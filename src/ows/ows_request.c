@@ -384,10 +384,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
 	}
 
 	/* check XML Validity */
-	if ((!cgi_method_get()
-		  && !cgi_method_post())
-	   || (cgi_method_post()
-		  && strcmp(getenv("CONTENT_TYPE"),
+	if ((cgi_method_post() && strcmp(getenv("CONTENT_TYPE"),
 			 "application/x-www-form-urlencoded") != 0))
 	{
 		xmlstring = buffer_init();

@@ -233,13 +233,11 @@ int main(int argc, char *argv[])
 		/* initialize input array to store CGI values */
 		/* The Content-Type of all POST KVP-encoded request entities 
 		   must be 'application/x-www-form-urlencoded' */
-		if (cgi_method_get()
-		   || (cgi_method_post()
-			  && strcmp(getenv("CONTENT_TYPE"),
-				 "application/x-www-form-urlencoded") == 0))
-			o->cgi = cgi_parse_kvp(o, query);
-		else
+		if (cgi_method_post() && strcmp(getenv("CONTENT_TYPE"),
+				 "application/x-www-form-urlencoded") != 0)
 			o->cgi = cgi_parse_xml(o, query);
+		else
+			o->cgi = cgi_parse_kvp(o, query);
 
 		o->psql_requests = list_init();
 

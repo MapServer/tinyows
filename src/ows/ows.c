@@ -233,7 +233,7 @@ int main(int argc, char *argv[])
 		/* initialize input array to store CGI values */
 
         /* Unit Test case with XML values */
-        if (!cgi_method_post() && !cgi_method_get() && query[1] == '<')
+        if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
 			o->cgi = cgi_parse_xml(o, query);
 		/* The Content-Type of all POST KVP-encoded request entities 
 		   must be 'application/x-www-form-urlencoded' */

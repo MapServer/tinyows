@@ -11,14 +11,15 @@ SRC = $(wildcard src/*/*.c)
 
 all:
 	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(SRC) -o tinyows
+	@rm -rf tinyows.dSYM
 
 svn-clean: clean doc-clean
 	@find . -name '*~' -exec rm {} \;
 	@rm -f configure
 
 clean: 
-	@rm -f tinyows ERROR Makefile src/ows_define.h
-
+	@rm -f tinyows Makefile src/ows_define.h
+	@rm -rf tinyows.dSYM
 
 install:
 	mkdir -p $(PREFIX)/tinyows
@@ -37,17 +38,12 @@ doxygen: doc-clean
 	) || echo "doxygen seems not installed"
 
 valgrind:
-	@(which valgrind 2> /dev/null > /dev/null	\
-	&& rm -f ERROR					\
-	&& test/wfs_get_feature 1			\
-	&& test/wfs_get_capabilities 1			\
-	&& test/wfs_describe 1				\
-	&& test/wms_get_capabilities 1			\
-	&& test/wms_get_map 1				\
-	&& test/wfs_transaction 1			\
-	&& test/wfs_lock_feature 1			\
-	&& test/wfs_get_feature_with_lock 1		\
-	) || echo "valgrind seems not installed"
+	@test/unit_test test/wfs/get_feature 1
+	@test/unit_test test/wfs/get_capabilities 1
+	@test/unit_test test/wfs/describe 1
+	@test/unit_test test/wfs/transaction 1
+	@test/unit_test test/wfs/lock_feature 1
+	@test/unit_test test/wfs/get_feature_with_lock 1
 
 
 indent:

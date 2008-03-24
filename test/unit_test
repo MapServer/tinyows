@@ -1,0 +1,84 @@
+#!/bin/sh
+
+
+#
+# DO NOT call this file directly, use make check or make valgrind instead.
+#
+
+path=$1
+mode=$2
+file_tmp=._file_tmp
+list_tmp=._list_tmp
+
+valgrind_opt="--leak-check=yes --run-libc-freeres=no --show-reachable=yes"
+
+# Check tinyows binary
+if [ ! -x ./tinyows ]; then
+	echo "No tinyows binary founded, try to run 'make' before !"
+	exit 1
+fi
+
+# Check tinyows binary
+if [ $mode -eq 1 ]; then
+	if [ ! -x `which valgrind` ]; then
+		echo "No valgrind binary founded !"
+		exit 1
+	fi
+fi
+
+
+# Create unit test list
+rm -f $list_tmp
+for file in `ls $1`; do
+	if [ -f $1/$file ]; then
+		echo $1/$file >> $list_tmp
+	elif [ -f $1 ]; then
+		echo $1 >> $list_tmp
+	fi
+done
+	
+# run into the created list
+for unit_id in `cat $list_tmp`; do
+
+option=`cat $unit_id`
+export QUERY_STRING=$option
+
+#valgrind mode
+if [ $mode -eq 1 ]; then
+    valgrind $valgrind_opt ./tinyows 2> $file_tmp 1> /dev/null
+    valgrind_error=`grep ERROR $file_tmp                                  \
+	    	    | sed -e 's/^==[0-9]\+== ERROR SUMMARY: //g'          \
+	  	          -e 's/from.\+$//'                               \
+			  -e 's/ errors //'`
+    valgrind_leak=`grep LEAK $file_tmp | wc -l`
+			
+    echo -n "$unit_id		-> $valgrind_error errors "
+
+    if [ $valgrind_leak -eq 0 ] ; then
+      echo " |  No leak detected"
+    else
+      echo " |  Memory leak detected"
+    fi
+    
+elif [ $mode -eq 2 ]; then
+    valgrind -v $valgrind_opt ./tinyows
+
+# Stdout mode
+elif [ $mode -eq 3 ]; then
+    ./tinyows
+
+# Diff mode
+else
+    ./tinyows > $file_tmp 2>&1
+    error=`diff $file_out $file_tmp | wc -l`
+
+    if [ $error -eq 0 ] ; then
+      echo "$unit_id 		-> OK"
+    else
+      echo "$unit_id 		-> Error"
+    fi
+fi
+
+rm -f $file_tmp
+
+done

@@ -145,7 +145,6 @@ ows_meta *ows_metadata_init()
 void ows_metadata_free(ows_meta * metadata)
 {
 	assert(metadata != NULL);
-
 	if (metadata->name != NULL)
 		buffer_free(metadata->name);
 
@@ -195,9 +194,9 @@ void ows_metadata_fill(ows * o, array * cgi)
 		b = array_get(cgi, "xmlns");
 		if (buffer_case_cmp(b, "http://www.opengis.net/wfs"))
 		{
-			o->metadata->type = buffer_init();
+            o->metadata->type = buffer_init();
 			buffer_add_str(o->metadata->type, "WFS");
-			o->metadata->name = buffer_init();
+            if (o->metadata->name == NULL) o->metadata->name = buffer_init();
 			buffer_add_str(o->metadata->name, "WFS");
 		}
 	}

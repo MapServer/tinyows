@@ -449,19 +449,18 @@ array *cgi_parse_xml(ows * o, char *query)
 
 	prop_need_comma = false;
 	typ_need_comma = false;
+    n = NULL;
 
 	xmlInitParser();
 	xmldoc = xmlParseMemory(query, strlen(query));
 
-	if (!xmldoc)
+	if (!xmldoc || (n = xmlDocGetRootElement(xmldoc)) == NULL)
 	{
 		xmlFreeDoc(xmldoc);
 		xmlCleanupParser();
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "xml isn't valid",
 		   "request");
 	}
-
-	n = xmldoc->children;
 
 	arr = array_init();
 	key = buffer_init();

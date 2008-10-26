@@ -385,7 +385,7 @@ buffer *ows_srs_get_from_a_srid(ows * o, buffer * srid)
 	request_name = buffer_init();
 	buffer_add_str(request_name, "get_from_a_srid");
 	parameters = buffer_init();
-	buffer_add_str(parameters, "(text)");
+	buffer_add_str(parameters, "(integer)");
 
 	/* check if the request has already been executed */
 	if (!in_list(o->psql_requests, request_name))

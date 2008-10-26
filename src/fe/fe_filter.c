@@ -137,8 +137,7 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
  * Recursive function which eval a prefixed expression and 
  * return the matching string
  */
-buffer *fe_expression(ows * o, buffer * typename, filter_encoding * fe,
-   buffer * sql, xmlNodePtr n)
+buffer *fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
 	xmlChar *content;
 
@@ -147,25 +146,19 @@ buffer *fe_expression(ows * o, buffer * typename, filter_encoding * fe,
 	assert(fe != NULL);
 	assert(sql != NULL);
 
-	if (n == NULL)
-		return sql;
+	if (n == NULL) return sql;
 
-	if (strcmp((char *) n->name, "Fe_Function") == 0)
-	{
+	if (strcmp((char *) n->name, "Fe_Function") == 0) {
 		sql = fe_function(o, typename, fe, sql, n);
 		return sql;
 	}
 
 	/* open a bracket when there are grandchildren elements */
-	if (n->children != NULL)
-	{
-		if (n->children->type == XML_ELEMENT_NODE)
-		{
+	if (n->children != NULL) {
+		if (n->children->type == XML_ELEMENT_NODE) {
 			if (n->children->children != NULL)
 				buffer_add_str(sql, "(");
-		}
-		else
-		{
+		} else {
 			if (n->children->next != NULL)
 				if (n->children->next->children != NULL)
 					buffer_add_str(sql, "(");
@@ -185,13 +178,11 @@ buffer *fe_expression(ows * o, buffer * typename, filter_encoding * fe,
 		buffer_add_str(sql, " * ");
 	else if (strcmp((char *) n->name, "Div") == 0)
 		buffer_add_str(sql, " / ");
-	else if (strcmp((char *) n->name, "Literal") == 0)
-	{
+	else if (strcmp((char *) n->name, "Literal") == 0) {
 		/* strings must be written in quotation marks */
 		if (check_regexp((char *) content, "^ + $") == 1)
 			buffer_add_str(sql, "''");
-		else
-		{
+		else {
 			if (check_regexp((char *) content, "^[A-Za-z]") == 1
 			   || check_regexp((char *) content, ".*-.*") == 1)
 				buffer_add_str(sql, "'");
@@ -202,32 +193,29 @@ buffer *fe_expression(ows * o, buffer * typename, filter_encoding * fe,
 			   || check_regexp((char *) content, ".*-.*") == 1)
 				buffer_add_str(sql, "'");
 		}
-	}
-	else if (strcmp((char *) n->name, "PropertyName") == 0)
+	} else if (strcmp((char *) n->name, "PropertyName") == 0)
 		sql = fe_property_name(o, typename, fe, sql, n);
 	else if (n->type != XML_ELEMENT_NODE)
 		sql = fe_expression(o, typename, fe, sql, n->next);
 	xmlFree(content);
 
 	/* eval the right part of the expression */
-	if (n->children != NULL)
-	{
-		if (n->children->next != NULL)
-		{
-			if (n->children->type == XML_ELEMENT_NODE
-			   && n->children->next->type == XML_ELEMENT_NODE)
-				sql =
-				   fe_expression(o, typename, fe, sql, n->children->next);
-			else
-				sql =
-				   fe_expression(o, typename, fe, sql,
-				   n->children->next->next);
-			content = xmlNodeGetContent(n->children->next);
-			/* close a bracket when there are not empty children elements */
-			if (check_regexp((char *) content, " +") != 1)
-				buffer_add_str(sql, ")");
-			xmlFree(content);
-		}
+	if (n->children != NULL && n->children->next != NULL) {
+		if (n->children->type == XML_ELEMENT_NODE &&
+            n->children->next->type == XML_ELEMENT_NODE)
+			sql = fe_expression(o, typename, fe, sql, n->children->next);
+		else sql = fe_expression(o, typename, fe, sql, n->children->next->next);
+
+		content = xmlNodeGetContent(n->children->next);
+
+        /* if children element is empty */
+        if (check_regexp((char *) content, "^$") == 1)
+			buffer_add_str(sql, "''");
+		/* close a bracket when there are not empty children elements */
+        else if (check_regexp((char *) content, " +") != 1)
+			buffer_add_str(sql, ")");
+
+        xmlFree(content);
 	}
 
 	return sql;

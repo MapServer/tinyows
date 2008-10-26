@@ -415,17 +415,22 @@ static buffer *cgi_add_into_buffer(buffer * b, xmlNodePtr n,
 buffer *cgi_add_xml_into_buffer(buffer * element, xmlNodePtr n)
 {
 	xmlBufferPtr buf;
-	int size;
+    xmlNsPtr * ns;
+	int i;
 
 	assert(element != NULL);
 	assert(n != NULL);
 
-	buf = xmlBufferCreate();
-	size = xmlNodeDump(buf, n->doc, n, 0, 0);
+    ns = xmlGetNsList(n->doc, n);
+    for(i=0 ; ns && ns[i] != NULL && ns[i]->prefix != NULL ; i++)
+                xmlNewNs(n, ns[i]->href, ns[i]->prefix);
 
+	buf = xmlBufferCreate();
+	xmlNodeDump(buf, n->doc, n, 0, 0);
 	buffer_add_str(element, (char *) buf->content);
 
 	xmlBufferFree(buf);
+    xmlFree(ns);
 
 	return element;
 }
@@ -538,24 +543,22 @@ array *cgi_parse_xml(ows * o, char *query)
 			for (node = n->children; node; node = node->next)
 			{
 				/*execute the process only if n is an element and not spaces for instance */
-				if (node->type != XML_ELEMENT_NODE)
-					continue;
-				if (strcmp((char *) node->name, "PropertyName") == 0)
-				{
+				if (node->type != XML_ELEMENT_NODE) continue;
+
+				if (strcmp((char *) node->name, "PropertyName") == 0) {
 					/* add propertyname to the matching global buffer */
-					prop =
-					   cgi_add_into_buffer(prop, node, prop_need_comma);
+					prop = cgi_add_into_buffer(prop, node, prop_need_comma);
 					prop_need_comma = true;
-				}
-				else if (strcmp((char *) node->name, "Filter") == 0)
+				} else if (strcmp((char *) node->name, "Filter") == 0) {
 					/* add the whole xml filter to the matching global buffer */
 					filter = cgi_add_xml_into_buffer(filter, node);
-				else if (strcmp((char *) node->name, "SortBy") == 0)
+                } else if (strcmp((char *) node->name, "SortBy") == 0) {
 					/* add sortby element to the array */
 					arr = cgi_add_sortby(arr, node);
-				else
+                } else {
 					/* add element to the array */
 					arr = cgi_add_node(arr, node);
+                } 
 			}
 			/* when there aren't any propertynames, an '*' must be included into the buffer to be sur that propertyname's size and typename's size are similar */
 			if (prop_need_comma == false)

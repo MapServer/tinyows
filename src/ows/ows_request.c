@@ -26,8 +26,8 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-#include <libxml2/libxml/xmlschemas.h>
-#include <libxml2/libxml/xmlschemastypes.h>
+#include <libxml/xmlschemas.h>
+#include <libxml/xmlschemastypes.h>
 
 #include "ows.h"
 #include "../ows_define.h"

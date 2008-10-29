@@ -18,4 +18,4 @@ To be able to launch unit test
 4) Install valgrind if not yet done
 
 5) Play with tests :
- make valgrind
+ make test-valgrind

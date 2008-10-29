@@ -43,7 +43,7 @@ for unit_id in `cat $list_tmp`; do
 option=`cat $unit_id`
 export QUERY_STRING=$option
 
-#valgrind mode
+# Valgrind resume mode
 if [ $mode -eq 1 ]; then
     valgrind $valgrind_opt ./tinyows 2> $file_tmp 1> /dev/null
     valgrind_error=`grep ERROR $file_tmp                                  \
@@ -59,7 +59,9 @@ if [ $mode -eq 1 ]; then
     else
       echo " |  Memory leak detected"
     fi
+    rm -f $file_tmp
     
+# Valgrind verbose mode
 elif [ $mode -eq 2 ]; then
     valgrind -v $valgrind_opt ./tinyows
 
@@ -67,18 +69,15 @@ elif [ $mode -eq 2 ]; then
 elif [ $mode -eq 3 ]; then
     ./tinyows
 
-# Diff mode
-else
-    ./tinyows > $file_tmp 2>&1
-    error=`diff $file_out $file_tmp | wc -l`
-
-    if [ $error -eq 0 ] ; then
-      echo "$unit_id 		-> OK"
-    else
-      echo "$unit_id 		-> Error"
+# Exception mode
+elif [ $mode -eq 4 ]; then
+    ows_ret=`./tinyows 2> /dev/null | grep ExceptionText`
+    if [ "$ows_ret" ]; then
+	    echo -n "$unit_id  -> "
+	    echo $ows_ret | sed -e 's/<\/ExceptionText>//' -e 's/<ExceptionText>//'
     fi
+
 fi
 
-rm -f $file_tmp
-
 done
+rm -f $list_tmp

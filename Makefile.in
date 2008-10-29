@@ -27,7 +27,6 @@ install:
 	cp -rf schema $(PREFIX)/tinyows/
 	cp -i config.xml $(PREFIX)/tinyows/
 
-
 doc-clean:
 	@rm -rf doc/doxygen
 
@@ -37,22 +36,35 @@ doxygen: doc-clean
 	&& doxygen doc/Doxyfile				\
 	) || echo "doxygen seems not installed"
 
-valgrind:
+test-valgrind:
 	@test/unit_test test/wfs/get_feature 1
+	@test/unit_test test/wfs/get_feature/spatialops 1
+	@test/unit_test test/wfs/get_feature/logicalops 1
+	@test/unit_test test/wfs/get_feature/gmlsf-1 1
+	@test/unit_test test/wfs/get_feature/arithmeticops 1
 	@test/unit_test test/wfs/get_capabilities 1
 	@test/unit_test test/wfs/describe 1
-	@test/unit_test test/wfs/transaction 1
-	@test/unit_test test/wfs/lock_feature 1
-	@test/unit_test test/wfs/get_feature_with_lock 1
 
+test-output:
+	@test/unit_test test/wfs/get_feature 3
+	@test/unit_test test/wfs/get_feature/spatialops 3
+	@test/unit_test test/wfs/get_feature/logicalops 3
+	@test/unit_test test/wfs/get_feature/gmlsf-1 3
+	@test/unit_test test/wfs/get_feature/arithmeticops 3
+	@test/unit_test test/wfs/get_capabilities 3
+	@test/unit_test test/wfs/describe 3
+
+test-exception:
+	@test/unit_test test/wfs/get_feature 4
+	@test/unit_test test/wfs/get_feature/spatialops 4
+	@test/unit_test test/wfs/get_feature/logicalops 4
+	@test/unit_test test/wfs/get_feature/gmlsf-1 4
+	@test/unit_test test/wfs/get_feature/arithmeticops 4
+	@test/unit_test test/wfs/get_capabilities 4
+	@test/unit_test test/wfs/describe 4
 
 indent:
 	@(which indent 2> /dev/null > /dev/null \
 	&& indent -nbad -bap -bbo -nbc -bli0 -c33 -cd33 -ncdb -nce -nlp -ci3 -cli0 -cp33 -cs -d0 -di1 -nfc1 -nfca -hnl -ts4 -i4 -ip0 -npcs -nprs -npsl -saf -sai -saw -nsc -nsob -nss -nbfda -nbfde -npsl -l75 $(SRC) \
 	&& find . -name '*~' -exec rm {} \;    \
 	) || echo "indent seems not installed"
-
-splint:
-	@(which splint 2> /dev/null > /dev/null \
-	&& splint -mustfreeonly -kepttrans -nullderef -compdestroy -mustfreefresh -temptrans -usereleased -compdef -observertrans -statictrans -booltype bool $(PGFLAGS) $(XMLFLAGS) $(SRC) \
-	) || echo "splint seems not installed"

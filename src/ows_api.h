@@ -46,7 +46,7 @@ buffer *fe_kvp_bbox (ows * o, wfs_request * wr, buffer * layer_name, ows_bbox * 
 buffer *fe_kvp_featureid (ows * o, wfs_request * wr, buffer * layer_name, list * fid);
 buffer *fe_logical_op (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
 void fe_node_flush (xmlNodePtr node, FILE * output);
-buffer *fe_property_name (ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n);
+buffer *fe_property_name (ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n, bool check_geom_column);
 buffer *fe_spatial_op (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
 buffer *fe_transform_coord_gml3_to_psql (buffer * coord);
 buffer *fe_transform_coord_gml_to_psql (buffer * coord);

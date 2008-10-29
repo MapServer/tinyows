@@ -36,56 +36,42 @@ void fe_error(ows * o, filter_encoding * fe)
 	assert(o != NULL);
 	assert(fe != NULL);
 
-	if (fe->error_code == FE_ERROR_FEATUREID)
-	{
+	if (fe->error_code == FE_ERROR_FEATUREID) {
 		filter_encoding_free(fe);
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "featureid must match layer.id", "FILTER");
-	}
-	else if (fe->error_code == FE_ERROR_FILTER)
-	{
+		   "Featureid must match layer.id", "FILTER");
+	} else if (fe->error_code == FE_ERROR_FILTER) {
 		filter_encoding_free(fe);
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "filter parameter doesn't validate the filter.xsd schema. Check your xml",
-		   "FILTER");
-	}
-	else if (fe->error_code == FE_ERROR_BBOX)
-	{
+		   "Filter parameter doesn't validate the filter.xsd schema", "FILTER");
+	} else if (fe->error_code == FE_ERROR_BBOX) {
 		filter_encoding_free(fe);
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "bbox must match xmin,ymin,xmax,ymax", "FILTER");
-	}
-	else if (fe->error_code == FE_ERROR_PROPERTYNAME)
-	{
+		   "Bbox must match xmin,ymin,xmax,ymax", "FILTER");
+	} else if (fe->error_code == FE_ERROR_PROPERTYNAME) {
 		filter_encoding_free(fe);
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "PropertyName not available, execute a DescribeFeaturetype request to see the available properties",
-		   "FILTER");
-	}
-	else if (fe->error_code == FE_ERROR_UNITS)
-	{
+		   "PropertyName not available", "FILTER");
+	} else if (fe->error_code == FE_ERROR_GEOM_PROPERTYNAME) {
 		filter_encoding_free(fe);
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "units not supported, use 'meters' or 'kilometers'", "FILTER");
-	}
-	else if (fe->error_code == FE_ERROR_GEOMETRY)
-	{
+            "Geometry PropertyName not available", "FILTER");
+	} else if (fe->error_code == FE_ERROR_UNITS) {
 		filter_encoding_free(fe);
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "bad geometry", "FILTER");
-	}
-	else if (fe->error_code == FE_ERROR_FID)
-	{
+		   "Units not supported, use 'meters' or 'kilometers'", "FILTER");
+	} else if (fe->error_code == FE_ERROR_GEOMETRY) {
 		filter_encoding_free(fe);
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "only one type of identifiers is allowed (FeatureId or GmlObjectId)",
-		   "FILTER");
-	}
-	else if (fe->error_code == FE_ERROR_SRS)
-	{
+		   "Bad geometry", "FILTER");
+	} else if (fe->error_code == FE_ERROR_FID) {
 		filter_encoding_free(fe);
 		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "srsName isn't valid", "srsName");
+		   "Only one type of identifiers allowed (FeatureId or GmlObjectId)", "FILTER");
+	} else if (fe->error_code == FE_ERROR_SRS) {
+		filter_encoding_free(fe);
+		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+		   "SrsName isn't valid", "FILTER");
 	}
 }
 
@@ -103,41 +89,23 @@ buffer *fill_fe_error(ows * o, filter_encoding * fe)
 	result = buffer_init();
 
 	if (fe->error_code == FE_ERROR_FEATUREID)
-	{
-		buffer_add_str(result, "featureid must match layer.id");
-	}
+		buffer_add_str(result, "Featureid must match layer.id");
 	else if (fe->error_code == FE_ERROR_FILTER)
-	{
-		buffer_add_str(result,
-		   "filter parameter doesn't validate the filter.xsd schema. Check your xml");
-	}
+		buffer_add_str(result, "Filter parameter doesn't validate the filter.xsd schema. Check your xml");
 	else if (fe->error_code == FE_ERROR_BBOX)
-	{
-		buffer_add_str(result, "bbox must match xmin,ymin,xmax,ymax");
-	}
+		buffer_add_str(result, "Bbox must match xmin,ymin,xmax,ymax");
 	else if (fe->error_code == FE_ERROR_PROPERTYNAME)
-	{
-		buffer_add_str(result,
-		   "PropertyName not available, execute a DescribeFeaturetype request to see the available properties");
-	}
+		buffer_add_str(result, "PropertyName not available");
+	else if (fe->error_code == FE_ERROR_GEOM_PROPERTYNAME)
+		buffer_add_str(result, "Geometry PropertyName not available");
 	else if (fe->error_code == FE_ERROR_UNITS)
-	{
-		buffer_add_str(result,
-		   "units not supported, use 'meters' or 'kilometers'");
-	}
+		buffer_add_str(result, "Units not supported, use 'meters' or 'kilometers'");
 	else if (fe->error_code == FE_ERROR_GEOMETRY)
-	{
-		buffer_add_str(result, "bad geometry");
-	}
+		buffer_add_str(result, "Bad geometry");
 	else if (fe->error_code == FE_ERROR_FID)
-	{
-		buffer_add_str(result,
-		   "only one type of identifiers is allowed (FeatureId or GmlObjectId)");
-	}
+		buffer_add_str(result, "Only one type of identifier allowed (FeatureId or GmlObjectId)");
 	else if (fe->error_code == FE_ERROR_SRS)
-	{
-		buffer_add_str(result, "srsName isn't valid");
-	}
+		buffer_add_str(result, "SrsName isn't valid");
 
 	return result;
 }

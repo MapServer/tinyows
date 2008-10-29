@@ -194,7 +194,7 @@ buffer *fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer *
 				buffer_add_str(sql, "'");
 		}
 	} else if (strcmp((char *) n->name, "PropertyName") == 0)
-		sql = fe_property_name(o, typename, fe, sql, n);
+		sql = fe_property_name(o, typename, fe, sql, n, false);
 	else if (n->type != XML_ELEMENT_NODE)
 		sql = fe_expression(o, typename, fe, sql, n->next);
 	xmlFree(content);
@@ -259,7 +259,7 @@ buffer *fe_xpath_property_name(ows * o, buffer * typename,
  * Check if propertyName is valid and return the appropriate string
  */
 buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
-   buffer * sql, xmlNodePtr n)
+   buffer * sql, xmlNodePtr n, bool check_geom_column)
 {
 	xmlChar *content;
 	array *prop_table;
@@ -298,14 +298,12 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
 		buffer_copy(sql, tmp);
 		buffer_add_str(sql, "\"");
 	}
-	else
-	{
+	else {
 		fe->error_code = FE_ERROR_PROPERTYNAME;
-		buffer_free(tmp);
-		array_free(prop_table);
-		xmlFree(content);
-		return sql;
 	}
+
+    if (check_geom_column && !ows_psql_is_geometry_column(o, typename, tmp))
+		    fe->error_code = FE_ERROR_GEOM_PROPERTYNAME;
 
 	array_free(prop_table);
 	buffer_free(tmp);

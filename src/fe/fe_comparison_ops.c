@@ -173,7 +173,7 @@ static buffer *fe_property_is_like(ows * o, buffer * typename,
 	while (n->type != XML_ELEMENT_NODE)
 		n = n->next;
 
-	fe->sql = fe_property_name(o, typename, fe, fe->sql, n);
+	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false);
 
 
 	buffer_add_str(fe->sql, " Like E");
@@ -233,7 +233,7 @@ static buffer *fe_property_is_null(ows * o, buffer * typename,
 	while (n->type != XML_ELEMENT_NODE)
 		n = n->next;
 
-	fe->sql = fe_property_name(o, typename, fe, fe->sql, n);
+	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false);
 
 	buffer_add_str(fe->sql, " isnull");
 

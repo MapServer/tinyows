@@ -381,7 +381,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename,
 	while (n->type != XML_ELEMENT_NODE)
 		n = n->next;
 
-	fe->sql = fe_property_name(o, typename, fe, fe->sql, n);
+	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
 	n = n->next;
 
@@ -443,7 +443,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename,
 		n = n->next;
 
 	/* display the property name */
-	fe->sql = fe_property_name(o, typename, fe, fe->sql, n);
+	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
 
 	buffer_add_str(fe->sql, "),centroid(");
@@ -511,7 +511,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe,
 		n = n->next;
 
 	/* display the property name */
-	fe->sql = fe_property_name(o, typename, fe, fe->sql, n);
+	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
 	n = n->next;
 

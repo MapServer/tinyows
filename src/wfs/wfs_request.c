@@ -583,23 +583,12 @@ static void wfs_request_check_sortby(ows * o, wfs_request * wr)
 			/* put the order into postgresql syntax */
 			if (fe->last->value != NULL)
 			{
-				if (buffer_cmp(fe->last->value, "A"))
-				{
-					buffer_empty(fe->last->value);
-					buffer_add_str(fe->last->value, "ASC");
-				}
-				else if (buffer_cmp(fe->last->value, "D"))
-				{
+				if (buffer_cmp(fe->last->value, "D")) {
 					buffer_empty(fe->last->value);
 					buffer_add_str(fe->last->value, "DESC");
-				}
-				else if (!buffer_cmp(fe->last->value, "ASC")
-				   && !buffer_cmp(fe->last->value, "DESC"))
-				{
-					list_free(fe);
-					ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-					   "SORTBY isn't valid, must be ASC or DESC",
-					   "sortby");
+				} else {
+					buffer_empty(fe->last->value);
+					buffer_add_str(fe->last->value, "ASC");
 				}
 			}
 			buffer_copy(wr->sortby, fe->first->value);

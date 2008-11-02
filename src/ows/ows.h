@@ -26,12 +26,8 @@
 #include <stdio.h> 		/* FILE prototype */
 #include <libpq-fe.h>
 #include <libxml/xmlreader.h>
+#include "../ows_define.h"
 
-
-/* define OWS_DEBUG if needed */
-#if 1
-#define OWS_DEBUG
-#endif
 
 /* ========= Structures ========= */
 

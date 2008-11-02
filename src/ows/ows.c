@@ -228,60 +228,73 @@ int main(int argc, char *argv[])
 	/* retrieve the query in HTTP request */
 	query = cgi_getback_query(o);
 
-	if (query != NULL && strlen(query) != 0)
-	{
-		/* initialize input array to store CGI values */
-
-        /* Unit Test case with XML values */
-        if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
-			o->cgi = cgi_parse_xml(o, query);
-		/* The Content-Type of all POST KVP-encoded request entities 
-		   must be 'application/x-www-form-urlencoded' */
-		else if (cgi_method_post() && strcmp(getenv("CONTENT_TYPE"),
-				 "application/x-www-form-urlencoded") != 0)
-			o->cgi = cgi_parse_xml(o, query);
-		else o->cgi = cgi_parse_kvp(o, query);
-
-		o->psql_requests = list_init();
-
-		/* Parse the configuration file and initialize ows struct */
-		ows_parse_config(o, OWS_CONFIG_FILE_PATH);
-
-		/* Connect the ows to the database */
-		ows_pg(o, o->pg_dsn->buf);
-
-		/* Fill service's metadata */
-		ows_metadata_fill(o, o->cgi);
-
-		/* Process service request */
-		o->request = ows_request_init();
-		ows_request_check(o, o->request, o->cgi, query);
-
-		/* Run the right OWS service */
-		switch (o->request->service)
-		{
-		case WMS:
-			o->request->request.wms = wms_request_init();
-			wms_request_check(o, o->request->request.wms, o->cgi);
-			wms(o, o->request->request.wms);
-			break;
-		case WFS:
-			o->request->request.wfs = wfs_request_init();
-			wfs_request_check(o, o->request->request.wfs, o->cgi);
-			wfs(o, o->request->request.wfs);
-			break;
-		default:
-			ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-			   "service unknown", "service");
-		}
-	} else if (argc > 1 && (strncmp(argv[1], "--help", 6) == 0
-            || strncmp(argv[1], "--h", 3) == 0)) {
-		ows_parse_config(o, OWS_CONFIG_FILE_PATH);
-        ows_usage(o);
-    } else {
-			ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-			   "service unknown", "service");
+    if (query == NULL || strlen(query) == 0) {
+	    if (argc > 1 && (strncmp(argv[1], "--help", 6) == 0
+                     || strncmp(argv[1], "-h", 2) == 0)) {
+		    ows_parse_config(o, OWS_CONFIG_FILE_PATH);
+            ows_usage(o);
+        } else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+			   "Service Unknown", "service");
     }
+
+    /* 
+     * Request encoding and HTTP method WFS 1.1.0 -> 6.5
+     */
+
+    /* GET could only handle KVP */
+    if (cgi_method_get()) o->cgi = cgi_parse_kvp(o, query);
+    /* POST could handle KVP or XML encoding */
+    else if (cgi_method_post()) {
+        if (strcmp(getenv("CONTENT_TYPE"),
+                    "application/x-www-form-urlencoded") == 0)
+            o->cgi = cgi_parse_kvp(o, query);
+        else if (strcmp(getenv("CONTENT_TYPE"), "text/xml") == 0)
+            o->cgi = cgi_parse_xml(o, query);
+#if OWS_BUGGY_CITE_TEST
+        /* TODO report this bug to OGC CITE */
+        else if (strcmp(getenv("CONTENT_TYPE"), 
+                    "application/xml; charset=UTF-8") == 0)
+            o->cgi = cgi_parse_xml(o, query);
+#endif
+    /* Unit Test case with XML values (not HTTP) */
+    } else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
+        o->cgi = cgi_parse_xml(o, query);
+    else ows_error(o, OWS_ERROR_REQUEST_HTTP,
+            "Wrong HTTP request Method", "http");
+
+
+	o->psql_requests = list_init();
+
+	/* Parse the configuration file and initialize ows struct */
+	ows_parse_config(o, OWS_CONFIG_FILE_PATH);
+
+    /* Connect the ows to the database */
+    ows_pg(o, o->pg_dsn->buf);
+
+	/* Fill service's metadata */
+	ows_metadata_fill(o, o->cgi);
+
+	/* Process service request */
+	o->request = ows_request_init();
+	ows_request_check(o, o->request, o->cgi, query);
+
+	/* Run the right OWS service */
+	switch (o->request->service)
+	{
+	case WMS:
+		o->request->request.wms = wms_request_init();
+		wms_request_check(o, o->request->request.wms, o->cgi);
+		wms(o, o->request->request.wms);
+		break;
+	case WFS:
+		o->request->request.wfs = wfs_request_init();
+		wfs_request_check(o, o->request->request.wfs, o->cgi);
+		wfs(o, o->request->request.wfs);
+		break;
+	default:
+		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+		   "Service Unknown", "service");
+	}
   
 	ows_free(o);
 

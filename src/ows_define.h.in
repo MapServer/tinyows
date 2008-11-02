@@ -24,6 +24,15 @@
 #ifndef OWS_DEFINE_H 
 #define OWS_DEFINE_H
 
+
+/* define OWS_DEBUG if needed */
+#if 1
+#define OWS_DEBUG
+#endif
+
+/* Specific code to workaround OGC CITE Unit test bugs */
+#define OWS_BUGGY_CITE_TEST 1
+
 #define OWS_CONFIG_FILE_PATH        "@prefix@/tinyows/config.xml"
 
 #define WFS_SCHEMA_100_BASIC_PATH   "@prefix@/tinyows/schema/wfs/1.0.0/WFS-basic.xsd"

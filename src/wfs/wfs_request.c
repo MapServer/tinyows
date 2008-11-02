@@ -564,46 +564,44 @@ static void wfs_request_check_sortby(ows * o, wfs_request * wr)
 
 	ln = NULL;
 
-	if (array_is_key(o->cgi, "sortby"))
+	if (!array_is_key(o->cgi, "sortby")) return;
+
+	b = array_get(o->cgi, "sortby");
+	wr->sortby = buffer_init();
+	l = list_explode(',', b);
+	for (ln = l->first; ln != NULL; ln = ln->next)
 	{
-		b = array_get(o->cgi, "sortby");
-		wr->sortby = buffer_init();
-		l = list_explode(',', b);
-		for (ln = l->first; ln != NULL; ln = ln->next)
+		fe = list_explode(' ', ln->value);
+		/*remove namespaces */
+		fe->first->value =
+		   wfs_request_remove_namespaces(o, fe->first->value);
+
+		/* add quotation marks */
+		buffer_add_head_str(fe->first->value, "\"");
+		buffer_add_str(fe->first->value, "\"");
+
+		/* put the order into postgresql syntax */
+		if (fe->last->value != NULL && fe->last != fe->first)
 		{
-			fe = list_explode(' ', ln->value);
-			/*remove namespaces */
-			fe->first->value =
-			   wfs_request_remove_namespaces(o, fe->first->value);
-
-			/* add quotation marks */
-			buffer_add_head_str(fe->first->value, "\"");
-			buffer_add_str(fe->first->value, "\"");
-
-			/* put the order into postgresql syntax */
-			if (fe->last->value != NULL)
-			{
-				if (buffer_cmp(fe->last->value, "D")) {
-					buffer_empty(fe->last->value);
-					buffer_add_str(fe->last->value, "DESC");
-				} else {
-					buffer_empty(fe->last->value);
-					buffer_add_str(fe->last->value, "ASC");
-				}
+			if (buffer_cmp(fe->last->value, "D")) {
+				buffer_empty(fe->last->value);
+				buffer_add_str(fe->last->value, "DESC");
+			} else {
+				buffer_empty(fe->last->value);
+				buffer_add_str(fe->last->value, "ASC");
 			}
-			buffer_copy(wr->sortby, fe->first->value);
-			buffer_add_str(wr->sortby, " ");
-			if (fe->last->value != NULL)
-				buffer_copy(wr->sortby, fe->last->value);
-			else
-				buffer_add_str(wr->sortby, "ASC");
-			if (ln->next != NULL)
-				buffer_add_str(wr->sortby, ",");
-
-			list_free(fe);
 		}
-		list_free(l);
+		buffer_copy(wr->sortby, fe->first->value);
+		buffer_add_str(wr->sortby, " ");
+		if (fe->last->value != NULL && fe->last != fe->first)
+			buffer_copy(wr->sortby, fe->last->value);
+		else buffer_add_str(wr->sortby, "ASC");
+
+		if (ln->next != NULL) buffer_add_str(wr->sortby, ",");
+
+		list_free(fe);
 	}
+	list_free(l);
 }
 
 

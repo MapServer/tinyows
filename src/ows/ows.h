@@ -206,6 +206,12 @@ enum ows_service {
     OWS_SERVICE_UNKNOWN
 };
 
+enum ows_method {
+   OWS_METHOD_UNKNOWN,
+   OWS_METHOD_KVP,
+   OWS_METHOD_XML
+};
+
 
 
 /* ========= WMS ========= */
@@ -319,10 +325,10 @@ typedef struct Wfs_request {
     buffer * sortby;
     list * sections;
 
-  mlist * insert_results;
-  int delete_results;
-  int update_results;
-  
+    mlist * insert_results;
+    int delete_results;
+    int update_results;
+
 } wfs_request;
 
 
@@ -352,6 +358,7 @@ typedef struct Filter_encoding {
 
 typedef struct Ows_request {
     ows_version * version;
+    enum ows_method method;
     enum ows_service service;
     union {
         wfs_request * wfs;

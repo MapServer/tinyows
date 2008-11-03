@@ -44,6 +44,7 @@ ows_request *ows_request_init()
 
 	or->version = NULL;
 	or->service = OWS_SERVICE_UNKNOWN;
+	or->method = OWS_METHOD_UNKNOWN;
 	or->request.wfs = NULL;
 	or->request.wms = NULL;
 
@@ -92,6 +93,7 @@ void ows_request_flush(ows_request * or, FILE * output)
 	assert(or != NULL);
 	assert(output != NULL);
 
+	fprintf(output, "method:%d\n", or->method);
 	fprintf(output, "service:%d\n", or->service);
 
 	if (or->version != NULL)
@@ -304,16 +306,17 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
 
 	/* check if VERSION is set and init Version */
 	or->version = ows_version_init();
-	if (!array_is_key(cgi, "version"))
+	if (!array_is_key(cgi, "version") || buffer_cmp(array_get(cgi, "version"), ""))
 	{
 		if (!buffer_case_cmp(b, "GetCapabilities"))
 		{
-			/* Tests WFS 1.1.0 require a default value for requests 
-			   encoded in XML if version is not set */
-			if (cgi_method_get())
+			/* WFS 1.1.0 with KVP need a version set */
+			if (o->request->method == OWS_METHOD_KVP)
 				ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
 				   "VERSION is not set", "VERSION");
-			else
+			/* WFS 1.1.0 require a default value for requests 
+			   encoded in XML if version is not set */
+			else if (o->request->method == OWS_METHOD_XML)
 			{
 				if (or->service == WFS)
 					ows_version_set(o->request->version, 1, 1, 0);
@@ -321,9 +324,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
 					ows_version_set(o->request->version, 1, 3, 0);
 			}
 		}
-	}
-	else
-		or->version = ows_request_check_version(o, or, cgi);
+	} else or->version = ows_request_check_version(o, or, cgi);
 
 	/* check if layers have name or title and srs */
 	for (ln = o->layers->first; ln != NULL; ln = ln->next)

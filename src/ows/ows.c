@@ -241,41 +241,50 @@ int main(int argc, char *argv[])
      * Request encoding and HTTP method WFS 1.1.0 -> 6.5
      */
 
+	o->request = ows_request_init();
     /* GET could only handle KVP */
-    if (cgi_method_get()) o->cgi = cgi_parse_kvp(o, query);
+    if (cgi_method_get()) o->request->method = OWS_METHOD_KVP;
     /* POST could handle KVP or XML encoding */
     else if (cgi_method_post()) {
         if (strcmp(getenv("CONTENT_TYPE"),
                     "application/x-www-form-urlencoded") == 0)
-            o->cgi = cgi_parse_kvp(o, query);
+		o->request->method = OWS_METHOD_KVP;
         else if (strcmp(getenv("CONTENT_TYPE"), "text/xml") == 0)
-            o->cgi = cgi_parse_xml(o, query);
+		o->request->method = OWS_METHOD_XML;
 #if OWS_BUGGY_CITE_TEST
         /* TODO report this bug to OGC CITE */
         else if (strcmp(getenv("CONTENT_TYPE"), 
                     "application/xml; charset=UTF-8") == 0)
-            o->cgi = cgi_parse_xml(o, query);
+		o->request->method = OWS_METHOD_XML;
 #endif
-    /* Unit Test case with XML values (not HTTP) */
-    } else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
-        o->cgi = cgi_parse_xml(o, query);
-    else ows_error(o, OWS_ERROR_REQUEST_HTTP,
-            "Wrong HTTP request Method", "http");
+    	/* Unit Test case with XML values (not HTTP) */
+    	} else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
+		o->request->method = OWS_METHOD_XML;
+   else ows_error(o, OWS_ERROR_REQUEST_HTTP,
+   		"Wrong HTTP request Method", "http");
 
+	switch(o->request->method) {
+		case OWS_METHOD_KVP:
+            		o->cgi = cgi_parse_kvp(o, query);
+			break;
+		case OWS_METHOD_XML:
+            		o->cgi = cgi_parse_xml(o, query);
+			break;
+		default: assert(false); /* should never happen */
+	}
 
 	o->psql_requests = list_init();
 
 	/* Parse the configuration file and initialize ows struct */
 	ows_parse_config(o, OWS_CONFIG_FILE_PATH);
 
-    /* Connect the ows to the database */
-    ows_pg(o, o->pg_dsn->buf);
+        /* Connect the ows to the database */
+        ows_pg(o, o->pg_dsn->buf);
 
 	/* Fill service's metadata */
 	ows_metadata_fill(o, o->cgi);
 
 	/* Process service request */
-	o->request = ows_request_init();
 	ows_request_check(o, o->request, o->cgi, query);
 
 	/* Run the right OWS service */

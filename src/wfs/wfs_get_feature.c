@@ -337,7 +337,7 @@ static void wfs_gml_display_hits(ows * o, wfs_request * wr, mlist * request_list
 	/* render GML hits output */
 	res = PQexec(o->pg, "select localtimestamp");
 	date = ows_psql_timestamp_to_xml_datetime(PQgetvalue(res, 0, 0));
-	fprintf(o->output, " timeStamp='%s' numberOfFeatures='%d' >\n", 
+	fprintf(o->output, " timeStamp='%s' numberOfFeatures='%d' />\n", 
 		date->buf, hits);
 	buffer_free(date);
 	PQclear(res);

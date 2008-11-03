@@ -187,10 +187,7 @@ static ows_version *ows_request_check_version(ows * o, ows_request * or,
 
 	if (buffer_cmp(b, ""))
 	{
-		if (or->service == WFS)
-			ows_version_set(o->request->version, 1, 1, 0);
-		else if (or->service == WMS)
-			ows_version_set(o->request->version, 1, 3, 0);
+		ows_version_set(o->request->version, 0, 0, 0);
 	}
 	else
 	{

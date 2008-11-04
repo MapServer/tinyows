@@ -696,16 +696,16 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
  */
 static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 {
-	buffer *typename, *xmlstring, *result, *sql, *property_name;
-	filter_encoding *filter;
-	xmlNodePtr node;
+	buffer *typename, *xmlstring, *result, *sql, *property_name, *values;
+	filter_encoding *filter, *fe;
+	xmlNodePtr node, elemt;
 	xmlChar *content;
 
 	assert(o != NULL);
 	assert(wr != NULL);
 	assert(n != NULL);
 
-	sql = buffer_init();
+    sql = buffer_init();
 	content = NULL;
 
 	buffer_add_str(sql, "UPDATE \"");
@@ -726,18 +726,19 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 	/* write the fields and the new values of the features to update */
 	for (; n; n = n->next)
 	{
+        values = buffer_init();
 		if (n->type == XML_ELEMENT_NODE)
 		{
-			if (strcmp((char *) n->name, "Property") == 0)
-			{
+		    if (strcmp((char *) n->name, "Property") == 0)
+	        {
 				node = n->children;
 				while (node->type != XML_ELEMENT_NODE)
 					node = node->next;
 
+                property_name = buffer_init();
 				/* property name to update */
 				if (strcmp((char *) node->name, "Name") == 0)
 				{
-					property_name = buffer_init();
 					content = xmlNodeGetContent(node);
 					buffer_add_str(property_name, (char *) content);
 					xmlFree(content);
@@ -746,7 +747,8 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 				}
 
 				buffer_add_str(sql, " = ");
-				node = node->next;
+     			node = node->next;
+
 				/* jump to the next element if there are spaces */
 				if (node != NULL)
 					if (node->type != XML_ELEMENT_NODE)
@@ -756,7 +758,43 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 				if (node == NULL)
 					buffer_add_str(sql, "NULL");
 				else if (strcmp((char *) node->name, "Value") == 0)
-					sql = wfs_retrieve_value(o, wr, sql, node);
+                {
+  				    if (ows_psql_is_geometry_column(o, typename, property_name))
+				    {
+					    elemt = node->children;
+					    /* jump to the next element if there are spaces */
+					    while (elemt->type != XML_ELEMENT_NODE)
+						    elemt = elemt->next;
+
+					    fe = filter_encoding_init();
+					    fe->sql = buffer_init();
+					    if (strcmp((char *) elemt->name, "Box") == 0
+					       || strcmp((char *) elemt->name, "Envelope") == 0)
+					    {
+						    fe->sql = fe_envelope(o, typename, fe, elemt);
+						    buffer_copy(values, fe->sql);
+					    }
+					    else if (strcmp((char *) elemt->name, "Null") == 0)
+					    {
+						    buffer_add_str(values, "''");
+					    }
+					    else
+					    {
+						   fe->sql =
+						      fe_transform_geometry_gml_to_psql(o,
+						      typename, fe, elemt);
+						      buffer_copy(values, fe->sql);
+					    }
+					    filter_encoding_free(fe);
+				    }
+                    else
+                    {
+  					    values = wfs_retrieve_value(o, wr, values, node);
+                    }
+
+                    buffer_copy(sql, values);
+                    buffer_free(values);
+                }
 			}
 			if (strcmp((char *) n->name, "Filter") == 0)
 			{
@@ -779,25 +817,25 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 				}
 				else
 				{
-					buffer_copy(sql, filter->sql);
+                    buffer_copy(sql, filter->sql);
 					buffer_free(xmlstring);
 					filter_encoding_free(filter);
 				}
 			}
-		}
+		} 
+ 
 		if (n->next != NULL)
 			if (strcmp((char *) n->next->name, "Property") == 0)
 				buffer_add_str(sql, ",");
 	}
 	buffer_add_str(sql, "; ");
-
-	/* run the request to update the specified features */
+    /* run the request to update the specified features */
 	result = wfs_execute_transaction_request(o, wr, sql);
 
 	buffer_free(typename);
 	buffer_free(sql);
 
-	return result;
+    return result;
 }
 
 

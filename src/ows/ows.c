@@ -246,22 +246,21 @@ int main(int argc, char *argv[])
     if (cgi_method_get()) o->request->method = OWS_METHOD_KVP;
     /* POST could handle KVP or XML encoding */
     else if (cgi_method_post()) {
+        /* WFS 1.1.0 mandatory */
         if (strcmp(getenv("CONTENT_TYPE"),
                     "application/x-www-form-urlencoded") == 0)
-		o->request->method = OWS_METHOD_KVP;
+		    o->request->method = OWS_METHOD_KVP;
         else if (strcmp(getenv("CONTENT_TYPE"), "text/xml") == 0)
-		o->request->method = OWS_METHOD_XML;
-#if OWS_BUGGY_CITE_TEST
-        /* TODO report this bug to OGC CITE */
-        else if (strcmp(getenv("CONTENT_TYPE"), 
-                    "application/xml; charset=UTF-8") == 0)
-		o->request->method = OWS_METHOD_XML;
-#endif
-    	/* Unit Test case with XML values (not HTTP) */
+		    o->request->method = OWS_METHOD_XML;
+        /* WFS 1.0.0 && CITE Test compliant */
+        else if (strcmp(getenv("CONTENT_TYPE"), "application/xml") == 0 ||
+                 strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") == 0)
+		    o->request->method = OWS_METHOD_XML;
+    	/* Command line Unit Test cases with XML values (not HTTP) */
     	} else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
-		o->request->method = OWS_METHOD_XML;
+		    o->request->method = OWS_METHOD_XML;
    else ows_error(o, OWS_ERROR_REQUEST_HTTP,
-   		"Wrong HTTP request Method", "http");
+   		        "Wrong HTTP request Method", "http");
 
 	switch(o->request->method) {
 		case OWS_METHOD_KVP:
@@ -270,7 +269,9 @@ int main(int argc, char *argv[])
 		case OWS_METHOD_XML:
             		o->cgi = cgi_parse_xml(o, query);
 			break;
-		default: assert(false); /* should never happen */
+
+        default: ows_error(o, OWS_ERROR_REQUEST_HTTP,
+                         "Wrong HTTP request Method", "http");
 	}
 
 	o->psql_requests = list_init();

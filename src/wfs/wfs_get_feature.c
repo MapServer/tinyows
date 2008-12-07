@@ -91,7 +91,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
    buffer * layer_name, buffer * prefix, buffer * prop_name,
    buffer * prop_type, buffer * value)
 {
-	buffer *datetime, *srid, *box;
+	buffer *time, *srid, *box;
 	list *coord;
 	float xmin, ymin, xmax, ymax;
 
@@ -139,17 +139,16 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 	else if (!buffer_cmp(value, "")
 		/* OGC Cite Tests 1.1.0 exception :
 	  	   column id must not figure in the results */
-	   && !((buffer_cmp(prop_name, "id")) && (buffer_cmp(prefix, "sf"))))
+	   && !((buffer_cmp(prop_name, "id")) && (buffer_cmp(prefix, "sf")))) /* FIXME check this !!! */
 	{
 		fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
 		if (buffer_cmp(prop_type, "timestamptz")
-		   || buffer_cmp(prop_type, "datetime")
-		   || buffer_cmp(prop_type, "date") || buffer_cmp(prop_type, "timestamp"))
+		   || buffer_cmp(prop_type, "timestamp"))
 		{
 			/* PSQL date must be transformed into GML format */
-			datetime = ows_psql_timestamp_to_xml_datetime(value->buf);
-			fprintf(o->output, "%s", datetime->buf);
-			buffer_free(datetime);
+			time = ows_psql_timestamp_to_xml_time(value->buf);
+			fprintf(o->output, "%s", time->buf);
+			buffer_free(time);
 		}
 		else if (buffer_cmp(prop_type, "bool"))
 		{
@@ -336,7 +335,7 @@ static void wfs_gml_display_hits(ows * o, wfs_request * wr, mlist * request_list
 
 	/* render GML hits output */
 	res = PQexec(o->pg, "select localtimestamp");
-	date = ows_psql_timestamp_to_xml_datetime(PQgetvalue(res, 0, 0));
+	date = ows_psql_timestamp_to_xml_time(PQgetvalue(res, 0, 0));
 	fprintf(o->output, " timeStamp='%s' numberOfFeatures='%d' />\n", 
 		date->buf, hits);
 	buffer_free(date);

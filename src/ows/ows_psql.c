@@ -517,23 +517,23 @@ char *ows_psql_to_xsd(buffer * type)
 /*
  * Convert a date from PostgreSQL to XML
  */
-buffer *ows_psql_timestamp_to_xml_datetime(char *date)
+buffer *ows_psql_timestamp_to_xml_time(char *timestamp)
 {
-	buffer *datetime;
+	buffer *time;
 
-	assert(date != NULL);
+	assert(timestamp != NULL);
 
-	datetime = buffer_init();
-	buffer_add_str(datetime, date);
+	time = buffer_init();
+	buffer_add_str(time, timestamp);
 
-	buffer_replace(datetime, " ", "T");
+	buffer_replace(time, " ", "T");
 
-	if (check_regexp(datetime->buf, "\\+"))
-		buffer_add_str(datetime, ":00");
+	if (check_regexp(time->buf, "\\+"))
+		buffer_add_str(time, ":00");
 	else
-		buffer_add_str(datetime, "Z");
+		buffer_add_str(time, "Z");
 
-	return datetime;
+	return time;
 }
 
 

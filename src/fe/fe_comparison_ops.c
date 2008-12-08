@@ -173,10 +173,11 @@ static buffer *fe_property_is_like(ows * o, buffer * typename,
 	while (n->type != XML_ELEMENT_NODE)
 		n = n->next;
 
+	/* We need to cast as varchar at least for timestamp 
+           PostgreSQL data type - cf (Ticket #10) */
+	buffer_add_str(fe->sql, " CAST(");
 	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false);
-
-
-	buffer_add_str(fe->sql, " Like E");
+	buffer_add_str(fe->sql, " AS varchar) LIKE E");
 
 	n = n->next;
 

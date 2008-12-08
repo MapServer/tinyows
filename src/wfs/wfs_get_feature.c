@@ -31,8 +31,6 @@
 #include "../ows/ows.h"
 
 
-char EPSG_version[8] = "6.11.2";
-
 
 /*
  * Return the boundaries of the features returned by the request
@@ -67,9 +65,7 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
 		}
 		else
 		{
-			fprintf(o->output,
-			   "<gml:Envelope srsName=\"urn:x-ogc:def:crs:EPSG:%s:%d\">",
-			   EPSG_version, srid);
+			fprintf(o->output, "<gml:Envelope srsName=\"urn:x-ogc:def:crs:EPSG:%d\">", srid);
 			fprintf(o->output, "<gml:lowerCorner>");
 			fprintf(o->output, "%f ", xmin);
 			fprintf(o->output, "%f", ymin);

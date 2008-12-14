@@ -139,7 +139,9 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 	{
 		fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
 		if (buffer_cmp(prop_type, "timestamptz")
-		   || buffer_cmp(prop_type, "timestamp"))
+		   || buffer_cmp(prop_type, "timestamp")
+		   || buffer_cmp(prop_type, "datetime")
+		   || buffer_cmp(prop_type, "date"))
 		{
 			/* PSQL date must be transformed into GML format */
 			time = ows_psql_timestamp_to_xml_time(value->buf);

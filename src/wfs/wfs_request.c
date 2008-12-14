@@ -583,7 +583,7 @@ static void wfs_request_check_sortby(ows * o, wfs_request * wr)
 		/* put the order into postgresql syntax */
 		if (fe->last->value != NULL && fe->last != fe->first)
 		{
-			if (buffer_cmp(fe->last->value, "D")) {
+			if (buffer_cmp(fe->last->value, "D") || buffer_cmp(fe->last->value, "DESC")) {
 				buffer_empty(fe->last->value);
 				buffer_add_str(fe->last->value, "DESC");
 			} else {

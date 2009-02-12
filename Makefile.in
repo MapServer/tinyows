@@ -1,9 +1,15 @@
 # compiler flags 
 CC=@CC@
 CFLAGS=@CFLAGS@ -ansi -pedantic -Wall
-PGFLAGS=-lpq -I`pg_config --includedir` -L`pg_config --libdir`
-XMLFLAGS=-lxml2 `xml2-config --cflags` 
 
+# postgresql ... required
+POSTGIS_INC=@POSTGIS_INC@
+POSTGIS_LIB=@POSTGIS_LIB@
+PGFLAGS=$(POSTGIS_INC) $(POSTGIS_LIB)
+# libxml2 ... required
+XML2_INC=@XML2_INC@
+XML2_LIB=@XML2_LIB@
+XMLFLAGS=$(XML2_INC) $(XML2_LIB)
 # install path
 PREFIX=@prefix@
 

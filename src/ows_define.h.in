@@ -32,10 +32,14 @@
 
 #define OWS_CONFIG_FILE_PATH        "@prefix@/tinyows/config.xml"
 
-#define WFS_SCHEMA_100_BASIC_PATH   "@prefix@/tinyows/schema/wfs/1.0.0/WFS-basic.xsd"
-#define WFS_SCHEMA_100_TRANS_PATH   "@prefix@/tinyows/schema/wfs/1.0.0/WFS-transaction.xsd"
-#define WFS_SCHEMA_110_PATH         "@prefix@/tinyows/schema/wfs/1.1.0/wfs.xsd"
-
+#define WFS_SCHEMA_100_BASIC        "wfs/1.0.0/WFS-basic.xsd"
+#define WFS_SCHEMA_100_BASIC_PATH   "@prefix@/tinyows/schema/" WFS_SCHEMA_100_BA
+SIC
+#define WFS_SCHEMA_100_TRANS        "wfs/1.0.0/WFS-transaction.xsd"
+#define WFS_SCHEMA_100_TRANS_PATH   "@prefix@/tinyows/schema/" WFS_SCHEMA_100_TR
+ANS
+#define WFS_SCHEMA_110              "wfs/1.1.0/wfs.xsd"
+#define WFS_SCHEMA_110_PATH         "@prefix@/tinyows/schema/" WFS_SCHEMA_110
 #endif /* OWS_DEFINE_H */
 
 

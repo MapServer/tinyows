@@ -29,6 +29,78 @@
 #include "ows.h"
 #include "../ows_define.h"
 
+char *ows_strdup(char *s)
+{
+    char *s1;
+
+    if(!s)
+        return(NULL);
+
+    s1 = (char *)malloc(strlen(s) + 1);
+    if(!s1)
+        return(NULL);
+
+    strcpy(s1,s);
+    return(s1);
+}
+/*
+ * Return config file path
+ */
+char *ows_get_config_path()
+{
+    const char *config_path = OWS_CONFIG_FILE_PATH;
+    const char *config_env_var = getenv("TINYOWS_CONFIG_FILE");
+
+    if(config_env_var != NULL)
+    {
+        return ows_strdup((char*) config_env_var);
+    }
+    else
+    {
+        return ows_strdup((char*) config_path);
+    }
+}
+
+/*
+ * Return schema dir
+ */
+char *ows_get_schema_path(char *schema_type)
+{
+    
+    char *schema_dir = NULL;
+    const char *schema_env_var = getenv("TINYOWS_SCHEMA_DIR");
+
+    if(schema_env_var != NULL)
+    {
+        schema_dir = (char *) malloc(sizeof(char *) * (strlen(schema_env_var) + 
+                                                     strlen(schema_type) + 2 ));
+        sprintf(schema_dir, "%s/%s", schema_env_var, schema_type); 
+    }
+    else
+    {
+        if( !strcmp(schema_type, WFS_SCHEMA_100_BASIC))
+        {
+            schema_dir = (char *) malloc( sizeof(char *) * 
+                                          (strlen(WFS_SCHEMA_100_BASIC_PATH) ));
+            sprintf(schema_dir, "%s", WFS_SCHEMA_100_BASIC_PATH); 
+        }
+        else if(!strcmp(schema_type, WFS_SCHEMA_100_TRANS))
+        {
+            schema_dir = (char *) malloc( sizeof(char *) * 
+                                          (strlen(WFS_SCHEMA_100_TRANS_PATH) ));
+            sprintf(schema_dir, "%s", WFS_SCHEMA_100_TRANS_PATH); 
+        }
+        else if(!strcmp(schema_type, WFS_SCHEMA_110))
+        {
+            schema_dir = (char *) malloc( sizeof(char *) * 
+                                          (strlen(WFS_SCHEMA_110_PATH) ));
+            sprintf(schema_dir, "%s", WFS_SCHEMA_110_PATH); 
+        }
+    }
+    return ows_strdup(schema_dir);
+}
+
+
 
 /* 
  * Connect the ows to the database specified in configuration file
@@ -201,117 +273,133 @@ void ows_free(ows * o)
 }
 
 
-void ows_usage(ows * o) {
+void ows_usage(ows * o) 
+{
+    char *config_path;
+    char *schema_path;
+
     printf("TinyOWS should be called by CGI throw a Web Server !\n\n");
     printf("___________\n");
-    printf("Config File Path: %s\n", OWS_CONFIG_FILE_PATH);
+    config_path = ows_get_config_path();
+    printf("Config File Path: %s\n", config_path);
     printf("PostGIS dsn: '%s'\n", o->pg_dsn->buf);
     printf("___________\n");
-    printf("WFS 1.0.0 Basic Schema Path: %s\n", WFS_SCHEMA_100_BASIC_PATH);
-    printf("WFS 1.0.0 Transactional Schema Path: %s\n", 
-        WFS_SCHEMA_100_TRANS_PATH);
-    printf("WFS 1.1.0 Schema Path: %s\n", WFS_SCHEMA_110_PATH);
+    schema_path = ows_get_schema_path(WFS_SCHEMA_100_BASIC);
+    printf("WFS 1.0.0 Basic Schema Path: %s\n", schema_path);
+    schema_path = ows_get_schema_path(WFS_SCHEMA_100_TRANS);
+    printf("WFS 1.0.0 Transactional Schema Path: %s\n", schema_path);
+    schema_path = ows_get_schema_path(WFS_SCHEMA_110);
+    printf("WFS 1.1.0 Schema Path: %s\n", schema_path);
     printf("___________\n");
+
+    free(config_path);
+    free(schema_path);
+   
 }
 
 
 int main(int argc, char *argv[])
 {
-	char *query;
-	ows *o;
+    char *query, *config_path;
+    ows *o;
 
-	o = ows_init();
+    o = ows_init();
 
-	/* TODO add an alternative cache system */
-	o->output = stdout;
+    /* TODO add an alternative cache system */
+    o->output = stdout;
 
-	/* retrieve the query in HTTP request */
-	query = cgi_getback_query(o);
+    /* retrieve the query in HTTP request */
+    query = cgi_getback_query(o);
+
+    config_path = ows_get_config_path();
 
     if (query == NULL || strlen(query) == 0) {
-	    if (argc > 1 && (strncmp(argv[1], "--help", 6) == 0
-                     || strncmp(argv[1], "-h", 2) == 0)) {
-		    ows_parse_config(o, OWS_CONFIG_FILE_PATH);
+        if (argc > 1 && (strncmp(argv[1], "--help", 6) == 0
+                         || strncmp(argv[1], "-h", 2) == 0)) {
+            ows_parse_config(o, config_path);
             ows_usage(o);
         } else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-			   "Service Unknown", "service");
+                         "Service Unknown", "service");
+
+        return EXIT_SUCCESS;
     }
 
     /* 
      * Request encoding and HTTP method WFS 1.1.0 -> 6.5
      */
 
-	o->request = ows_request_init();
+    o->request = ows_request_init();
     /* GET could only handle KVP */
     if (cgi_method_get()) o->request->method = OWS_METHOD_KVP;
     /* POST could handle KVP or XML encoding */
     else if (cgi_method_post()) {
         /* WFS 1.1.0 mandatory */
         if (strcmp(getenv("CONTENT_TYPE"),
-                    "application/x-www-form-urlencoded") == 0)
-		    o->request->method = OWS_METHOD_KVP;
+                   "application/x-www-form-urlencoded") == 0)
+            o->request->method = OWS_METHOD_KVP;
         else if (strcmp(getenv("CONTENT_TYPE"), "text/xml") == 0)
-		    o->request->method = OWS_METHOD_XML;
+            o->request->method = OWS_METHOD_XML;
         /* WFS 1.0.0 && CITE Test compliant */
         else if (strcmp(getenv("CONTENT_TYPE"), "application/xml") == 0 ||
                  strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") == 0)
-		    o->request->method = OWS_METHOD_XML;
+            o->request->method = OWS_METHOD_XML;
     	/* Command line Unit Test cases with XML values (not HTTP) */
-    	} else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
-		    o->request->method = OWS_METHOD_XML;
-   else ows_error(o, OWS_ERROR_REQUEST_HTTP,
-   		        "Wrong HTTP request Method", "http");
+    } else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
+        o->request->method = OWS_METHOD_XML;
+    else ows_error(o, OWS_ERROR_REQUEST_HTTP,
+                   "Wrong HTTP request Method", "http");
 
-	switch(o->request->method) {
-		case OWS_METHOD_KVP:
-            		o->cgi = cgi_parse_kvp(o, query);
-			break;
-		case OWS_METHOD_XML:
-            		o->cgi = cgi_parse_xml(o, query);
-			break;
+    switch(o->request->method) 
+    {
+        case OWS_METHOD_KVP:
+            o->cgi = cgi_parse_kvp(o, query);
+            break;
+        case OWS_METHOD_XML:
+            o->cgi = cgi_parse_xml(o, query);
+            break;
 
         default: ows_error(o, OWS_ERROR_REQUEST_HTTP,
                          "Wrong HTTP request Method", "http");
-	}
+    }
 
-	o->psql_requests = list_init();
+    o->psql_requests = list_init();
 
-	/* Parse the configuration file and initialize ows struct */
-	ows_parse_config(o, OWS_CONFIG_FILE_PATH);
+    /* Parse the configuration file and initialize ows struct */
+    ows_parse_config(o, config_path);
 
-        /* Connect the ows to the database */
-        ows_pg(o, o->pg_dsn->buf);
+    /* Connect the ows to the database */
+    ows_pg(o, o->pg_dsn->buf);
 
-	/* Fill service's metadata */
-	ows_metadata_fill(o, o->cgi);
+    /* Fill service's metadata */
+    ows_metadata_fill(o, o->cgi);
 
-	/* Process service request */
-	ows_request_check(o, o->request, o->cgi, query);
+    /* Process service request */
+    ows_request_check(o, o->request, o->cgi, query);
 
-	/* Run the right OWS service */
-	switch (o->request->service)
-	{
-	case WMS:
-		o->request->request.wms = wms_request_init();
-		wms_request_check(o, o->request->request.wms, o->cgi);
-		wms(o, o->request->request.wms);
-		break;
-	case WFS:
-		o->request->request.wfs = wfs_request_init();
-		wfs_request_check(o, o->request->request.wfs, o->cgi);
-		wfs(o, o->request->request.wfs);
-		break;
-	default:
-		ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-		   "Service Unknown", "service");
-	}
+    /* Run the right OWS service */
+    switch (o->request->service)
+    {
+        case WMS:
+            o->request->request.wms = wms_request_init();
+            wms_request_check(o, o->request->request.wms, o->cgi);
+            wms(o, o->request->request.wms);
+            break;
+        case WFS:
+            o->request->request.wfs = wfs_request_init();
+            wfs_request_check(o, o->request->request.wfs, o->cgi);
+            wfs(o, o->request->request.wfs);
+            break;
+        default:
+            ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+                  "Service Unknown", "service");
+    }
   
-	ows_free(o);
+    ows_free(o);
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
-
+    
 /*
  * vim: expandtab sw=4 ts=4 
  */

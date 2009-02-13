@@ -743,7 +743,9 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 					buffer_add_str(property_name, (char *) content);
 					xmlFree(content);
 					wfs_request_remove_namespaces(o, property_name);
+                    buffer_add_str(sql, "\"");
 					buffer_copy(sql, property_name);
+                    buffer_add_str(sql, "\"");
 				}
 
 				buffer_add_str(sql, " = ");

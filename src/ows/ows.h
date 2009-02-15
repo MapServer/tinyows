@@ -368,6 +368,8 @@ typedef struct Ows_request {
 
 typedef struct Ows {
     PGconn * pg;
+    buffer * config_file;
+    buffer * schema_dir;
     buffer * pg_dsn;
     FILE* output;
 

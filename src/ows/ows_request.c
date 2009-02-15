@@ -240,7 +240,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
     list_node *srid;
     bool srsname;
     int valid;
-    char *schema_path;
+    buffer *schema_path;
 
     assert(o != NULL);
     assert(or != NULL);
@@ -390,25 +390,27 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
         buffer_add_str(xmlstring, query);
         if (or->service == WFS)
         {
+            schema_path = buffer_init();
+            buffer_copy(schema_path, o->schema_dir);
             if (ows_version_get(or->version) == 100)
             {
                 if (buffer_cmp(b, "Transaction"))
                 {
-                    schema_path = ows_get_schema_path(WFS_SCHEMA_100_TRANS);
-                    valid = ows_schema_validation(schema_path, xmlstring);
+                    buffer_add_str(schema_path, WFS_SCHEMA_100_TRANS);
+                    valid = ows_schema_validation(schema_path->buf, xmlstring);
                 }
                 else
                 {
-                    schema_path = ows_get_schema_path(WFS_SCHEMA_100_BASIC);
-                    valid = ows_schema_validation(schema_path, xmlstring);
+                    buffer_add_str(schema_path, WFS_SCHEMA_100_BASIC);
+                    valid = ows_schema_validation(schema_path->buf, xmlstring);
                 }
             }
             else
             {
-                schema_path = ows_get_schema_path(WFS_SCHEMA_110);
-                valid = ows_schema_validation(schema_path, xmlstring);
+                buffer_add_str(schema_path, WFS_SCHEMA_110);
+                valid = ows_schema_validation(schema_path->buf, xmlstring);
             }
-            free(schema_path);
+            buffer_free(schema_path);
         }
         buffer_free(xmlstring);
         if (valid != 0)

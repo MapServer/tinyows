@@ -29,78 +29,6 @@
 #include "ows.h"
 #include "../ows_define.h"
 
-char *ows_strdup(char *s)
-{
-    char *s1;
-
-    if(!s)
-        return(NULL);
-
-    s1 = (char *)malloc(strlen(s) + 1);
-    if(!s1)
-        return(NULL);
-
-    strcpy(s1,s);
-    return(s1);
-}
-/*
- * Return config file path
- */
-char *ows_get_config_path()
-{
-    const char *config_path = OWS_CONFIG_FILE_PATH;
-    const char *config_env_var = getenv("TINYOWS_CONFIG_FILE");
-
-    if(config_env_var != NULL)
-    {
-        return ows_strdup((char*) config_env_var);
-    }
-    else
-    {
-        return ows_strdup((char*) config_path);
-    }
-}
-
-/*
- * Return schema dir
- */
-char *ows_get_schema_path(char *schema_type)
-{
-    
-    char *schema_dir = NULL;
-    const char *schema_env_var = getenv("TINYOWS_SCHEMA_DIR");
-
-    if(schema_env_var != NULL)
-    {
-        schema_dir = (char *) malloc(sizeof(char *) * (strlen(schema_env_var) + 
-                                                     strlen(schema_type) + 2 ));
-        sprintf(schema_dir, "%s/%s", schema_env_var, schema_type); 
-    }
-    else
-    {
-        if( !strcmp(schema_type, WFS_SCHEMA_100_BASIC))
-        {
-            schema_dir = (char *) malloc( sizeof(char *) * 
-                                          (strlen(WFS_SCHEMA_100_BASIC_PATH) ));
-            sprintf(schema_dir, "%s", WFS_SCHEMA_100_BASIC_PATH); 
-        }
-        else if(!strcmp(schema_type, WFS_SCHEMA_100_TRANS))
-        {
-            schema_dir = (char *) malloc( sizeof(char *) * 
-                                          (strlen(WFS_SCHEMA_100_TRANS_PATH) ));
-            sprintf(schema_dir, "%s", WFS_SCHEMA_100_TRANS_PATH); 
-        }
-        else if(!strcmp(schema_type, WFS_SCHEMA_110))
-        {
-            schema_dir = (char *) malloc( sizeof(char *) * 
-                                          (strlen(WFS_SCHEMA_110_PATH) ));
-            sprintf(schema_dir, "%s", WFS_SCHEMA_110_PATH); 
-        }
-    }
-    return ows_strdup(schema_dir);
-}
-
-
 
 /* 
  * Connect the ows to the database specified in configuration file
@@ -134,6 +62,8 @@ static ows *ows_init()
 	o->pg = NULL;
 	o->pg_dsn = NULL;
 	o->output = NULL;
+	o->config_file = NULL;
+	o->schema_dir = NULL;
 
 	o->layers = NULL;
 
@@ -149,6 +79,9 @@ static ows *ows_init()
 	o->sld_path = NULL;
 	o->sld_writable = 0;
 
+    o->config_file = buffer_init();
+    o->schema_dir = buffer_init();
+
 	return o;
 }
 
@@ -163,6 +96,18 @@ void ows_flush(ows * o, FILE * output)
 	assert(o != NULL);
 	assert(output != NULL);
 
+	if (o->config_file != NULL)
+	{
+		fprintf(output, "config_file: ");
+		buffer_flush(o->config_file, output);
+		fprintf(output, "\n");
+    }
+	if (o->schema_dir != NULL)
+	{
+		fprintf(output, "schema_dir: ");
+		buffer_flush(o->schema_dir, output);
+		fprintf(output, "\n");
+    }
 	if (o->pg_dsn != NULL)
 	{
 		fprintf(output, "pg: ");
@@ -238,6 +183,12 @@ void ows_free(ows * o)
 {
 	assert(o != NULL);
 
+	if (o->config_file != NULL)
+		buffer_free(o->config_file);
+
+	if (o->schema_dir != NULL)
+		buffer_free(o->schema_dir);
+
 	if (o->pg != NULL)
 		PQfinish(o->pg);
 
@@ -275,35 +226,35 @@ void ows_free(ows * o)
 
 void ows_usage(ows * o) 
 {
-    char *config_path;
-    char *schema_path;
-
     printf("TinyOWS should be called by CGI throw a Web Server !\n\n");
     printf("___________\n");
-    config_path = ows_get_config_path();
-    printf("Config File Path: %s\n", config_path);
+    printf("Config File Path: %s\n", o->config_file->buf);
+    printf("___________\n");
     printf("PostGIS dsn: '%s'\n", o->pg_dsn->buf);
     printf("___________\n");
-    schema_path = ows_get_schema_path(WFS_SCHEMA_100_BASIC);
-    printf("WFS 1.0.0 Basic Schema Path: %s\n", schema_path);
-    schema_path = ows_get_schema_path(WFS_SCHEMA_100_TRANS);
-    printf("WFS 1.0.0 Transactional Schema Path: %s\n", schema_path);
-    schema_path = ows_get_schema_path(WFS_SCHEMA_110);
-    printf("WFS 1.1.0 Schema Path: %s\n", schema_path);
+    printf("Schema dir: %s\n", o->schema_dir->buf);
     printf("___________\n");
-
-    free(config_path);
-    free(schema_path);
-   
 }
 
 
 int main(int argc, char *argv[])
 {
-    char *query, *config_path;
+    char *query;
     ows *o;
 
     o = ows_init();
+
+    /* Config Files */
+    if(getenv("TINYOWS_CONFIG_FILE") != NULL)
+        buffer_add_str(o->config_file, getenv("TINYOWS_CONFIG_FILE"));
+    else
+        buffer_add_str(o->config_file, OWS_CONFIG_FILE_PATH);
+
+    if (getenv("TINYOWS_SCHEMA_DIR") != NULL)
+        buffer_add_str(o->schema_dir, getenv("TINYOWS_SCHEMA_DIR"));
+    else
+        buffer_add_str(o->schema_dir, OWS_SCHEMA_DIR);
+
 
     /* TODO add an alternative cache system */
     o->output = stdout;
@@ -311,12 +262,10 @@ int main(int argc, char *argv[])
     /* retrieve the query in HTTP request */
     query = cgi_getback_query(o);
 
-    config_path = ows_get_config_path();
-
     if (query == NULL || strlen(query) == 0) {
         if (argc > 1 && (strncmp(argv[1], "--help", 6) == 0
                          || strncmp(argv[1], "-h", 2) == 0)) {
-            ows_parse_config(o, config_path);
+            ows_parse_config(o, o->config_file->buf);
             ows_usage(o);
         } else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                          "Service Unknown", "service");
@@ -365,7 +314,7 @@ int main(int argc, char *argv[])
     o->psql_requests = list_init();
 
     /* Parse the configuration file and initialize ows struct */
-    ows_parse_config(o, config_path);
+    ows_parse_config(o, o->config_file->buf);
 
     /* Connect the ows to the database */
     ows_pg(o, o->pg_dsn->buf);

@@ -190,5 +190,3 @@ void wms_request_check (ows * o, wms_request * wr, const array * cgi);
 void wms_request_flush (wms_request * wr, FILE * output);
 void wms_request_free (wms_request * wr);
 wms_request *wms_request_init ();
-char *ows_get_config_path ();
-char *ows_get_schema_path (char *schema_type);

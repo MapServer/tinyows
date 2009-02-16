@@ -689,10 +689,8 @@ void ows_parse_config(ows * o, const char *filename)
 	if (o->layers == NULL)
 		o->layers = ows_layer_list_init();
 
-	ret = xmlTextReaderRead(r);
-	while (ret == 1)
+	while ((ret = xmlTextReaderRead(r)) == 1)
 	{
-		ret = xmlTextReaderRead(r);
 		if (xmlTextReaderNodeType(r) == XML_READER_TYPE_ELEMENT)
 		{
 			name = xmlTextReaderConstLocalName(r);

@@ -120,7 +120,7 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
 			fprintf(o->output, "<xs:import namespace='%s' ",
 			   namespace->buf);
 			fprintf(o->output, "schemaLocation='%s?service=WFS&amp;",
-			   o->metadata->online_resource->buf);
+			   o->online_resource->buf);
 			if (wfs_version == 100)
 				fprintf(o->output,
 				   "version=1.0.0&amp;request=DescribeFeatureType&amp;typeName=");

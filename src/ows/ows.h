@@ -177,7 +177,6 @@ typedef struct Ows_meta {
     buffer * title;
     buffer * abstract;
     list * keywords;
-    buffer * online_resource;
     buffer * fees;
     buffer * access_constraints;
 } ows_meta;
@@ -370,6 +369,7 @@ typedef struct Ows {
     PGconn * pg;
     buffer * config_file;
     buffer * schema_dir;
+    buffer * online_resource;
     buffer * pg_dsn;
     FILE* output;
 

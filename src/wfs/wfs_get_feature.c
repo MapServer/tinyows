@@ -280,11 +280,11 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
 		if (ows_version_get(o->request->version) == 100)
 			fprintf(o->output,
 				" %s %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType \n",
-				an->value->buf, o->metadata->online_resource->buf);
+				an->value->buf, o->online_resource->buf);
 		else
 			fprintf(o->output,
 				" %s %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType \n",
-				an->value->buf, o->metadata->online_resource->buf);
+				an->value->buf, o->online_resource->buf);
 	}
 	if (ows_version_get(o->request->version) == 100) {
 		fprintf(o->output, " http://www.opengis.net/wfs");

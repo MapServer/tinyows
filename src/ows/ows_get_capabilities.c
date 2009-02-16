@@ -37,19 +37,19 @@
 void ows_get_capabilities_dcpt(const ows * o)
 {
 	assert(o != NULL);
-	assert(o->metadata->online_resource != NULL);
+	assert(o->online_resource != NULL);
 
 	fprintf(o->output, "    <ows:DCP>\n");
 	fprintf(o->output, "     <ows:HTTP>\n");
 	fprintf(o->output, "      <ows:Get xlink:href=\"");
-	fprintf(o->output, "%s", o->metadata->online_resource->buf);
+	fprintf(o->output, "%s", o->online_resource->buf);
 	fprintf(o->output, "?\"/>\n");
 	fprintf(o->output, "     </ows:HTTP>\n");
 	fprintf(o->output, "    </ows:DCP>\n");
 	fprintf(o->output, "    <ows:DCP>\n");
 	fprintf(o->output, "     <ows:HTTP>\n");
 	fprintf(o->output, "      <ows:Post xlink:href=\"");
-	fprintf(o->output, "%s", o->metadata->online_resource->buf);
+	fprintf(o->output, "%s", o->online_resource->buf);
 	fprintf(o->output, "\"/>\n");
 	fprintf(o->output, "     </ows:HTTP>\n");
 	fprintf(o->output, "    </ows:DCP>\n");
@@ -66,7 +66,7 @@ void ows_service_metadata(const ows * o)
 	list_node *ln;
 
 	assert(o != NULL);
-	assert(o->metadata->online_resource != NULL);
+	assert(o->online_resource != NULL);
 	assert(o->metadata->name != NULL);
 	assert(o->metadata->title != NULL);
 
@@ -90,7 +90,7 @@ void ows_service_metadata(const ows * o)
 	}
 
 	fprintf(o->output, "  <OnlineResource>%s</OnlineResource>\n",
-	   o->metadata->online_resource->buf);
+	   o->online_resource->buf);
 
 	if (o->metadata->fees != NULL)
 		fprintf(o->output, "  <Fees>%s</Fees>\n", o->metadata->fees->buf);

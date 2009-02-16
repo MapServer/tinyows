@@ -33,25 +33,25 @@
 /*
  * Display what distributed computing platform is supported
  * And what entry point is for all operations
- * Assume that online_ressource figure in the metadata
+ * Assume that online_resource figure in the tinyows struct
  * Used for version 1.0.0
  */
 static void wfs_get_capabilities_dcpt_100(const ows * o)
 {
 	assert(o != NULL);
-	assert(o->metadata->online_resource != NULL);
+	assert(o->online_resource != NULL);
 
 	fprintf(o->output, "    <DCPType>\n");
 	fprintf(o->output, "     <HTTP>\n");
 	fprintf(o->output, "      <Get onlineResource=\"");
-	fprintf(o->output, "%s", o->metadata->online_resource->buf);
+	fprintf(o->output, "%s", o->online_resource->buf);
 	fprintf(o->output, "?\"/>\n");
 	fprintf(o->output, "     </HTTP>\n");
 	fprintf(o->output, "    </DCPType>\n");
 	fprintf(o->output, "    <DCPType>\n");
 	fprintf(o->output, "     <HTTP>\n");
 	fprintf(o->output, "      <Post onlineResource=\"");
-	fprintf(o->output, "%s", o->metadata->online_resource->buf);
+	fprintf(o->output, "%s", o->online_resource->buf);
 	fprintf(o->output, "\"/>\n");
 	fprintf(o->output, "     </HTTP>\n");
 	fprintf(o->output, "    </DCPType>\n");
@@ -482,11 +482,13 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
 	assert(o != NULL);
 	assert(wr != NULL);
 
+#if 0
 	/* check if metadata are given */
 	if (o->metadata->type == NULL || o->metadata->versions == NULL)
 		ows_error(o, OWS_ERROR_MISSING_METADATA,
 		   "missing versions or type metadata in fileconf",
 		   "GetCapabilities");
+#endif
 
 	if (wr->format == WFS_TEXT_XML)
 		fprintf(o->output, "Content-Type: text/xml\n\n");
@@ -495,10 +497,8 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
 	fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
 	fprintf(o->output, "<WFS_Capabilities");
 	fprintf(o->output, " version='1.1.0' updateSequence='0'\n");
-
 	fprintf(o->output, "  xmlns='http://www.opengis.net/wfs'\n");
-	fprintf(o->output,
-	   "  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
+	fprintf(o->output, "  xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
 	fprintf(o->output, "  xmlns:ogc='http://www.opengis.net/ogc'\n");
 	fprintf(o->output, "  xmlns:gml='http://www.opengis.net/gml'\n");
 	fprintf(o->output, "  xmlns:ows='http://www.opengis.net/ows'\n");
@@ -597,25 +597,25 @@ static void wfs_get_capabilities_100(ows * o, wfs_request * wr)
 	assert(o != NULL);
 	assert(wr != NULL);
 
+#if 0
 	/* check if metadata are given */
 	if (o->metadata->name == NULL
 	   || o->metadata->title == NULL
-	   || o->metadata->online_resource == NULL)
+	   || o->online_resource == NULL)
 		ows_error(o, OWS_ERROR_MISSING_METADATA,
 		   "missing name or title or online_resource metadata in config file",
 		   "GetCapabilities");
+#endif
 
 	fprintf(o->output, "Content-Type: application/xml\n\n");
 	fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
 	fprintf(o->output, "<WFS_Capabilities\n");
 	fprintf(o->output, "version='1.0.0' updateSequence='0'\n");
 	fprintf(o->output, " xmlns='http://www.opengis.net/wfs'\n");
-	fprintf(o->output,
-	   " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
+	fprintf(o->output, " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
 	fprintf(o->output, "xmlns:ogc='http://www.opengis.net/ogc'");
 	fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/wfs");
-	fprintf(o->output, 
-        " http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd' >\n");
+	fprintf(o->output, " http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd' >\n");
 
 	/* Service Section : provides information about the service iself */
 	ows_service_metadata(o);

@@ -8,6 +8,7 @@
 
 void sld_parse_file(ows * o, const char *filename)
 {
+#if 0
 	xmlTextReaderPtr r;
 	const xmlChar *name;
 	int ret;
@@ -58,6 +59,7 @@ void sld_parse_file(ows * o, const char *filename)
 
 	xmlFreeTextReader(r);
 	xmlCleanupParser();
+#endif
 }
 
 

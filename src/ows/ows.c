@@ -63,6 +63,7 @@ static ows *ows_init()
 	o->pg_dsn = NULL;
 	o->output = NULL;
 	o->config_file = NULL;
+    o->online_resource = NULL;
 	o->schema_dir = NULL;
 
 	o->layers = NULL;
@@ -78,9 +79,6 @@ static ows *ows_init()
 
 	o->sld_path = NULL;
 	o->sld_writable = 0;
-
-    o->config_file = buffer_init();
-    o->schema_dir = buffer_init();
 
 	return o;
 }
@@ -106,6 +104,12 @@ void ows_flush(ows * o, FILE * output)
 	{
 		fprintf(output, "schema_dir: ");
 		buffer_flush(o->schema_dir, output);
+		fprintf(output, "\n");
+    }
+	if (o->online_resource != NULL)
+	{
+		fprintf(output, "online_resource: ");
+		buffer_flush(o->online_resource, output);
 		fprintf(output, "\n");
     }
 	if (o->pg_dsn != NULL)
@@ -189,6 +193,9 @@ void ows_free(ows * o)
 	if (o->schema_dir != NULL)
 		buffer_free(o->schema_dir);
 
+	if (o->online_resource != NULL)
+		buffer_free(o->online_resource);
+
 	if (o->pg != NULL)
 		PQfinish(o->pg);
 
@@ -243,18 +250,13 @@ int main(int argc, char *argv[])
     ows *o;
 
     o = ows_init();
+    o->config_file = buffer_init();
 
     /* Config Files */
     if(getenv("TINYOWS_CONFIG_FILE") != NULL)
         buffer_add_str(o->config_file, getenv("TINYOWS_CONFIG_FILE"));
     else
         buffer_add_str(o->config_file, OWS_CONFIG_FILE_PATH);
-
-    if (getenv("TINYOWS_SCHEMA_DIR") != NULL)
-        buffer_add_str(o->schema_dir, getenv("TINYOWS_SCHEMA_DIR"));
-    else
-        buffer_add_str(o->schema_dir, OWS_SCHEMA_DIR);
-
 
     /* TODO add an alternative cache system */
     o->output = stdout;

@@ -131,7 +131,6 @@ ows_meta *ows_metadata_init()
 	metadata->title = NULL;
 	metadata->abstract = NULL;
 	metadata->keywords = NULL;
-	metadata->online_resource = NULL;
 	metadata->fees = NULL;
 	metadata->access_constraints = NULL;
 
@@ -162,9 +161,6 @@ void ows_metadata_free(ows_meta * metadata)
 
 	if (metadata->keywords != NULL)
 		list_free(metadata->keywords);
-
-	if (metadata->online_resource != NULL)
-		buffer_free(metadata->online_resource);
 
 	if (metadata->fees != NULL)
 		buffer_free(metadata->fees);
@@ -397,13 +393,6 @@ void ows_metadata_flush(ows_meta * metadata, FILE * output)
 	{
 		fprintf(output, "keywords: ");
 		list_flush(metadata->keywords, output);
-		fprintf(output, "\n");
-	}
-
-	if (metadata->online_resource != NULL)
-	{
-		fprintf(output, "online_resource: ");
-		buffer_flush(metadata->online_resource, output);
 		fprintf(output, "\n");
 	}
 

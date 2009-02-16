@@ -30,9 +30,37 @@
 
 
 /* 
+ * Parse the configuration file's tinyows element
+ */
+static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
+{
+	xmlChar *a;
+
+	assert(o != NULL);
+	assert(r != NULL);
+
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "online_resource");
+	if (a != NULL)
+	{
+		o->online_resource = buffer_init();
+		buffer_add_str(o->online_resource, (char *) a);
+		free(a);
+	}
+
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "schema_dir");
+	if (a != NULL)
+	{
+		o->schema_dir = buffer_init();
+		buffer_add_str(o->schema_dir, (char *) a);
+		free(a);
+	}
+}
+   
+
+/* 
  * Parse the configuration file's contact element
  */
-void ows_parse_config_contact(ows * o, xmlTextReaderPtr r)
+static void ows_parse_config_contact(ows * o, xmlTextReaderPtr r)
 {
 	xmlChar *a;
 	ows_contact *contact;
@@ -170,7 +198,7 @@ void ows_parse_config_contact(ows * o, xmlTextReaderPtr r)
 /* 
  * Parse the configuration file's metadata element
  */
-void ows_parse_config_metadata(ows * o, xmlTextReaderPtr r)
+static void ows_parse_config_metadata(ows * o, xmlTextReaderPtr r)
 {
 	xmlChar *a;
 
@@ -202,14 +230,6 @@ void ows_parse_config_metadata(ows * o, xmlTextReaderPtr r)
 		free(a);
 	}
 
-	a = xmlTextReaderGetAttribute(r, (xmlChar *) "online_resource");
-	if (a != NULL)
-	{
-		o->metadata->online_resource = buffer_init();
-		buffer_add_str(o->metadata->online_resource, (char *) a);
-		free(a);
-	}
-    
 	a = xmlTextReaderGetAttribute(r, (xmlChar *) "fees");
 	if (a != NULL)
 	{
@@ -231,7 +251,7 @@ void ows_parse_config_metadata(ows * o, xmlTextReaderPtr r)
 /* 
  * Parse the configuration file's abstract metadata element
  */
-void ows_parse_config_abstract(ows * o, xmlTextReaderPtr r)
+static void ows_parse_config_abstract(ows * o, xmlTextReaderPtr r)
 {
 	xmlChar *v;
 
@@ -254,7 +274,7 @@ void ows_parse_config_abstract(ows * o, xmlTextReaderPtr r)
 /* 
  * Parse the configuration file's limits element
  */
-void ows_parse_config_limits(ows * o, xmlTextReaderPtr r)
+static void ows_parse_config_limits(ows * o, xmlTextReaderPtr r)
 {
 	xmlChar *a;
 	ows_geobbox *geo;
@@ -306,7 +326,7 @@ void ows_parse_config_limits(ows * o, xmlTextReaderPtr r)
 /* 
  * Parse the configuration file's pg element about connection information
  */
-void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
+static void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
 {
 	xmlChar *a;
 	xmlChar *v;
@@ -348,7 +368,7 @@ void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
 /* 
  * Return layer's parent if there is one
  */
-ows_layer *ows_parse_config_layer_get_parent(const ows * o, int depth)
+static ows_layer *ows_parse_config_layer_get_parent(const ows * o, int depth)
 {
 	ows_layer_node *ln;
 
@@ -374,7 +394,7 @@ ows_layer *ows_parse_config_layer_get_parent(const ows * o, int depth)
 /* 
  * Parse the configuration file's layer element and all child layers
  */
-void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
+static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 {
 	ows_layer *layer;
 	buffer *b;
@@ -583,7 +603,7 @@ void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 /* 
  * Parse the configuration file's style element
  */
-void ows_parse_config_style(ows * o, xmlTextReaderPtr r)
+static void ows_parse_config_style(ows * o, xmlTextReaderPtr r)
 {
 	xmlChar *a;
 
@@ -605,6 +625,43 @@ void ows_parse_config_style(ows * o, xmlTextReaderPtr r)
 			o->sld_writable = true;
 		free(a);
 	}
+}
+
+
+/*
+ * Check if every mandatory element/property are
+ * rightly set from config files
+ */
+static void ows_config_check(ows * o)
+{
+    if (o->online_resource == NULL)
+        ows_error(o, OWS_ERROR_CONFIG_FILE,
+                 "No 'online_resource' property in tinyows element",
+                 "parse_config_file");
+
+    if (o->metadata == NULL)
+        ows_error(o, OWS_ERROR_CONFIG_FILE,
+                 "No 'metadata' element", "parse_config_file");
+
+    if (o->metadata->name == NULL)
+        ows_error(o, OWS_ERROR_CONFIG_FILE,
+                 "No 'name' property in metadata element",
+                 "parse_config_file");
+
+    if (o->metadata->title == NULL)
+        ows_error(o, OWS_ERROR_CONFIG_FILE,
+                 "No 'title' property in metadata element",
+                 "parse_config_file");
+
+    if (o->pg_dsn == NULL)
+        ows_error(o, OWS_ERROR_CONFIG_FILE,
+                 "No 'pg' element",
+                 "parse_config_file");
+
+    if (o->contact->name == NULL)
+        ows_error(o, OWS_ERROR_CONFIG_FILE,
+                 "No 'name' property in contact element",
+                 "parse_config_file");
 }
 
 
@@ -640,6 +697,9 @@ void ows_parse_config(ows * o, const char *filename)
 		{
 			name = xmlTextReaderConstLocalName(r);
 
+			if (strcmp((char *) name, "tinyows") == 0)
+				ows_parse_config_tinyows(o, r);
+
 			if (strcmp((char *) name, "metadata") == 0)
 				ows_parse_config_metadata(o, r);
 
@@ -672,6 +732,8 @@ void ows_parse_config(ows * o, const char *filename)
 
 	xmlFreeTextReader(r);
 	xmlCleanupParser();
+
+    ows_config_check(o);
 }
 
 

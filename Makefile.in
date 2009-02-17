@@ -33,6 +33,10 @@ install:
 	cp -rf schema $(PREFIX)/tinyows/
 	cp -i config.xml $(PREFIX)/tinyows/
 
+install-demo:
+	chmod +x demo/install.sh
+	su postgres -c "demo/install.sh"
+
 doc-clean:
 	@rm -rf doc/doxygen
 

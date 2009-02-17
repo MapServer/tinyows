@@ -13,7 +13,8 @@ To be able to launch unit test
  psql -d tinyows_test < ogc_wfs_data.sql
 
 3) Replace tinyows config file by 'owg_test_config.xml' one
-   (Check postgresql connection parameter)
+   (Check PostgreSQL connection parameter, online_resource 
+    and schema_dir values)
 
 4) Install valgrind if not yet done
 

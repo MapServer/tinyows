@@ -31,8 +31,8 @@ AC_MSG_RESULT([checking for libxml2 version... $XML2_VER])
 XML2_INC=`$LIBXML2_CONFIG --cflags`
 XML2_LIB=`$LIBXML2_CONFIG --libs`
 
-AC_SUBST(XML2_INC,    $XML2_INC)
-AC_SUBST(XML2_LIB,    $XML2_LIB)
+AC_SUBST(XML2_INC)
+AC_SUBST(XML2_LIB)
 
 dnl ---------------------------------------------------------------------------
 dnl Try to find PostgreSQL if PostGIS support requested.
@@ -49,26 +49,22 @@ else
   PG_CONFIG=$with_postgis
 fi
 
-if test "$PG_CONFIG" = "no" ; then
-  POSTGIS_ENABLED=
-  POSTGIS_INC=
-  POSTGIS_LIB=
-else
-  if ! test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
-    AC_MSG_ERROR(['$PG_CONFIG' is not an executable.  Make sure you use --with-postgis=/path/to/pg_config])
-  fi
-
-  POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
-  POSTGIS_INC="-I`$PG_CONFIG --includedir`"
+if ! test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
+  AC_MSG_ERROR(['$PG_CONFIG' is not an executable.  Make sure you use --with-postgis=/path/to/pg_config])
 fi
 
-AC_SUBST(POSTGIS_ENABLED,$POSTGIS_ENABLED)
-AC_SUBST(POSTGIS_INC,$POSTGIS_INC)
-AC_SUBST(POSTGIS_LIB,$POSTGIS_LIB)
+POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
+POSTGIS_INC="-I`$PG_CONFIG --includedir`"
+POSTGIS_SHARE=`$PG_CONFIG --sharedir`
+POSTGIS_BIN=`$PG_CONFIG --bindir`
+
+AC_SUBST(POSTGIS_INC)
+AC_SUBST(POSTGIS_LIB)
+AC_SUBST(POSTGIS_SHARE)
+AC_SUBST(POSTGIS_BIN)
 
 AC_CHECK_FUNCS()
-
-AC_OUTPUT(Makefile src/ows_define.h)
+AC_OUTPUT(Makefile src/ows_define.h demo/config.xml demo/install.sh)
 
 rm -rf autom4te.cache
 rm -f config.log config.status

@@ -1,0 +1,20 @@
+#/bin/sh
+
+PG_BIN=@POSTGIS_BIN@
+PG_SHARE=@POSTGIS_SHARE@
+DB=tinyows_demo
+
+echo "Create Spatial Database: $DB"
+$PG_BIN/dropdb $DB > /dev/null 2> /dev/null
+$PG_BIN/createdb $DB
+$PG_BIN/createlang plpgsql $DB
+$PG_BIN/psql $DB < $PG_SHARE/lwpostgis.sql
+$PG_BIN/psql $DB < $PG_SHARE/spatial_ref_sys.sql
+
+echo "Import layer data: world" 
+$PG_BIN/shp2pgsql -s 4326 -I demo/world.shp world | $PG_BIN/psql $DB
+
+echo "Import layer data: france_dept" 
+$PG_BIN/shp2pgsql -s 27582 -I -W latin1 demo/france_dept.shp france_dept | $PG_BIN/psql $DB
+
+echo "Demo Install - Done"

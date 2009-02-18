@@ -28,14 +28,20 @@ clean:
 	@rm -rf tinyows.dSYM
 
 install:
-	mkdir -p $(PREFIX)/tinyows
-	cp tinyows $(PREFIX)/tinyows/
-	cp -rf schema $(PREFIX)/tinyows/
-	cp -i config.xml $(PREFIX)/tinyows/
+	@echo "-----"
+	@echo "TinyOWS Schema install dir in $(PREFIX)/tinyows/schema"
+	@mkdir -p $(PREFIX)/tinyows
+	@cp -rf schema $(PREFIX)/tinyows/
+	@echo "-----"
+	@echo "Now:"
+	@echo " 1) copy 'tinyows' binary to cgi-bin directory"
+	@echo " 2) - put a workable config.xml file in $(PREFIX) dir"
+	@echo "    - OR launch 'make install-demo'"
 
 install-demo:
-	chmod +x demo/install.sh
-	su postgres -c "demo/install.sh"
+	@chmod +x demo/install.sh
+	@su postgres -c "demo/install.sh"
+	cp -i demo/config.xml $(PREFIX)/tinyows
 
 doc-clean:
 	@rm -rf doc/doxygen

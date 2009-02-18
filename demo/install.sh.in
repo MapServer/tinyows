@@ -1,5 +1,8 @@
 #/bin/sh
 
+# don't launch directly this script
+# use 'make install-demo' to do so
+
 PG_BIN=@POSTGIS_BIN@
 PG_SHARE=@POSTGIS_SHARE@
 DB=tinyows_demo
@@ -16,5 +19,3 @@ $PG_BIN/shp2pgsql -s 4326 -I demo/world.shp world | $PG_BIN/psql $DB
 
 echo "Import layer data: france_dept" 
 $PG_BIN/shp2pgsql -s 27582 -I -W latin1 demo/france_dept.shp france_dept | $PG_BIN/psql $DB
-
-echo "Demo Install - Done"

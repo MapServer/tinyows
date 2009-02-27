@@ -8,7 +8,7 @@ AC_ARG_WITH(xml2-config,
 [  --with-xml2-config=PATH Specify path to xml2-config.],,)
 
 if test "$with_xml2_config" = "no" ; then
-  AC_MSG_ERROR([PostGIS support is a need to TinyOWS !])
+  AC_MSG_ERROR([LibXML2 support is a need to TinyOWS !])
 fi
 
 if test "`basename xx/$with_xml2_config`" = "xml2-config" ; then
@@ -25,8 +25,14 @@ if test "$LIBXML2_CONFIG" = "no" ; then
 fi
 
 XML2_VER=`$LIBXML2_CONFIG --version`
-
 AC_MSG_RESULT([checking for libxml2 version... $XML2_VER])
+
+xml2_vers=`$LIBXML2_CONFIG --version | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
+if test "$xml2_vers" -lt 2006020 ; then
+	AC_MSG_ERROR([You need at least libxml 2.6.20])
+fi
+
+
 
 XML2_INC=`$LIBXML2_CONFIG --cflags`
 XML2_LIB=`$LIBXML2_CONFIG --libs`
@@ -35,7 +41,7 @@ AC_SUBST(XML2_INC)
 AC_SUBST(XML2_LIB)
 
 dnl ---------------------------------------------------------------------------
-dnl Try to find PostgreSQL if PostGIS support requested.
+dnl PostgreSQL / PostGIS support
 dnl ---------------------------------------------------------------------------
 
 AC_ARG_WITH(postgis,[  --with-postgis[[=ARG]]    Include PostGIS Support (ARG=yes/path to pg_config)],,)
@@ -53,6 +59,15 @@ if ! test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
   AC_MSG_ERROR(['$PG_CONFIG' is not an executable.  Make sure you use --with-postgis=/path/to/pg_config])
 fi
 
+PG_VER=`$PG_CONFIG --version`
+AC_MSG_RESULT([checking for PostgreSQL version... $PG_VER])
+
+pg_vers=`$PG_CONFIG --version | sed 's/PostgreSQL //' | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
+if test "$pg_vers" -lt 8001000 ; then
+	AC_MSG_ERROR([You need at least PostgreSQL 8.1.0])
+fi
+
+
 POSTGIS_LIB="-L`$PG_CONFIG --libdir` -lpq"
 POSTGIS_INC="-I`$PG_CONFIG --includedir`"
 POSTGIS_SHARE=`$PG_CONFIG --sharedir`
@@ -68,3 +83,7 @@ AC_OUTPUT(Makefile src/ows_define.h demo/config.xml demo/install.sh)
 
 rm -rf autom4te.cache
 rm -f config.log config.status
+
+echo "------------------------"
+echo "This TinyOWS version will need at least PostGIS 1.3.x"
+echo "------------------------"

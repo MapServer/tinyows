@@ -1,7 +1,10 @@
 <tinyows online_resource="http://127.0.0.1/cgi-bin/tinyows"
-	 schema_dir="@prefix@/tinyows/schema/"/>
+	 schema_dir="@prefix@/tinyows/schema/">
 
   <pg host="127.0.0.1" user="postgres" password="postgres" dbname="tinyows_demo" port="5432"/>
+
+  <metadata name="TinyOWS Server"
+	    title="TinyOWS Server - Demo Service" />
 
   <contact name="TinyOWS Server"
     	   site="http://www.tinyows.org/"

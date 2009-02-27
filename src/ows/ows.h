@@ -380,6 +380,10 @@ typedef struct Ows {
     int max_height;
     int max_layers;
     int max_features;
+
+    int degree_precision;
+    int meter_precision;
+
     ows_geobbox * max_geobbox;
 
     array * cgi;

@@ -228,42 +228,22 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
  */
 bool ows_srs_meter_units(ows * o, buffer * layer_name)
 {
-	buffer *sql, *request_name, *parameters;
+	buffer *sql, *srid;
 	PGresult *res;
-	buffer *srid;
 
 	assert(o != NULL);
 	assert(layer_name != NULL);
 
 	sql = buffer_init();
-
 	srid = ows_srs_get_srid_from_layer(o, layer_name);
 
-	buffer_add_str(sql, "SELECT * FROM spatial_ref_sys ");
-	buffer_add_str(sql, "WHERE srid = $1 ");
-	buffer_add_str(sql, "AND proj4text like '%units=m%'");
-
-	/* initialize the request's name and parameters */
-	request_name = buffer_init();
-	buffer_add_str(request_name, "srs_meter_units");
-	parameters = buffer_init();
-	buffer_add_str(parameters, "(text)");
-
-	/* check if the request has already been executed */
-	if (!in_list(o->psql_requests, request_name))
-		ows_psql_prepare(o, request_name, parameters, sql);
-
-	/* execute the request */
-	buffer_empty(sql);
-	buffer_add_str(sql, "EXECUTE srs_meter_units(");
+	buffer_add_str(sql, "SELECT * FROM spatial_ref_sys WHERE srid=");
 	buffer_copy(sql, srid);
-	buffer_add_str(sql, ")");
+	buffer_add_str(sql, " AND proj4text like '%%units=m%%'");
 
 	res = PQexec(o->pg, sql->buf);
 	buffer_free(sql);
 	buffer_free(srid);
-	buffer_free(parameters);
-	buffer_free(request_name);
 
 	if (PQntuples(res) != 1)
 	{
@@ -272,12 +252,12 @@ bool ows_srs_meter_units(ows * o, buffer * layer_name)
 	}
 
 	PQclear(res);
-
 	return true;
 }
 
 
 /* 
+ * FIXME: why this function return a buffer rather than an int ???
  * Retrieve a srs from a layer
  */
 buffer *ows_srs_get_srid_from_layer(ows * o, buffer * layer_name)

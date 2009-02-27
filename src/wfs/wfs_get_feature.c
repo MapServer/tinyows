@@ -469,8 +469,12 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
 			{
 				buffer_add_str(select, "ST_AsGml(2, \"");
 				buffer_copy(select, an->key);
-				buffer_add_str(select, "\",6) As \"");
-                /* FIXME why need to took 6 digits if data are meters ? */
+				buffer_add_str(select, "\",");
+                if (ows_srs_meter_units(o, layer_name))
+				    buffer_add_int(select, o->meter_precision);
+                else
+				    buffer_add_int(select, o->degree_precision);
+				buffer_add_str(select, ") AS \"");
 				buffer_copy(select, an->key);
 				buffer_add_str(select, "\" ");
 			}
@@ -479,8 +483,12 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
 			{
 				buffer_add_str(select, "ST_AsGml(3, \"");
 				buffer_copy(select, an->key);
-				buffer_add_str(select, "\",6) As \"");
-                /* FIXME why need to took 6 digits if data are meters ? */
+				buffer_add_str(select, "\",");
+                if (ows_srs_meter_units(o, layer_name))
+				    buffer_add_int(select, o->meter_precision);
+                else
+				    buffer_add_int(select, o->degree_precision);
+				buffer_add_str(select, ") AS \"");
 				buffer_copy(select, an->key);
 				buffer_add_str(select, "\" ");
 			}

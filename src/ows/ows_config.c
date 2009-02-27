@@ -35,6 +35,7 @@
 static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
 {
 	xmlChar *a;
+    int precision;
 
 	assert(o != NULL);
 	assert(r != NULL);
@@ -52,6 +53,26 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
 	{
 		o->schema_dir = buffer_init();
 		buffer_add_str(o->schema_dir, (char *) a);
+		xmlFree(a);
+	}
+
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "degree_precision");
+	if (a != NULL)
+	{
+		o->schema_dir = buffer_init();
+        precision = atoi((char *) a);
+        if (precision > 0 && precision < 12)
+		    o->degree_precision = precision;
+		xmlFree(a);
+	}
+
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "meter_precision");
+	if (a != NULL)
+	{
+		o->schema_dir = buffer_init();
+        precision = atoi((char *) a);
+        if (precision > 0 && precision < 12)
+		    o->meter_precision = precision;
 		xmlFree(a);
 	}
 }

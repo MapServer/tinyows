@@ -72,6 +72,8 @@ static ows *ows_init()
 	o->max_height = 0;
 	o->max_layers = 0;
 	o->max_features = 0;
+	o->degree_precision = 6;
+	o->meter_precision = 0;
 	o->max_geobbox = NULL;
 
 	o->metadata = NULL;
@@ -162,6 +164,8 @@ void ows_flush(ows * o, FILE * output)
 	fprintf(output, "max_height: %d\n", o->max_height);
 	fprintf(output, "max_layers: %d\n", o->max_layers);
 	fprintf(output, "max_features: %d\n", o->max_features);
+	fprintf(output, "degree_precision: %d\n", o->degree_precision);
+	fprintf(output, "meter_precision: %d\n", o->meter_precision);
 	if (o->max_geobbox != NULL)
 	{
 		fprintf(output, "max_geobbox: ");

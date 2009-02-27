@@ -129,6 +129,7 @@ array *ows_psql_describe_table (ows * o, buffer * layer_name);
 list *ows_psql_geometry_column (ows * o, buffer * layer_name);
 buffer *ows_psql_id_column (ows * o, buffer * layer_name);
 bool ows_psql_is_geometry_column (ows * o, buffer * layer_name, buffer * column);
+bool ows_psql_is_geometry_valid(ows * o, buffer * geom);
 list *ows_psql_not_null_properties (ows * o, buffer * layer_name);
 int ows_psql_num_column (ows * o, buffer * layer_name, buffer * column);
 int ows_psql_number_features (ows * o, list * from, list * where);

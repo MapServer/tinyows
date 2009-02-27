@@ -180,6 +180,39 @@ list *ows_psql_geometry_column(ows * o, buffer * layer_name)
 	return geom;
 }
 
+/* 
+ * Check if a given WKT geometry is or not valid
+ */
+bool ows_psql_is_geometry_valid(ows * o, buffer * geom)
+{
+	buffer *sql;
+	PGresult *res;
+
+	assert(o != NULL);
+	assert(geom != NULL);
+
+	sql = buffer_init();
+	buffer_add_str(sql, "SELECT isvalid(geometryfromtext('");
+	buffer_copy(sql, geom);
+	buffer_add_str(sql, "', -1));");
+
+	res = PQexec(o->pg, sql->buf);
+	buffer_free(sql);
+
+	if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0)
+	{
+		PQclear(res);
+		return false;
+	}
+
+	if ((char) PQgetvalue(res, 0, 0)[0] ==  't') {
+	    PQclear(res);
+        return true;
+    }
+
+	PQclear(res);
+	return false;
+}
 
 /* 
  * Check if the specified column from a layer_name is (or not) a geometry column
@@ -231,7 +264,6 @@ bool ows_psql_is_geometry_column(ows * o, buffer * layer_name,
 	}
 
 	PQclear(res);
-
 	return true;
 }
 

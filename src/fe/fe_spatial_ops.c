@@ -228,7 +228,8 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 {
 	xmlChar *content;
 	xmlNodePtr node, node_coord;
-	buffer *srid, *tmp, *geom_type;
+	buffer *srid, *tmp, *geom;
+    int bracket;
 
 	assert(o != NULL);
 	assert(typename != NULL);
@@ -238,36 +239,36 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 	content = NULL;
 
 	/* jump to the next element if there are spaces */
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
+	while (n->type != XML_ELEMENT_NODE) n = n->next;
 
 	buffer_add_str(fe->sql, "setsrid('");
 	buffer_add_str(fe->sql, (char *) n->name);
 
-	geom_type = buffer_init();
-	buffer_add_str(geom_type, (char *) n->name);
+	geom = buffer_init();
+	buffer_add_str(geom, (char *) n->name);
 
 	/* print the geometry type */
-	if (buffer_cmp(geom_type, "MultiPolygon"))
-		buffer_add_str(fe->sql, "(((");
-	else if (buffer_cmp(geom_type, "MultiLineString")
-	   || buffer_cmp(geom_type, "Polygon"))
-		buffer_add_str(fe->sql, "((");
-	else if (buffer_cmp(geom_type, "MultiPoint")
-	   || buffer_cmp(geom_type, "LineString")
-	   || buffer_cmp(geom_type, "Point"))
-		buffer_add_str(fe->sql, "(");
-	else
-	{
+	if (buffer_cmp(geom, "MultiPolygon")) {
+		buffer_add_str(geom, "(((");
+        bracket = 3;
+    } else if (buffer_cmp(geom, "MultiLineString")
+	   || buffer_cmp(geom, "Polygon")) {
+		buffer_add_str(geom, "((");
+        bracket = 2;
+    } else if (buffer_cmp(geom, "MultiPoint")
+	   || buffer_cmp(geom, "LineString")
+	   || buffer_cmp(geom, "Point")) {
+		buffer_add_str(geom, "(");
+        bracket = 1;
+    } else {
 		fe->error_code = FE_ERROR_GEOMETRY;
-		buffer_free(geom_type);
+		buffer_free(geom);
 		return fe->sql;
 	}
 
 	n = n->children;
 	/* jump to the next element if there are spaces */
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
+	while (n->type != XML_ELEMENT_NODE) n = n->next;
 
 	/* print the coordinates */
 	for (node = n; node != NULL; node = node->next)
@@ -297,7 +298,7 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 				tmp = fe_transform_coord_gml_to_psql(tmp);
 			else
 				tmp = fe_transform_coord_gml3_to_psql(tmp);
-			buffer_copy(fe->sql, tmp);
+			buffer_copy(geom, tmp);
 			buffer_free(tmp);
 			xmlFree(content);
 		}
@@ -307,41 +308,34 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 			{
 				if (strcmp((char *) node->next->name,
 					  "lineStringMember") == 0)
-					buffer_add_str(fe->sql, "),(");
+					buffer_add_str(geom, "),(");
 				else if (strcmp((char *) node->next->name,
 					  "polygonMember") == 0)
-					buffer_add_str(fe->sql, ")),((");
+					buffer_add_str(geom, ")),((");
 				else
-					buffer_add_str(fe->sql, ",");
+					buffer_add_str(geom, ",");
 			}
 		}
 	}
 	/* print the geometry type */
-	if (buffer_cmp(geom_type, "MultiPolygon"))
-		buffer_add_str(fe->sql, ")))");
-	else if (buffer_cmp(geom_type, "MultiLineString")
-	   || buffer_cmp(geom_type, "Polygon"))
-		buffer_add_str(fe->sql, "))");
-	else if (buffer_cmp(geom_type, "MultiPoint")
-	   || buffer_cmp(geom_type, "LineString")
-	   || buffer_cmp(geom_type, "Point"))
-		buffer_add_str(fe->sql, ")");
-	else
-	{
+	if (bracket == 3) buffer_add_str(geom, ")))");
+	else if (bracket == 2) buffer_add_str(geom, "))");
+	else buffer_add_str(geom, ")");
+
+    if (!ows_psql_is_geometry_valid(o, geom)) {
 		fe->error_code = FE_ERROR_GEOMETRY;
-		buffer_free(geom_type);
+		buffer_free(geom);
 		return fe->sql;
-	}
+    }
 
-	buffer_add_str(fe->sql, "'::geometry,");
-
+	buffer_add_str(geom, "'::geometry,");
 	/* print the srid */
 	srid = ows_srs_get_srid_from_layer(o, typename);
 	buffer_copy(fe->sql, srid);
 	buffer_add_str(fe->sql, ")");
 
 	buffer_free(srid);
-	buffer_free(geom_type);
+	buffer_free(geom);
 
 	return fe->sql;
 }

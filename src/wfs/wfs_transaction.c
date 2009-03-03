@@ -289,32 +289,26 @@ static void wfs_transaction_response(ows * o, wfs_request * wr,
  * Add a content node value to a buffer
  */
 static buffer *wfs_retrieve_value(ows * o, wfs_request * wr,
-   buffer * value, xmlNodePtr n)
+                                  buffer * value, xmlNodePtr n)
 {
-	xmlChar *content;
+    xmlChar *content;
 
-	assert(o != NULL);
-	assert(wr != NULL);
-	assert(value != NULL);
-	assert(n != NULL);
+    assert(o != NULL);
+    assert(wr != NULL);
+    assert(value != NULL);
+    assert(n != NULL);
 
-	content = xmlNodeGetContent(n);
-	/*if the value is a string, must be in quotation marks */
-	if (check_regexp((char *) content,
-		  "^[A-Za-z]") == 1
-	   || check_regexp((char *) content, ".*-.*") == 1)
-		buffer_add_str(value, "'");
+    content = xmlNodeGetContent(n);
 
-	buffer_add_str(value, (char *) content);
+    buffer_add_str(value, "'");
 
-	if (check_regexp((char *) content,
-		  "^[A-Za-z]") == 1
-	   || check_regexp((char *) content, ".*-.*") == 1)
-		buffer_add_str(value, "'");
+    buffer_add_str(value, (char *) content);
 
-	xmlFree(content);
+    buffer_add_str(value, "'");
+ 
+    xmlFree(content);
 
-	return value;
+    return value;
 }
 
 

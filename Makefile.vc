@@ -53,7 +53,7 @@ TINY_EXE = 	tinyows.exe
 #
 default: 	all
 
-all:		$(TINY_LIB) $(TINY_EXE)
+all:		svn_update $(TINY_LIB) $(TINY_EXE)
 
 $(TINY_OBJS):	$(TINY_HDRS)
 
@@ -64,6 +64,8 @@ $(TINY_LIB):	ows_define.h $(TINY_OBJS)
 $(TINY_EXE): src\ows\ows.c $(TINY_LIB)
           $(CC) $(CFLAGS) src\ows\ows.c /Fetinyows.exe $(LIBS)
 
+svn_update:
+        svn update
 
 .c.obj:
 	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
@@ -80,12 +82,30 @@ $(TINY_EXE): src\ows\ows.c $(TINY_LIB)
 
 
 ows_define.h:	src\ows_define.h.in
-	copy src\ows_define.h.in src\ows_define.h
+	copy /y src\ows_define.h.in src\ows_define.h
 
+
+ms4w:   #all
+        if EXIST builds rd /s /q builds  
+
+        mkdir builds
+        cd builds
+
+        svn export http://www.tinyows.org/svn/tinyows/ms4w
+        
+        cd ms4w\apps\tinyows-svn
+        svn export http://www.tinyows.org/svn/tinyows/schema
+        svn export http://www.tinyows.org/svn/tinyows/demo
+
+        cd ..\..\..\..
+        copy /y tinyows.exe builds\ms4w\Apache\cgi-bin\
+        cd builds
+        zip -r -q -9 tinyows_ms4w-svn.zip
+ 
 clean:
 	del *.obj
 	del $(TINY_EXE)
-       del *.lib
+        del *.lib
 	del *.manifest
 	del src\fe\*.obj
 	del src\ows\*.obj

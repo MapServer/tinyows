@@ -61,8 +61,9 @@ $(TINY_LIB):	ows_define.h $(TINY_OBJS)
 	lib /out:$(TINY_LIB) $(TINY_OBJS)
 
 
-$(TINY_EXE): src\ows\ows.c $(TINY_LIB)
+$(TINY_EXE): $(TINY_LIB)
           $(CC) $(CFLAGS) src\ows\ows.c /Fetinyows.exe $(LIBS)
+	         if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
 
 svn_update:
         svn update
@@ -73,19 +74,11 @@ svn_update:
 .cpp.obj:
 	$(CC) $(CFLAGS) /c $*.cpp /Fo$*.obj
 
-.c.exe:
-	$(CC) $(CFLAGS) /c $*.c /Fo$*.obj
-
-       $(LINK) $(LDFLAGS) $*.obj $(LIBS)
-
-	if exist $@.manifest mt -manifest $@.manifest -outputresource:$@;1
-
-
 ows_define.h:	src\ows_define.h.in
 	copy /y src\ows_define.h.in src\ows_define.h
 
 
-ms4w:   #all
+ms4w:   all
         if EXIST builds rd /s /q builds  
 
         mkdir builds
@@ -93,14 +86,17 @@ ms4w:   #all
 
         svn export http://www.tinyows.org/svn/tinyows/ms4w
         
-        cd ms4w\apps\tinyows-svn
+        cd ms4w\apps\tinyows-svn 
         svn export http://www.tinyows.org/svn/tinyows/schema
         svn export http://www.tinyows.org/svn/tinyows/demo
 
         cd ..\..\..\..
-        copy /y tinyows.exe builds\ms4w\Apache\cgi-bin\
+
+        copy /y tinyows.exe builds\ms4w\Apache\cgi-bin\ 
+
         cd builds
-        zip -r -q -9 tinyows_ms4w-svn.zip
+
+        zip -r -q -9 tinyows_ms4w-svn.zip ms4w
  
 clean:
 	del *.obj

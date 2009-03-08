@@ -228,93 +228,43 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
  */
 bool ows_srs_meter_units(ows * o, buffer * layer_name)
 {
-	buffer *sql, *srid;
-	PGresult *res;
+	ows_layer_node * ln;
 
 	assert(o != NULL);
 	assert(layer_name != NULL);
 
-	sql = buffer_init();
-	srid = ows_srs_get_srid_from_layer(o, layer_name);
+	for (ln = o->layers->first; ln != NULL; ln = ln->next) {
+                if (ln->layer->name != NULL && ln->layer->storage != NULL
+                        && ln->layer->name->use == layer_name->use
+                        && strcmp(ln->layer->name->buf, layer_name->buf) == 0) {
+                        return !ln->layer->storage->is_degree;
+                }
+        }
 
-	buffer_add_str(sql, "SELECT * FROM spatial_ref_sys WHERE srid=");
-	buffer_copy(sql, srid);
-	buffer_add_str(sql, " AND proj4text like '%%units=m%%'");
-
-	res = PQexec(o->pg, sql->buf);
-	buffer_free(sql);
-	buffer_free(srid);
-
-	if (PQntuples(res) != 1)
-	{
-		PQclear(res);
-		return false;
-	}
-
-	PQclear(res);
-	return true;
+        assert(0); /* Should not happen */
+        return false;
 }
 
 
 /* 
- * FIXME: why this function return a buffer rather than an int ???
  * Retrieve a srs from a layer
  */
-buffer *ows_srs_get_srid_from_layer(ows * o, buffer * layer_name)
+int ows_srs_get_srid_from_layer(ows * o, buffer * layer_name)
 {
-	buffer *sql, *request_name, *parameters;
-	list *geom;
-	PGresult *res;
-	buffer *b;
+	ows_layer_node * ln;
 
 	assert(o != NULL);
 	assert(layer_name != NULL);
 
-	sql = buffer_init();
-	b = buffer_init();
+	for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        if (ln->layer->name != NULL 
+	        && ln->layer->storage != NULL
+            && ln->layer->name->use == layer_name->use
+            && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+			return ln->layer->storage->srid;
 
-	geom = ows_psql_geometry_column(o, layer_name);
-
-	if (geom->first != NULL)
-	{
-		buffer_add_str(sql, "SELECT find_srid('',$1,$2)");
-
-		/* initialize the request's name and parameters */
-		request_name = buffer_init();
-		buffer_add_str(request_name, "get_srid_from_layer");
-		parameters = buffer_init();
-		buffer_add_str(parameters, "(text,text)");
-
-		/* check if the request has already been executed */
-		if (!in_list(o->psql_requests, request_name))
-			ows_psql_prepare(o, request_name, parameters, sql);
-
-		/* execute the request */
-		buffer_empty(sql);
-		buffer_add_str(sql, "EXECUTE get_srid_from_layer('");
-		buffer_copy(sql, layer_name);
-		buffer_add_str(sql, "','");
-		buffer_copy(sql, geom->first->value);
-		buffer_add_str(sql, "')");
-
-		res = PQexec(o->pg, sql->buf);
-		buffer_free(sql);
-		buffer_free(parameters);
-		buffer_free(request_name);
-
-		if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1)
-		{
-			list_free(geom);
-			PQclear(res);
-			buffer_free(sql);
-			return b;
-		}
-		buffer_add_str(b, (PQgetvalue(res, 0, 0)));
-		PQclear(res);
-	}
-	list_free(geom);
-
-	return b;
+        assert(0); /* Should not happen */
+        return -1;
 }
 
 
@@ -331,12 +281,11 @@ list *ows_srs_get_from_srid(ows * o, list * l)
 	assert(l != NULL);
 
 	srs = list_init();
-	if (l->size == 0)
-		return srs;
+	if (l->size == 0) return srs;
 
 	for (ln = l->first; ln != NULL; ln = ln->next)
 	{
-		b = ows_srs_get_from_a_srid(o, ln->value);
+		b = ows_srs_get_from_a_srid(o, atoi(ln->value->buf));
 		list_add(srs, b);
 	}
 
@@ -347,14 +296,13 @@ list *ows_srs_get_from_srid(ows * o, list * l)
 /* 
  * Retrieve a srs from a srid
  */
-buffer *ows_srs_get_from_a_srid(ows * o, buffer * srid)
+buffer *ows_srs_get_from_a_srid(ows * o, int srid)
 {
 	buffer *b;
 	buffer *sql, *request_name, *parameters;
 	PGresult *res;
 
 	assert(o != NULL);
-	assert(srid != NULL);
 
 	sql = buffer_init();
 	buffer_add_str(sql, "SELECT auth_name||':'||auth_srid AS srs ");
@@ -374,10 +322,7 @@ buffer *ows_srs_get_from_a_srid(ows * o, buffer * srid)
 	/* execute the request */
 	buffer_empty(sql);
 	buffer_add_str(sql, "EXECUTE get_from_a_srid(");
-	if (srid->use != 0)
-		buffer_copy(sql, srid);
-	else
-		buffer_add_int(sql, -1);
+	buffer_add_int(sql, srid);
 	buffer_add_str(sql, ")");
 
 	res = PQexec(o->pg, sql->buf);

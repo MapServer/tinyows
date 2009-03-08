@@ -433,7 +433,8 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr,
 static void wfs_request_check_bbox(ows * o, wfs_request * wr,
    list * layer_name)
 {
-	buffer *b, *srid, *srid_tmp;
+	buffer *b;
+	int srid, srid_tmp;
 	list_node *ln;
 
 	assert(o != NULL);
@@ -451,31 +452,26 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr,
 			for (ln = layer_name->first->next; ln != NULL; ln = ln->next)
 			{
 				srid_tmp = ows_srs_get_srid_from_layer(o, ln->value);
-				if (buffer_cmp(srid, srid_tmp->buf) == false)
+				if (srid != srid_tmp)
 				{
 					list_free(layer_name);
-					buffer_free(srid);
-					buffer_free(srid_tmp);
 					ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
 					   "layers in TYPENAME must have the same SRS",
 					   "GetFeature");
 				}
-				buffer_free(srid_tmp);
 			}
 		}
 
 		b = array_get(o->cgi, "bbox");
 		wr->bbox = ows_bbox_init();
 
-		if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, atoi(srid->buf)))
+		if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, srid))
 		{
 			list_free(layer_name);
-			buffer_free(srid);
 			ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
 			   "Bad parameters for Bbox, must be Xmin,Ymin,Xmax,Ymax",
 			   "NULL");
 		}
-		buffer_free(srid);
 	}
 }
 
@@ -669,7 +665,6 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr,
 		   mln = mln->next, ln_tpn = ln_tpn->next)
 		{
 			prop_table = ows_psql_describe_table(o, ln_tpn->value);
-			assert(prop_table != NULL);
 
 			for (ln = mln->value->first; ln != NULL; ln = ln->next)
 			{
@@ -682,7 +677,6 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr,
 					if (buffer_cmp(fe->first->value,
 						  ln_tpn->value->buf) == 0)
 					{
-						array_free(prop_table);
 						list_free(layer_name);
 						list_free(fe);
 						mlist_free(f);
@@ -711,14 +705,12 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr,
 				if (buffer_cmp(ln->value, "*") == 0
 				   && array_is_key(prop_table, ln->value->buf) == 0)
 				{
-					array_free(prop_table);
 					mlist_free(f);
 					list_free(layer_name);
 					ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
 					   "propertyname values not available", "GetFeature");
 				}
 			}
-			array_free(prop_table);
 		}
 		wr->propertyname = f;
 	}

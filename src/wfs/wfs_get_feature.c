@@ -42,8 +42,7 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
 	assert(wr != NULL);
 
 	fprintf(o->output, "<gml:boundedBy>\n");
-	if (xmin == DBL_MIN
-	   || ymin == DBL_MIN || xmax == DBL_MAX || ymax == DBL_MAX)
+	if (xmin == DBL_MIN || ymin == DBL_MIN || xmax == DBL_MAX || ymax == DBL_MAX)
 	{
 		if (ows_version_get(o->request->version) == 100)
 			fprintf(o->output, "<gml:null>unknown</gml:null>\n");
@@ -87,8 +86,9 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
    buffer * layer_name, buffer * prefix, buffer * prop_name,
    buffer * prop_type, buffer * value)
 {
-	buffer *time, *srid, *box;
+	buffer *time, *box;
 	list *coord;
+	int srid;
 	float xmin, ymin, xmax, ymax;
 
 	assert(o != NULL);
@@ -127,10 +127,9 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 		ymax = atof(coord->first->next->next->next->value->buf);
 
 		srid = ows_srs_get_srid_from_layer(o, layer_name);
-		wfs_gml_bounded_by(o, wr, xmin, ymin, xmax, ymax, atoi(srid->buf));
+		wfs_gml_bounded_by(o, wr, xmin, ymin, xmax, ymax, srid);
 
 		list_free(coord);
-		buffer_free(srid);
 	}
 	else if (!buffer_cmp(value, "")
 		/* OGC Cite Tests 1.1.0 exception :
@@ -238,9 +237,6 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
 	}
 	buffer_free(layer_name);
 	buffer_free(prefix);
-	buffer_free(id_name);
-	array_free(describe);
-	list_free(mandatory_prop);
 }
 
 
@@ -450,6 +446,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
 	buffer_add_str(select, "SELECT ");
 
 	prop_table = ows_psql_describe_table(o, layer_name);
+
 	for (an = prop_table->first; an != NULL; an = an->next)
 	{
 		/* geometry columns must be returned in GML */
@@ -484,10 +481,12 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
 				buffer_add_str(select, "ST_AsGml(3, \"");
 				buffer_copy(select, an->key);
 				buffer_add_str(select, "\",");
+
                 if (ows_srs_meter_units(o, layer_name))
 				    buffer_add_int(select, o->meter_precision);
                 else
 				    buffer_add_int(select, o->degree_precision);
+
 				buffer_add_str(select, ") AS \"");
 				buffer_copy(select, an->key);
 				buffer_add_str(select, "\" ");
@@ -504,7 +503,6 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
 		if (an->next != NULL)
 			buffer_add_str(select, ",");
 	}
-	array_free(prop_table);
 
 	return select;
 }
@@ -519,8 +517,8 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
 	mlist_node *mln_fid;
 	list *fid, *sql_req, *from_list, *where_list;
 	list_node *ln_typename, *ln_filter;
-	buffer *geom, *sql, *where, *layer_name, *srid;
-	int size, cpt, nb;
+	buffer *geom, *sql, *where, *layer_name;
+	int srid, size, cpt, nb;
 	filter_encoding *fe;
 
 	assert(o != NULL);
@@ -571,6 +569,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
 			buffer_copy(layer_name, fid->first->value);
 			list_free(fid);
 		}
+
 
 		/* SELECT */
 		sql = wfs_retrieve_sql_request_select(o, wr, layer_name);
@@ -650,9 +649,8 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
 			buffer_add_double(where, o->max_geobbox->south);
 			buffer_add_str(where, ")'::box2d,");
 			srid = ows_srs_get_srid_from_layer(o, layer_name);
-			buffer_copy(where, srid);
+			buffer_add_int(where, srid);
 			buffer_add_str(where, ")))");
-			buffer_free(srid);
 		}
 
 		/* sortby parameter */
@@ -669,8 +667,11 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
 			buffer_add_str(where, " LIMIT ");
 			if (wr->maxfeatures != 0)
 			{
+#if 0
 				nb = ows_psql_number_features(o, from_list, where_list);
 				buffer_add_int(where, wr->maxfeatures - nb);
+#endif
+				buffer_add_int(where, wr->maxfeatures);
 			}
 			else
 				buffer_add_int(where, o->max_features);

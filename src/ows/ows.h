@@ -88,6 +88,16 @@ typedef struct Array {
 
 /* ========= OWS Common ========= */
 
+typedef struct Ows_layer_storage {
+    buffer * schema;
+    buffer * table;
+    list * geom_columns;
+    list * not_null_columns;
+    int srid;
+    buffer * pkey;
+    bool is_degree;
+    array * attributes;
+} ows_layer_storage;
 
 typedef struct Ows_srs {
 	int srid;
@@ -155,6 +165,7 @@ typedef struct Ows_layer {
     list * keywords;
     buffer * prefix;
     buffer * server;
+    ows_layer_storage * storage;
 } ows_layer;
 
 typedef struct Ows_layer_node {

@@ -435,6 +435,8 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 	{
 		layer->name = buffer_init();
 		buffer_add_str(layer->name, (char *) a);
+
+		buffer_add_str(layer->storage->table, (char *) a);
 		xmlFree(a);
 	}
 
@@ -463,6 +465,14 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
 		layer->keywords = list_explode(',', b);
 		buffer_free(b);
 	}
+
+	a = xmlTextReaderGetAttribute(r, (xmlChar *) "pg_schema");
+	if (a != NULL)
+	{
+		buffer_add_str(layer->storage->schema, (char *) a);
+		xmlFree(a);
+	}
+
 
 	/* inherits from layer parent and replaces with specified value 
        if defined */

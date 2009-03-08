@@ -331,6 +331,9 @@ int main(int argc, char *argv[])
     /* Process service request */
     ows_request_check(o, o->request, o->cgi, query);
 
+    /* Fill layers storage metadata */
+    ows_layers_storage_fill(o);
+
     /* Run the right OWS service */
     switch (o->request->service)
     {

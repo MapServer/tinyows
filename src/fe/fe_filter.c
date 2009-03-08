@@ -305,7 +305,6 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
     if (check_geom_column && !ows_psql_is_geometry_column(o, typename, tmp))
 		    fe->error_code = FE_ERROR_GEOM_PROPERTYNAME;
 
-	array_free(prop_table);
 	buffer_free(tmp);
 	xmlFree(content);
 
@@ -393,7 +392,6 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe,
 				fe->error_code = FE_ERROR_FEATUREID;
 				list_free(fe_list);
 				buffer_free(buf_fid);
-				buffer_free(id_name);
 				xmlFree(fid);
 				return fe->sql;
 			}
@@ -401,7 +399,6 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe,
 			buffer_add_str(fe->sql, " = \'");
 			buffer_copy(fe->sql, fe_list->last->value);
 			buffer_add_str(fe->sql, "\'");
-			buffer_free(id_name);
 			list_free(fe_list);
 			buffer_free(buf_fid);
 			xmlFree(fid);
@@ -536,11 +533,7 @@ buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name,
 	where = buffer_init();
 
 	id_name = ows_psql_id_column(o, layer_name);
-	if (id_name->use == 0)
-	{
-		buffer_free(id_name);
-		return where;
-	}
+	if (id_name->use == 0) return where;
 
 	buffer_add_str(where, " WHERE ");
 
@@ -555,7 +548,6 @@ buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name,
 		if (ln->next != NULL)
 			buffer_add_str(where, " OR ");
 	}
-	buffer_free(id_name);
 
 	return where;
 }

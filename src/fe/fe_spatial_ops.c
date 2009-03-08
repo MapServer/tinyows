@@ -57,12 +57,12 @@ bool fe_is_spatial_op(char *name)
 /*
  * Write a polygon geometry according to postgresql syntax from GML bbox 
  */
-buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe,
-   xmlNodePtr n)
+buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
 	xmlChar *content, *srsname;
 	buffer *srid, *name, *tmp;
 	list *coord_min, *coord_max, *coord_pair;
+	int srid_int;
 
 	assert(o != NULL);
 	assert(typename != NULL);
@@ -75,7 +75,9 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe,
 	/* BBOX is transformed into a polygon so that point corners are included */
 	buffer_add_str(fe->sql, "setsrid('POLYGON((");
 
-	srid = ows_srs_get_srid_from_layer(o, typename);
+	srid_int = ows_srs_get_srid_from_layer(o, typename);
+	srid = buffer_init();
+	buffer_add_int(srid, srid_int); 
 	srsname = xmlGetProp(n, (xmlChar *) "srsName");
 
 	if (srsname != NULL)
@@ -228,8 +230,8 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 {
 	xmlChar *content;
 	xmlNodePtr node, node_coord;
-	buffer *srid, *tmp, *geom;
-    int bracket;
+	buffer *tmp, *geom;
+        int bracket;
 
 	assert(o != NULL);
 	assert(typename != NULL);
@@ -330,11 +332,9 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 
 	buffer_add_str(geom, "'::geometry,");
 	/* print the srid */
-	srid = ows_srs_get_srid_from_layer(o, typename);
-	buffer_copy(fe->sql, srid);
+	buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename)); 
 	buffer_add_str(fe->sql, ")");
 
-	buffer_free(srid);
 	buffer_free(geom);
 
 	return fe->sql;

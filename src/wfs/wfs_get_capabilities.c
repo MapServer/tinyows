@@ -200,6 +200,7 @@ static void wfs_feature_type_list(ows * o)
 	ows_layer_node *ln;
 	ows_geobbox *gb;
 
+	int srid_int;
 	buffer *srid;
 	buffer *srs;
 	list_node *keyword, *other_srid;
@@ -208,8 +209,6 @@ static void wfs_feature_type_list(ows * o)
 
 	assert(o != NULL);
 
-	srid = NULL;
-	srs = NULL;
 	writable = false;
 	retrievable = false;
 
@@ -309,8 +308,10 @@ static void wfs_feature_type_list(ows * o)
 			}
 
 			/* SRS */
-			srid = ows_srs_get_srid_from_layer(o, ln->layer->name);
-			srs = ows_srs_get_from_a_srid(o, srid);
+			srid = buffer_init();
+			srid_int = ows_srs_get_srid_from_layer(o, ln->layer->name);
+			buffer_add_int(srid, srid_int);
+			srs = ows_srs_get_from_a_srid(o, srid_int);
 			if (srs->use != 0)
 			{
 				if (ows_version_get(o->request->version) == 100)

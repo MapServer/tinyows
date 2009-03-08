@@ -64,6 +64,22 @@ void ows_psql_prepare(ows * o, buffer * request_name, buffer * parameters,
  */
 buffer *ows_psql_id_column(ows * o, buffer * layer_name)
 {
+    	ows_layer_node *ln = NULL;
+
+	    assert(o != NULL);
+    	assert(o->layers != NULL);
+	    assert(layer_name != NULL);
+
+    	for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        	if (ln->layer->name != NULL
+                && ln->layer->storage != NULL
+		    	&& ln->layer->name->use == layer_name->use
+           		&& strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+            		return ln->layer->storage->pkey;
+
+    	assert(0); /* Should not happen */
+    	return NULL;
+#if 0
 	buffer *sql;
 	PGresult *res;
 	buffer *b, *request_name, *parameters;
@@ -76,8 +92,7 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
 
 	/* retrieve the column defined like primary key */
 	buffer_add_str(sql, "SELECT column_name ");
-	buffer_add_str(sql,
-	   "FROM information_schema.constraint_column_usage ");
+	buffer_add_str(sql, "FROM information_schema.constraint_column_usage ");
 	buffer_add_str(sql, "WHERE table_name = $1 AND constraint_name = (");
 
 	buffer_add_str(sql, "SELECT c.conname ");
@@ -123,6 +138,7 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
 	PQclear(res);
 
 	return b;
+#endif
 }
 
 
@@ -131,53 +147,21 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
  */
 list *ows_psql_geometry_column(ows * o, buffer * layer_name)
 {
-	buffer *sql, *request_name, *parameters;
-	PGresult *res;
-	list *geom;
-	int i;
+    	ows_layer_node *ln = NULL;
 
-	assert(o != NULL);
-	assert(layer_name != NULL);
+	    assert(o != NULL);
+    	assert(o->layers != NULL);
+	    assert(layer_name != NULL);
 
-	sql = buffer_init();
-	geom = list_init();
+    	for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        	if (ln->layer->name != NULL
+                && ln->layer->storage != NULL
+		    	&& ln->layer->name->use == layer_name->use
+           		&& strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+            		return ln->layer->storage->geom_columns;
 
-	buffer_add_str(sql, "SELECT f_geometry_column ");
-	buffer_add_str(sql, "FROM geometry_columns WHERE f_table_name = $1");
-
-	/* initialize the request's name and parameters */
-	request_name = buffer_init();
-	buffer_add_str(request_name, "geometry_column");
-	parameters = buffer_init();
-	buffer_add_str(parameters, "(text)");
-
-	/* check if the request has already been executed */
-	if (!in_list(o->psql_requests, request_name))
-		ows_psql_prepare(o, request_name, parameters, sql);
-
-	/* execute the request */
-	buffer_empty(sql);
-	buffer_add_str(sql, "EXECUTE geometry_column('");
-	buffer_copy(sql, layer_name);
-	buffer_add_str(sql, "')");
-
-	res = PQexec(o->pg, sql->buf);
-	buffer_free(sql);
-	buffer_free(parameters);
-	buffer_free(request_name);
-
-	if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0)
-	{
-		PQclear(res);
-		return geom;
-	}
-
-	for (i = 0; i < PQntuples(res); i++)
-		list_add_str(geom, PQgetvalue(res, i, 0));
-
-	PQclear(res);
-
-	return geom;
+    	assert(0); /* Should not happen */
+    	return NULL;
 }
 
 /* 
@@ -217,54 +201,24 @@ bool ows_psql_is_geometry_valid(ows * o, buffer * geom)
 /* 
  * Check if the specified column from a layer_name is (or not) a geometry column
  */
-bool ows_psql_is_geometry_column(ows * o, buffer * layer_name,
-   buffer * column)
+bool ows_psql_is_geometry_column(ows * o, buffer * layer_name, buffer * column)
 {
-	buffer *sql, *request_name, *parameters;
-	PGresult *res;
+    ows_layer_node *ln;
 
-	assert(o != NULL);
+    assert(o != NULL);
+    assert(o->layers != NULL);
 	assert(layer_name != NULL);
 	assert(column != NULL);
 
-	sql = buffer_init();
+    for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        if (ln->layer->name != NULL
+	        && ln->layer->storage != NULL
+            && ln->layer->name->use == layer_name->use
+            && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+            return in_list(ln->layer->storage->geom_columns, column);
 
-	buffer_add_str(sql, "SELECT f_geometry_column ");
-	buffer_add_str(sql, "FROM geometry_columns ");
-	buffer_add_str(sql, "WHERE f_table_name = $1 ");
-	buffer_add_str(sql, "AND f_geometry_column = $2");
-
-	/* initialize the request's name and parameters */
-	request_name = buffer_init();
-	buffer_add_str(request_name, "is_geometry_column");
-	parameters = buffer_init();
-	buffer_add_str(parameters, "(text, text)");
-
-	/* check if the request has already been executed */
-	if (!in_list(o->psql_requests, request_name))
-		ows_psql_prepare(o, request_name, parameters, sql);
-
-	/* execute the request */
-	buffer_empty(sql);
-	buffer_add_str(sql, "EXECUTE is_geometry_column('");
-	buffer_copy(sql, layer_name);
-	buffer_add_str(sql, "','");
-	buffer_copy(sql, column);
-	buffer_add_str(sql, "')");
-
-	res = PQexec(o->pg, sql->buf);
-	buffer_free(sql);
-	buffer_free(parameters);
-	buffer_free(request_name);
-
-	if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0)
-	{
-		PQclear(res);
-		return false;
-	}
-
-	PQclear(res);
-	return true;
+    assert(0); /* should not happen */
+    return false;
 }
 
 
@@ -273,60 +227,21 @@ bool ows_psql_is_geometry_column(ows * o, buffer * layer_name,
  */
 list *ows_psql_not_null_properties(ows * o, buffer * layer_name)
 {
-	buffer *sql, *b, *request_name, *parameters;
-	PGresult *res;
-	list *l;
-	int i, end;
+    ows_layer_node *ln;
 
-	assert(o != NULL);
+    assert(o != NULL);
+    assert(o->layers != NULL);
 	assert(layer_name != NULL);
 
-	sql = buffer_init();
-	l = list_init();
+    for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        if (ln->layer->name != NULL
+	        && ln->layer->storage != NULL
+            && ln->layer->name->use == layer_name->use
+            && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+            return ln->layer->storage->not_null_columns;
 
-	buffer_add_str(sql, "SELECT a.attname AS field ");
-	buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t ");
-	buffer_add_str(sql, "WHERE c.relname = $1 ");
-	buffer_add_str(sql, "AND a.attnum > 0 AND a.attrelid = c.oid ");
-	buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attnotnull = 't'");
-
-	/* initialize the request's name and parameters */
-	request_name = buffer_init();
-	buffer_add_str(request_name, "not_null_properties");
-	parameters = buffer_init();
-	buffer_add_str(parameters, "(text)");
-
-	/* check if the request has already been executed */
-	if (!in_list(o->psql_requests, request_name))
-		ows_psql_prepare(o, request_name, parameters, sql);
-
-	/* execute the request */
-	buffer_empty(sql);
-	buffer_add_str(sql, "EXECUTE not_null_properties('");
-	buffer_copy(sql, layer_name);
-	buffer_add_str(sql, "')");
-
-	res = PQexec(o->pg, sql->buf);
-	buffer_free(sql);
-	buffer_free(parameters);
-	buffer_free(request_name);
-
-	if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0)
-	{
-		PQclear(res);
-		return l;
-	}
-
-	for (i = 0, end = PQntuples(res); i < end; i++)
-	{
-		b = buffer_init();
-		buffer_add_str(b, PQgetvalue(res, i, 0));
-		list_add(l, b);
-	}
-
-	PQclear(res);
-
-	return l;
+    assert(0); /* should not happen */
+    return false;
 }
 
 
@@ -451,63 +366,21 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
  */
 array *ows_psql_describe_table(ows * o, buffer * layer_name)
 {
-	array *table;
-	buffer *sql, *request_name, *parameters;
-	PGresult *res;
-	buffer *b, *t;
-	int i, end;
+  	ows_layer_node *ln = NULL;
 
-	assert(o != NULL);
-	assert(layer_name != NULL);
+    assert(o != NULL);
+   	assert(o->layers != NULL);
+    assert(layer_name != NULL);
 
-	sql = buffer_init();
+    for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        if (ln->layer->name != NULL
+	        && ln->layer->storage != NULL
+            && ln->layer->name->use == layer_name->use
+            && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+            return ln->layer->storage->attributes;
 
-	buffer_add_str(sql, "SELECT a.attname AS field, t.typname AS type ");
-	buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t ");
-	buffer_add_str(sql, "WHERE c.relname = $1 ");
-	buffer_add_str(sql, "AND a.attnum > 0 AND a.attrelid = c.oid ");
-	buffer_add_str(sql, "AND a.atttypid = t.oid");
-
-	/* initialize the request's name and parameters */
-	request_name = buffer_init();
-	buffer_add_str(request_name, "describe_table");
-	parameters = buffer_init();
-	buffer_add_str(parameters, "(text)");
-
-	/* check if the request has already been executed */
-	if (!in_list(o->psql_requests, request_name))
-		ows_psql_prepare(o, request_name, parameters, sql);
-
-	/* execute the request */
-	buffer_empty(sql);
-	buffer_add_str(sql, "EXECUTE describe_table('");
-	buffer_copy(sql, layer_name);
-	buffer_add_str(sql, "')");
-
-	res = PQexec(o->pg, sql->buf);
-	buffer_free(sql);
-	buffer_free(parameters);
-	buffer_free(request_name);
-
-	table = array_init();
-	if (PQresultStatus(res) != PGRES_TUPLES_OK)
-	{
-		PQclear(res);
-		return table;
-	}
-
-	for (i = 0, end = PQntuples(res); i < end; i++)
-	{
-		b = buffer_init();
-		t = buffer_init();
-		buffer_add_str(b, PQgetvalue(res, i, 0));
-		buffer_add_str(t, PQgetvalue(res, i, 1));
-		array_add(table, b, t);
-
-	}
-	PQclear(res);
-
-	return table;
+    assert(0); /* should not happen */
+    return NULL;
 }
 
 
@@ -574,63 +447,26 @@ buffer *ows_psql_timestamp_to_xml_time(char *timestamp)
  */
 buffer *ows_psql_type(ows * o, buffer * layer_name, buffer * property)
 {
-	buffer *type, *sql, *prop, *request_name, *parameters;
-	PGresult *res;
+    ows_layer_node *ln;
 
-	assert(o != NULL);
+    assert(o != NULL);
+    assert(o->layers != NULL);
 	assert(layer_name != NULL);
 	assert(property != NULL);
 
-	prop = buffer_init();
-	type = buffer_init();
-	sql = buffer_init();
+    for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        if (ln->layer->name != NULL 
+	        && ln->layer->storage != NULL
+            && ln->layer->name->use == layer_name->use
+            && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+            return array_get(ln->layer->storage->attributes, property->buf);
 
-	buffer_copy(prop, property);
-	prop = buffer_replace(prop, "\"", "");
-
-	buffer_add_str(sql, "SELECT t.typname AS type ");
-	buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t ");
-	buffer_add_str(sql, "WHERE c.relname = $1 ");
-	buffer_add_str(sql, "AND a.attnum > 0 AND a.attrelid = c.oid ");
-	buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attname = $2");
-
-	/* initialize the request's name and parameters */
-	request_name = buffer_init();
-	buffer_add_str(request_name, "type");
-	parameters = buffer_init();
-	buffer_add_str(parameters, "(text,text)");
-
-	/* check if the request has already been executed */
-	if (!in_list(o->psql_requests, request_name))
-		ows_psql_prepare(o, request_name, parameters, sql);
-
-	/* execute the request */
-	buffer_empty(sql);
-	buffer_add_str(sql, "EXECUTE type('");
-	buffer_copy(sql, layer_name);
-	buffer_add_str(sql, "','");
-	buffer_copy(sql, prop);
-	buffer_add_str(sql, "')");
-
-	res = PQexec(o->pg, sql->buf);
-	buffer_free(sql);
-	buffer_free(prop);
-	buffer_free(parameters);
-	buffer_free(request_name);
-
-	if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0)
-	{
-		PQclear(res);
-		return type;
-	}
-
-	buffer_add_str(type, PQgetvalue(res, 0, 0));
-	PQclear(res);
-
-	return type;
+    assert(0); /* should not happen */
+    return NULL;
 }
 
 
+#if 0
 /*
  * Return the number of rows returned by the specified requests
  */
@@ -651,9 +487,9 @@ int ows_psql_number_features(ows * o, list * from, list * where)
 	if (from->size != where->size)
 		return nb;
 
-
-	for (ln_from = from->first, ln_where = where->first; ln_from != NULL;
-	   ln_from = ln_from->next, ln_where = ln_where->next)
+	for (ln_from = from->first, ln_where = where->first;
+         ln_from != NULL;
+	     ln_from = ln_from->next, ln_where = ln_where->next)
 	{
 		sql = buffer_init();
 
@@ -677,6 +513,7 @@ int ows_psql_number_features(ows * o, list * from, list * where)
 
 	return nb;
 }
+#endif
 
 
 /*

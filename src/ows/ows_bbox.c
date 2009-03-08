@@ -138,9 +138,10 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str,
 ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 {
 	ows_bbox *bb;
-	buffer *sql, *srid;
+	buffer *sql;
 	list *geom;
 	list_node *ln_from, *ln_where, *ln_geom;
+	int srid;
 	PGresult *res;
 
 	assert(o != NULL);
@@ -148,7 +149,6 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 	assert(where != NULL);
 
 	bb = ows_bbox_init();
-	ln_geom = NULL;
 
 	/* checks if from list and where list have the same size */
 	if (from->size != where->size)
@@ -156,34 +156,32 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 
 	sql = buffer_init();
 	/* put into a buffer the SQL request calculating an extent */
-	buffer_add_str(sql,
-	   "SELECT xmin(g.extent), ymin(g.extent), xmax(g.extent), ymax(g.extent) FROM ");
-	buffer_add_str(sql, "(SELECT Extent(");
+	buffer_add_str(sql, "SELECT ST_xmin(g.extent), ST_ymin(g.extent),");
+    	buffer_add_str(sql, " ST_xmax(g.extent), ST_ymax(g.extent) FROM ");
+	buffer_add_str(sql, "(SELECT ST_Extent(");
 	buffer_add_str(sql, "foo.the_geom");
-	buffer_add_str(sql, ") FROM ( ");
-	/* for each layer name or each geometry column, make an union between retrieved features */
-	for (ln_from = from->first, ln_where = where->first; ln_from != NULL;
-	   ln_from = ln_from->next, ln_where = ln_where->next)
-	{
+	buffer_add_str(sql, ") as extent FROM ( ");
+	/* for each layer name or each geometry column, make an union 
+         * between retrieved features */
+	for (ln_from = from->first, ln_where = where->first;
+             ln_from != NULL;
+	     ln_from = ln_from->next, ln_where = ln_where->next) {
+
 		geom = ows_psql_geometry_column(o, ln_from->value);
-		assert(geom != NULL);
-		for (ln_geom = geom->first; ln_geom != NULL;
-		   ln_geom = ln_geom->next)
-		{
-			buffer_add_str(sql, " (select \"");
+
+		for (ln_geom=geom->first ; ln_geom != NULL ; ln_geom=ln_geom->next) {
+			buffer_add_str(sql, " (SELECT \"");
 			buffer_copy(sql, ln_geom->value);
-			buffer_add_str(sql, "\" As \"the_geom\" FROM \"");
+			buffer_add_str(sql, "\" AS \"the_geom\" FROM \"");
 			buffer_copy(sql, ln_from->value);
 			buffer_add_str(sql, "\" ");
 			buffer_copy(sql, ln_where->value);
 			buffer_add_str(sql, ")");
 			if (ln_geom->next != NULL)
-				buffer_add_str(sql, " union all ");
+				buffer_add_str(sql, " UNION ALL ");
 		}
 		if (ln_from->next != NULL)
-			buffer_add_str(sql, " union all ");
-
-		list_free(geom);
+			buffer_add_str(sql, " UNION ALL ");
 	}
 	buffer_add_str(sql, " ) AS foo");
 	buffer_add_str(sql, " ) AS g");
@@ -203,13 +201,8 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 	bb->ymax = atof(PQgetvalue(res, 0, 3));
 
 	srid = ows_srs_get_srid_from_layer(o, from->first->value);
-	if (ows_srs_set_from_srid(o, bb->srs, atoi(srid->buf)))
-	{
-		/* do nothing */
-	}
+	ows_srs_set_from_srid(o, bb->srs, srid);
 
-
-	buffer_free(srid);
 	PQclear(res);
 	return bb;
 }

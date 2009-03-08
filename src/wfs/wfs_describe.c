@@ -46,8 +46,6 @@ static void wfs_complex_type(ows * o, wfs_request * wr,
 
 	mandatory_prop = ows_psql_not_null_properties(o, layer_name);
 
-	assert(mandatory_prop != NULL);
-
 	fprintf(o->output, "<xs:complexType name='");
 	buffer_flush(layer_name, o->output);
 	fprintf(o->output, "Type'>\n");
@@ -80,10 +78,6 @@ static void wfs_complex_type(ows * o, wfs_request * wr,
 	fprintf(o->output, "  </xs:extension>\n");
 	fprintf(o->output, " </xs:complexContent>\n");
 	fprintf(o->output, "</xs:complexType>\n");
-
-	array_free(table);
-	buffer_free(id_name);
-	list_free(mandatory_prop);
 }
 
 

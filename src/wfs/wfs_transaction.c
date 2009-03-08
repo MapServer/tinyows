@@ -289,26 +289,24 @@ static void wfs_transaction_response(ows * o, wfs_request * wr,
  * Add a content node value to a buffer
  */
 static buffer *wfs_retrieve_value(ows * o, wfs_request * wr,
-                                  buffer * value, xmlNodePtr n)
+   buffer * value, xmlNodePtr n)
 {
-    xmlChar *content;
+	xmlChar *content;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(value != NULL);
-    assert(n != NULL);
+	assert(o != NULL);
+	assert(wr != NULL);
+	assert(value != NULL);
+	assert(n != NULL);
 
-    content = xmlNodeGetContent(n);
+	content = xmlNodeGetContent(n);
 
-    buffer_add_str(value, "'");
+	buffer_add_str(value, "'");
+	buffer_add_str(value, (char *) content);
+	buffer_add_str(value, "'");
 
-    buffer_add_str(value, (char *) content);
+	xmlFree(content);
 
-    buffer_add_str(value, "'");
- 
-    xmlFree(content);
-
-    return value;
+	return value;
 }
 
 
@@ -485,7 +483,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 		buffer_add_str(sql, "; ");
 
 		buffer_free(values);
-		buffer_free(id);
 		buffer_free(layer_name);
 	}
 

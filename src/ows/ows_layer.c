@@ -469,7 +469,7 @@ void ows_layer_list_flush(ows_layer_list * ll, FILE * output)
 	for (ln = ll->first; ln != NULL; ln = ln->next)
 	{
 		ows_layer_flush(ln->layer, output);
-		fprintf(output, "-------------\n");
+		fprintf(output, "--------------------\n");
 	}
 }
 #endif
@@ -500,6 +500,7 @@ ows_layer *ows_layer_init()
 	l->geobbox = NULL;
 	l->prefix = NULL;
 	l->server = NULL;
+    l->storage = ows_layer_storage_init();
 
 	return l;
 }
@@ -538,6 +539,9 @@ void ows_layer_free(ows_layer * l)
 
 	if (l->server != NULL)
 		buffer_free(l->server);
+
+	if (l->storage != NULL)
+		ows_layer_storage_free(l->storage);
 
 	free(l);
 	l = NULL;
@@ -621,9 +625,15 @@ void ows_layer_flush(ows_layer * l, FILE * output)
 		buffer_flush(l->server, output);
 		fprintf(output, "\n");
 	}
+
+	if (l->storage != NULL)
+	{
+		fprintf(output, "storage: ");
+		ows_layer_storage_flush(l->storage, output);
+		fprintf(output, "\n");
+	}
 }
 #endif
-
 
 /*
  * vim: expandtab sw=4 ts=4 

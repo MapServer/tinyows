@@ -26,6 +26,8 @@ svn-clean: clean doc-clean
 clean: 
 	@rm -f tinyows Makefile src/ows_define.h
 	@rm -rf tinyows.dSYM
+	@rm -f demo/config.xml demo/install.sh
+	@rm -f test/config.xml test/install.sh
 
 install:
 	@echo "-----"
@@ -42,6 +44,11 @@ install-demo:
 	@chmod +x demo/install.sh
 	@su postgres -c "demo/install.sh"
 	cp -i demo/config.xml $(PREFIX)/tinyows
+
+install-test:
+	@chmod +x test/install.sh
+	@su postgres -c "test/install.sh"
+	cp -i test/config.xml $(PREFIX)/tinyows
 
 doc-clean:
 	@rm -rf doc/doxygen

@@ -182,8 +182,6 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
 	buffer_add_str(sql, " ) AS foo");
 	buffer_add_str(sql, " ) AS g");
 
-	list_free(geom);
-
 	res = PQexec(o->pg, sql->buf);
 	buffer_free(sql);
 

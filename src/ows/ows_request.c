@@ -330,12 +330,12 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
     /* check if layers have name or title and srs */
     for (ln = o->layers->first; ln != NULL; ln = ln->next)
     {
+        if (ln->layer->name == NULL)
+             ows_error(o, OWS_ERROR_CONFIG_FILE,
+                     "No layer name defined", "config_file");
+
         if (ows_layer_match_table(o, ln->layer->name))
         {
-            if (ln->layer->name == NULL)
-                ows_error(o, OWS_ERROR_CONFIG_FILE,
-                          "No layer name defined", "config_file");
-
             if (ln->layer->title == NULL)
                 ows_error(o, OWS_ERROR_CONFIG_FILE,
                           "No layer title defined", "config_file");

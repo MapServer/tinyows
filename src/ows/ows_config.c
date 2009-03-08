@@ -670,6 +670,11 @@ static void ows_config_check(ows * o)
                  "No 'online_resource' property in tinyows element",
                  "parse_config_file");
 
+    if (o->schema_dir == NULL)
+        ows_error(o, OWS_ERROR_CONFIG_FILE,
+                 "No 'schema_dir' property in tinyows element",
+                 "parse_config_file");
+
     if (o->metadata == NULL)
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                  "No 'metadata' element", "parse_config_file");
@@ -687,6 +692,11 @@ static void ows_config_check(ows * o)
     if (o->pg_dsn == NULL)
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                  "No 'pg' element",
+                 "parse_config_file");
+
+    if (o->contact == NULL)
+        ows_error(o, OWS_ERROR_CONFIG_FILE,
+                 "No 'contact' element",
                  "parse_config_file");
 
     if (o->contact->name == NULL)

@@ -1,0 +1,16 @@
+#/bin/sh
+
+# don't launch directly this script
+# use 'make install-test' to do so
+
+PG_BIN=@POSTGIS_BIN@
+PG_SHARE=@POSTGIS_SHARE@/contrib/
+DB=tinyows_test
+
+echo "Create Spatial Database: $DB"
+$PG_BIN/dropdb $DB > /dev/null 2> /dev/null
+$PG_BIN/createdb $DB
+$PG_BIN/createlang plpgsql $DB
+$PG_BIN/psql $DB < $PG_SHARE/postgis.sql
+$PG_BIN/psql $DB < $PG_SHARE/spatial_ref_sys.sql
+$PG_BIN/psql $DB < test/ogc_wfs_data.sql

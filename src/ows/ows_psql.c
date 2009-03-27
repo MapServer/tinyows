@@ -455,12 +455,13 @@ buffer *ows_psql_type(ows * o, buffer * layer_name, buffer * property)
 	assert(property != NULL);
 
     for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL 
-	        && ln->layer->storage != NULL
-            && ln->layer->name->use == layer_name->use
-            && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
-            return array_get(ln->layer->storage->attributes, property->buf);
-
+    {
+      if (ln->layer->name != NULL 
+          && ln->layer->storage != NULL
+          && ln->layer->name->use == layer_name->use
+          && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+        return array_get(ln->layer->storage->attributes, property->buf);
+    }
     assert(0); /* should not happen */
     return NULL;
 }

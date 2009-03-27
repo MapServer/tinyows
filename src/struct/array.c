@@ -136,10 +136,11 @@ buffer *array_get(const array * a, const char *key)
 	assert(key != NULL);
 
 	for (ks = strlen(key), an = a->first; an != NULL; an = an->next)
-		if (ks == an->key->use)
-			if (buffer_case_cmp(an->key, key))
-				break;
-
+        {
+            if (ks == an->key->use)
+              if (buffer_case_cmp(an->key, key))
+                break;
+        }
 	assert(an != NULL);
 
 	return an->value;

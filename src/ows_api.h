@@ -159,7 +159,6 @@ void ows_version_free (ows_version * v);
 int ows_version_get (ows_version * v);
 ows_version *ows_version_init ();
 void ows_version_set (ows_version * v, int major, int minor, int release);
-void sld_parse_file (ows * o, const char *filename);
 void wfs (ows * o, wfs_request * wf);
 void wfs_delete (ows * o, wfs_request * wr);
 void wfs_describe_feature_type (ows * o, wfs_request * wr);

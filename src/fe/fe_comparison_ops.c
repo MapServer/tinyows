@@ -83,10 +83,12 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
 	if (buffer_cmp(name, "PropertyIsEqualTo")
 	   || buffer_cmp(name, "PropertyIsNotEqualTo"))
 	{
+        /* remove first and last " */
+        buffer_pop(tmp, 1);
+        buffer_shift(tmp, 1);
 		type = ows_psql_type(o, typename, tmp);
 		if (buffer_cmp(type, "bool"))
 			bool_type = true;
-		buffer_free(type);
 	}
 
 

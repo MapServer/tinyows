@@ -1,22 +1,16 @@
 To be able to launch unit test 
 
-1) create postgis spatial database (as usual),
-  named 'tinyows_test'
+1) Launch in TinyOWS root dir
+   # make install-test
 
-  createdb tinyows_test
-  createlang plpgsql tinyows_test
-  psql -d tinyows_test < lwpostgis.sql
-  psql -d tinyows_test < spatial_ref_sys.sql
+2) Check TinyOWS config file values
+   Check PostgreSQL connection parameter, online_resource 
+   and schema_dir values
 
-2) load wfs.sql data 
+   (online_resource must use a Public URL or IP
+   if you want to use OGC CITE Unit Test)
 
- psql -d tinyows_test < ogc_wfs_data.sql
+4) Install valgrind if not yet been done
 
-3) Replace tinyows config file by 'owg_test_config.xml' one
-   (Check PostgreSQL connection parameter, online_resource 
-    and schema_dir values)
-
-4) Install valgrind if not yet done
-
-5) Play with tests :
- make test-valgrind
+5) Play with tests:
+   $ make test-valgrind

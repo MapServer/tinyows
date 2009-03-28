@@ -138,8 +138,8 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str,
 ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 {
 	ows_bbox *bb;
-	buffer *sql;
-	list *geom;
+	buffer *sql, *box;
+	list *geom, *coord;
 	list_node *ln_from, *ln_where, *ln_geom;
 	int srid;
 	PGresult *res;
@@ -156,9 +156,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 
 	sql = buffer_init();
 	/* put into a buffer the SQL request calculating an extent */
-	buffer_add_str(sql, "SELECT ST_xmin(g.extent), ST_ymin(g.extent),");
-    	buffer_add_str(sql, " ST_xmax(g.extent), ST_ymax(g.extent) FROM ");
-	buffer_add_str(sql, "(SELECT ST_Extent(");
+	buffer_add_str(sql, "SELECT ST_Extent(");
 	buffer_add_str(sql, "foo.the_geom");
 	buffer_add_str(sql, ") as extent FROM ( ");
 	/* for each layer name or each geometry column, make an union 
@@ -184,21 +182,30 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 			buffer_add_str(sql, " UNION ALL ");
 	}
 	buffer_add_str(sql, " ) AS foo");
-	buffer_add_str(sql, " ) AS g");
 
 	res = PQexec(o->pg, sql->buf);
 	buffer_free(sql);
 
-	if (PQresultStatus(res) != PGRES_TUPLES_OK && PQntuples(res) != 4)
+	if (PQresultStatus(res) != PGRES_TUPLES_OK && PQntuples(res) != 1)
 	{
 		PQclear(res);
 		return bb;
 	}
 
-	bb->xmin = atof(PQgetvalue(res, 0, 0));
-	bb->ymin = atof(PQgetvalue(res, 0, 1));
-	bb->xmax = atof(PQgetvalue(res, 0, 2));
-	bb->ymax = atof(PQgetvalue(res, 0, 3));
+    box = buffer_init(); 
+	buffer_add_str(box, PQgetvalue(res, 0, 0));
+    box = buffer_replace(box, "BOX(",  "");
+    box = buffer_replace(box, ")",  "");
+    box = buffer_replace(box, " ",  ",");
+
+    coord = list_explode(',', box);
+    buffer_free(box);
+
+	bb->xmin = atof(coord->first->value->buf);
+	bb->ymin = atof(coord->first->next->value->buf);
+	bb->xmax = atof(coord->first->next->next->value->buf);
+	bb->ymax = atof(coord->first->next->next->next->value->buf);
+    list_free(coord);
 
 	srid = ows_srs_get_srid_from_layer(o, from->first->value);
 	ows_srs_set_from_srid(o, bb->srs, srid);

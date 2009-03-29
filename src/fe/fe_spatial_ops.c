@@ -244,7 +244,6 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 	while (n->type != XML_ELEMENT_NODE) n = n->next;
 
 	buffer_add_str(fe->sql, "setsrid('");
-	buffer_add_str(fe->sql, (char *) n->name);
 
 	geom = buffer_init();
 	buffer_add_str(geom, (char *) n->name);
@@ -331,6 +330,7 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
     }
 
 	buffer_add_str(geom, "'::geometry,");
+    buffer_copy(fe->sql, geom);
 	/* print the srid */
 	buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename)); 
 	buffer_add_str(fe->sql, ")");

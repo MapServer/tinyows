@@ -32,8 +32,7 @@ TINY_OBJS = src\fe\fe_comparison_ops.obj src\fe\fe_error.obj src\fe\fe_filter.ob
             src\ows\ows.obj src\ows\ows_bbox.obj src\ows\ows_config.obj \
             src\ows\ows_error.obj src\ows\ows_geobbox.obj src\ows\ows_get_capabilities.obj \
             src\ows\ows_layer.obj src\ows\ows_metadata.obj src\ows\ows_psql.obj \
-            src\ows\ows_request.obj src\ows\ows_srs.obj src\ows\ows_version.obj \
-            src\sld\sld_parser.obj \
+            src\ows\ows_request.obj src\ows\ows_srs.obj src\ows\ows_version.obj src\ows\ows_storage.obj \
             src\struct\array.obj src\struct\buffer.obj src\struct\cgi_request.obj \
             src\struct\list.obj src\struct\mlist.obj src\struct\regexp.obj \
             src\wfs\wfs_describe.obj src\wfs\wfs_error.obj src\wfs\wfs_get_capabilities.obj \

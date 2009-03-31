@@ -35,6 +35,9 @@
 #define WFS_SCHEMA_100_BASIC        "wfs/1.0.0/WFS-basic.xsd"
 #define WFS_SCHEMA_100_TRANS        "wfs/1.0.0/WFS-transaction.xsd"
 #define WFS_SCHEMA_110              "wfs/1.1.0/wfs.xsd"
+
+#define FE_SCHEMA_100               "filter/1.0.0/filter.xsd"
+#define FE_SCHEMA_110               "filter/1.1.0/filter.xsd"
 #endif /* OWS_DEFINE_H */
 
 

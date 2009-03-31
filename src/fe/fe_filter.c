@@ -83,7 +83,6 @@ void filter_encoding_flush(ows * o, filter_encoding * fe, FILE * output)
 
 	fprintf(output, "]\n");
 }
-#endif
 
 
 /*
@@ -131,13 +130,14 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
 		xmlFree(content);
 	}
 }
+#endif
 
 
 /*
  * Recursive function which eval a prefixed expression and 
  * return the matching string
  */
-buffer *fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
+buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
 	xmlChar *content;
 
@@ -179,10 +179,13 @@ buffer *fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer *
 	else if (strcmp((char *) n->name, "Div") == 0)
 		buffer_add_str(sql, " / ");
 	else if (strcmp((char *) n->name, "Literal") == 0) {
+
 		/* strings must be written in quotation marks */
-		if (check_regexp((char *) content, "^ + $") == 1)
-			buffer_add_str(sql, "''");
-		else {
+
+		if (check_regexp((char *) content, "^[[:space:]]+$") == 1) {
+			buffer_add_str(sql, "''");      /* empty string */
+
+         } else {
 			if (check_regexp((char *) content, "^[A-Za-z]") == 1
 			   || check_regexp((char *) content, ".*-.*") == 1)
 				buffer_add_str(sql, "'");
@@ -419,6 +422,7 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe,
 filter_encoding *fe_filter(ows * o, filter_encoding * fe,
    buffer * typename, buffer * xmlchar)
 {
+    buffer * schema_path;
 	xmlDocPtr xmldoc;
 	xmlNodePtr n;
 
@@ -426,6 +430,20 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
 	assert(fe != NULL);
 	assert(typename != NULL);
 	assert(xmlchar != NULL);
+
+    schema_path = buffer_init();
+    buffer_copy(schema_path, o->schema_dir);
+    if (ows_version_get(o->request->version) == 100)
+        buffer_add_str(schema_path, FE_SCHEMA_100);
+    else buffer_add_str(schema_path, FE_SCHEMA_110);
+
+
+    if (ows_schema_validation(schema_path->buf, xmlchar)){
+        buffer_free(schema_path);
+		fe->error_code = FE_ERROR_FILTER;
+		return fe;
+    }
+    buffer_free(schema_path);
 
 	xmlInitParser();
 	LIBXML_TEST_VERSION fe->sql = buffer_init();

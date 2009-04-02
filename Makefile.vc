@@ -1,15 +1,14 @@
 #
 # makefile.vc - Main Tinyows makefile for MSVC++
 #
-# This  VC++ makefile will build MAPSERVER.LIB, MAPSERV.EXE, and the other
-# MapServer command-line programs.
+# This  VC++ makefile will build TINYOWS.EXES.
 #
 # To use the makefile:
 #  - Open a DOS prompt window
 #  - Run the VCVARS32.BAT script to initialize the VC++ environment variables
 #  - Start the build with:  nmake /f makefile.vc
 #
-# $Id: Makefile.vc 7550 2008-04-30 20:57:26Z dmorissette $
+# $Id: $
 #
 TINYOWS_ROOT = .
 
@@ -22,7 +21,7 @@ CC=     cl
 LINK=   link
 
 #
-# Main MapServer library.
+# Main Tinyows library.
 #
 TINY_DLL = libtiny.dll
 
@@ -98,16 +97,16 @@ ms4w:   all
         zip -r -q -9 tinyows_ms4w-svn.zip ms4w
  
 clean:
-	del *.obj
-	del $(TINY_EXE)
-        del *.lib
-	del *.manifest
-	del src\fe\*.obj
-	del src\ows\*.obj
-	del src\sld\*.obj
-	del src\struct\*.obj
-	del src\wfs\*.obj
-	del src\wms\*.obj
+    del *.obj
+    del $(TINY_EXE)
+    del *.lib
+    del *.manifest
+    del src\fe\*.obj
+    del src\ows\*.obj
+    del src\sld\*.obj
+    del src\struct\*.obj
+    del src\wfs\*.obj
+    del src\wms\*.obj
         
 
 install: $(TINY_EXE)

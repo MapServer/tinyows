@@ -44,7 +44,7 @@ dnl ---------------------------------------------------------------------------
 dnl PostgreSQL / PostGIS support
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(postgis,[  --with-postgis[[=ARG]]    Include PostGIS Support (ARG=yes/path to pg_config)],,)
+AC_ARG_WITH(pg_config,[  --with-pg_config[[=ARG]]    Include PostGIS Support (ARG=yes/path to pg_config)],,)
 
 if test "$with_postgis" = "no" ; then
   AC_MSG_ERROR([PostGIS support is a need to TinyOWS !])
@@ -56,7 +56,7 @@ else
 fi
 
 if ! test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
-  AC_MSG_ERROR(['$PG_CONFIG' is not an executable.  Make sure you use --with-postgis=/path/to/pg_config])
+  AC_MSG_ERROR(['$PG_CONFIG' is not an executable.  Make sure you use --with-pg_config=/path/to/pg_config])
 fi
 
 PG_VER=`$PG_CONFIG --version`

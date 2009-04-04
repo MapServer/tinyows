@@ -487,7 +487,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                 else
 				    buffer_add_int(select, o->degree_precision);
 
-				buffer_add_str(select, ") AS \"");
+				buffer_add_str(select, ", 1) AS \"");
 				buffer_copy(select, an->key);
 				buffer_add_str(select, "\" ");
 			}

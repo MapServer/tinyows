@@ -42,12 +42,12 @@ install:
 
 install-demo:
 	@chmod +x demo/install.sh
-	@su postgres -c "demo/install.sh"
+	@demo/install.sh
 	cp -i demo/config.xml $(PREFIX)/tinyows
 
 install-test:
 	@chmod +x test/install.sh
-	@su postgres -c "test/install.sh"
+	@test/install.sh
 	cp -i test/config.xml $(PREFIX)/tinyows
 
 doc-clean:

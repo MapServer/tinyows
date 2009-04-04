@@ -5,6 +5,7 @@
 
 PG_BIN=@POSTGIS_BIN@
 PG_SHARE=@POSTGIS_SHARE@/contrib/
+export PGUSER=postgres
 DB=tinyows_test
 
 echo "Create Spatial Database: $DB"

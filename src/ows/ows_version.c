@@ -1,4 +1,4 @@
-/* 
+/*
   Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,7 +17,7 @@
   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-  IN THE SOFTWARE. 
+  IN THE SOFTWARE.
 */
 
 #include <stdlib.h>
@@ -32,16 +32,16 @@
  */
 ows_version *ows_version_init()
 {
-	ows_version *v;
+    ows_version *v;
 
-	v = malloc(sizeof(ows_version));
-	assert(v != NULL);
+    v = malloc(sizeof(ows_version));
+    assert(v != NULL);
 
-	v->major = 0;
-	v->minor = 0;
-	v->release = 0;
+    v->major = 0;
+    v->minor = 0;
+    v->release = 0;
 
-	return v;
+    return v;
 }
 
 
@@ -50,11 +50,11 @@ ows_version *ows_version_init()
  */
 void ows_version_set(ows_version * v, int major, int minor, int release)
 {
-	assert(v != NULL);
+    assert(v != NULL);
 
-	v->major = major;
-	v->minor = minor;
-	v->release = release;
+    v->major = major;
+    v->minor = minor;
+    v->release = release;
 }
 
 
@@ -63,10 +63,10 @@ void ows_version_set(ows_version * v, int major, int minor, int release)
  */
 void ows_version_free(ows_version * v)
 {
-	assert(v != NULL);
+    assert(v != NULL);
 
-	free(v);
-	v = NULL;
+    free(v);
+    v = NULL;
 }
 
 
@@ -75,23 +75,23 @@ void ows_version_free(ows_version * v)
  */
 int ows_version_get(ows_version * v)
 {
-	assert(v != NULL);
+    assert(v != NULL);
 
-	return v->major * 100 + v->minor * 10 + v->release;
+    return v->major * 100 + v->minor * 10 + v->release;
 }
 
 
 #ifdef OWS_DEBUG
 void ows_version_flush(ows_version * v, FILE * output)
 {
-	assert(v != NULL);
-	assert(output != NULL);
+    assert(v != NULL);
+    assert(output != NULL);
 
-	fprintf(output, "version: [%i,%i,%i]\n", v->major, v->minor,
-	   v->release);
+    fprintf(output, "version: [%i,%i,%i]\n", v->major, v->minor,
+            v->release);
 }
 #endif
 
 /*
- * vim: expandtab sw=4 ts=4 
+ * vim: expandtab sw=4 ts=4
  */

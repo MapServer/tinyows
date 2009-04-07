@@ -1,4 +1,4 @@
-/* 
+/*
   Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,7 +17,7 @@
   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-  IN THE SOFTWARE. 
+  IN THE SOFTWARE.
 */
 
 
@@ -29,94 +29,93 @@
 
 
 /*
- * Transform an error code into an error message 
+ * Transform an error code into an error message
  */
 static char *wfs_error_code_string(enum wfs_error_code code)
 {
-	switch (code)
-	{
-	case WFS_ERROR_INVALID_VERSION:
-		return "InvalidVersion";
-	case WFS_ERROR_OUTPUT_FORMAT_NOT_SUPPORTED:
-		return "OutputFormatNotSupported";
-	case WFS_ERROR_LAYER_NOT_DEFINED:
-		return "LayerNotDefined";
-	case WFS_ERROR_EXCLUSIVE_PARAMETERS:
-		return "ExclusiveParameters";
-	case WFS_ERROR_LAYER_NOT_RETRIEVABLE:
-		return "LayerNotRetrievable";
-	case WFS_ERROR_LAYER_NOT_WRITABLE:
-		return "LayerNotWritable";
-	case WFS_ERROR_INCORRECT_SIZE_PARAMETER:
-		return "IncorrectSizeParameter";
-	case WFS_ERROR_NO_MATCHING:
-		return "NoMatching";
-	}
+    switch (code) {
+        case WFS_ERROR_INVALID_VERSION:
+            return "InvalidVersion";
+        case WFS_ERROR_OUTPUT_FORMAT_NOT_SUPPORTED:
+            return "OutputFormatNotSupported";
+        case WFS_ERROR_LAYER_NOT_DEFINED:
+            return "LayerNotDefined";
+        case WFS_ERROR_EXCLUSIVE_PARAMETERS:
+            return "ExclusiveParameters";
+        case WFS_ERROR_LAYER_NOT_RETRIEVABLE:
+            return "LayerNotRetrievable";
+        case WFS_ERROR_LAYER_NOT_WRITABLE:
+            return "LayerNotWritable";
+        case WFS_ERROR_INCORRECT_SIZE_PARAMETER:
+            return "IncorrectSizeParameter";
+        case WFS_ERROR_NO_MATCHING:
+            return "NoMatching";
+    }
 
-	assert(0);
+    assert(0);
 }
 
 
-/* 
+/*
  * Return a ServiceExceptionReport as specified in WFS 1.0.0 specification
  */
 static void wfs_error_100(ows * o, wfs_request * wf,
-   enum wfs_error_code code, char *message, char *locator)
+                          enum wfs_error_code code, char *message, char *locator)
 {
-	assert(o != NULL);
-	assert(wf != NULL);
-	assert(message != NULL);
-	assert(locator != NULL);
+    assert(o != NULL);
+    assert(wf != NULL);
+    assert(message != NULL);
+    assert(locator != NULL);
 
-	fprintf(o->output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-	fprintf(o->output, "<ServiceExceptionReport\n");
-	fprintf(o->output, " xmlns=\"http://www.opengis.net/ogc\"\n");
-	fprintf(o->output,
-	   " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
-	fprintf(o->output,
-	   " xsi:schemaLocation=\"http://www.opengis.net/ogc http://schemas.opengis.net/wms/1.1.1/OGC-exception.xsd\"\n");
-	fprintf(o->output, "version=\"1.2.0\">\n");
-	fprintf(o->output, "<ServiceException code=\"%s\" locator=\"%s\">\n",
-	   wfs_error_code_string(code), locator);
-	fprintf(o->output, "%s", message);
-	fprintf(o->output, "</ServiceException>\n");
-	fprintf(o->output, "</ServiceExceptionReport>\n");
+    fprintf(o->output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    fprintf(o->output, "<ServiceExceptionReport\n");
+    fprintf(o->output, " xmlns=\"http://www.opengis.net/ogc\"\n");
+    fprintf(o->output,
+            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
+    fprintf(o->output,
+            " xsi:schemaLocation=\"http://www.opengis.net/ogc http://schemas.opengis.net/wms/1.1.1/OGC-exception.xsd\"\n");
+    fprintf(o->output, "version=\"1.2.0\">\n");
+    fprintf(o->output, "<ServiceException code=\"%s\" locator=\"%s\">\n",
+            wfs_error_code_string(code), locator);
+    fprintf(o->output, "%s", message);
+    fprintf(o->output, "</ServiceException>\n");
+    fprintf(o->output, "</ServiceExceptionReport>\n");
 
-	ows_free(o);
+    ows_free(o);
 
-	exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
 
 
-/* 
+/*
  * Return an ExceptionReport as specified in WFS 1.1.0 specification
  */
 static void wfs_error_110(ows * o, wfs_request * wf,
-   enum wfs_error_code code, char *message, char *locator)
+                          enum wfs_error_code code, char *message, char *locator)
 {
-	assert(o != NULL);
-	assert(wf != NULL);
-	assert(message != NULL);
-	assert(locator != NULL);
+    assert(o != NULL);
+    assert(wf != NULL);
+    assert(message != NULL);
+    assert(locator != NULL);
 
-	fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
-	fprintf(o->output, "<ExceptionReport\n");
-	fprintf(o->output, " xmlns='http://www.opengis.net/ows'\n");
-	fprintf(o->output,
-	   " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
-	fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/ows");
-	fprintf(o->output,
-	   " http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd'\n");
-	fprintf(o->output, " version='1.0.0' language='en'>\n");
-	fprintf(o->output, " <Exception exceptionCode='%s' locator='%s'>\n",
-	   wfs_error_code_string(code), locator);
-	fprintf(o->output, "  <ExceptionText>%s</ExceptionText>\n", message);
-	fprintf(o->output, " </Exception>\n");
-	fprintf(o->output, "</ExceptionReport>\n");
+    fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
+    fprintf(o->output, "<ExceptionReport\n");
+    fprintf(o->output, " xmlns='http://www.opengis.net/ows'\n");
+    fprintf(o->output,
+            " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
+    fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/ows");
+    fprintf(o->output,
+            " http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd'\n");
+    fprintf(o->output, " version='1.0.0' language='en'>\n");
+    fprintf(o->output, " <Exception exceptionCode='%s' locator='%s'>\n",
+            wfs_error_code_string(code), locator);
+    fprintf(o->output, "  <ExceptionText>%s</ExceptionText>\n", message);
+    fprintf(o->output, " </Exception>\n");
+    fprintf(o->output, "</ExceptionReport>\n");
 
-	ows_free(o);
+    ows_free(o);
 
-	exit(EXIT_SUCCESS);
+    exit(EXIT_SUCCESS);
 }
 
 
@@ -124,27 +123,26 @@ static void wfs_error_110(ows * o, wfs_request * wf,
  * Call the right function according to version
  */
 void wfs_error(ows * o, wfs_request * wf, enum wfs_error_code code,
-   char *message, char *locator)
+               char *message, char *locator)
 {
-	int version;
+    int version;
 
-	assert(o != NULL);
-	assert(wf != NULL);
-	assert(message != NULL);
-	assert(locator != NULL);
+    assert(o != NULL);
+    assert(wf != NULL);
+    assert(message != NULL);
+    assert(locator != NULL);
 
-	version = ows_version_get(o->request->version);
-	fprintf(o->output, "Content-Type: application/xml\n\n");
+    version = ows_version_get(o->request->version);
+    fprintf(o->output, "Content-Type: application/xml\n\n");
 
-	switch (version)
-	{
-	case 100:
-		wfs_error_100(o, wf, code, message, locator);
-		break;
-	case 110:
-		wfs_error_110(o, wf, code, message, locator);
-		break;
-	}
+    switch (version) {
+        case 100:
+            wfs_error_100(o, wf, code, message, locator);
+            break;
+        case 110:
+            wfs_error_110(o, wf, code, message, locator);
+            break;
+    }
 }
 
 

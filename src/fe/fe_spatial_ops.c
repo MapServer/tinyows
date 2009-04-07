@@ -1,4 +1,4 @@
-/* 
+/*
   Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,7 +17,7 @@
   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-  IN THE SOFTWARE. 
+  IN THE SOFTWARE.
 */
 
 
@@ -29,141 +29,139 @@
 #include "../ows/ows.h"
 
 
-/* 
+/*
  * Check if the string is a spatial operator
  */
 bool fe_is_spatial_op(char *name)
 {
-	assert(name != NULL);
+    assert(name != NULL);
 
-	/* case sensitive comparison because the gml standard specifies 
-	   strictly the name of the operator */
-	if (strcmp(name, "Equals") == 0
-	   || strcmp(name, "Disjoint") == 0
-	   || strcmp(name, "Touches") == 0
-	   || strcmp(name, "Within") == 0
-	   || strcmp(name, "Overlaps") == 0
-	   || strcmp(name, "Crosses") == 0
-	   || strcmp(name, "Intersects") == 0
-	   || strcmp(name, "Contains") == 0
-	   || strcmp(name, "DWithin") == 0
-	   || strcmp(name, "Beyond") == 0 || strcmp(name, "BBOX") == 0)
-		return true;
+    /* case sensitive comparison because the gml standard specifies
+       strictly the name of the operator */
+    if (strcmp(name, "Equals") == 0
+            || strcmp(name, "Disjoint") == 0
+            || strcmp(name, "Touches") == 0
+            || strcmp(name, "Within") == 0
+            || strcmp(name, "Overlaps") == 0
+            || strcmp(name, "Crosses") == 0
+            || strcmp(name, "Intersects") == 0
+            || strcmp(name, "Contains") == 0
+            || strcmp(name, "DWithin") == 0
+            || strcmp(name, "Beyond") == 0 || strcmp(name, "BBOX") == 0)
+        return true;
 
-	return false;
+    return false;
 }
 
 
 /*
- * Write a polygon geometry according to postgresql syntax from GML bbox 
+ * Write a polygon geometry according to postgresql syntax from GML bbox
  */
 buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-	xmlChar *content, *srsname;
-	buffer *srid, *name, *tmp;
-	list *coord_min, *coord_max, *coord_pair;
-	int srid_int;
+    xmlChar *content, *srsname;
+    buffer *srid, *name, *tmp;
+    list *coord_min, *coord_max, *coord_pair;
+    int srid_int;
 
-	assert(o != NULL);
-	assert(typename != NULL);
-	assert(fe != NULL);
-	assert(n != NULL);
+    assert(o != NULL);
+    assert(typename != NULL);
+    assert(fe != NULL);
+    assert(n != NULL);
 
-	name = buffer_init();
-	buffer_add_str(name, (char *) n->name);
+    name = buffer_init();
+    buffer_add_str(name, (char *) n->name);
 
-	/* BBOX is transformed into a polygon so that point corners are included */
-	buffer_add_str(fe->sql, "setsrid('POLYGON((");
+    /* BBOX is transformed into a polygon so that point corners are included */
+    buffer_add_str(fe->sql, "setsrid('POLYGON((");
 
-	srid_int = ows_srs_get_srid_from_layer(o, typename);
-	srid = buffer_init();
-	buffer_add_int(srid, srid_int); 
-	srsname = xmlGetProp(n, (xmlChar *) "srsName");
+    srid_int = ows_srs_get_srid_from_layer(o, typename);
+    srid = buffer_init();
+    buffer_add_int(srid, srid_int);
+    srsname = xmlGetProp(n, (xmlChar *) "srsName");
 
-	if (srsname != NULL)
-	{
-		if (!check_regexp((char *) srsname, srid->buf))
-		{
-			fe->error_code = FE_ERROR_SRS;
-			xmlFree(srsname);
-			buffer_free(name);
-			buffer_free(srid);
-			return fe->sql;
-		}
-	}
+    if (srsname != NULL) {
+        if (!check_regexp((char *) srsname, srid->buf)) {
+            fe->error_code = FE_ERROR_SRS;
+            xmlFree(srsname);
+            buffer_free(name);
+            buffer_free(srid);
+            return fe->sql;
+        }
+    }
 
-	n = n->children;
+    n = n->children;
 
-	/* jump to the next element if there are spaces */
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
+    /* jump to the next element if there are spaces */
+    while (n->type != XML_ELEMENT_NODE)
+        n = n->next;
 
-	content = xmlNodeGetContent(n->children);
+    content = xmlNodeGetContent(n->children);
 
-	/* GML3 */
-	if (buffer_cmp(name, "Envelope"))
-	{
-		coord_min = list_explode_str(' ', (char *) content);
+    /* GML3 */
+    if (buffer_cmp(name, "Envelope")) {
+        coord_min = list_explode_str(' ', (char *) content);
 
-		n = n->next;
-		/* jump to the next element if there are spaces */
-		while (n->type != XML_ELEMENT_NODE)
-			n = n->next;
-		xmlFree(content);
-		content = xmlNodeGetContent(n->children);
+        n = n->next;
 
-		coord_max = list_explode_str(' ', (char *) content);
-	}
-	/* GML2 */
-	else
-	{
-		tmp = buffer_init();
-		buffer_add_str(tmp, (char *) content);
+        /* jump to the next element if there are spaces */
+        while (n->type != XML_ELEMENT_NODE)
+            n = n->next;
 
-		tmp = fe_transform_coord_gml_to_psql(tmp);
+        xmlFree(content);
+        content = xmlNodeGetContent(n->children);
 
-		coord_pair = list_explode(',', tmp);
-		coord_min = list_explode(' ', coord_pair->first->value);
-		coord_max = list_explode(' ', coord_pair->first->next->value);
-		buffer_free(tmp);
-		list_free(coord_pair);
-	}
+        coord_max = list_explode_str(' ', (char *) content);
+    }
+    /* GML2 */
+    else {
+        tmp = buffer_init();
+        buffer_add_str(tmp, (char *) content);
 
-	/* display the polygon's coordinates matching the bbox */
-	buffer_copy(fe->sql, coord_min->first->value);
-	buffer_add_str(fe->sql, " ");
-	buffer_copy(fe->sql, coord_min->first->next->value);
-	buffer_add_str(fe->sql, ",");
-	buffer_copy(fe->sql, coord_max->first->value);
-	buffer_add_str(fe->sql, " ");
-	buffer_copy(fe->sql, coord_min->first->next->value);
-	buffer_add_str(fe->sql, ",");
-	buffer_copy(fe->sql, coord_max->first->value);
-	buffer_add_str(fe->sql, " ");
-	buffer_copy(fe->sql, coord_max->first->next->value);
-	buffer_add_str(fe->sql, ",");
-	buffer_copy(fe->sql, coord_min->first->value);
-	buffer_add_str(fe->sql, " ");
-	buffer_copy(fe->sql, coord_max->first->next->value);
-	buffer_add_str(fe->sql, ",");
-	buffer_copy(fe->sql, coord_min->first->value);
-	buffer_add_str(fe->sql, " ");
-	buffer_copy(fe->sql, coord_min->first->next->value);
+        tmp = fe_transform_coord_gml_to_psql(tmp);
 
-	list_free(coord_min);
-	list_free(coord_max);
+        coord_pair = list_explode(',', tmp);
+        coord_min = list_explode(' ', coord_pair->first->value);
+        coord_max = list_explode(' ', coord_pair->first->next->value);
+        buffer_free(tmp);
+        list_free(coord_pair);
+    }
 
-	buffer_add_str(fe->sql, "))'::geometry,");
+    /* display the polygon's coordinates matching the bbox */
+    buffer_copy(fe->sql, coord_min->first->value);
+    buffer_add_str(fe->sql, " ");
+    buffer_copy(fe->sql, coord_min->first->next->value);
+    buffer_add_str(fe->sql, ",");
+    buffer_copy(fe->sql, coord_max->first->value);
+    buffer_add_str(fe->sql, " ");
+    buffer_copy(fe->sql, coord_min->first->next->value);
+    buffer_add_str(fe->sql, ",");
+    buffer_copy(fe->sql, coord_max->first->value);
+    buffer_add_str(fe->sql, " ");
+    buffer_copy(fe->sql, coord_max->first->next->value);
+    buffer_add_str(fe->sql, ",");
+    buffer_copy(fe->sql, coord_min->first->value);
+    buffer_add_str(fe->sql, " ");
+    buffer_copy(fe->sql, coord_max->first->next->value);
+    buffer_add_str(fe->sql, ",");
+    buffer_copy(fe->sql, coord_min->first->value);
+    buffer_add_str(fe->sql, " ");
+    buffer_copy(fe->sql, coord_min->first->next->value);
 
-	buffer_copy(fe->sql, srid);
-	buffer_add_str(fe->sql, ")");
+    list_free(coord_min);
+    list_free(coord_max);
 
-	xmlFree(srsname);
-	xmlFree(content);
-	buffer_free(srid);
-	buffer_free(name);
+    buffer_add_str(fe->sql, "))'::geometry,");
 
-	return fe->sql;
+    buffer_copy(fe->sql, srid);
+    buffer_add_str(fe->sql, ")");
+
+    xmlFree(srsname);
+    xmlFree(content);
+    buffer_free(srid);
+    buffer_free(name);
+
+    return fe->sql;
 }
 
 
@@ -172,23 +170,21 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
  */
 buffer *fe_transform_coord_gml_to_psql(buffer * coord)
 {
-	size_t i;
+    size_t i;
 
-	assert(coord != NULL);
+    assert(coord != NULL);
 
-	/*check if the first separator is a comma else do nothing */
-	if (check_regexp(coord->buf, "^[0-9.-]+,"))
-	{
-		for (i = 0; i < coord->use; i++)
-		{
-			if (coord->buf[i] == ' ')
-				coord->buf[i] = ',';
-			else if (coord->buf[i] == ',')
-				coord->buf[i] = ' ';
-		}
-	}
+    /*check if the first separator is a comma else do nothing */
+    if (check_regexp(coord->buf, "^[0-9.-]+,")) {
+        for (i = 0; i < coord->use; i++) {
+            if (coord->buf[i] == ' ')
+                coord->buf[i] = ',';
+            else if (coord->buf[i] == ',')
+                coord->buf[i] = ' ';
+        }
+    }
 
-	return coord;
+    return coord;
 }
 
 
@@ -197,28 +193,26 @@ buffer *fe_transform_coord_gml_to_psql(buffer * coord)
  */
 buffer *fe_transform_coord_gml3_to_psql(buffer * coord)
 {
-	size_t i;
-	int nb_spaces;
+    size_t i;
+    int nb_spaces;
 
-	assert(coord != NULL);
+    assert(coord != NULL);
 
-	nb_spaces = 0;
+    nb_spaces = 0;
 
-	for (i = 0; i < coord->use; i++)
-	{
-		if (coord->buf[i] == ' ')
-		{
-			nb_spaces++;
-			/* transform the second space separator into comma */
-			if (nb_spaces == 2)
-			{
-				coord->buf[i] = ',';
-				nb_spaces = 0;
-			}
-		}
-	}
+    for (i = 0; i < coord->use; i++) {
+        if (coord->buf[i] == ' ') {
+            nb_spaces++;
 
-	return coord;
+            /* transform the second space separator into comma */
+            if (nb_spaces == 2) {
+                coord->buf[i] = ',';
+                nb_spaces = 0;
+            }
+        }
+    }
+
+    return coord;
 }
 
 
@@ -226,337 +220,346 @@ buffer *fe_transform_coord_gml3_to_psql(buffer * coord)
  * Transform a geometry expressed in GML into Postgis geometry syntax
  */
 buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
-   filter_encoding * fe, xmlNodePtr n)
+        filter_encoding * fe, xmlNodePtr n)
 {
-	xmlChar *content;
-	xmlNodePtr node, node_coord;
-	buffer *tmp, *geom;
-        int bracket;
+    xmlChar *content;
+    xmlNodePtr node, node_coord;
+    buffer *tmp, *geom;
+    int bracket;
 
-	assert(o != NULL);
-	assert(typename != NULL);
-	assert(fe != NULL);
-	assert(n != NULL);
+    assert(o != NULL);
+    assert(typename != NULL);
+    assert(fe != NULL);
+    assert(n != NULL);
 
-	content = NULL;
+    content = NULL;
 
-	/* jump to the next element if there are spaces */
-	while (n->type != XML_ELEMENT_NODE) n = n->next;
+    /* jump to the next element if there are spaces */
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-	buffer_add_str(fe->sql, "setsrid('");
+    buffer_add_str(fe->sql, "setsrid('");
 
-	geom = buffer_init();
-	buffer_add_str(geom, (char *) n->name);
+    geom = buffer_init();
+    buffer_add_str(geom, (char *) n->name);
 
-	/* print the geometry type */
-	if (buffer_cmp(geom, "MultiPolygon")) {
-		buffer_add_str(geom, "(((");
+    /* print the geometry type */
+    if (buffer_cmp(geom, "MultiPolygon")) {
+        buffer_add_str(geom, "(((");
         bracket = 3;
     } else if (buffer_cmp(geom, "MultiLineString")
-	   || buffer_cmp(geom, "Polygon")) {
-		buffer_add_str(geom, "((");
+               || buffer_cmp(geom, "Polygon")) {
+        buffer_add_str(geom, "((");
         bracket = 2;
     } else if (buffer_cmp(geom, "MultiPoint")
-	   || buffer_cmp(geom, "LineString")
-	   || buffer_cmp(geom, "Point")) {
-		buffer_add_str(geom, "(");
+               || buffer_cmp(geom, "LineString")
+               || buffer_cmp(geom, "Point")) {
+        buffer_add_str(geom, "(");
         bracket = 1;
     } else {
-		fe->error_code = FE_ERROR_GEOMETRY;
-		buffer_free(geom);
-		return fe->sql;
-	}
-
-	n = n->children;
-	/* jump to the next element if there are spaces */
-	while (n->type != XML_ELEMENT_NODE) n = n->next;
-
-	/* print the coordinates */
-	for (node = n; node != NULL; node = node->next)
-	{
-		if (node->type == XML_ELEMENT_NODE)
-		{
-			node_coord = node;
-			/* go to node <coordinates> */
-			while (strcmp((char *) node_coord->name, "coordinates") != 0
-			   && strcmp((char *) node_coord->name, "posList") != 0
-			   && strcmp((char *) node_coord->name, "pos") != 0)
-			{
-				/* jump to the next element if there are spaces */
-				while (node_coord->type != XML_ELEMENT_NODE)
-					node_coord = node_coord->next;
-				if (strcmp((char *) node_coord->name, "coordinates") != 0
-				   && strcmp((char *) node_coord->name, "posList") != 0
-				   && strcmp((char *) node_coord->name, "pos") != 0)
-					node_coord = node_coord->children;
-			}
-
-			tmp = buffer_init();
-
-			content = xmlNodeGetContent(node_coord);
-			buffer_add_str(tmp, (char *) content);
-			if (strcmp((char *) node_coord->name, "coordinates") == 0)
-				tmp = fe_transform_coord_gml_to_psql(tmp);
-			else
-				tmp = fe_transform_coord_gml3_to_psql(tmp);
-			buffer_copy(geom, tmp);
-			buffer_free(tmp);
-			xmlFree(content);
-		}
-		if (node->next != NULL)
-		{
-			if (node->next->type == XML_ELEMENT_NODE)
-			{
-				if (strcmp((char *) node->next->name,
-					  "lineStringMember") == 0)
-					buffer_add_str(geom, "),(");
-				else if (strcmp((char *) node->next->name,
-					  "polygonMember") == 0)
-					buffer_add_str(geom, ")),((");
-				else
-					buffer_add_str(geom, ",");
-			}
-		}
-	}
-	/* print the geometry type */
-	if (bracket == 3) buffer_add_str(geom, ")))");
-	else if (bracket == 2) buffer_add_str(geom, "))");
-	else buffer_add_str(geom, ")");
-
-    if (!ows_psql_is_geometry_valid(o, geom)) {
-		fe->error_code = FE_ERROR_GEOMETRY;
-		buffer_free(geom);
-		return fe->sql;
+        fe->error_code = FE_ERROR_GEOMETRY;
+        buffer_free(geom);
+        return fe->sql;
     }
 
-	buffer_add_str(geom, "'::geometry,");
+    n = n->children;
+
+    /* jump to the next element if there are spaces */
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
+
+    /* print the coordinates */
+    for (node = n; node != NULL; node = node->next) {
+        if (node->type == XML_ELEMENT_NODE) {
+            node_coord = node;
+
+            /* go to node <coordinates> */
+            while (strcmp((char *) node_coord->name, "coordinates") != 0
+                    && strcmp((char *) node_coord->name, "posList") != 0
+                    && strcmp((char *) node_coord->name, "pos") != 0) {
+                /* jump to the next element if there are spaces */
+                while (node_coord->type != XML_ELEMENT_NODE)
+                    node_coord = node_coord->next;
+
+                if (strcmp((char *) node_coord->name, "coordinates") != 0
+                        && strcmp((char *) node_coord->name, "posList") != 0
+                        && strcmp((char *) node_coord->name, "pos") != 0)
+                    node_coord = node_coord->children;
+            }
+
+            tmp = buffer_init();
+
+            content = xmlNodeGetContent(node_coord);
+            buffer_add_str(tmp, (char *) content);
+
+            if (strcmp((char *) node_coord->name, "coordinates") == 0)
+                tmp = fe_transform_coord_gml_to_psql(tmp);
+            else
+                tmp = fe_transform_coord_gml3_to_psql(tmp);
+
+            buffer_copy(geom, tmp);
+            buffer_free(tmp);
+            xmlFree(content);
+        }
+
+        if (node->next != NULL) {
+            if (node->next->type == XML_ELEMENT_NODE) {
+                if (strcmp((char *) node->next->name,
+                           "lineStringMember") == 0)
+                    buffer_add_str(geom, "),(");
+                else if (strcmp((char *) node->next->name,
+                                "polygonMember") == 0)
+                    buffer_add_str(geom, ")),((");
+                else
+                    buffer_add_str(geom, ",");
+            }
+        }
+    }
+
+    /* print the geometry type */
+    if (bracket == 3) buffer_add_str(geom, ")))");
+    else if (bracket == 2) buffer_add_str(geom, "))");
+    else buffer_add_str(geom, ")");
+
+    if (!ows_psql_is_geometry_valid(o, geom)) {
+        fe->error_code = FE_ERROR_GEOMETRY;
+        buffer_free(geom);
+        return fe->sql;
+    }
+
+    buffer_add_str(geom, "'::geometry,");
     buffer_copy(fe->sql, geom);
-	/* print the srid */
-	buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename)); 
-	buffer_add_str(fe->sql, ")");
+    /* print the srid */
+    buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename));
+    buffer_add_str(fe->sql, ")");
 
-	buffer_free(geom);
+    buffer_free(geom);
 
-	return fe->sql;
-}
-
-
-/* 
- * Return the SQL request matching the spatial operator
- */
-static buffer *fe_spatial_functions(ows * o, buffer * typename,
-   filter_encoding * fe, xmlNodePtr n)
-{
-	assert(o != NULL);
-	assert(typename != NULL);
-	assert(fe != NULL);
-	assert(n != NULL);
-
-	if (strcmp((char *) n->name, "Equals") == 0)
-		buffer_add_str(fe->sql, " Equals(");
-	if (strcmp((char *) n->name, "Disjoint") == 0)
-		buffer_add_str(fe->sql, " Disjoint(");
-	if (strcmp((char *) n->name, "Touches") == 0)
-		buffer_add_str(fe->sql, " Touches(");
-	if (strcmp((char *) n->name, "Within") == 0)
-		buffer_add_str(fe->sql, " Within(");
-	if (strcmp((char *) n->name, "Overlaps") == 0)
-		buffer_add_str(fe->sql, " Overlaps(");
-	if (strcmp((char *) n->name, "Crosses") == 0)
-		buffer_add_str(fe->sql, " Crosses(");
-	if (strcmp((char *) n->name, "Intersects") == 0)
-		buffer_add_str(fe->sql, " Intersects(");
-	if (strcmp((char *) n->name, "Contains") == 0)
-		buffer_add_str(fe->sql, " Contains(");
-
-	n = n->children;
-
-	/* jump to the next element if there are spaces */
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
-
-	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
-
-	n = n->next;
-
-	/* jump to the next element if there are spaces */
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
-
-	buffer_add_str(fe->sql, ",");
-	if (strcmp((char *) n->name, "Box") == 0
-	   || strcmp((char *) n->name, "Envelope") == 0)
-		fe->sql = fe_envelope(o, typename, fe, n);
-	else
-		fe->sql = fe_transform_geometry_gml_to_psql(o, typename, fe, n);
-
-	buffer_add_str(fe->sql, ")");
-
-	return fe->sql;
+    return fe->sql;
 }
 
 
 /*
- * DWithin and Beyond operators : test if a geometry A is within (or beyond) 
- * a specified distance of a geometry B 
+ * Return the SQL request matching the spatial operator
+ */
+static buffer *fe_spatial_functions(ows * o, buffer * typename,
+                                    filter_encoding * fe, xmlNodePtr n)
+{
+    assert(o != NULL);
+    assert(typename != NULL);
+    assert(fe != NULL);
+    assert(n != NULL);
+
+    if (strcmp((char *) n->name, "Equals") == 0)
+        buffer_add_str(fe->sql, " Equals(");
+
+    if (strcmp((char *) n->name, "Disjoint") == 0)
+        buffer_add_str(fe->sql, " Disjoint(");
+
+    if (strcmp((char *) n->name, "Touches") == 0)
+        buffer_add_str(fe->sql, " Touches(");
+
+    if (strcmp((char *) n->name, "Within") == 0)
+        buffer_add_str(fe->sql, " Within(");
+
+    if (strcmp((char *) n->name, "Overlaps") == 0)
+        buffer_add_str(fe->sql, " Overlaps(");
+
+    if (strcmp((char *) n->name, "Crosses") == 0)
+        buffer_add_str(fe->sql, " Crosses(");
+
+    if (strcmp((char *) n->name, "Intersects") == 0)
+        buffer_add_str(fe->sql, " Intersects(");
+
+    if (strcmp((char *) n->name, "Contains") == 0)
+        buffer_add_str(fe->sql, " Contains(");
+
+    n = n->children;
+
+    /* jump to the next element if there are spaces */
+    while (n->type != XML_ELEMENT_NODE)
+        n = n->next;
+
+    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
+
+    n = n->next;
+
+    /* jump to the next element if there are spaces */
+    while (n->type != XML_ELEMENT_NODE)
+        n = n->next;
+
+    buffer_add_str(fe->sql, ",");
+
+    if (strcmp((char *) n->name, "Box") == 0
+            || strcmp((char *) n->name, "Envelope") == 0)
+        fe->sql = fe_envelope(o, typename, fe, n);
+    else
+        fe->sql = fe_transform_geometry_gml_to_psql(o, typename, fe, n);
+
+    buffer_add_str(fe->sql, ")");
+
+    return fe->sql;
+}
+
+
+/*
+ * DWithin and Beyond operators : test if a geometry A is within (or beyond)
+ * a specified distance of a geometry B
  */
 static buffer *fe_distance_functions(ows * o, buffer * typename,
-   filter_encoding * fe, xmlNodePtr n)
+                                     filter_encoding * fe, xmlNodePtr n)
 {
-	xmlChar *content, *units;
-	float km;
-	buffer *tmp, *op;
+    xmlChar *content, *units;
+    float km;
+    buffer *tmp, *op;
 
-	assert(o != NULL);
-	assert(typename != NULL);
-	assert(fe != NULL);
-	assert(n != NULL);
+    assert(o != NULL);
+    assert(typename != NULL);
+    assert(fe != NULL);
+    assert(n != NULL);
 
-	tmp = NULL;
-	op = buffer_init();
+    tmp = NULL;
+    op = buffer_init();
 
-	if (strcmp((char *) n->name, "Beyond") == 0)
-		buffer_add_str(op, " > ");
-	if (strcmp((char *) n->name, "DWithin") == 0)
-		buffer_add_str(op, " < ");
+    if (strcmp((char *) n->name, "Beyond") == 0)
+        buffer_add_str(op, " > ");
 
-	/* parameters are passed with centroid function because 
-	   Distance_sphere parameters must be points
-	   So to be able to calculate distance between lines or polygons 
-	   whose coordinates are degree, centroid function must be used 
-	   To be coherent, centroid is also used with Distance function */
-	if (ows_srs_meter_units(o, typename))
-		buffer_add_str(fe->sql, "Distance(centroid(");
-	else
-		buffer_add_str(fe->sql, "Distance_sphere(centroid(");
+    if (strcmp((char *) n->name, "DWithin") == 0)
+        buffer_add_str(op, " < ");
 
-	n = n->children;
+    /* parameters are passed with centroid function because
+       Distance_sphere parameters must be points
+       So to be able to calculate distance between lines or polygons
+       whose coordinates are degree, centroid function must be used
+       To be coherent, centroid is also used with Distance function */
+    if (ows_srs_meter_units(o, typename))
+        buffer_add_str(fe->sql, "Distance(centroid(");
+    else
+        buffer_add_str(fe->sql, "Distance_sphere(centroid(");
 
-	/* jump to the next element if there are spaces */
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
+    n = n->children;
 
-	/* display the property name */
-	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
+    /* jump to the next element if there are spaces */
+    while (n->type != XML_ELEMENT_NODE)
+        n = n->next;
+
+    /* display the property name */
+    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
 
-	buffer_add_str(fe->sql, "),centroid(");
+    buffer_add_str(fe->sql, "),centroid(");
 
-	n = n->next;
+    n = n->next;
 
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
+    while (n->type != XML_ELEMENT_NODE)
+        n = n->next;
 
-	/* display the geometry */
-	fe->sql = fe_transform_geometry_gml_to_psql(o, typename, fe, n);
+    /* display the geometry */
+    fe->sql = fe_transform_geometry_gml_to_psql(o, typename, fe, n);
 
-	buffer_add_str(fe->sql, "))");
+    buffer_add_str(fe->sql, "))");
 
-	n = n->next;
+    n = n->next;
 
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
+    while (n->type != XML_ELEMENT_NODE)
+        n = n->next;
 
-	units = xmlGetProp(n, (xmlChar *) "units");
-	buffer_copy(fe->sql, op);
-	content = xmlNodeGetContent(n->children);
+    units = xmlGetProp(n, (xmlChar *) "units");
+    buffer_copy(fe->sql, op);
+    content = xmlNodeGetContent(n->children);
 
-	/* units not strictly defined in Filter Encoding specification */
-	if (strcmp((char *) units, "meters") == 0
-	   || strcmp((char *) units, "#metre") == 0)
-		buffer_add_str(fe->sql, (char *) content);
-	else if (strcmp((char *) units, "kilometers") == 0
-	   || strcmp((char *) units, "#kilometre") == 0)
-	{
-		km = atof((char *) content) * 1000.0;
-		tmp = buffer_ftoa((double) km);
-		buffer_copy(fe->sql, tmp);
-		buffer_free(tmp);
-	}
-	else
-	{
-		fe->error_code = FE_ERROR_UNITS;
-	}
+    /* units not strictly defined in Filter Encoding specification */
+    if (strcmp((char *) units, "meters") == 0
+            || strcmp((char *) units, "#metre") == 0)
+        buffer_add_str(fe->sql, (char *) content);
+    else if (strcmp((char *) units, "kilometers") == 0
+             || strcmp((char *) units, "#kilometre") == 0) {
+        km = atof((char *) content) * 1000.0;
+        tmp = buffer_ftoa((double) km);
+        buffer_copy(fe->sql, tmp);
+        buffer_free(tmp);
+    } else {
+        fe->error_code = FE_ERROR_UNITS;
+    }
 
-	buffer_free(op);
-	xmlFree(content);
-	xmlFree(units);
+    buffer_free(op);
+    xmlFree(content);
+    xmlFree(units);
 
-	return fe->sql;
+    return fe->sql;
 }
 
 
-/* 
- * BBOX operator : identify all geometries that spatially interact with the specified box 
+/*
+ * BBOX operator : identify all geometries that spatially interact with the specified box
  */
 static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe,
-   xmlNodePtr n)
+                       xmlNodePtr n)
 {
-	assert(o != NULL);
-	assert(typename != NULL);
-	assert(fe != NULL);
-	assert(n != NULL);
+    assert(o != NULL);
+    assert(typename != NULL);
+    assert(fe != NULL);
+    assert(n != NULL);
 
-	buffer_add_str(fe->sql, "not(disjoint(");
+    buffer_add_str(fe->sql, "not(disjoint(");
 
-	n = n->children;
+    n = n->children;
 
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
+    while (n->type != XML_ELEMENT_NODE)
+        n = n->next;
 
-	/* display the property name */
-	fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
+    /* display the property name */
+    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
-	n = n->next;
+    n = n->next;
 
-	while (n->type != XML_ELEMENT_NODE)
-		n = n->next;
+    while (n->type != XML_ELEMENT_NODE)
+        n = n->next;
 
-	buffer_add_str(fe->sql, ",");
+    buffer_add_str(fe->sql, ",");
 
-	/* display the geometry matching the bbox */
-	if (strcmp((char *) n->name, "Box") == 0
-	   || strcmp((char *) n->name, "Envelope") == 0)
-		fe->sql = fe_envelope(o, typename, fe, n);
-	buffer_add_str(fe->sql, "))");
+    /* display the geometry matching the bbox */
+    if (strcmp((char *) n->name, "Box") == 0
+            || strcmp((char *) n->name, "Envelope") == 0)
+        fe->sql = fe_envelope(o, typename, fe, n);
 
-	return fe->sql;
+    buffer_add_str(fe->sql, "))");
+
+    return fe->sql;
 }
 
 
-/* 
+/*
  * Print the SQL request matching spatial function (Equals,Disjoint, etc)
- * Warning : before calling this function, 
- * Check if the node name is a spatial operator with fe_is_spatial_op() 
+ * Warning : before calling this function,
+ * Check if the node name is a spatial operator with fe_is_spatial_op()
  */
 buffer *fe_spatial_op(ows * o, buffer * typename, filter_encoding * fe,
-   xmlNodePtr n)
+                      xmlNodePtr n)
 {
-	assert(o != NULL);
-	assert(typename != NULL);
-	assert(fe != NULL);
-	assert(n != NULL);
+    assert(o != NULL);
+    assert(typename != NULL);
+    assert(fe != NULL);
+    assert(n != NULL);
 
-	/* case sensitive comparison because the gml standard specifies 
-	   strictly the name of the operator */
-	if (strcmp((char *) n->name, "Equals") == 0
-	   || strcmp((char *) n->name, "Disjoint") == 0
-	   || strcmp((char *) n->name, "Touches") == 0
-	   || strcmp((char *) n->name, "Within") == 0
-	   || strcmp((char *) n->name, "Overlaps") == 0
-	   || strcmp((char *) n->name, "Crosses") == 0
-	   || strcmp((char *) n->name, "Intersects") == 0
-	   || strcmp((char *) n->name, "Contains") == 0)
-		fe->sql = fe_spatial_functions(o, typename, fe, n);
-	else if (strcmp((char *) n->name, "DWithin") == 0
-	   || strcmp((char *) n->name, "Beyond") == 0)
-		fe->sql = fe_distance_functions(o, typename, fe, n);
-	else if (strcmp((char *) n->name, "BBOX") == 0)
-		fe->sql = fe_bbox(o, typename, fe, n);
-	else
-		fe->error_code = FE_ERROR_FILTER;
+    /* case sensitive comparison because the gml standard specifies
+       strictly the name of the operator */
+    if (strcmp((char *) n->name, "Equals") == 0
+            || strcmp((char *) n->name, "Disjoint") == 0
+            || strcmp((char *) n->name, "Touches") == 0
+            || strcmp((char *) n->name, "Within") == 0
+            || strcmp((char *) n->name, "Overlaps") == 0
+            || strcmp((char *) n->name, "Crosses") == 0
+            || strcmp((char *) n->name, "Intersects") == 0
+            || strcmp((char *) n->name, "Contains") == 0)
+        fe->sql = fe_spatial_functions(o, typename, fe, n);
+    else if (strcmp((char *) n->name, "DWithin") == 0
+             || strcmp((char *) n->name, "Beyond") == 0)
+        fe->sql = fe_distance_functions(o, typename, fe, n);
+    else if (strcmp((char *) n->name, "BBOX") == 0)
+        fe->sql = fe_bbox(o, typename, fe, n);
+    else
+        fe->error_code = FE_ERROR_FILTER;
 
-	return fe->sql;
+    return fe->sql;
 }
 
 

@@ -1,4 +1,4 @@
-/* 
+/*
   Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -17,7 +17,7 @@
   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-  IN THE SOFTWARE. 
+  IN THE SOFTWARE.
 */
 
 
@@ -30,33 +30,34 @@
 #include "../ows/ows.h"
 
 
-/* 
- * Check if a string match a pattern 
+/*
+ * Check if a string match a pattern
  */
 bool check_regexp(const char *str_request, const char *str_regex)
 {
-	int err;
-	int match;
-	regex_t preg;
+    int err;
+    int match;
+    regex_t preg;
 
-	assert(str_request != NULL);
-	assert(str_regex != NULL);
+    assert(str_request != NULL);
+    assert(str_regex != NULL);
 
-	err = regcomp(&preg, str_regex, REG_NOSUB | REG_EXTENDED);
-	if (err == 0)
-	{
+    err = regcomp(&preg, str_regex, REG_NOSUB | REG_EXTENDED);
 
-		match = regexec(&preg, str_request, 0, NULL, 0);
-		regfree(&preg);
+    if (err == 0) {
 
-		if (match == 0)
-			return true;
-		else if (match == REG_NOMATCH)
-			return false;
-		else
-			return false;
-	}
-	return false;
+        match = regexec(&preg, str_request, 0, NULL, 0);
+        regfree(&preg);
+
+        if (match == 0)
+            return true;
+        else if (match == REG_NOMATCH)
+            return false;
+        else
+            return false;
+    }
+
+    return false;
 }
 
 

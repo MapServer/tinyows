@@ -19,7 +19,7 @@ all:
 	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(SRC) -o tinyows
 	@rm -rf tinyows.dSYM
 
-svn-clean: clean doc-clean
+svn-clean: clean doc-clean astyle
 	@find . -name '*~' -exec rm {} \;
 	@rm -f configure
 
@@ -87,4 +87,5 @@ test-exception:
 	@test/unit_test test/wfs/describe 4
 
 astyle:
-	@(astyle -A1 $(SRC)) || echo "astyle seems not installed"
+	@(astyle -A4 -S -M -m -f -p -U -o -c $(SRC)) \
+	|| echo "astyle seems not installed"

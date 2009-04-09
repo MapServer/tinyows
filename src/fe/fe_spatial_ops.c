@@ -275,10 +275,18 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
             while (strcmp((char *) node_coord->name, "coordinates") != 0
                     && strcmp((char *) node_coord->name, "posList") != 0
                     && strcmp((char *) node_coord->name, "pos") != 0) {
-                /* jump to the next element if there are spaces */
-                while (node_coord->type != XML_ELEMENT_NODE)
-                    node_coord = node_coord->next;
 
+                while (node_coord != NULL && node_coord->type != XML_ELEMENT_NODE) {
+                    node_coord = node_coord->next;
+                }
+
+                if (node_coord == NULL) {
+                    fe->error_code = FE_ERROR_GEOMETRY;
+                    buffer_free(geom);
+                    return fe->sql;
+               }
+
+                /* jump to the next element if there are spaces */
                 if (strcmp((char *) node_coord->name, "coordinates") != 0
                         && strcmp((char *) node_coord->name, "posList") != 0
                         && strcmp((char *) node_coord->name, "pos") != 0)

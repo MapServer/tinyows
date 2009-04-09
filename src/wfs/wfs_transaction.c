@@ -426,9 +426,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                     } else if (strcmp((char *) elemt->name, "Null") == 0) {
                         buffer_add_str(values, "''");
                     } else {
-                        fe->sql =
-                            fe_transform_geometry_gml_to_psql(o,
-                                                              layer_name, fe, elemt);
+                        fe->sql = fe_transform_geometry_gml_to_psql(o, layer_name, fe, elemt);
                         buffer_copy(values, fe->sql);
                     }
 
@@ -638,6 +636,14 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     buffer_add_str(sql, "\"");
 
     n = n->children;
+    if (n == NULL) {
+        buffer_free(xmlstring);
+        buffer_free(typename);
+        buffer_free(sql);
+        result = buffer_init();
+        buffer_add_str(result, "No FE selector on DELETE statement");
+        return result;
+    }
 
     /* jump to the next element if there are spaces */
     while (n->type != XML_ELEMENT_NODE)
@@ -767,8 +773,8 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                         values = wfs_retrieve_value(o, wr, values, node);
                     }
 
+                    buffer_free(property_name);
                     buffer_copy(sql, values);
-                    buffer_free(values);
                 }
             }
 
@@ -785,6 +791,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                     result = fill_fe_error(o, filter);
                     buffer_free(xmlstring);
                     filter_encoding_free(filter);
+                    buffer_free(values);
                     buffer_free(typename);
                     buffer_free(sql);
                     return result;
@@ -799,6 +806,8 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
         if (n->next != NULL)
             if (strcmp((char *) n->next->name, "Property") == 0)
                 buffer_add_str(sql, ",");
+
+    buffer_free(values);
     }
 
     buffer_add_str(sql, "; ");

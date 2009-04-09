@@ -45,7 +45,7 @@ export QUERY_STRING=$option
 
 # Valgrind resume mode
 if [ $mode -eq 1 ]; then
-    valgrind $valgrind_opt ./tinyows 2> $file_tmp 1> /dev/null
+    time valgrind $valgrind_opt ./tinyows 2> $file_tmp 1> /dev/null
     valgrind_error=`grep ERROR $file_tmp                                  \
 	    	    | sed -e 's/^==[0-9]\+== ERROR SUMMARY: //g'          \
 	  	          -e 's/from.\+$//'                               \
@@ -77,6 +77,14 @@ elif [ $mode -eq 4 ]; then
 	    echo $ows_ret | sed -e 's/<\/ExceptionText>//' -e 's/<ExceptionText>//'
     fi
 
+# stderr mode
+elif [ $mode -eq 5 ]; then
+    ./tinyows > /dev/null 2> $file_tmp
+    ows_ret=`cat $file_tmp`
+    if [ "$ows_ret" ]; then
+	    echo "$unit_id => stderr"
+    fi
+    rm -f $file_tmp
 fi
 
 done

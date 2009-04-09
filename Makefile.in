@@ -60,31 +60,13 @@ doxygen: doc-clean
 	) || echo "doxygen seems not installed"
 
 test-valgrind:
-	@test/unit_test test/wfs/get_feature 1
-	@test/unit_test test/wfs/get_feature/spatialops 1
-	@test/unit_test test/wfs/get_feature/logicalops 1
-	@test/unit_test test/wfs/get_feature/gmlsf-1 1
-	@test/unit_test test/wfs/get_feature/arithmeticops 1
-	@test/unit_test test/wfs/get_capabilities 1
-	@test/unit_test test/wfs/describe 1
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 1
 
 test-output:
-	@test/unit_test test/wfs/get_feature 3
-	@test/unit_test test/wfs/get_feature/spatialops 3
-	@test/unit_test test/wfs/get_feature/logicalops 3
-	@test/unit_test test/wfs/get_feature/gmlsf-1 3
-	@test/unit_test test/wfs/get_feature/arithmeticops 3
-	@test/unit_test test/wfs/get_capabilities 3
-	@test/unit_test test/wfs/describe 3
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 3
 
 test-exception:
-	@test/unit_test test/wfs/get_feature 4
-	@test/unit_test test/wfs/get_feature/spatialops 4
-	@test/unit_test test/wfs/get_feature/logicalops 4
-	@test/unit_test test/wfs/get_feature/gmlsf-1 4
-	@test/unit_test test/wfs/get_feature/arithmeticops 4
-	@test/unit_test test/wfs/get_capabilities 4
-	@test/unit_test test/wfs/describe 4
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 4
 
 astyle:
 	@(astyle -A4 -S -M -m -f -p -U -o -c $(SRC)) \

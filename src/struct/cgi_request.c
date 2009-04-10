@@ -210,12 +210,10 @@ array *cgi_parse_kvp(ows * o, char *query)
                               "request");
                 }
             else {
-                if (check_regexp(string,
-                                 "[A-Za-zà-ÿ0-9.\\,():/\\*_ \\-]")
+                if (check_regexp(string, "[A-Za-zà-ÿ0-9.\\,():/\\*_ \\-]")
                         /* if word is filter key, more characters are allowed */
                         || (buffer_cmp(key, "filter")
-                            && check_regexp(string,
-                                            "[A-Za-zà-ÿ0-9.#\\,():/_<> \"\'=\\*!\\-]")))
+                            && check_regexp(string, "[A-Za-zà-ÿ0-9.#\\,():/_<> \"\'=\\*!\\-]")))
                     buffer_add(val, query[i]);
                 else {
                     buffer_free(key);
@@ -419,7 +417,7 @@ buffer *cgi_add_xml_into_buffer(buffer * element, xmlNodePtr n)
 
     ns = xmlGetNsList(n->doc, n);
 
-    for (i = 0 ; ns && ns[i] != NULL && ns[i]->prefix != NULL ; i++)
+    for (i = 0 ; ns[i] != NULL ; i++)
         xmlNewNs(n, ns[i]->href, ns[i]->prefix);
 
     buf = xmlBufferCreate();

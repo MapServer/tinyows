@@ -773,9 +773,9 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                         values = wfs_retrieve_value(o, wr, values, node);
                     }
 
-                    buffer_free(property_name);
                     buffer_copy(sql, values);
                 }
+                buffer_free(property_name);
             }
 
             if (strcmp((char *) n->name, "Filter") == 0) {

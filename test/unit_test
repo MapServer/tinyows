@@ -45,7 +45,7 @@ export QUERY_STRING=$option
 
 # Valgrind resume mode
 if [ $mode -eq 1 ]; then
-    time valgrind $valgrind_opt ./tinyows 2> $file_tmp 1> /dev/null
+    valgrind $valgrind_opt ./tinyows 2> $file_tmp 1> /dev/null
     valgrind_error=`grep ERROR $file_tmp                                  \
 	    	    | sed -e 's/^==[0-9]\+== ERROR SUMMARY: //g'          \
 	  	          -e 's/from.\+$//'                               \

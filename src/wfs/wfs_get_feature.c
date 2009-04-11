@@ -250,7 +250,7 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     fprintf(o->output, "<wfs:FeatureCollection\n");
 
     for (an = namespaces->first; an != NULL; an = an->next)
-        fprintf(o->output, " xmlns:%s='%s'", an->key->buf, an->value->buf);
+        fprintf(o->output, " xmlns:%s='%s'\n", an->key->buf, an->value->buf);
 
     fprintf(o->output, " xmlns:wfs='http://www.opengis.net/wfs'\n");
     fprintf(o->output, " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
@@ -262,31 +262,28 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
 
     fprintf(o->output, " xsi:schemaLocation='");
 
-    for (an = namespaces->first; an != NULL; an = an->next) {
-        if (ows_version_get(o->request->version) == 100)
-            fprintf(o->output,
-                    " %s %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType \n",
-                    an->value->buf, o->online_resource->buf);
-        else
-            fprintf(o->output,
-                    " %s %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType \n",
-                    an->value->buf, o->online_resource->buf);
-    }
+    if (ows_version_get(o->request->version) == 100)
+        fprintf(o->output,
+                "%s\n    %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType&amp;Typename\n",
+                namespaces->first->value->buf, o->online_resource->buf);
+    else fprintf(o->output,
+                "%s\n   %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType&amp;Typename\n",
+                namespaces->first->value->buf, o->online_resource->buf);
 
     if (ows_version_get(o->request->version) == 100) {
-        fprintf(o->output, " http://www.opengis.net/wfs");
-        fprintf(o->output, " http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd ");
+        fprintf(o->output, "   http://www.opengis.net/wfs\n");
+        fprintf(o->output, "   http://schemas.opengis.net/wfs/1.0.0/WFS-basic.xsd\n");
     } else {
-        fprintf(o->output, " http://www.opengis.net/wfs");
-        fprintf(o->output, " http://schemas.opengis.net/wfs/1.1.0/wfs.xsd ");
+        fprintf(o->output, "   http://www.opengis.net/wfs\n");
+        fprintf(o->output, "   http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\n");
     }
 
     if (wr->format == WFS_GML2) {
-        fprintf(o->output, " http://www.opengis.net/gml");
-        fprintf(o->output, " http://schemas.opengis.net/gml/2.1.2/feature.xsd' \n");
+        fprintf(o->output, "   http://www.opengis.net/gml\n");
+        fprintf(o->output, "   http://schemas.opengis.net/gml/2.1.2/feature.xsd'\n");
     } else {
-        fprintf(o->output, " http://www.opengis.net/gml");
-        fprintf(o->output, " http://schemas.opengis.net/gml/3.1.1/base/gml.xsd' \n");
+        fprintf(o->output, "   http://www.opengis.net/gml\n");
+        fprintf(o->output, "   http://schemas.opengis.net/gml/3.1.1/base/gml.xsd'\n");
     }
 
     array_free(namespaces);

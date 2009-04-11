@@ -299,6 +299,8 @@ int main(int argc, char *argv[])
         /* Command line Unit Test cases with XML values (not HTTP) */
     } else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
         o->request->method = OWS_METHOD_XML;
+    else if (!cgi_method_post() && !cgi_method_get())
+        o->request->method = OWS_METHOD_KVP;
     else ows_error(o, OWS_ERROR_REQUEST_HTTP,
                        "Wrong HTTP request Method", "http");
 

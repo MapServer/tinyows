@@ -73,7 +73,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
     buffer_add_str(name, (char *) n->name);
 
     /* BBOX is transformed into a polygon so that point corners are included */
-    buffer_add_str(fe->sql, "setsrid('POLYGON((");
+    buffer_add_str(fe->sql, "setsrid('BOX(");
 
     srid_int = ows_srs_get_srid_from_layer(o, typename);
     srid = buffer_init();
@@ -128,30 +128,19 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
     }
 
     /* display the polygon's coordinates matching the bbox */
+
     buffer_copy(fe->sql, coord_min->first->value);
     buffer_add_str(fe->sql, " ");
     buffer_copy(fe->sql, coord_min->first->next->value);
     buffer_add_str(fe->sql, ",");
     buffer_copy(fe->sql, coord_max->first->value);
     buffer_add_str(fe->sql, " ");
-    buffer_copy(fe->sql, coord_min->first->next->value);
-    buffer_add_str(fe->sql, ",");
-    buffer_copy(fe->sql, coord_max->first->value);
-    buffer_add_str(fe->sql, " ");
     buffer_copy(fe->sql, coord_max->first->next->value);
-    buffer_add_str(fe->sql, ",");
-    buffer_copy(fe->sql, coord_min->first->value);
-    buffer_add_str(fe->sql, " ");
-    buffer_copy(fe->sql, coord_max->first->next->value);
-    buffer_add_str(fe->sql, ",");
-    buffer_copy(fe->sql, coord_min->first->value);
-    buffer_add_str(fe->sql, " ");
-    buffer_copy(fe->sql, coord_min->first->next->value);
 
     list_free(coord_min);
     list_free(coord_max);
 
-    buffer_add_str(fe->sql, "))'::geometry,");
+    buffer_add_str(fe->sql, ")'::box2d,");
 
     buffer_copy(fe->sql, srid);
     buffer_add_str(fe->sql, ")");
@@ -507,7 +496,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe,
     assert(fe != NULL);
     assert(n != NULL);
 
-    buffer_add_str(fe->sql, "not(disjoint(");
+    buffer_add_str(fe->sql, "st_intersects(");
 
     n = n->children;
 
@@ -529,7 +518,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe,
             || strcmp((char *) n->name, "Envelope") == 0)
         fe->sql = fe_envelope(o, typename, fe, n);
 
-    buffer_add_str(fe->sql, "))");
+    buffer_add_str(fe->sql, ")");
 
     return fe->sql;
 }

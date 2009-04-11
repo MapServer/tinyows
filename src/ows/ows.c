@@ -325,11 +325,11 @@ int main(int argc, char *argv[])
     /* Fill service's metadata */
     ows_metadata_fill(o, o->cgi);
 
-    /* Process service request */
-    ows_request_check(o, o->request, o->cgi, query);
-
     /* Fill layers storage metadata */
     ows_layers_storage_fill(o);
+
+    /* Process service request */
+    ows_request_check(o, o->request, o->cgi, query);
 
     /* Run the right OWS service */
     switch (o->request->service) {

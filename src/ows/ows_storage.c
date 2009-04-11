@@ -198,19 +198,6 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND c.contype = 'p')");
 
-#if 0
-    /* retrieve the column named id */
-    buffer_add_str(sql, " UNION ");
-    buffer_add_str(sql, "SELECT a.attname ");
-    buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_namespace n ");
-    buffer_add_str(sql, "WHERE c.relname = ' ");
-    buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND c.relnamespace = n.oid ");
-    buffer_add_str(sql, " AND n.nspname = '");
-    buffer_copy(sql, l->storage->schema);
-    buffer_add_str(sql, "' AND a.attname = 'id' AND a.attrelid = c.oid");
-#endif
-
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
@@ -268,7 +255,6 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
         buffer_add_str(b, PQgetvalue(res, i, 0));
         buffer_add_str(t, PQgetvalue(res, i, 1));
         array_add(l->storage->attributes, b, t);
-
     }
 
     PQclear(res);
@@ -331,17 +317,38 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l)
 void ows_layers_storage_fill(ows * o)
 {
     ows_layer_node *ln;
+    buffer * sql;
+    PGresult *res;
+    int i, end;
+    bool filled;
 
     assert(o != NULL);
     assert(o->layers != NULL);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ows_layer_match_table(o, ln->layer->name))
-            ows_layer_storage_fill(o, ln->layer);
-        else {
-            ows_layer_storage_free(ln->layer->storage);
-            ln->layer->storage = NULL;
+    sql = buffer_init();
+    buffer_add_str(sql, "SELECT DISTINCT f_table_schema, f_table_name FROM geometry_columns");
+    res = PQexec(o->pg, sql->buf);
+    buffer_free(sql);
+
+    for (ln = o->layers->first; ln != NULL; ln = ln->next) {
+        filled = false;
+
+        /* TODO add PostgreSQL schema handle */
+        for (i = 0, end = PQntuples(res); i < end; i++) {
+            if (buffer_cmp(ln->layer->name, (char *) PQgetvalue(res, i, 1))) {
+                ows_layer_storage_fill(o, ln->layer);
+                filled = true;
+            }
         }
+            
+        if (!filled) {
+            if (ln->layer->storage != NULL)
+                ows_layer_storage_free(ln->layer->storage);
+                ln->layer->storage = NULL;
+        }
+    }
+    PQclear(res);
+
 }
 
 /*

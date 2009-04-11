@@ -112,7 +112,7 @@ array *ows_layer_list_namespaces (ows_layer_list * ll);
 list *ows_layer_list_prefix (ows_layer_list * ll, list * layer_name);
 bool ows_layer_list_retrievable (const ows_layer_list * ll);
 bool ows_layer_list_writable (const ows_layer_list * ll);
-bool ows_layer_match_table (ows * o, buffer * layer_name);
+bool ows_layer_match_table (const ows * o, const buffer * name);
 void ows_layer_node_free (ows_layer_list * ll, ows_layer_node * ln);
 ows_layer_node *ows_layer_node_init ();
 buffer *ows_layer_prefix (ows_layer_list * ll, buffer * layer_name);

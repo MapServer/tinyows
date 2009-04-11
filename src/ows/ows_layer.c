@@ -68,56 +68,23 @@ void ows_layer_list_free(ows_layer_list * ll)
 /*
  * Check if a layer matchs an existing table in PostGis
  */
-bool ows_layer_match_table(ows * o, buffer * layer_name)
+bool ows_layer_match_table(const ows * o, const buffer * name)
 {
-    PGresult *res;
-    buffer *sql, *request_name, *parameters;
-    bool ok;
+    ows_layer_node *ln;
 
     assert(o != NULL);
-    assert(o->pg != NULL);
-    assert(layer_name != NULL);
+    assert(name != NULL);
 
-    ok = false;
-
-    sql = buffer_init();
-    buffer_add_str(sql, "SELECT count(*) ");
-    buffer_add_str(sql, "FROM pg_class ");
-    buffer_add_str(sql, "WHERE relname = $1");
-
-    /* initialize the request's name and parameters */
-    request_name = buffer_init();
-    buffer_add_str(request_name, "match_table");
-    parameters = buffer_init();
-    buffer_add_str(parameters, "(text)");
-
-    /* check if the request has already been executed */
-    if (!in_list(o->psql_requests, request_name))
-        ows_psql_prepare(o, request_name, parameters, sql);
-
-    /* execute the request */
-    buffer_empty(sql);
-    buffer_add_str(sql, "EXECUTE match_table('");
-    buffer_copy(sql, layer_name);
-    buffer_add_str(sql, "')");
-
-    res = PQexec(o->pg, sql->buf);
-    buffer_free(sql);
-    buffer_free(parameters);
-    buffer_free(request_name);
-
-    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
-        PQclear(res);
-
-        return ok;
+    for (ln = o->layers->first; ln != NULL; ln = ln->next) {
+        if (ln->layer->name != NULL
+                && ln->layer->name->use == name->use
+                && strcmp(ln->layer->name->buf, name->buf) == 0) {
+                    if (ln->layer->storage != NULL) return true;
+                    else return false;
+        }
     }
 
-    if (atoi(PQgetvalue(res, 0, 0)) == 1)
-        ok = true;
-
-    PQclear(res);
-
-    return ok;
+    return false;
 }
 
 

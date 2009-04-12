@@ -425,21 +425,23 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
     assert(typename != NULL);
     assert(xmlchar != NULL);
 
-    schema_path = buffer_init();
-    buffer_copy(schema_path, o->schema_dir);
+    /* No validation if Filter came from KVP method */
+    if (o->request->method == OWS_METHOD_XML) {
+        schema_path = buffer_init();
+        buffer_copy(schema_path, o->schema_dir);
 
-    if (ows_version_get(o->request->version) == 100)
-        buffer_add_str(schema_path, FE_SCHEMA_100);
-    else buffer_add_str(schema_path, FE_SCHEMA_110);
+        if (ows_version_get(o->request->version) == 100)
+            buffer_add_str(schema_path, FE_SCHEMA_100);
+        else buffer_add_str(schema_path, FE_SCHEMA_110);
 
+        if (ows_schema_validation(schema_path->buf, xmlchar)) {
+            buffer_free(schema_path);
+            fe->error_code = FE_ERROR_FILTER;
+            return fe;
+        }
 
-    if (ows_schema_validation(schema_path->buf, xmlchar)) {
         buffer_free(schema_path);
-        fe->error_code = FE_ERROR_FILTER;
-        return fe;
     }
-
-    buffer_free(schema_path);
 
     xmlInitParser();
     LIBXML_TEST_VERSION fe->sql = buffer_init();

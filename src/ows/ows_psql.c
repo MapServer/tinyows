@@ -79,65 +79,6 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
 
     assert(0); /* Should not happen */
     return NULL;
-#if 0
-    buffer *sql;
-    PGresult *res;
-    buffer *b, *request_name, *parameters;
-
-    assert(o != NULL);
-    assert(layer_name != NULL);
-
-    sql = buffer_init();
-    b = buffer_init();
-
-    /* retrieve the column defined like primary key */
-    buffer_add_str(sql, "SELECT column_name ");
-    buffer_add_str(sql, "FROM information_schema.constraint_column_usage ");
-    buffer_add_str(sql, "WHERE table_name = $1 AND constraint_name = (");
-
-    buffer_add_str(sql, "SELECT c.conname ");
-    buffer_add_str(sql, "FROM pg_class r, pg_constraint c ");
-    buffer_add_str(sql, "WHERE r.oid = c.conrelid AND relname = $1 ");
-    buffer_add_str(sql, "AND c.contype = 'p')");
-
-    /* retrieve the column named id */
-    buffer_add_str(sql, " UNION ");
-    buffer_add_str(sql, "SELECT a.attname ");
-    buffer_add_str(sql, "FROM pg_class c, pg_attribute a ");
-    buffer_add_str(sql, "WHERE c.relname = $1 ");
-    buffer_add_str(sql, "AND a.attname = 'id' AND a.attrelid = c.oid");
-
-    /* initialize the request's name and parameters */
-    request_name = buffer_init();
-    buffer_add_str(request_name, "id_column");
-    parameters = buffer_init();
-    buffer_add_str(parameters, "(text)");
-
-    /* check if the request has already been executed */
-    if (!in_list(o->psql_requests, request_name))
-        ows_psql_prepare(o, request_name, parameters, sql);
-
-    /* execute the request */
-    buffer_empty(sql);
-    buffer_add_str(sql, "EXECUTE id_column('");
-    buffer_copy(sql, layer_name);
-    buffer_add_str(sql, "')");
-
-    res = PQexec(o->pg, sql->buf);
-    buffer_free(sql);
-    buffer_free(parameters);
-    buffer_free(request_name);
-
-    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
-        PQclear(res);
-        return b;
-    }
-
-    buffer_add_str(b, PQgetvalue(res, 0, 0));
-    PQclear(res);
-
-    return b;
-#endif
 }
 
 
@@ -409,7 +350,7 @@ char *ows_psql_to_xsd(buffer * type)
     else if (buffer_cmp(type, "time"))
         return "time";
     else if (buffer_cmp(type, "timestamptz"))
-        return "datetime";
+        return "dateTime";
     else
         return "string";
 }

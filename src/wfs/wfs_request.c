@@ -824,6 +824,7 @@ static void wfs_request_check_get_capabilities(ows * o, wfs_request * wr,
 
         }
 
+        list_free(l);
         /* if versions weren't 1.0.0 or 1.1.0, raise an error */
         if (version == false)
             ows_error(o, OWS_ERROR_VERSION_NEGOTIATION_FAILED,

@@ -82,7 +82,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
                              buffer * layer_name, buffer * prefix, buffer * prop_name,
                              buffer * prop_type, buffer * value)
 {
-    buffer *time, *box;
+    buffer *time, *box, *pkey;
     list *coord;
     int srid;
     float xmin, ymin, xmax, ymax;
@@ -94,6 +94,8 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     assert(prop_name != NULL);
     assert(prop_type != NULL);
     assert(value != NULL);
+
+    pkey = ows_psql_id_column(o, layer_name);
 
     /* exception properties, must have 'gml' like prefix */
     if (buffer_cmp(prop_name, "name")
@@ -124,10 +126,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
         wfs_gml_bounded_by(o, wr, xmin, ymin, xmax, ymax, srid);
 
         list_free(coord);
-    } else if (!buffer_cmp(value, "")
-               /* OGC Cite Tests 1.1.0 exception :
-                  column id must not figure in the results */
-               && !((buffer_cmp(prop_name, "id")) && (buffer_cmp(prefix, "sf")))) { /* FIXME check this !!! */
+    } else if (!buffer_cmp(value, "") && !buffer_cmp(prop_name, pkey->buf)) {
         fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
 
         if (buffer_cmp(prop_type, "timestamptz")
@@ -264,10 +263,10 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
 
     if (ows_version_get(o->request->version) == 100)
         fprintf(o->output,
-                "%s\n    %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType&amp;Typename\n",
+                "%s\n    %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType\n",
                 namespaces->first->value->buf, o->online_resource->buf);
     else fprintf(o->output,
-                "%s\n   %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType&amp;Typename\n",
+                "%s\n   %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType\n",
                 namespaces->first->value->buf, o->online_resource->buf);
 
     if (ows_version_get(o->request->version) == 100) {

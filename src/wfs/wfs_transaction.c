@@ -92,17 +92,17 @@ static void wfs_transaction_summary(ows * o, wfs_request * wr,
     fprintf(o->output, "<wfs:TransactionSummary>\n");
 
     if (buffer_cmp(result, "PGRES_COMMAND_OK")) {
+
         if (wr->insert_results != NULL) {
-            for (mln = wr->insert_results->first; mln != NULL;
-                    mln = mln->next)
+            for (mln = wr->insert_results->first; mln != NULL; mln = mln->next)
                 insert_nb = insert_nb + mln->value->size;
 
-            fprintf(o->output, "<wfs:totalInserted>%d", insert_nb);
-            fprintf(o->output, "</wfs:totalInserted>\n");
+            fprintf(o->output, " <wfs:totalInserted>%d</wfs:totalInserted>\n",
+                    insert_nb);
         }
 
         if (wr->delete_results != 0)
-            fprintf(o->output, "<wfs:totalDeleted>%d</wfs:totalDeleted>\n",
+            fprintf(o->output, " <wfs:totalDeleted>%d</wfs:totalDeleted>\n",
                     wr->delete_results);
 
         if (wr->update_results != 0)
@@ -247,26 +247,21 @@ static void wfs_transaction_response(ows * o, wfs_request * wr,
     fprintf(o->output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 
     if (ows_version_get(o->request->version) == 100)
-        fprintf(o->output,
-                "<wfs:WFS_TransactionResponse version=\"1.0.0\"\n");
+        fprintf(o->output, "<wfs:WFS_TransactionResponse version=\"1.0.0\"\n");
     else
         fprintf(o->output, "<wfs:TransactionResponse version=\"1.1.0\"\n");
 
     fprintf(o->output, " xmlns:wfs=\"http://www.opengis.net/wfs\"\n");
-    fprintf(o->output,
-            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
-    fprintf(o->output, "xmlns:ogc=\"http://www.opengis.net/ogc\"");
+    fprintf(o->output, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
+    fprintf(o->output, " xmlns:ogc=\"http://www.opengis.net/ogc\"\n");
 
     if (ows_version_get(o->request->version) == 100) {
         fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/wfs");
-        fprintf(o->output,
-                " http://schemas.opengis.net/wfs/1.0.0/WFS-transaction.xsd' >\n");
+        fprintf(o->output, " http://schemas.opengis.net/wfs/1.0.0/WFS-transaction.xsd'>\n");
     } else {
         fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/wfs");
-        fprintf(o->output,
-                " http://schemas.opengis.net/wfs/1.1.0/wfs.xsd' >\n");
+        fprintf(o->output, " http://schemas.opengis.net/wfs/1.1.0/wfs.xsd'>\n");
     }
-
 
     if (ows_version_get(o->request->version) == 100) {
         wfs_transaction_insert_result(o, wr, result);
@@ -341,7 +336,7 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr,
  */
 static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 {
-    buffer *values, *column, *layer_name, *result, *sql, *id, *tmp;
+    buffer *values, *column, *layer_name, *result, *sql, *id, *tmp, *id_column;
     list *fid;
     filter_encoding *fe;
     xmlNodePtr node, elemt;
@@ -371,8 +366,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     /* insert elements layer by layer */
     for (; n; n = n->next) {
@@ -386,11 +380,31 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
         buffer_add_str(layer_name, (char *) n->name);
         wfs_request_remove_namespaces(o, layer_name);
 
-        id = ows_psql_id_column(o, layer_name);
+
+        assert(n->properties != NULL);
+        id = buffer_init();
+        content = xmlNodeGetContent(n->properties->children);
+        buffer_add_str(id, (char *) content);
+        xmlFree(content);
+
+        id_column = ows_psql_id_column(o, layer_name);
+
+        /* retrieve the id of the inserted feature
+         * to report it in transaction respons
+         */
+        tmp = buffer_init();
+        buffer_copy(tmp, layer_name);
+        buffer_add(tmp, '.');
+        buffer_copy(tmp, id);
+        list_add(fid, tmp);
 
         buffer_add_str(sql, "INSERT INTO \"");
         buffer_copy(sql, layer_name);
         buffer_add_str(sql, "\" (");
+
+        buffer_add_str(sql, "\"");
+        buffer_copy(sql, id_column);
+        buffer_add_str(sql, "\",");
 
         node = n->children;
 
@@ -432,24 +446,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
                     filter_encoding_free(fe);
                 } else {
-                    content = xmlNodeGetContent(node);
-
-                    /* if it's about id column, ID is put into
-                       a multiple list of feature id to use them
-                       during the transaction_response */
-                    if (id->use != 0) {
-                        if (buffer_cmp(id, (char *) node->name)) {
-                            tmp = buffer_init();
-                            buffer_copy(tmp, layer_name);
-                            buffer_add_str(tmp, ".");
-                            buffer_add_str(tmp, (char *) content);
-                            /* retrieve the id of the inserted feature
-                               to report it in transaction response */
-                            list_add(fid, tmp);
-                        }
-                    }
-
-                    xmlFree(content);
                     values = wfs_retrieve_value(o, wr, values, node);
                 }
 
@@ -463,15 +459,16 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                 }
         }
 
-        buffer_add_str(sql, " ) VALUES (");
+        buffer_add_str(sql, " ) VALUES ('");
+        buffer_copy(sql, id);
+        buffer_add_str(sql, "',");
 
         buffer_copy(sql, values);
-        buffer_add_str(sql, ")");
-
-        buffer_add_str(sql, "; ");
+        buffer_add_str(sql, "); ");
 
         buffer_free(values);
         buffer_free(layer_name);
+        buffer_free(id);
     }
 
     /* list of featureid inserted to be used during transaction response */
@@ -762,9 +759,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                         } else if (strcmp((char *) elemt->name, "Null") == 0) {
                             buffer_add_str(values, "''");
                         } else {
-                            fe->sql =
-                                fe_transform_geometry_gml_to_psql(o,
-                                                                  typename, fe, elemt);
+                            fe->sql = fe_transform_geometry_gml_to_psql(o, typename, fe, elemt);
                             buffer_copy(values, fe->sql);
                         }
 

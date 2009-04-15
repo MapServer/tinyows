@@ -89,6 +89,27 @@ bool ows_layer_match_table(const ows * o, const buffer * name)
 
 
 /*
+ * Retrieve a list of layer name who have a storage object
+ * (concrete layer so)
+ */
+list * ows_layer_list_having_storage(const ows_layer_list * ll)
+{
+    ows_layer_node *ln;
+    list *l;
+
+    assert(ll != NULL);
+
+    l = list_init();
+
+    for (ln = ll->first; ln != NULL; ln = ln->next)
+        if (ln->layer->storage != NULL)
+            list_add_by_copy(l, ln->layer->name);
+
+    return l;
+}
+
+
+/*
  * Check if all layers are retrievable (defined in configuration file)
  */
 bool ows_layer_list_retrievable(const ows_layer_list * ll)
@@ -263,7 +284,6 @@ list *ows_layer_list_by_prefix(ows_layer_list * ll, list * layer_name,
  */
 list *ows_layer_list_prefix(ows_layer_list * ll, list * layer_name)
 {
-
     list_node *ln;
     list *ml_prefix;
     buffer *prefix;
@@ -281,7 +301,6 @@ list *ows_layer_list_prefix(ows_layer_list * ll, list * layer_name)
 
         buffer_free(prefix);
     }
-
 
     return ml_prefix;
 }
@@ -305,8 +324,14 @@ buffer *ows_layer_prefix(ows_layer_list * ll, buffer * layer_name)
         if (buffer_cmp(ln->layer->name, layer_name->buf)) {
             l = ln->layer;
 
-            while (l->prefix == NULL)
+            while (l->prefix == NULL) {
+                if ( l->parent == NULL) {
+                buffer_flush(layer_name, stderr);
+                ows_layer_list_flush(ll, stderr);
+                }
+                assert(l->parent != NULL);
                 l = l->parent;
+            }
 
             buffer_copy(prefix, l->prefix);
             return prefix;
@@ -332,7 +357,6 @@ buffer *ows_layer_server(ows_layer_list * ll, buffer * prefix)
             if (buffer_cmp(ln->layer->prefix, prefix->buf))
                 return ln->layer->server;
         }
-
     }
 
     return (buffer *) NULL;

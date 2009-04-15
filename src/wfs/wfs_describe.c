@@ -61,18 +61,20 @@ static void wfs_complex_type(ows * o, wfs_request * wr,
 
     /* Output the description of the layer_name */
     for (an = table->first; an != NULL; an = an->next) {
-        fprintf(o->output, "    <xs:element name ='");
-        buffer_flush(an->key, o->output);
-        fprintf(o->output, "' type='");
-        fprintf(o->output, ows_psql_to_xsd(an->value));
-        fprintf(o->output, "' ");
+        if (!buffer_cmp(an->key, id_name->buf)) {
+            fprintf(o->output, "    <xs:element name ='");
+            buffer_flush(an->key, o->output);
+            fprintf(o->output, "' type='");
+            fprintf(o->output, ows_psql_to_xsd(an->value));
+            fprintf(o->output, "' ");
 
-        if (in_list(mandatory_prop, an->key))
-            fprintf(o->output, "minOccurs='1' ");
-        else
-            fprintf(o->output, "minOccurs='0' ");
+            if (in_list(mandatory_prop, an->key))
+                fprintf(o->output, "minOccurs='1' ");
+            else
+                fprintf(o->output, "minOccurs='0' ");
 
-        fprintf(o->output, "maxOccurs='1'/>\n");
+            fprintf(o->output, "maxOccurs='1'/>\n");
+        }
     }
 
     fprintf(o->output, "   </xs:sequence>\n");
@@ -112,26 +114,21 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
             namespace = ows_layer_server(o->layers, elemt->value);
             fprintf(o->output, "<xs:import namespace='%s' ",
                     namespace->buf);
-            fprintf(o->output, "schemaLocation='%s?service=WFS&amp;",
+            fprintf(o->output, "schemaLocation='%s?service=WFS&amp;version=",
                     o->online_resource->buf);
 
             if (wfs_version == 100)
-                fprintf(o->output,
-                        "version=1.0.0&amp;request=DescribeFeatureType&amp;typeName=");
+                fprintf(o->output, "1.0.0&amp;request=DescribeFeatureType&amp;typename=");
             else
-                fprintf(o->output,
-                        "version=1.1.0&amp;request=DescribeFeatureType&amp;typeName=");
+                fprintf(o->output, "1.1.0&amp;request=DescribeFeatureType&amp;typename=");
 
             /* print the describeFeatureType request with typenames for each prefix */
-            typ =
-                ows_layer_list_by_prefix(o->layers, wr->typename,
-                                         elemt->value);
+            typ = ows_layer_list_by_prefix(o->layers, wr->typename, elemt->value);
 
             for (ln = typ->first; ln != NULL; ln = ln->next) {
                 fprintf(o->output, "%s", ln->value->buf);
 
-                if (ln->next != NULL)
-                    fprintf(o->output, ",");
+                if (ln->next != NULL) fprintf(o->output, ",");
             }
 
             list_free(typ);
@@ -186,6 +183,66 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     }
 
     list_free(prefix);
+}
+
+
+/*
+ * Generate a WFS Schema related to current Server (all valid layers)
+ * with GML XSD import 
+ * This is needed by WFS Insert operation validation as libxml2 only handle
+ * a single schema validation at a time
+ */
+buffer * wfs_generate_schema(ows * o)
+{
+    int wfs_version;
+    list_node *elemt;
+    list *prefix;
+    buffer *namespace;
+    buffer *schema;
+    list * layers;
+
+    assert(o != NULL);
+
+    wfs_version = ows_version_get(o->request->version);
+    schema = buffer_init();
+    layers = ows_layer_list_having_storage(o->layers);
+
+    buffer_add_str(schema, "<?xml version='1.0' encoding='UTF-8'?>\n"); 
+    prefix = ows_layer_list_prefix(o->layers, layers);
+
+    buffer_add_str(schema, "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'");
+    buffer_add_str(schema, " xmlns='http://www.w3.org/2001/XMLSchema'");
+    buffer_add_str(schema, " elementFormDefault='qualified'>\n");
+
+    buffer_add_str(schema, "<xs:import namespace='http://www.opengis.net/wfs' ");
+    buffer_add_str(schema, "schemaLocation='");
+    buffer_copy(schema, o->schema_dir);
+    if (wfs_version == 100) buffer_add_str(schema, WFS_SCHEMA_100_TRANS);
+    else buffer_add_str(schema, WFS_SCHEMA_110);
+
+    buffer_add_str(schema, "'/>\n");
+
+    for (elemt = prefix->first; elemt != NULL; elemt = elemt->next) {
+        namespace = ows_layer_server(o->layers, elemt->value);
+        buffer_add_str(schema, "<xs:import namespace='");
+        buffer_copy(schema, namespace);
+        buffer_add_str(schema, "' schemaLocation='");
+        buffer_copy(schema, o->online_resource);
+        buffer_add_str(schema, "?service=WFS&amp;request=DescribeFeatureType");
+
+        if (wfs_version == 100)
+            buffer_add_str(schema, "&amp;version=1.0.0");
+        else
+            buffer_add_str(schema, "&amp;version=1.1.0");
+
+        buffer_add_str(schema, "'/>\n");
+    }
+
+    buffer_add_str(schema, "</xs:schema>");
+    list_free(prefix);
+    list_free(layers);
+
+    return schema;
 }
 
 

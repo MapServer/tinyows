@@ -434,7 +434,7 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
             buffer_add_str(schema_path, FE_SCHEMA_100);
         else buffer_add_str(schema_path, FE_SCHEMA_110);
 
-        if (ows_schema_validation(schema_path->buf, xmlchar)) {
+        if (ows_schema_validation(schema_path, xmlchar, true)) {
             buffer_free(schema_path);
             fe->error_code = FE_ERROR_FILTER;
             return fe;

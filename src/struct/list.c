@@ -35,7 +35,6 @@
  */
 list *list_init()
 {
-
     list *l = NULL;
 
     l = malloc(sizeof(list));
@@ -54,12 +53,10 @@ list *list_init()
  */
 void list_free(list * l)
 {
-
     assert(l != NULL);
 
     while (l->first != NULL)
         list_node_free(l, l->first);
-
 
     l->last = NULL;
 
@@ -229,7 +226,6 @@ void list_node_free(list * l, list_node * ln)
 
     if (ln->prev != NULL)
         ln->prev = NULL;
-
 
     if (ln->next != NULL) {
         if (l != NULL)

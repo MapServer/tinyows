@@ -109,6 +109,23 @@ void ows_request_flush(ows_request * or, FILE * output)
 
 
 /*
+ * Simple callback used to catch error and warning from libxml2 schema
+ * validation
+ * If OWS_DEBUG mode output to stderr, else do nothing
+ */
+static void libxml2_callback  (void * ctx, const char * msg, ...) {
+#ifdef OWS_DEBUG
+    va_list varg;
+    char * str;
+
+    va_start(varg, msg);
+    str = (char *) va_arg(varg, int);
+    fprintf(stderr, "%s\n", str);
+#endif
+}
+
+
+/*
  * Valid an xml string against an XML schema
  * Inpired from: http://xml.developpez.com/sources/?page=validation#validate_XSD_CppCLI_2
  */
@@ -132,8 +149,9 @@ int ows_schema_validation(buffer * xml_schema, buffer * xml, bool schema_is_file
     else ctxt = xmlSchemaNewMemParserCtxt(xml_schema->buf, xml_schema->use);
 
     xmlSchemaSetParserErrors(ctxt,
-                             (xmlSchemaValidityErrorFunc) fprintf,
-                             (xmlSchemaValidityWarningFunc) fprintf, stderr);
+                             (xmlSchemaValidityErrorFunc) libxml2_callback,
+                             (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
+
 
     schema = xmlSchemaParse(ctxt);
     xmlSchemaFreeParserCtxt(ctxt);
@@ -151,8 +169,8 @@ int ows_schema_validation(buffer * xml_schema, buffer * xml, bool schema_is_file
         /* Loading XML Schema content */
         validctxt = xmlSchemaNewValidCtxt(schema);
         xmlSchemaSetValidErrors(validctxt,
-                                (xmlSchemaValidityErrorFunc) fprintf,
-                                (xmlSchemaValidityWarningFunc) fprintf, stderr);
+                                (xmlSchemaValidityErrorFunc) libxml2_callback,
+                                (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
         /* validation */
         ret = xmlSchemaValidateDoc(validctxt, doc);
         xmlSchemaFreeValidCtxt(validctxt);

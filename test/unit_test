@@ -85,6 +85,11 @@ elif [ $mode -eq 5 ]; then
 	    echo "$unit_id => stderr"
     fi
     rm -f $file_tmp
+
+# time mode
+elif [ $mode -eq 7 ]; then
+    echo -n "$unit_id  -> "
+    `which time` -p ./tinyows 2>&1 | grep user | sed -e 's/user //'
 fi
 
 done

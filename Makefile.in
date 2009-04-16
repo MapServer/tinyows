@@ -71,6 +71,10 @@ test-exception:
 test-stderr:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 5
 
+test-time:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 7
+
+
 
 astyle:
 	@(astyle -A4 -S -M -m -f -p -U -o -c $(SRC)) \

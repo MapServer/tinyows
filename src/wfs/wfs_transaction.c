@@ -380,12 +380,18 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
         buffer_add_str(layer_name, (char *) n->name);
         wfs_request_remove_namespaces(o, layer_name);
 
-
-        assert(n->properties != NULL);
+        /* In GML 3 GML:id is used, in GML 2.1.2 fid is used.
+         * In both cases no other attribute allowed in this element
+         * and in both cases (f)id is optionnal !
+         */ 
         id = buffer_init();
-        content = xmlNodeGetContent(n->properties->children);
-        buffer_add_str(id, (char *) content);
-        xmlFree(content);
+        if ((n->properties != NULL) && (
+                    (strcmp((char *) n->properties->name, "id") == 0 ||
+                    (strcmp((char *) n->properties->name, "fid") == 0 )))) {
+            content = xmlNodeGetContent(n->properties->children);
+            buffer_add_str(id, (char *) content);
+            xmlFree(content); 
+        }
 
         id_column = ows_psql_id_column(o, layer_name);
 
@@ -459,9 +465,13 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                 }
         }
 
-        buffer_add_str(sql, " ) VALUES ('");
-        buffer_copy(sql, id);
-        buffer_add_str(sql, "',");
+        /* As id could be NULL in GML */
+        if (id->use > 0) {  
+            buffer_add_str(sql, " ) VALUES ('");
+            buffer_copy(sql, id);
+            buffer_add_str(sql, "',");
+        } else 
+            buffer_add_str(sql, " ) VALUES (null,");
 
         buffer_copy(sql, values);
         buffer_add_str(sql, "); ");

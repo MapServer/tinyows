@@ -325,10 +325,6 @@ buffer *ows_layer_prefix(ows_layer_list * ll, buffer * layer_name)
             l = ln->layer;
 
             while (l->prefix == NULL) {
-                if ( l->parent == NULL) {
-                buffer_flush(layer_name, stderr);
-                ows_layer_list_flush(ll, stderr);
-                }
                 assert(l->parent != NULL);
                 l = l->parent;
             }

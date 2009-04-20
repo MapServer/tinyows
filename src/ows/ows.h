@@ -74,6 +74,18 @@ typedef struct Mlist {
 } mlist;
 
 
+typedef struct Alist_node {
+	buffer * key;
+	list * value;
+	struct Alist_node * next;
+} alist_node;
+
+typedef struct Alist {
+	alist_node * first;
+	alist_node * last;
+} alist;
+
+
 typedef struct Array_node {
 	buffer * key;
 	buffer * value;
@@ -319,6 +331,11 @@ enum wfs_format {
 	WFS_APPLICATION_XML
 };
 
+enum wfs_insert_idgen {
+	WFS_GENERATE_NEW,
+	WFS_USE_EXISTING,
+	WFS_REPLACE_DUPLICATE
+};
 
 typedef struct Wfs_request {
     enum wfs_request request;
@@ -335,7 +352,7 @@ typedef struct Wfs_request {
     buffer * sortby;
     list * sections;
 
-    mlist * insert_results;
+    alist * insert_results;
     int delete_results;
     int update_results;
 
@@ -355,7 +372,8 @@ enum fe_error_code {
     FE_ERROR_UNITS,
     FE_ERROR_GEOMETRY,
     FE_ERROR_FID,
-    FE_ERROR_SRS
+    FE_ERROR_SRS,
+    FE_ERROR_FUNCTION
 };
 
 typedef struct Filter_encoding {

@@ -52,7 +52,7 @@ static char *wfs_error_code_string(enum wfs_error_code code)
             return "NoMatching";
     }
 
-    assert(0);
+    assert(0); /* Should not happen */
 }
 
 
@@ -70,14 +70,12 @@ static void wfs_error_100(ows * o, wfs_request * wf,
     fprintf(o->output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     fprintf(o->output, "<ServiceExceptionReport\n");
     fprintf(o->output, " xmlns=\"http://www.opengis.net/ogc\"\n");
-    fprintf(o->output,
-            " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
-    fprintf(o->output,
-            " xsi:schemaLocation=\"http://www.opengis.net/ogc http://schemas.opengis.net/wms/1.1.1/OGC-exception.xsd\"\n");
+    fprintf(o->output, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");
+    fprintf(o->output, " xsi:schemaLocation=\"http://www.opengis.net/ogc");
+    fprintf(o->output, " http://schemas.opengis.net/wms/1.1.1/OGC-exception.xsd\"\n");
     fprintf(o->output, "version=\"1.2.0\">\n");
-    fprintf(o->output, "<ServiceException code=\"%s\" locator=\"%s\">\n",
-            wfs_error_code_string(code), locator);
-    fprintf(o->output, "%s", message);
+    fprintf(o->output, "<ServiceException code=\"%s\"", wfs_error_code_string(code));
+    fprintf(o->output, " locator=\"%s\'>\n%s", locator, message);
     fprintf(o->output, "</ServiceException>\n");
     fprintf(o->output, "</ServiceExceptionReport>\n");
 
@@ -101,11 +99,9 @@ static void wfs_error_110(ows * o, wfs_request * wf,
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
     fprintf(o->output, "<ExceptionReport\n");
     fprintf(o->output, " xmlns='http://www.opengis.net/ows'\n");
-    fprintf(o->output,
-            " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
+    fprintf(o->output, " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
     fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/ows");
-    fprintf(o->output,
-            " http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd'\n");
+    fprintf(o->output, " http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd'\n");
     fprintf(o->output, " version='1.0.0' language='en'>\n");
     fprintf(o->output, " <Exception exceptionCode='%s' locator='%s'>\n",
             wfs_error_code_string(code), locator);

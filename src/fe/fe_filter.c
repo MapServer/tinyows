@@ -144,9 +144,8 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
 
     if (n == NULL) return sql;
 
-    if (strcmp((char *) n->name, "Fe_Function") == 0) {
-        sql = fe_function(o, typename, fe, sql, n);
-        return sql;
+    if (strcmp((char *) n->name, "Function") == 0) {
+        return fe_function(o, typename, fe, sql, n);
     }
 
     /* open a bracket when there are grandchildren elements */
@@ -275,8 +274,7 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
     tmp = buffer_init();
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     prop_table = ows_psql_describe_table(o, typename);
 
@@ -314,8 +312,7 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Check if featureId or GmlObjectId are valid and return the appropriate string
  */
-buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe,
-                      xmlNodePtr n)
+buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
     xmlChar *fid;
     buffer *buf_fid, *id_name;
@@ -444,7 +441,8 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
     }
 
     xmlInitParser();
-    LIBXML_TEST_VERSION fe->sql = buffer_init();
+    LIBXML_TEST_VERSION 
+    fe->sql = buffer_init();
 
     xmldoc = xmlParseMemory(xmlchar->buf, xmlchar->use);
 
@@ -458,8 +456,7 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
     n = xmldoc->children->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     /* Comparison Operators */
     if (fe_is_comparison_op((char *) n->name))

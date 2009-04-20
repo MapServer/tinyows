@@ -174,7 +174,7 @@ static buffer *fe_fct_avg(ows * o, buffer * typename, filter_encoding * fe,
     assert(n != NULL);
     assert(sql != NULL);
 
-    buffer_add_str(sql, "(Select avg(");
+    buffer_add_str(sql, "(SELECT avg(");
 
     sql = fe_aggregate_functions(o, typename, fe, sql, n);
 
@@ -273,7 +273,7 @@ static buffer *fe_fct_count(ows * o, buffer * typename,
     assert(n != NULL);
     assert(sql != NULL);
 
-    buffer_add_str(sql, "(Select count(");
+    buffer_add_str(sql, "(SELECT count(");
 
     sql = fe_aggregate_functions(o, typename, fe, sql, n);
 
@@ -413,7 +413,7 @@ static buffer *fe_fct_min(ows * o, buffer * typename, filter_encoding * fe,
     assert(n != NULL);
     assert(sql != NULL);
 
-    buffer_add_str(sql, "(Select Min(");
+    buffer_add_str(sql, "(SELECT Min(");
 
     sql = fe_aggregate_functions(o, typename, fe, sql, n);
 
@@ -433,7 +433,7 @@ static buffer *fe_fct_max(ows * o, buffer * typename, filter_encoding * fe,
     assert(n != NULL);
     assert(sql != NULL);
 
-    buffer_add_str(sql, "(Select Max(");
+    buffer_add_str(sql, "(SELECT Max(");
 
     sql = fe_aggregate_functions(o, typename, fe, sql, n);
 
@@ -580,78 +580,55 @@ buffer *fe_function(ows * o, buffer * typename, filter_encoding * fe,
 
     if (strcmp((char *) fct_name, "abs") == 0)
         sql = fe_fct_abs(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "acos") == 0)
+    else if (strcmp((char *) fct_name, "acos") == 0)
         sql = fe_fct_acos(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "asin") == 0)
+    else if (strcmp((char *) fct_name, "asin") == 0)
         sql = fe_fct_asin(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "atan") == 0)
+    else if (strcmp((char *) fct_name, "atan") == 0)
         sql = fe_fct_atan(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "avg") == 0)
+    else if (strcmp((char *) fct_name, "avg") == 0)
         sql = fe_fct_avg(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "cbrt") == 0)
+    else if (strcmp((char *) fct_name, "cbrt") == 0)
         sql = fe_fct_cbrt(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "ceil") == 0)
+    else if (strcmp((char *) fct_name, "ceil") == 0)
         sql = fe_fct_ceil(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "ceiling") == 0)
+    else if (strcmp((char *) fct_name, "ceiling") == 0)
         sql = fe_fct_ceil(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "cos") == 0)
+    else if (strcmp((char *) fct_name, "cos") == 0)
         sql = fe_fct_cos(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "cot") == 0)
+    else if (strcmp((char *) fct_name, "cot") == 0)
         sql = fe_fct_cot(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "count") == 0)
+    else if (strcmp((char *) fct_name, "count") == 0)
         sql = fe_fct_count(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "degrees") == 0)
+    else if (strcmp((char *) fct_name, "degrees") == 0)
         sql = fe_fct_degrees(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "exp") == 0)
+    else if (strcmp((char *) fct_name, "exp") == 0)
         sql = fe_fct_exp(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "floor") == 0)
+    else if (strcmp((char *) fct_name, "floor") == 0)
         sql = fe_fct_floor(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "length") == 0)
+    else if (strcmp((char *) fct_name, "length") == 0)
         sql = fe_fct_length(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "ln") == 0)
+    else if (strcmp((char *) fct_name, "ln") == 0)
         sql = fe_fct_ln(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "log") == 0)
+    else if (strcmp((char *) fct_name, "log") == 0)
         sql = fe_fct_log(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "min") == 0)
+    else if (strcmp((char *) fct_name, "min") == 0)
         sql = fe_fct_min(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "max") == 0)
+    else if (strcmp((char *) fct_name, "max") == 0)
         sql = fe_fct_max(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "radians") == 0)
+    else if (strcmp((char *) fct_name, "radians") == 0)
         sql = fe_fct_radians(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "round") == 0)
+    else if (strcmp((char *) fct_name, "round") == 0)
         sql = fe_fct_round(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "sin") == 0)
+    else if (strcmp((char *) fct_name, "sin") == 0)
         sql = fe_fct_sin(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "sqrt") == 0)
+    else if (strcmp((char *) fct_name, "sqrt") == 0)
         sql = fe_fct_sqrt(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "tan") == 0)
+    else if (strcmp((char *) fct_name, "tan") == 0)
         sql = fe_fct_tan(o, typename, fe, sql, n);
-
-    if (strcmp((char *) fct_name, "trunc") == 0)
+    else if (strcmp((char *) fct_name, "trunc") == 0)
         sql = fe_fct_trunc(o, typename, fe, sql, n);
+    else fe->error_code = FE_ERROR_FUNCTION;
 
     xmlFree(fct_name);
 

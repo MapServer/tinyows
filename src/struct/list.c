@@ -195,7 +195,6 @@ void list_add_by_copy(list * l, buffer * value)
     l->last = ln;
     l->last->next = NULL;
     l->size++;
-
 }
 
 
@@ -242,7 +241,6 @@ void list_node_free(list * l, list_node * ln)
 
     free(ln);
     ln = NULL;
-
 }
 
 
@@ -288,7 +286,6 @@ list *list_explode(char separator, const buffer * value)
         } else
             buffer_add(buf, value->buf[i]);
 
-
     list_add(l, buf);
 
     return l;
@@ -327,7 +324,6 @@ list *list_explode_start_end(char separator_start, char separator_end,
                 buf = buffer_init();
     }
 
-
     return l;
 }
 
@@ -342,7 +338,6 @@ list *list_explode_str(char separator, const char *value)
     list *l;
     buffer *buf;
 
-
     assert(value != NULL);
 
     l = list_init();
@@ -355,7 +350,6 @@ list *list_explode_str(char separator, const char *value)
             buf = buffer_init();
         } else
             buffer_add(buf, value[i]);
-
 
     list_add(l, buf);
 

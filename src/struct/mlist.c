@@ -35,7 +35,6 @@
  */
 mlist *mlist_init()
 {
-
     mlist *ml = NULL;
 
     ml = malloc(sizeof(mlist));
@@ -54,12 +53,10 @@ mlist *mlist_init()
  */
 void mlist_free(mlist * ml)
 {
-
     assert(ml != NULL);
 
     while (ml->first != NULL)
         mlist_node_free(ml, ml->first);
-
 
     ml->last = NULL;
 
@@ -128,7 +125,6 @@ void mlist_node_free(mlist * ml, mlist_node * mln)
     if (mln->prev != NULL)
         mln->prev = NULL;
 
-
     if (mln->next != NULL) {
         ml->first = mln->next;
         mln->next = NULL;
@@ -140,7 +136,6 @@ void mlist_node_free(mlist * ml, mlist_node * mln)
 
     free(mln);
     mln = NULL;
-
 }
 
 

@@ -47,7 +47,8 @@ bool fe_is_spatial_op(char *name)
             || strcmp(name, "Intersects") == 0
             || strcmp(name, "Contains") == 0
             || strcmp(name, "DWithin") == 0
-            || strcmp(name, "Beyond") == 0 || strcmp(name, "BBOX") == 0)
+            || strcmp(name, "Beyond") == 0
+	    || strcmp(name, "BBOX") == 0)
         return true;
 
     return false;
@@ -257,6 +258,13 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 
     /* print the coordinates */
     for (node = n; node != NULL; node = node->next) {
+
+        if ((strcmp((char *) node->name, "description") == 0 
+            || strcmp((char *) node->name, "name") == 0  
+            || strcmp((char *) node->name, "metaDataProperty") == 0)  
+	&& strcmp((char *) node->ns->href, "http://www.opengis.net/gml")  == 0)
+            node = node->next;
+
         if (node->type == XML_ELEMENT_NODE) {
             node_coord = node;
 
@@ -324,6 +332,7 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 
     buffer_add_str(geom, "'::geometry,");
     buffer_copy(fe->sql, geom);
+
     /* print the srid */
     buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename));
     buffer_add_str(fe->sql, ")");
@@ -372,18 +381,16 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename,
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
     n = n->next;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    buffer_add_str(fe->sql, ",");
+    buffer_add(fe->sql, ',');
 
     if (strcmp((char *) n->name, "Box") == 0
             || strcmp((char *) n->name, "Envelope") == 0)
@@ -391,7 +398,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename,
     else
         fe->sql = fe_transform_geometry_gml_to_psql(o, typename, fe, n);
 
-    buffer_add_str(fe->sql, ")");
+    buffer_add(fe->sql, ')');
 
     return fe->sql;
 }
@@ -428,9 +435,9 @@ static buffer *fe_distance_functions(ows * o, buffer * typename,
        whose coordinates are degree, centroid function must be used
        To be coherent, centroid is also used with Distance function */
     if (ows_srs_meter_units(o, typename))
-        buffer_add_str(fe->sql, "Distance(centroid(");
+        buffer_add_str(fe->sql, "ST_Distance(ST_centroid(");
     else
-        buffer_add_str(fe->sql, "Distance_sphere(centroid(");
+        buffer_add_str(fe->sql, "ST_Distance_sphere(ST_centroid(");
 
     n = n->children;
 
@@ -441,8 +448,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename,
     /* display the property name */
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
-
-    buffer_add_str(fe->sql, "),centroid(");
+    buffer_add_str(fe->sql, "),ST_centroid(");
 
     n = n->next;
 

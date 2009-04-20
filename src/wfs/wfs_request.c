@@ -140,10 +140,9 @@ void wfs_request_flush(wfs_request * wr, FILE * output)
 
     if (wr->insert_results != NULL) {
         fprintf(output, " insert_results -> ");
-        mlist_flush(wr->insert_results, output);
+        alist_flush(wr->insert_results, output);
         fprintf(output, "\n");
     }
-
 
     fprintf(output, "]\n");
 }
@@ -188,7 +187,7 @@ void wfs_request_free(wfs_request * wr)
         list_free(wr->sections);
 
     if (wr->insert_results != NULL)
-        mlist_free(wr->insert_results);
+        alist_free(wr->insert_results);
 
     free(wr);
     wr = NULL;

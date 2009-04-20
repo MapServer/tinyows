@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 #include "../ows/ows.h"
 
@@ -79,34 +80,28 @@ static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr,
 static void wfs_transaction_summary(ows * o, wfs_request * wr,
                                     buffer * result)
 {
-    mlist_node *mln;
-    int insert_nb;
+    int nb = 0; 
+    alist_node *an;
 
     assert(o != NULL);
     assert(wr != NULL);
     assert(result != NULL);
-
-    mln = NULL;
-    insert_nb = 0;
 
     fprintf(o->output, "<wfs:TransactionSummary>\n");
 
     if (buffer_cmp(result, "PGRES_COMMAND_OK")) {
 
         if (wr->insert_results != NULL) {
-            for (mln = wr->insert_results->first; mln != NULL; mln = mln->next)
-                insert_nb = insert_nb + mln->value->size;
+            for (an = wr->insert_results->first; an != NULL; an = an->next)
+                nb += an->value->size;
 
-            fprintf(o->output, " <wfs:totalInserted>%d</wfs:totalInserted>\n",
-                    insert_nb);
+            fprintf(o->output, " <wfs:totalInserted>%d</wfs:totalInserted>\n", nb);
         }
 
-        if (wr->delete_results != 0)
-            fprintf(o->output, " <wfs:totalDeleted>%d</wfs:totalDeleted>\n",
+        fprintf(o->output, " <wfs:totalDeleted>%d</wfs:totalDeleted>\n",
                     wr->delete_results);
 
-        if (wr->update_results != 0)
-            fprintf(o->output, "<wfs:totalUpdated>%d</wfs:totalUpdated>\n",
+        fprintf(o->output, "<wfs:totalUpdated>%d</wfs:totalUpdated>\n",
                     wr->update_results);
     }
 
@@ -117,59 +112,42 @@ static void wfs_transaction_summary(ows * o, wfs_request * wr,
 /*
  * Report newly created feature instances
  */
-static void wfs_transaction_insert_result(ows * o, wfs_request * wr,
-        buffer * result)
+static void wfs_transaction_insert_result(ows * o, wfs_request * wr, buffer * result)
 {
-    mlist_node *mln;
-    list_node *hdl, *ln;
+    list_node *ln;
+    alist_node *an;
 
     assert(o != NULL);
     assert(wr != NULL);
     assert(result != NULL);
 
-    mln = NULL;
-    hdl = NULL;
     ln = NULL;
 
     /* check if there were Insert operations and if the command succeeded */
     if ((!cgi_method_get()) && (buffer_cmp(result, "PGRES_COMMAND_OK")
-                                && (wr->insert_results != NULL))) {
-        if (wr->handle != NULL)
-            hdl = wr->handle->first;
+            && (wr->insert_results != NULL))) {
 
         if (ows_version_get(o->request->version) == 110)
             fprintf(o->output, "<wfs:InsertResults>\n");
 
-        for (mln = wr->insert_results->first; mln != NULL; mln = mln->next) {
-            if (ows_version_get(o->request->version) == 100) {
-                if (wr->handle != NULL)
-                    fprintf(o->output, "<wfs:InsertResult handle=\"%s\">",
-                            hdl->value->buf);
-                else
-                    fprintf(o->output, "<wfs:InsertResult>");
-            } else {
-                if (wr->handle != NULL)
-                    fprintf(o->output, "<wfs:Feature handle=\"%s\">",
-                            hdl->value->buf);
-                else
-                    fprintf(o->output, "<wfs:Feature>");
-            }
+        for (an = wr->insert_results->first; an != NULL; an = an->next) {
 
-            for (ln = mln->value->first; ln != NULL; ln = ln->next)
-                fprintf(o->output, "<ogc:FeatureId fid=\"%s\"/>",
-                        ln->value->buf);
+            if (ows_version_get(o->request->version) == 100)
+                    fprintf(o->output, "<wfs:InsertResult handle=\"%s\">", an->key->buf);
+            else 
+                    fprintf(o->output, "<wfs:Feature handle=\"%s\">", an->key->buf);
+
+            for (ln = an->value->first; ln != NULL; ln = ln->next)
+                fprintf(o->output, "<ogc:FeatureId fid=\"%s\"/>", ln->value->buf);
 
             if (ows_version_get(o->request->version) == 100)
                 fprintf(o->output, "</wfs:InsertResult>\n");
             else
                 fprintf(o->output, "</wfs:Feature>\n");
-
-            if (wr->handle != NULL)
-                hdl = hdl->next;
         }
 
         if (ows_version_get(o->request->version) == 110)
-            fprintf(o->output, "<wfs:InsertResults>");
+            fprintf(o->output, "</wfs:InsertResults>");
     }
 }
 
@@ -336,31 +314,39 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr,
  */
 static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 {
-    buffer *values, *column, *layer_name, *result, *sql, *id, *tmp, *id_column;
-    list *fid;
+    buffer *values, *column, *layer_name, *layer_prefix, *result, *sql;
+    buffer *id, *handle, *id_column, *fid_full_name;
     filter_encoding *fe;
     xmlNodePtr node, elemt;
-    xmlChar *content;
+    xmlChar *attr = NULL;
+    enum wfs_insert_idgen idgen = WFS_GENERATE_NEW;
 
     assert(o != NULL);
     assert(wr != NULL);
     assert(n != NULL);
 
     sql = buffer_init();
-    fid = list_init();
-    content = NULL;
+    handle = buffer_init();
 
     /* retrieve handle attribute to report it in transaction response */
-    if (n->properties != NULL) {
-        if (strcmp((char *) n->properties->name, "handle") == 0) {
-            wr->handle = list_init();
-            content = xmlNodeGetContent(n->properties->children);
-            tmp = buffer_init();
-            buffer_add_str(tmp, (char *) content);
-            list_add_by_copy(wr->handle, tmp);
-            xmlFree(content);
-            buffer_free(tmp);
-        }
+    if (xmlHasProp(n, (xmlChar *) "handle")) {
+        attr =  xmlGetProp(n, (xmlChar *) "handle");
+        buffer_add_str(handle, (char *) attr);
+        xmlFree(attr);
+    /* handle is optional in WFS Schema */
+    } else buffer_add_str(handle, "TinyOWS-WFS-default-handle");
+
+    /* idgen appears in WFS 1.1.0, default behaviour is GenerateNew id
+       It is safe to not test WFS version, as schema validation 
+       already do the job for us.
+    */
+    if (xmlHasProp(n, (xmlChar *) "idgen")) {
+        attr =  xmlGetProp(n, (xmlChar *) "idgen");
+        if (strcmp((char *) attr, "ReplaceDuplicate") == 0)
+		idgen = WFS_REPLACE_DUPLICATE;
+        else if (strcmp((char *) attr, "UseExisting") == 0)
+		idgen = WFS_USE_EXISTING;
+        xmlFree(attr);
     }
 
     n = n->children;
@@ -385,24 +371,49 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
          * and in both cases (f)id is optionnal !
          */ 
         id = buffer_init();
-        if ((n->properties != NULL) && (
-                    (strcmp((char *) n->properties->name, "id") == 0 ||
-                    (strcmp((char *) n->properties->name, "fid") == 0 )))) {
-            content = xmlNodeGetContent(n->properties->children);
-            buffer_add_str(id, (char *) content);
-            xmlFree(content); 
-        }
+        if (xmlHasProp(n, (xmlChar *) "id"))
+            attr =  xmlGetProp(n, (xmlChar *) "id");
+        else if (xmlHasProp(n, (xmlChar *) "fid"))
+            attr =  xmlGetProp(n, (xmlChar *) "fid");
+        
+        if (attr != NULL) {
+            buffer_add_str(id, (char *) attr);
+            xmlFree(attr); 
+        } else idgen = WFS_GENERATE_NEW;
+        /* TODO should add error if UseExisting 
+           or Replace without id set ? */
 
         id_column = ows_psql_id_column(o, layer_name);
+        layer_prefix = ows_layer_prefix(o->layers, layer_name);
 
-        /* retrieve the id of the inserted feature
+        /*
+         * Delete previous feature if idgen is ReplaceExisting
+         */
+	if (idgen == WFS_REPLACE_DUPLICATE) {
+             buffer_add_str(sql, "DELETE FROM \"");
+             buffer_copy(sql, layer_name);
+             buffer_add_str(sql, "\" WHERE ");
+             buffer_copy(sql, id_column);
+             buffer_add_str(sql, "='");
+             buffer_copy(sql, id);
+             buffer_add_str(sql, "';");
+        } else if (idgen == WFS_GENERATE_NEW) {
+             srandom((int) (time(NULL) ^ random() % 1000) + 42);
+             srandom((random() % 1000 ^ random() % 1000) + 42);
+             buffer_add_int(id, random());
+ 	     /* FIXME: use something more clever than that
+                to prevent collission !
+             */
+        }
+
+        /* Retrieve the id of the inserted feature
          * to report it in transaction respons
          */
-        tmp = buffer_init();
-        buffer_copy(tmp, layer_name);
-        buffer_add(tmp, '.');
-        buffer_copy(tmp, id);
-        list_add(fid, tmp);
+        fid_full_name = buffer_init();
+        buffer_copy(fid_full_name, layer_name);
+        buffer_add(fid_full_name, '.');
+        buffer_copy(fid_full_name, id);
+        alist_add(wr->insert_results, handle, fid_full_name);
 
         buffer_add_str(sql, "INSERT INTO \"");
         buffer_copy(sql, layer_name);
@@ -410,17 +421,21 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
         buffer_add_str(sql, "\"");
         buffer_copy(sql, id_column);
-        buffer_add_str(sql, "\",");
+        buffer_add_str(sql, "\"");
 
         node = n->children;
 
         /* jump to the next element if there are spaces */
-        while (node->type != XML_ELEMENT_NODE)
-            node = node->next;
+        while (node->type != XML_ELEMENT_NODE) node = node->next;
 
         /* fill fields and values at the same time */
         for (; node; node = node->next) {
-            if (node->type == XML_ELEMENT_NODE) {
+            if (node->type == XML_ELEMENT_NODE && 
+                buffer_cmp(layer_prefix, (char *) node->ns->prefix)) {
+
+                buffer_add(sql, ',');
+                buffer_add(values, ',');
+
                 column = buffer_init();
                 buffer_add_str(column, (char *) node->name);
 
@@ -433,8 +448,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                     elemt = node->children;
 
                     /* jump to the next element if there are spaces */
-                    while (elemt->type != XML_ELEMENT_NODE)
-                        elemt = elemt->next;
+                    while (elemt->type != XML_ELEMENT_NODE) elemt = elemt->next;
 
                     fe = filter_encoding_init();
                     fe->sql = buffer_init();
@@ -447,6 +461,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                         buffer_add_str(values, "''");
                     } else {
                         fe->sql = fe_transform_geometry_gml_to_psql(o, layer_name, fe, elemt);
+                        /* Carefull no error test on transform ! */
                         buffer_copy(values, fe->sql);
                     }
 
@@ -457,33 +472,24 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
                 buffer_free(column);
             }
-
-            if (node->next != NULL)
-                if (node->next->type == XML_ELEMENT_NODE) {
-                    buffer_add_str(sql, ",");
-                    buffer_add_str(values, ",");
-                }
         }
 
         /* As id could be NULL in GML */
         if (id->use > 0) {  
-            buffer_add_str(sql, " ) VALUES ('");
+            buffer_add_str(sql, ") VALUES ('");
             buffer_copy(sql, id);
-            buffer_add_str(sql, "',");
+            buffer_add_str(sql, "'");
         } else 
-            buffer_add_str(sql, " ) VALUES (null,");
+            buffer_add_str(sql, ") VALUES (null");
 
         buffer_copy(sql, values);
         buffer_add_str(sql, "); ");
 
         buffer_free(values);
         buffer_free(layer_name);
+        buffer_free(layer_prefix);
         buffer_free(id);
     }
-
-    /* list of featureid inserted to be used during transaction response */
-    wr->insert_results = mlist_init();
-    mlist_add(wr->insert_results, fid);
 
     /* run the request to insert all features at the same time */
     result = wfs_execute_transaction_request(o, wr, sql);
@@ -844,7 +850,7 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
 
     sql = buffer_init();
     locator = buffer_init();
-    wr->featureid = mlist_init();
+    wr->insert_results = alist_init();
     content = NULL;
 
     xmlInitParser();
@@ -853,21 +859,18 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
     if (!xmldoc) {
         xmlFreeDoc(xmldoc);
         xmlCleanupParser();
-        wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "xml isn't valid",
-                  "transaction");
+        wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "xml isn't valid", "transaction");
     }
 
     n = xmldoc->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     /* initialize the transaction inside postgresql */
     buffer_add_str(sql, "BEGIN;");
@@ -878,10 +881,8 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
     buffer_empty(sql);
 
     /* go through the operations while transaction is successful */
-    for (; (n != NULL) && (buffer_cmp(result, "PGRES_COMMAND_OK"));
-            n = n->next) {
-        if (n->type != XML_ELEMENT_NODE)
-            continue;
+    for ( /* empty */ ; (n != NULL) && (buffer_cmp(result, "PGRES_COMMAND_OK")); n = n->next) {
+        if (n->type != XML_ELEMENT_NODE) continue;
 
         if (strcmp((char *) n->name, "Insert") == 0) {
             buffer_free(result);
@@ -914,7 +915,6 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
             } else
                 buffer_add_str(locator, (char *) n->name);
         }
-
     }
 
     /* end the transaction according to the result */

@@ -37,7 +37,6 @@
 static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
                                        filter_encoding * fe, xmlNodePtr n)
 {
-
     buffer *tmp, *type, *name;
     xmlChar *matchcase;
     bool bool_type, sensitive_case;
@@ -68,15 +67,19 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     /* if comparison isn't case sensitive, strings are passed in lower case */
     if (!sensitive_case)
         buffer_add_str(fe->sql, "lower(");
 
-
     tmp = fe_expression(o, typename, fe, tmp, n);
+    if (fe->error_code) {
+        buffer_free(tmp);
+        buffer_free(name);
+        return fe->sql;
+    }
+
     buffer_copy(fe->sql, tmp);
 
     /* if property is a boolean, xml content( 1 or 0) must be transformed
@@ -85,9 +88,11 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
             || buffer_cmp(name, "PropertyIsNotEqualTo")) {
         /* remove brackets (if any) and quotation marks */
         if (tmp->buf[0] == '(') {
+            assert(tmp->use > 3);
             buffer_pop(tmp, 2);
             buffer_shift(tmp, 2);
         } else {
+            assert(tmp->use > 1);
             buffer_pop(tmp, 1);
             buffer_shift(tmp, 1);
         }
@@ -98,10 +103,8 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
             bool_type = true;
     }
 
-
     if (!sensitive_case)
         buffer_add_str(fe->sql, ")");
-
 
     if (buffer_cmp(name, "PropertyIsEqualTo"))
         buffer_add_str(fe->sql, " = ");
@@ -125,14 +128,17 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
 
     n = n->next;
 
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     if (!sensitive_case)
         buffer_add_str(fe->sql, "lower(");
 
-
     tmp = fe_expression(o, typename, fe, tmp, n);
+    if (fe->error_code) {
+        buffer_free(tmp);
+        buffer_free(name);
+        return fe->sql;
+    }
 
     /* if property is a boolean, xml content( 1 or 0) must be transformed
        into fe->sql (true or false) */
@@ -145,7 +151,6 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
     } else
         buffer_copy(fe->sql, tmp);
 
-
     if (!sensitive_case)
         buffer_add_str(fe->sql, ")");
 
@@ -153,13 +158,12 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
     buffer_free(name);
 
     return fe->sql;
-
 }
 
 
 /*
  * String comparison operator with pattern matching
- * FIX ME : remains a problem when escaping \* -> \%
+ * FIXME : remains a problem when escaping \* -> \%
  */
 static buffer *fe_property_is_like(ows * o, buffer * typename,
                                    filter_encoding * fe, xmlNodePtr n)
@@ -184,8 +188,7 @@ static buffer *fe_property_is_like(ows * o, buffer * typename,
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     /* We need to cast as varchar at least for timestamp
            PostgreSQL data type - cf (Ticket #10) */
@@ -196,8 +199,7 @@ static buffer *fe_property_is_like(ows * o, buffer * typename,
     n = n->next;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     content = xmlNodeGetContent(n->children);
 

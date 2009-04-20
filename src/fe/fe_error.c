@@ -72,6 +72,10 @@ void fe_error(ows * o, filter_encoding * fe)
         filter_encoding_free(fe);
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                   "SrsName isn't valid", "FILTER");
+    } else if (fe->error_code == FE_ERROR_FUNCTION) {
+        filter_encoding_free(fe);
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+                  "Unknown Function Name used in Filter", "FILTER");
     }
 }
 

@@ -30,7 +30,10 @@
 
 #include "../ows/ows.h"
 
-
+#if defined(_WIN32)
+#define random    rand
+#define srandom   srand 
+#endif
 /*
  * Execute the request sql matching a transaction
  * Return the result of the request (PGRES_COMMAND_OK or an error message)

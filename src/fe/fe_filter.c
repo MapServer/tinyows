@@ -136,6 +136,7 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
 buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
     xmlChar *content;
+    int isstring = 0;
 
     assert(o != NULL);
     assert(typename != NULL);
@@ -182,15 +183,15 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
             buffer_add_str(sql, "''");      /* empty string */
 
         } else {
-            if (check_regexp((char *) content, "^[A-Za-z]") == 1
-                    || check_regexp((char *) content, ".*-.*") == 1)
-                buffer_add_str(sql, "'");
+          if (!check_regexp((char *)content, "[-+]?\\b[0-9]*\\.?[0-9]+\\b"))
+          {
+              isstring = 1;
+              buffer_add_str(sql, "'");
+          }
+          buffer_add_str(sql, (char *) content);
 
-            buffer_add_str(sql, (char *) content);
-
-            if (check_regexp((char *) content, "^[A-Za-z]") == 1
-                    || check_regexp((char *) content, ".*-.*") == 1)
-                buffer_add_str(sql, "'");
+          if (isstring)
+            buffer_add_str(sql, "'");
         }
     } else if (strcmp((char *) n->name, "PropertyName") == 0)
         sql = fe_property_name(o, typename, fe, sql, n, false);

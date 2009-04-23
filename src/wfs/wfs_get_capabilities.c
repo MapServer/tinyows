@@ -36,7 +36,7 @@
  * Assume that online_resource figure in the tinyows struct
  * Used for version 1.0.0
  */
-static void wfs_get_capabilities_dcpt_100(const ows * o)
+static void wfs_get_capabilities_dcpt_100(const ows * o, char * req)
 {
     assert(o != NULL);
     assert(o->online_resource != NULL);
@@ -44,8 +44,7 @@ static void wfs_get_capabilities_dcpt_100(const ows * o)
     fprintf(o->output, "    <DCPType>\n");
     fprintf(o->output, "     <HTTP>\n");
     fprintf(o->output, "      <Get onlineResource=\"");
-    fprintf(o->output, "%s", o->online_resource->buf);
-    fprintf(o->output, "?\"/>\n");
+    fprintf(o->output, "%s?%s\"/>\n", o->online_resource->buf, req);
     fprintf(o->output, "     </HTTP>\n");
     fprintf(o->output, "    </DCPType>\n");
     fprintf(o->output, "    <DCPType>\n");
@@ -111,22 +110,22 @@ static void wfs_capability(ows * o)
     fprintf(o->output, " <Capability>\n");
     fprintf(o->output, "  <Request>\n");
     fprintf(o->output, "   <GetCapabilities>\n");
-    wfs_get_capabilities_dcpt_100(o);
+    wfs_get_capabilities_dcpt_100(o, "");
     fprintf(o->output, "   </GetCapabilities>\n");
     fprintf(o->output, "   <DescribeFeatureType>\n");
     fprintf(o->output, "     <SchemaDescriptionLanguage>\n");
     fprintf(o->output, "        <XMLSCHEMA/>\n");
     fprintf(o->output, "     </SchemaDescriptionLanguage>\n");
-    wfs_get_capabilities_dcpt_100(o);
+    wfs_get_capabilities_dcpt_100(o, "REQUEST=DescribeFeatureType");
     fprintf(o->output, "   </DescribeFeatureType>\n");
     fprintf(o->output, "   <GetFeature>\n");
     fprintf(o->output, "<ResultFormat>\n");
     fprintf(o->output, "<GML2/>\n");
     fprintf(o->output, "</ResultFormat>\n");
-    wfs_get_capabilities_dcpt_100(o);
+    wfs_get_capabilities_dcpt_100(o, "REQUEST=GetFeature");
     fprintf(o->output, "   </GetFeature>\n");
     fprintf(o->output, "   <Transaction>\n");
-    wfs_get_capabilities_dcpt_100(o);
+    wfs_get_capabilities_dcpt_100(o, "REQUEST=Transaction");
     fprintf(o->output, "   </Transaction>\n");
     fprintf(o->output, "  </Request>\n");
     fprintf(o->output, " </Capability>\n");
@@ -254,6 +253,8 @@ static void wfs_feature_type_list(ows * o)
                     fprintf(o->output, " ");
 
                 fprintf(o->output, " <Name>");
+                buffer_flush(ln->layer->prefix, o->output);
+                fprintf(o->output, ":");
                 buffer_flush(ln->layer->name, o->output);
                 fprintf(o->output, "</Name>\n");
             }
@@ -316,9 +317,7 @@ static void wfs_feature_type_list(ows * o)
                     fprintf(o->output, "</SRS>\n");
                 } else if (ows_version_get(o->request->version) == 110) {
                     fprintf(o->output, " <DefaultSRS>");
-                    fprintf(o->output,
-                            "http://www.opengis.net/gml/srs/epsg.xml#%s",
-                            srid->buf);
+                    fprintf(o->output, "urn:ogc:def:crs:EPSG:%s", srid->buf);
                     fprintf(o->output, "</DefaultSRS>\n");
 
                     if (ln->layer->srid != NULL) {
@@ -327,8 +326,7 @@ static void wfs_feature_type_list(ows * o)
                                 other_srid = other_srid->next) {
                             if (!buffer_cmp(srid, other_srid->value->buf)) {
                                 fprintf(o->output, " <OtherSRS>");
-                                fprintf(o->output,
-                                        "http://www.opengis.net/gml/srs/epsg.xml#%s",
+                                fprintf(o->output, "urn:ogc:def:crs:EPSG:%s",
                                         other_srid->value->buf);
                                 fprintf(o->output, "</OtherSRS>\n");
                             }
@@ -352,22 +350,18 @@ static void wfs_feature_type_list(ows * o)
                     if (ows_version_get(o->request->version) == 100)
                         fprintf(o->output, "   <Query/>\n");
                     else if (ows_version_get(o->request->version) == 110)
-                        fprintf(o->output,
-                                "   <Operation>Query</Operation>\n");
+                        fprintf(o->output, "   <Operation>Query</Operation>\n");
                 }
 
-                if (writable == false && ln->layer->writable == true) {
+                if (writable == true && ln->layer->writable == true) {
                     if (ows_version_get(o->request->version) == 100) {
                         fprintf(o->output, "   <Insert/>\n");
                         fprintf(o->output, "   <Update/>\n");
                         fprintf(o->output, "   <Delete/>\n");
                     } else if (ows_version_get(o->request->version) == 110) {
-                        fprintf(o->output,
-                                "   <Operation>Insert</Operation>\n");
-                        fprintf(o->output,
-                                "   <Operation>Update</Operation>\n");
-                        fprintf(o->output,
-                                "   <Operation>Delete</Operation>\n");
+                        fprintf(o->output, "   <Operation>Insert</Operation>\n");
+                        fprintf(o->output, "   <Operation>Update</Operation>\n");
+                        fprintf(o->output, "   <Operation>Delete</Operation>\n");
                     }
                 }
 

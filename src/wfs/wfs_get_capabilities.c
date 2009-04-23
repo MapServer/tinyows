@@ -245,7 +245,8 @@ static void wfs_feature_type_list(ows * o)
         /* print each feature type */
         if (ows_layer_match_table(o, ln->layer->name)) {
 
-            fprintf(o->output, "<FeatureType>\n");
+            fprintf(o->output, "<FeatureType xmlns:%s=\"%s\">\n",
+                    ln->layer->prefix->buf, ln->layer->server->buf);
 
             /* name */
             if (ln->layer->name != NULL) {

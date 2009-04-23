@@ -65,6 +65,7 @@ static ows *ows_init()
     o->config_file = NULL;
     o->online_resource = NULL;
     o->schema_dir = NULL;
+    o->log = NULL;
 
     o->layers = NULL;
 
@@ -75,6 +76,7 @@ static ows *ows_init()
     o->degree_precision = 6;
     o->meter_precision = 0;
     o->max_geobbox = NULL;
+    o->wfs_display_bbox = false;
 
     o->metadata = NULL;
     o->contact = NULL;
@@ -117,6 +119,12 @@ void ows_flush(ows * o, FILE * output)
     if (o->pg_dsn != NULL) {
         fprintf(output, "pg: ");
         buffer_flush(o->pg_dsn, output);
+        fprintf(output, "\n");
+    }
+
+    if (o->log != NULL) {
+        fprintf(output, "log: ");
+        buffer_flush(o->log, output);
         fprintf(output, "\n");
     }
 
@@ -168,6 +176,7 @@ void ows_flush(ows * o, FILE * output)
         ows_geobbox_flush(o->max_geobbox, output);
         fprintf(output, "\n");
     }
+    fprintf(output, "wfs_display_bbox: %d\n", o->wfs_display_bbox?1:0);
 
     if (o->sld_path != NULL) {
         fprintf(output, "sld_path: ");
@@ -198,6 +207,9 @@ void ows_free(ows * o)
 
     if (o->pg != NULL)
         PQfinish(o->pg);
+
+    if (o->log != NULL)
+        buffer_free(o->log);
 
     if (o->pg_dsn != NULL)
         buffer_free(o->pg_dsn);
@@ -241,6 +253,10 @@ void ows_usage(ows * o)
     printf("___________\n");
     printf("Schema dir: %s\n", o->schema_dir->buf);
     printf("___________\n");
+    if (o->log != NULL) {
+        printf("Log file: %s\n", o->log->buf);
+        printf("___________\n");
+    }
 }
 
 
@@ -248,6 +264,7 @@ int main(int argc, char *argv[])
 {
     char *query;
     ows *o;
+    FILE *log;
 
     o = ows_init();
     o->config_file = buffer_init();
@@ -329,6 +346,17 @@ int main(int argc, char *argv[])
 
     /* Fill layers storage metadata */
     ows_layers_storage_fill(o);
+
+    /* Log input query if asked
+     * Mainly usefull for debug purpose indeed...
+     */
+    if (o->log != NULL) {
+        log = fopen(o->log->buf, "a");
+        if (log != NULL) {
+            fprintf(log, "%s\n", query);
+            fclose(log);
+        }
+    }
 
     /* Process service request */
     ows_request_check(o, o->request, o->cgi, query);

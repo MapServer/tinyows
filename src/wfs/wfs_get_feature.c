@@ -98,6 +98,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     pkey = ows_psql_id_column(o, layer_name);
 
     /* exception properties, must have 'gml' like prefix */
+    /* humm not sure that's right !!! */
     if (buffer_cmp(prop_name, "name")
             || buffer_cmp(prop_name, "description")
             || (!buffer_cmp(prop_name, "boundedBy")
@@ -350,12 +351,18 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
 
     fprintf(o->output, ">\n");
 
-    /* print the outerboundaries of the requests */
-    outer_b = ows_bbox_boundaries(o, request_list->first->next->value,
+    /* 
+     * Display only if we really asked the bbox of the features retrieved
+     * Overhead could be signifiant !!!
+     */
+    if (o->wfs_display_bbox) {
+        /* print the outerboundaries of the requests */
+        outer_b = ows_bbox_boundaries(o, request_list->first->next->value,
                                   request_list->last->value);
-    wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin,
+        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin,
                        outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
-    ows_bbox_free(outer_b);
+        ows_bbox_free(outer_b);
+    }
 
     /* initialize the nodes to run through requests */
     if (wr->typename != NULL)

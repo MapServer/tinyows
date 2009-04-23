@@ -56,6 +56,14 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     }
 
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "log");
+
+    if (a != NULL) {
+        o->log = buffer_init();
+        buffer_add_str(o->log, (char *) a);
+        xmlFree(a);
+    }
+
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "degree_precision");
 
     if (a != NULL) {
@@ -79,6 +87,16 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
 
         xmlFree(a);
     }
+
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "wfs_display_bbox");
+
+    if (a != NULL) {
+        if (atoi((char *) a))
+            o->wfs_display_bbox = true;
+
+        xmlFree(a);
+    }
+
 }
 
 

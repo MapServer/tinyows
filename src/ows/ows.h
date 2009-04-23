@@ -400,6 +400,7 @@ typedef struct Ows {
     buffer * schema_dir;
     buffer * online_resource;
     buffer * pg_dsn;
+    buffer * log;
     FILE* output;
 
     ows_meta * metadata;
@@ -414,6 +415,7 @@ typedef struct Ows {
     int meter_precision;
 
     ows_geobbox * max_geobbox;
+    bool wfs_display_bbox;
 
     array * cgi;
     list * psql_requests;

@@ -30,10 +30,6 @@
 
 #include "../ows/ows.h"
 
-#if defined(_WIN32)
-#define random    rand
-#define srandom   srand 
-#endif
 /*
  * Execute the request sql matching a transaction
  * Return the result of the request (PGRES_COMMAND_OK or an error message)
@@ -401,9 +397,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
              buffer_copy(sql, id);
              buffer_add_str(sql, "';");
         } else if (idgen == WFS_GENERATE_NEW) {
-             srandom((int) (time(NULL) ^ random() % 1000) + 42);
-             srandom((random() % 1000 ^ random() % 1000) + 42);
-             buffer_add_int(id, random());
+             srand((int) (time(NULL) ^ rand() % 1000) + 42);
+             srand((rand() % 1000 ^ rand() % 1000) + 42);
+             buffer_add_int(id, rand());
  	     /* FIXME: use something more clever than that
                 to prevent collission !
              */

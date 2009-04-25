@@ -50,8 +50,7 @@ static void wfs_get_capabilities_dcpt_100(const ows * o, char * req)
     fprintf(o->output, "    <DCPType>\n");
     fprintf(o->output, "     <HTTP>\n");
     fprintf(o->output, "      <Post onlineResource=\"");
-    fprintf(o->output, "%s", o->online_resource->buf);
-    fprintf(o->output, "\"/>\n");
+    fprintf(o->output, "%s\"/>\n", o->online_resource->buf);
     fprintf(o->output, "     </HTTP>\n");
     fprintf(o->output, "    </DCPType>\n");
 }
@@ -69,10 +68,8 @@ static void wfs_gml_object_type(ows * o, char *type)
     fprintf(o->output, "  <GMLObjectType>\n");
     fprintf(o->output, "   <Name>gml:%s</Name>\n", type);
     fprintf(o->output, "   <OutputFormats>\n");
-    fprintf(o->output,
-            "    <Format>text/xml; subtype=gml/2.1.2</Format>\n");
-    fprintf(o->output,
-            "    <Format>text/xml; subtype=gml/3.1.1</Format>\n");
+    fprintf(o->output, "    <Format>text/xml; subtype=gml/2.1.2</Format>\n");
+    fprintf(o->output, "    <Format>text/xml; subtype=gml/3.1.1</Format>\n");
     fprintf(o->output, "   </OutputFormats>\n");
     fprintf(o->output, "  </GMLObjectType>\n");
 }
@@ -141,7 +138,6 @@ static void wfs_operations_metadata(ows * o)
     assert(o != NULL);
 
     fprintf(o->output, " <ows:OperationsMetadata>\n");
-
     fprintf(o->output, "  <ows:Operation name='GetCapabilities'>\n");
     ows_get_capabilities_dcpt(o);
     fprintf(o->output, "  <ows:Parameter name='AcceptVersions'>\n");
@@ -156,24 +152,17 @@ static void wfs_operations_metadata(ows * o)
     fprintf(o->output, "  <ows:Value>ServiceProvider</ows:Value>\n");
     fprintf(o->output, "  <ows:Value>OperationsMetadata</ows:Value>\n");
     fprintf(o->output, "  <ows:Value>FeatureTypeList</ows:Value>\n");
-    fprintf(o->output,
-            "  <ows:Value>ServesGMLObjectTypeList</ows:Value>\n");
-    fprintf(o->output,
-            "  <ows:Value>SupportsGMLObjectTypeList</ows:Value>\n");
+    fprintf(o->output, "  <ows:Value>ServesGMLObjectTypeList</ows:Value>\n");
+    fprintf(o->output, "  <ows:Value>SupportsGMLObjectTypeList</ows:Value>\n");
     fprintf(o->output, "  </ows:Parameter>\n");
     fprintf(o->output, "   </ows:Operation>\n");
-
     fprintf(o->output, "   <ows:Operation name='DescribeFeatureType'>\n");
     ows_get_capabilities_dcpt(o);
     fprintf(o->output, "  <ows:Parameter name='outputFormat'>\n");
-    fprintf(o->output,
-            "  <ows:Value>text/xml; subtype=gml/3.1.1</ows:Value>\n");
-    fprintf(o->output,
-            "  <ows:Value>text/xml; subtype=gml/2.1.2</ows:Value>\n");
-
+    fprintf(o->output, "  <ows:Value>text/xml; subtype=gml/3.1.1</ows:Value>\n");
+    fprintf(o->output, "  <ows:Value>text/xml; subtype=gml/2.1.2</ows:Value>\n");
     fprintf(o->output, "  </ows:Parameter>\n");
     fprintf(o->output, "   </ows:Operation>\n");
-
     fprintf(o->output, "   <ows:Operation name='GetFeature'>\n");
     ows_get_capabilities_dcpt(o);
     fprintf(o->output, "  <ows:Parameter name='resultType'>\n");
@@ -181,11 +170,9 @@ static void wfs_operations_metadata(ows * o)
     fprintf(o->output, "  <ows:Value>hits</ows:Value>\n");
     fprintf(o->output, "  </ows:Parameter>\n");
     fprintf(o->output, "   </ows:Operation>\n");
-
     fprintf(o->output, "   <ows:Operation name='Transaction'>\n");
     ows_get_capabilities_dcpt(o);
     fprintf(o->output, "   </ows:Operation>\n");
-
     fprintf(o->output, " </ows:OperationsMetadata>\n");
 }
 
@@ -333,7 +320,6 @@ static void wfs_feature_type_list(ows * o)
                             }
                         }
                     }
-
                 }
             } else {
                 if (ows_version_get(o->request->version) == 100)
@@ -370,9 +356,9 @@ static void wfs_feature_type_list(ows * o)
             }
 
             /* boundaries */
-            if (ln->layer->geobbox == NULL)
+            if (ln->layer->geobbox == NULL) {
                 gb = ows_geobbox_compute(o, ln->layer->name);
-            else {
+            } else {
                 gb = ows_geobbox_init();
                 gb->west = ln->layer->geobbox->west;
                 gb->east = ln->layer->geobbox->east;
@@ -429,10 +415,8 @@ static void wfs_feature_type_list(ows * o)
                     fprintf(o->output, " maxy='0'");
                     fprintf(o->output, " />\n");
                 } else if (ows_version_get(o->request->version) == 110) {
-                    fprintf(o->output,
-                            " <ows:LowerCorner>0 0</ows:LowerCorner>");
-                    fprintf(o->output,
-                            " <ows:UpperCorner>0 0</ows:UpperCorner>");
+                    fprintf(o->output, " <ows:LowerCorner>0 0</ows:LowerCorner>");
+                    fprintf(o->output, " <ows:UpperCorner>0 0</ows:UpperCorner>");
                 }
             }
 
@@ -453,7 +437,6 @@ static void wfs_feature_type_list(ows * o)
 
 /*
  * Execute the wfs get capabilities 1.1.0 request
- * Valid against wfs_capabilities 1.1.0 schema
  */
 static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
 {
@@ -461,16 +444,6 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
 
     assert(o != NULL);
     assert(wr != NULL);
-
-#if 0
-
-    /* check if metadata are given */
-    if (o->metadata->type == NULL || o->metadata->versions == NULL)
-        ows_error(o, OWS_ERROR_MISSING_METADATA,
-                  "missing versions or type metadata in fileconf",
-                  "GetCapabilities");
-
-#endif
 
     if (wr->format == WFS_TEXT_XML)
         fprintf(o->output, "Content-Type: text/xml\n\n");
@@ -568,24 +541,11 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
 
 /*
  * Execute the wfs get capabilities request 1.0.0
- * Valid against schema wfs_capabilities 1.0.0
  */
 static void wfs_get_capabilities_100(ows * o, wfs_request * wr)
 {
     assert(o != NULL);
     assert(wr != NULL);
-
-#if 0
-
-    /* check if metadata are given */
-    if (o->metadata->name == NULL
-            || o->metadata->title == NULL
-            || o->online_resource == NULL)
-        ows_error(o, OWS_ERROR_MISSING_METADATA,
-                  "missing name or title or online_resource metadata in config file",
-                  "GetCapabilities");
-
-#endif
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
@@ -593,8 +553,8 @@ static void wfs_get_capabilities_100(ows * o, wfs_request * wr)
     fprintf(o->output, "version='1.0.0' updateSequence='0'\n");
     fprintf(o->output, " xmlns='http://www.opengis.net/wfs'\n");
     fprintf(o->output, " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
-    fprintf(o->output, "xmlns:ogc='http://www.opengis.net/ogc'");
-    fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/wfs");
+    fprintf(o->output, " xmlns:ogc='http://www.opengis.net/ogc'\n");
+    fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/wfs\n");
     fprintf(o->output, " http://schemas.opengis.net/wfs/1.0.0/WFS-capabilities.xsd' >\n");
 
     /* Service Section : provides information about the service iself */

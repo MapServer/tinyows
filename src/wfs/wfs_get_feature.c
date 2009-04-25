@@ -237,6 +237,8 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
 {
     array *namespaces;
     array_node *an;
+    list_node *ln;
+    buffer * prefix;
 
     assert(o != NULL);
     assert(wr != NULL);
@@ -263,12 +265,18 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     fprintf(o->output, " xsi:schemaLocation='");
 
     if (ows_version_get(o->request->version) == 100)
-        fprintf(o->output,
-                "%s\n    %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType\n",
+        fprintf(o->output, "%s\n    %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType&amp;Typename=",
                 namespaces->first->value->buf, o->online_resource->buf);
-    else fprintf(o->output,
-                "%s\n   %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType\n",
+    else 
+        fprintf(o->output, "%s\n    %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType&amp;Typename=",
                 namespaces->first->value->buf, o->online_resource->buf);
+
+    for (ln = wr->typename->first; ln != NULL; ln = ln->next) {
+        prefix = ows_layer_prefix(o->layers, ln->value);
+        fprintf(o->output, "%s:%s", prefix->buf, ln->value->buf);
+        buffer_free(prefix);
+        if (ln->next) fprintf(o->output, ",");
+    }
 
     if (ows_version_get(o->request->version) == 100) {
         fprintf(o->output, "   http://www.opengis.net/wfs\n");

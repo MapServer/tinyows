@@ -11,14 +11,16 @@
    	   email="tinyows-users@lists.maptools.org" />
 
   <layer retrievable="1"
-	 prefix="wld"
-	 server="http://www.tinyows.org/demo/world/"
+	 writable="1"
+	 prefix="tows"
+	 server="http://www.tinyows.org/"
          name="world"
          title="World Administrative Boundaries" />
 
   <layer retrievable="1"
-	 prefix="dpt"
-	 server="http://www.tinyows.org/demo/france_dept/"
+	 writable="1"
+	 prefix="tows"
+	 server="http://www.tinyows.org/"
          name="france_dept"
          title="French Administrative Sub Boundaries (IGN - GeoFLA Departements)" />
 

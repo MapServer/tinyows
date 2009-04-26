@@ -25,12 +25,12 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <time.h>
 
 #include "ows.h"
 
 
-void ows_psql_prepare(ows * o, buffer * request_name, buffer * parameters,
-                      buffer * sql)
+void ows_psql_prepare(ows * o, buffer * request_name, buffer * parameters, buffer * sql)
 {
     buffer *prepare;
     PGresult *res;
@@ -104,6 +104,7 @@ list *ows_psql_geometry_column(ows * o, buffer * layer_name)
     return NULL;
 }
 
+
 /*
  * Check if a given WKT geometry is or not valid
  */
@@ -119,7 +120,7 @@ bool ows_psql_is_geometry_valid(ows * o, buffer * geom)
     buffer_add_str(sql, "SELECT isvalid(geometryfromtext('");
     buffer_copy(sql, geom);
     buffer_add_str(sql, "', -1));");
-
+    
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
@@ -230,7 +231,6 @@ int ows_psql_num_column(ows * o, buffer * layer_name, buffer * column)
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
         PQclear(res);
-
         return -1;
     }
 
@@ -287,7 +287,6 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
         PQclear(res);
-
         return column;
     }
 
@@ -404,54 +403,86 @@ buffer *ows_psql_type(ows * o, buffer * layer_name, buffer * property)
 }
 
 
-#if 0
-/*
- * Return the number of rows returned by the specified requests
- */
-int ows_psql_number_features(ows * o, list * from, list * where)
+
+buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
 {
-    buffer *sql;
-    PGresult *res;
-    list_node *ln_from, *ln_where;
-    int nb;
+    ows_layer_node *ln;
+    buffer * id, *sql_id;
+    FILE *fp;
+    PGresult * res;
+    int i, seed_len;
+    char * seed = NULL;
 
     assert(o != NULL);
-    assert(from != NULL);
-    assert(where != NULL);
+    assert(o->layers != NULL);
+    assert(layer_name != NULL);
 
-    nb = 0;
-
-    /* checks if from list and where list have the same size */
-    if (from->size != where->size)
-        return nb;
-
-    for (ln_from = from->first, ln_where = where->first;
-            ln_from != NULL;
-            ln_from = ln_from->next, ln_where = ln_where->next) {
-        sql = buffer_init();
-
-        /* execute the request */
-        buffer_add_str(sql, "SELECT count(*) FROM \"");
-        buffer_copy(sql, ln_from->value);
-        buffer_add_str(sql, "\" ");
-        buffer_copy(sql, ln_where->value);
-
-        res = PQexec(o->pg, sql->buf);
-        buffer_free(sql);
-
-        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-            PQclear(res);
-            return -1;
-        }
-
-        nb = nb + atoi(PQgetvalue(res, 0, 0));
-        PQclear(res);
+    /* Retrieve layer node pointer */
+    for (ln = o->layers->first; ln != NULL; ln = ln->next) {
+        if (ln->layer->name != NULL
+                && ln->layer->storage != NULL
+                && ln->layer->name->use == layer_name->use
+                && strcmp(ln->layer->name->buf, layer_name->buf) == 0) break;
     }
+    assert(ln != NULL);
 
-    return nb;
+    id = buffer_init();
+
+    /* If PK have a sequence in PostgreSQL database,
+     * retrieve next available sequence value
+     */
+     if (ln->layer->storage->pkey_sequence != NULL) {
+         sql_id = buffer_init();
+         buffer_add_str(sql_id, "SELECT nextval('");
+         buffer_copy(sql_id, ln->layer->storage->pkey_sequence);
+         buffer_add_str(sql_id, "');");
+         res = PQexec(o->pg, sql_id->buf);
+         buffer_free(sql_id);
+
+         if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1) {
+             buffer_add_str(id, (char *) PQgetvalue(res, 0, 0));
+             PQclear(res);
+             return id;
+         }
+
+         /* FIXME: Shouldn't we return an error there instead ? */
+         PQclear(res);
+     } 
+     
+     /*
+      * If we don't have a PostgreSQL Sequence, we will try to 
+      * generate a pseudo random keystring using /dev/urandom
+      * Will so work only on somes/commons Unix system
+      */
+     seed_len = 6;
+     seed = malloc(sizeof(char) * (seed_len * 3 + 1));  /* multiply by 3 to be able to deal
+                                                           with hex2dec conversion */ 
+     assert(seed != NULL);
+     seed[0] = '\0';
+
+     fp=fopen("/dev/urandom","r");
+     if (fp != NULL) {
+         for (i=0 ; i<seed_len ; i++)
+             sprintf(seed,"%s%03d",seed,fgetc(fp));
+         fclose(fp);
+         buffer_add_str(id, seed);
+         free(seed);
+
+         return id;
+     } 
+     free(seed);
+
+    /* Case where we not using PostgreSQL sequence, 
+     * and OS don't have a /dev/urandom support
+     * This case don't prevent to produce ID collision
+     * Don't use it unless really no others choices !!!
+     */
+     srand((int) (time(NULL) ^ rand() % 1000) + 42); 
+     srand((rand() % 1000 ^ rand() % 1000) + 42); 
+     buffer_add_int(id, rand());
+
+     return id;
 }
-#endif
-
 
 /*
  * vim: expandtab sw=4 ts=4

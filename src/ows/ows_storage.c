@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "ows.h"
 
@@ -41,7 +42,8 @@ ows_layer_storage * ows_layer_storage_init()
     storage->geom_columns = list_init();
     storage->is_degree = true;
     storage->table = buffer_init();
-    storage->pkey = buffer_init();
+    storage->pkey = NULL;
+    storage->pkey_sequence = NULL;
     storage->attributes = array_init();
     storage->not_null_columns = list_init();
 
@@ -61,6 +63,9 @@ void ows_layer_storage_free(ows_layer_storage * storage)
 
     if (storage->pkey != NULL)
         buffer_free(storage->pkey);
+
+    if (storage->pkey_sequence != NULL)
+        buffer_free(storage->pkey_sequence);
 
     if (storage->geom_columns != NULL)
         list_free(storage->geom_columns);
@@ -106,6 +111,12 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     if (storage->pkey != NULL) {
         fprintf(output, "pkey: ");
         buffer_flush(storage->pkey, output);
+        fprintf(output, "\n");
+    }
+
+    if (storage->pkey != NULL) {
+        fprintf(output, "pkey_sequence: ");
+        buffer_flush(storage->pkey_sequence, output);
         fprintf(output, "\n");
     }
 
@@ -167,8 +178,10 @@ static void ows_storage_fill_not_null(ows * o, ows_layer * l)
     PQclear(res);
 }
 
+
 /*
  * Retrieve pkey column of a table related a given layer
+ * And if success try also to retrieve a related pkey sequence
  */
 static void ows_storage_fill_pkey(ows * o, ows_layer * l)
 {
@@ -199,18 +212,50 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     buffer_add_str(sql, "' AND c.contype = 'p')");
 
     res = PQexec(o->pg, sql->buf);
-    buffer_free(sql);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
         PQclear(res);
+        buffer_free(sql);
         ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
                   "Unable to access pg_* tables.", "pkey column");
     }
 
-    if (PQntuples(res) == 1)
+    /* Layer could have no Pkey indeed... (An SQL view for example) */
+    if (PQntuples(res) == 1) {
+        l->storage->pkey = buffer_init();
         buffer_add_str(l->storage->pkey, PQgetvalue(res, 0, 0));
+        buffer_empty(sql);
+        PQclear(res);
+
+        /* Now try to find a sequence related to this Pkey */
+        buffer_add_str(sql, "SELECT pg_get_serial_sequence('");
+        buffer_copy(sql, l->storage->schema);
+        buffer_add_str(sql, ".\"");
+        buffer_copy(sql, l->storage->table);
+	    buffer_add_str(sql, "\"', '");
+        buffer_copy(sql, l->storage->pkey);
+	    buffer_add_str(sql, "');");
+
+        res = PQexec(o->pg, sql->buf);
+
+        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+            PQclear(res);
+            buffer_free(sql);
+            ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
+                  "Unable to use pg_get_serial_sequence.", "pkey_sequence retrieve");
+        }
+        
+        /* Even if no sequence found, this function return an empty row
+         * so we must check that result string returned > 0 char
+         */
+        if (PQntuples(res) == 1 && strlen((char *) PQgetvalue(res, 0, 0)) > 0) {
+            l->storage->pkey_sequence = buffer_init();
+            buffer_add_str(l->storage->pkey_sequence, PQgetvalue(res, 0, 0));
+        }
+    }
 
     PQclear(res);
+    buffer_free(sql);
 }
 
 
@@ -313,6 +358,7 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l)
     ows_storage_fill_not_null(o, l);
     ows_storage_fill_pkey(o, l);
 }
+
 
 void ows_layers_storage_fill(ows * o)
 {

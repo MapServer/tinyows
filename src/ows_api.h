@@ -143,6 +143,7 @@ void ows_psql_prepare (ows * o, buffer * request_name, buffer * parameters, buff
 buffer *ows_psql_timestamp_to_xml_time (char *timestamp);
 char *ows_psql_to_xsd (buffer * type);
 buffer *ows_psql_type (ows * o, buffer * layer_name, buffer * property);
+buffer *ows_psql_generate_id (ows * o, buffer * layer_name);
 void ows_request_check (ows * o, ows_request * or, const array * cgi, const char *query);
 void ows_request_flush (ows_request * or, FILE * output);
 void ows_request_free (ows_request * or);

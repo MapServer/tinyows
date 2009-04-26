@@ -107,6 +107,7 @@ typedef struct Ows_layer_storage {
     list * not_null_columns;
     int srid;
     buffer * pkey;
+    buffer * pkey_sequence;
     bool is_degree;
     array * attributes;
 } ows_layer_storage;

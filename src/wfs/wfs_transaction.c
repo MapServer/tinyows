@@ -34,8 +34,7 @@
  * Execute the request sql matching a transaction
  * Return the result of the request (PGRES_COMMAND_OK or an error message)
  */
-static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr,
-        buffer * sql)
+static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr, buffer * sql)
 {
     buffer *result, *cmd_status;
     PGresult *res;
@@ -48,10 +47,11 @@ static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr,
 
     res = PQexec(o->pg, sql->buf);
 
-    if (PQresultStatus(res) != PGRES_COMMAND_OK)
+    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
         buffer_add_str(result, PQresultErrorMessage(res));
-    else
+    } else {
         buffer_add_str(result, PQresStatus(PQresultStatus(res)));
+    }
 
     buffer_add_str(cmd_status, (char *) PQcmdStatus(res));
 
@@ -284,8 +284,7 @@ static buffer *wfs_retrieve_value(ows * o, wfs_request * wr,
 /*
  * Retrieve the layer's name
  */
-static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr,
-                                     xmlNodePtr n)
+static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
 {
     xmlAttr *att;
     xmlChar *content;
@@ -314,11 +313,13 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr,
 static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 {
     buffer *values, *column, *layer_name, *layer_prefix, *result, *sql;
-    buffer *id, *handle, *id_column, *fid_full_name;
+    buffer *id, *handle, *id_column, *fid_full_name, *dup_sql;
     filter_encoding *fe;
     xmlNodePtr node, elemt;
+    PGresult *res;
     xmlChar *attr = NULL;
     enum wfs_insert_idgen idgen = WFS_GENERATE_NEW;
+    enum wfs_insert_idgen handle_idgen = WFS_GENERATE_NEW;
 
     assert(o != NULL);
     assert(wr != NULL);
@@ -342,9 +343,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     if (xmlHasProp(n, (xmlChar *) "idgen")) {
         attr =  xmlGetProp(n, (xmlChar *) "idgen");
         if (strcmp((char *) attr, "ReplaceDuplicate") == 0)
-		idgen = WFS_REPLACE_DUPLICATE;
+		handle_idgen = WFS_REPLACE_DUPLICATE;
         else if (strcmp((char *) attr, "UseExisting") == 0)
-		idgen = WFS_USE_EXISTING;
+		handle_idgen = WFS_USE_EXISTING;
         xmlFree(attr);
     }
 
@@ -355,8 +356,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
     /* insert elements layer by layer */
     for (; n; n = n->next) {
-        if (n->type != XML_ELEMENT_NODE)
-            continue;
+        if (n->type != XML_ELEMENT_NODE) continue;
 
         values = buffer_init();
         layer_name = buffer_init();
@@ -365,44 +365,59 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
         buffer_add_str(layer_name, (char *) n->name);
         wfs_request_remove_namespaces(o, layer_name);
 
+        idgen = handle_idgen;
+
         /* In GML 3 GML:id is used, in GML 2.1.2 fid is used.
          * In both cases no other attribute allowed in this element
          * and in both cases (f)id is optionnal !
          */ 
-        id = buffer_init();
         if (xmlHasProp(n, (xmlChar *) "id"))
             attr =  xmlGetProp(n, (xmlChar *) "id");
         else if (xmlHasProp(n, (xmlChar *) "fid"))
             attr =  xmlGetProp(n, (xmlChar *) "fid");
         
         if (attr != NULL) {
+            id = buffer_init();
             buffer_add_str(id, (char *) attr);
-            xmlFree(attr); 
+            xmlFree(attr);
         } else idgen = WFS_GENERATE_NEW;
-        /* TODO should add error if UseExisting 
+        /* TODO should we end on error if UseExisting 
            or Replace without id set ? */
 
         id_column = ows_psql_id_column(o, layer_name);
         layer_prefix = ows_layer_prefix(o->layers, layer_name);
 
-        /*
-         * Delete previous feature if idgen is ReplaceExisting
+        /* ReplaceDuplicate look if an ID is already used
+         *
+         * May not be safe if another transaction occur between
+         * this select and the related insert !!!
          */
-	if (idgen == WFS_REPLACE_DUPLICATE) {
-             buffer_add_str(sql, "DELETE FROM \"");
-             buffer_copy(sql, layer_name);
-             buffer_add_str(sql, "\" WHERE ");
-             buffer_copy(sql, id_column);
-             buffer_add_str(sql, "='");
-             buffer_copy(sql, id);
-             buffer_add_str(sql, "';");
-        } else if (idgen == WFS_GENERATE_NEW) {
-             srand((int) (time(NULL) ^ rand() % 1000) + 42);
-             srand((rand() % 1000 ^ rand() % 1000) + 42);
-             buffer_add_int(id, rand());
- 	     /* FIXME: use something more clever than that
-                to prevent collission !
-             */
+	   if (idgen == WFS_REPLACE_DUPLICATE) {
+           dup_sql = buffer_init();
+
+           buffer_add_str(dup_sql, "SELECT count(*) FROM \""); 
+           /* FIXME add Postgres schema */ 
+           buffer_copy(dup_sql, layer_name);
+           buffer_add_str(dup_sql, "\" WHERE "); 
+           buffer_copy(dup_sql, id_column);
+           buffer_add_str(dup_sql, "='"); 
+           buffer_copy(dup_sql, id);
+           buffer_add_str(dup_sql, "';");
+
+           res = PQexec(o->pg, dup_sql->buf);
+           buffer_free(dup_sql);
+           if (PQresultStatus(res) != PGRES_TUPLES_OK ||
+                   atoi((char *) PQgetvalue(res, 0, 0)) != 0)
+               idgen = WFS_GENERATE_NEW;
+           else
+               idgen = WFS_USE_EXISTING;
+
+           PQclear(res);
+       }
+
+        if (idgen == WFS_GENERATE_NEW) {
+            if (id != NULL) buffer_free(id);
+            id = ows_psql_generate_id(o, layer_name);
         }
 
         /* Retrieve the id of the inserted feature

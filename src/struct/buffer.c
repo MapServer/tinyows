@@ -49,12 +49,10 @@ static void buffer_realloc(buffer * buf)
     assert(buf->buf != NULL);
 
     buf->size = buf->realloc;
-
     buf->realloc *= 2;
 
     if (buf->realloc >= SIZE_MAX)
         assert(true);
-
 }
 
 
@@ -86,12 +84,10 @@ buffer *buffer_init()
 void buffer_free(buffer * buf)
 {
     assert(buf != NULL);
-
     assert(buf->buf != NULL);
 
     free(buf->buf);
     buf->buf = NULL;
-
 
     free(buf);
     buf = NULL;
@@ -259,6 +255,7 @@ void buffer_add_head(buffer * buf, char c)
     buf->use++;
 }
 
+
 /*
  * Add a string to the top of a buffer
  */
@@ -271,7 +268,6 @@ void buffer_add_head_str(buffer * buf, char *str)
 
     for (i = strlen(str); i != 0; i--)
         buffer_add_head(buf, str[i - 1]);
-
 }
 
 
@@ -392,7 +388,6 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
     assert(after != NULL);
 
     new_buf = buffer_init();
-
     buffer_copy(new_buf, buf);
 
     /* look for first occurence */
@@ -414,10 +409,8 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
         buffer_copy(new_buf, rest);
         buffer_free(rest);
 
-
         /* search the next occurence */
         pos = strstr(new_buf->buf, before);
-
     }
 
     /* return the altered buffer */
@@ -426,7 +419,6 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
     buffer_free(new_buf);
 
     return buf;
-
 }
 
 

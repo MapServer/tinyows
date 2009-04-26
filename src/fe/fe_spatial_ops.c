@@ -250,7 +250,6 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
         buffer_free(geom);
         return fe->sql;
     }
-
     n = n->children;
 
     /* jump to the next element if there are spaces */
@@ -262,7 +261,7 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
         if ((strcmp((char *) node->name, "description") == 0 
             || strcmp((char *) node->name, "name") == 0  
             || strcmp((char *) node->name, "metaDataProperty") == 0)  
-	&& strcmp((char *) node->ns->href, "http://www.opengis.net/gml")  == 0)
+	        && strcmp((char *) node->ns->href, "http://www.opengis.net/gml")  == 0)
             node = node->next;
 
         if (node->type == XML_ELEMENT_NODE) {

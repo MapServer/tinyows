@@ -97,11 +97,11 @@ static void wfs_transaction_summary(ows * o, wfs_request * wr,
             fprintf(o->output, " <wfs:totalInserted>%d</wfs:totalInserted>\n", nb);
         }
 
-        fprintf(o->output, " <wfs:totalDeleted>%d</wfs:totalDeleted>\n",
-                    wr->delete_results);
-
         fprintf(o->output, "<wfs:totalUpdated>%d</wfs:totalUpdated>\n",
                     wr->update_results);
+
+        fprintf(o->output, " <wfs:totalDeleted>%d</wfs:totalDeleted>\n",
+                    wr->delete_results);
     }
 
     fprintf(o->output, "</wfs:TransactionSummary>\n");
@@ -131,18 +131,18 @@ static void wfs_transaction_insert_result(ows * o, wfs_request * wr, buffer * re
 
         for (an = wr->insert_results->first; an != NULL; an = an->next) {
 
-            if (ows_version_get(o->request->version) == 100)
-                    fprintf(o->output, "<wfs:InsertResult handle=\"%s\">", an->key->buf);
-            else 
-                    fprintf(o->output, "<wfs:Feature handle=\"%s\">", an->key->buf);
-
-            for (ln = an->value->first; ln != NULL; ln = ln->next)
-                fprintf(o->output, "<ogc:FeatureId fid=\"%s\"/>", ln->value->buf);
-
-            if (ows_version_get(o->request->version) == 100)
+            if (ows_version_get(o->request->version) == 100) {
+                fprintf(o->output, "<wfs:InsertResult handle=\"%s\">", an->key->buf);
+                for (ln = an->value->first; ln != NULL; ln = ln->next)
+                    fprintf(o->output, "<ogc:FeatureId fid=\"%s\"/>", ln->value->buf);
                 fprintf(o->output, "</wfs:InsertResult>\n");
-            else
-                fprintf(o->output, "</wfs:Feature>\n");
+            } else {
+                for (ln = an->value->first; ln != NULL; ln = ln->next) {
+                    fprintf(o->output, "<wfs:Feature handle=\"%s\">\n", an->key->buf);
+                    fprintf(o->output, " <ogc:FeatureId fid=\"%s\"/>\n", ln->value->buf);
+                    fprintf(o->output, "</wfs:Feature>\n");
+                }
+            }
         }
 
         if (ows_version_get(o->request->version) == 110)

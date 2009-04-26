@@ -172,6 +172,13 @@ static void wfs_operations_metadata(ows * o)
     fprintf(o->output, "   </ows:Operation>\n");
     fprintf(o->output, "   <ows:Operation name='Transaction'>\n");
     ows_get_capabilities_dcpt(o);
+    fprintf(o->output, "    <ows:Parameter name='inputFormat'>\n"); 
+    fprintf(o->output, "     <ows:Value>text/xml; subtype=gml/3.1.1</ows:Value>\n");
+    fprintf(o->output, "    </ows:Parameter>\n"); 
+    fprintf(o->output, "    <ows:Parameter name='idgen'>\n"); 
+    fprintf(o->output, "     <ows:Value>GenerateNew</ows:Value>\n");
+    fprintf(o->output, "     <ows:Value>UseExisting</ows:Value>\n");
+    fprintf(o->output, "    </ows:Parameter>\n"); 
     fprintf(o->output, "   </ows:Operation>\n");
     fprintf(o->output, " </ows:OperationsMetadata>\n");
 }

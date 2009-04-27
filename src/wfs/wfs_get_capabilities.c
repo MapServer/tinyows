@@ -288,7 +288,7 @@ static void wfs_feature_type_list(ows * o)
                     else if (ows_version_get(o->request->version) == 110) {
                         fprintf(o->output, "  <Keyword>");
                         fprintf(o->output, "%s", keyword->value->buf);
-                        fprintf(o->output, "  </Keyword>");
+                        fprintf(o->output, "</Keyword>");
                     }
                 }
 

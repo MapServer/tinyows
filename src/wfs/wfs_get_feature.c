@@ -488,12 +488,14 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\",");
 
-                if (ows_srs_meter_units(o, layer_name))
+                if (ows_srs_meter_units(o, layer_name)) {
                     buffer_add_int(select, o->meter_precision);
-                else
+                    buffer_add_str(select, ", 1) AS \"");
+                } else {
                     buffer_add_int(select, o->degree_precision);
+                    buffer_add_str(select, ", 17) AS \"");
+                }
 
-                buffer_add_str(select, ", 1) AS \"");
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\" ");
             }

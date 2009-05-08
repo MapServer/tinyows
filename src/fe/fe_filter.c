@@ -78,9 +78,7 @@ void filter_encoding_flush(ows * o, filter_encoding * fe, FILE * output)
         fprintf(o->output, "\n");
     }
 
-    fprintf(output, " error code -> %d\n", fe->error_code);
-
-    fprintf(output, "]\n");
+    fprintf(output, " error code -> %d\n]\n", fe->error_code);
 }
 
 
@@ -183,16 +181,17 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
             buffer_add_str(sql, "''");      /* empty string */
 
         } else {
-          if (!check_regexp((char *)content, "[-+]?\\b[0-9]*\\.?[0-9]+\\b"))
+          if (!check_regexp((char *)content, "^[-+]?[0-9]*\\.?[0-9]+$"))
           {
               isstring = 1;
               buffer_add_str(sql, "'");
           }
           buffer_add_str(sql, (char *) content);
 
-          if (isstring)
-            buffer_add_str(sql, "'");
+          if (isstring) buffer_add_str(sql, "'");
         }
+
+
     } else if (strcmp((char *) n->name, "PropertyName") == 0)
         sql = fe_property_name(o, typename, fe, sql, n, false);
     else if (n->type != XML_ELEMENT_NODE)
@@ -482,6 +481,7 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
     xmlFreeDoc(xmldoc);
     xmlCleanupParser();
 
+    buffer_flush(fe->sql, stderr);
     return fe;
 }
 

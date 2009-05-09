@@ -34,7 +34,7 @@
  * Assume that online_ressource figure in the metadata
  * Used for version 1.1.0 WFS
  */
-void ows_get_capabilities_dcpt(const ows * o)
+void ows_get_capabilities_dcpt(const ows * o, const char * req)
 {
     assert(o != NULL);
     assert(o->online_resource != NULL);
@@ -42,15 +42,13 @@ void ows_get_capabilities_dcpt(const ows * o)
     fprintf(o->output, "    <ows:DCP>\n");
     fprintf(o->output, "     <ows:HTTP>\n");
     fprintf(o->output, "      <ows:Get xlink:href=\"");
-    fprintf(o->output, "%s", o->online_resource->buf);
-    fprintf(o->output, "?\"/>\n");
+    fprintf(o->output, "%s?%s\"/>\n", o->online_resource->buf, req);
     fprintf(o->output, "     </ows:HTTP>\n");
     fprintf(o->output, "    </ows:DCP>\n");
     fprintf(o->output, "    <ows:DCP>\n");
     fprintf(o->output, "     <ows:HTTP>\n");
     fprintf(o->output, "      <ows:Post xlink:href=\"");
-    fprintf(o->output, "%s", o->online_resource->buf);
-    fprintf(o->output, "\"/>\n");
+    fprintf(o->output, "%s\"/>\n", o->online_resource->buf);
     fprintf(o->output, "     </ows:HTTP>\n");
     fprintf(o->output, "    </ows:DCP>\n");
 }

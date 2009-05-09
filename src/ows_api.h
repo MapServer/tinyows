@@ -103,7 +103,7 @@ ows_geobbox *ows_geobbox_init ();
 bool ows_geobbox_set (ows * o, ows_geobbox * g, double west, double east, double south, double north);
 bool ows_geobbox_set_from_bbox (ows * o, ows_geobbox * g, ows_bbox * bb);
 ows_geobbox *ows_geobbox_set_from_str (ows * o, ows_geobbox * g, char *str);
-void ows_get_capabilities_dcpt (const ows * o);
+void ows_get_capabilities_dcpt (const ows * o, const char * req);
 void ows_layer_flush (ows_layer * l, FILE * output);
 void ows_layer_free (ows_layer * l);
 bool ows_layer_in_list (const ows_layer_list * ll, buffer * name);

@@ -43,7 +43,8 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
 
     fprintf(o->output, "<gml:boundedBy>\n");
 
-    if (xmin == DBL_MIN || ymin == DBL_MIN || xmax == DBL_MAX || ymax == DBL_MAX) {
+    if (floor(xmin) ==  floor(DBL_MIN)  || floor(ymin) == floor(DBL_MIN) 
+            || ceil(xmax) == ceil(DBL_MAX) || ceil(ymax) == ceil(DBL_MAX)) {
         if (ows_version_get(o->request->version) == 100)
             fprintf(o->output, "<gml:null>unknown</gml:null>\n");
         else
@@ -59,7 +60,7 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
             fprintf(o->output, "%f</gml:coordinates>", ymax);
             fprintf(o->output, "</gml:Box>\n");
         } else {
-            fprintf(o->output, "<gml:Envelope srsName=\"urn:x-ogc:def:crs:EPSG:%d\">", srid);
+            fprintf(o->output, "<gml:Envelope srsName=\"urn:ogc:def:crs:EPSG:%d\">", srid);
             fprintf(o->output, "<gml:lowerCorner>");
             fprintf(o->output, "%f ", xmin);
             fprintf(o->output, "%f", ymin);
@@ -82,10 +83,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
                              buffer * layer_name, buffer * prefix, buffer * prop_name,
                              buffer * prop_type, buffer * value)
 {
-    buffer *time, *box, *pkey;
-    list *coord;
-    int srid;
-    float xmin, ymin, xmax, ymax;
+    buffer *time, *pkey;
 
     assert(o != NULL);
     assert(wr != NULL);
@@ -97,60 +95,31 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 
     pkey = ows_psql_id_column(o, layer_name);
 
-    /* exception properties, must have 'gml' like prefix */
-    /* humm not sure that's right !!! */
-    if (buffer_cmp(prop_name, "name")
-            || buffer_cmp(prop_name, "description")
-            || (!buffer_cmp(prop_name, "boundedBy")
-                && buffer_cmp(prop_type, "geometry")
-                && (buffer_cmp(prefix, "cdf") || buffer_cmp(prefix, "cgf")))) {
-        fprintf(o->output, "   <gml:%s>", prop_name->buf);
+    /* No Pkey display in GML */
+    if (buffer_cmp(value, "") || buffer_cmp(prop_name, pkey->buf)) 
+        return;
+
+    fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
+
+    if (buffer_cmp(prop_type, "timestamptz")
+            || buffer_cmp(prop_type, "timestamp")
+            || buffer_cmp(prop_type, "datetime")
+            || buffer_cmp(prop_type, "date")) {
+        /* PSQL date must be transformed into GML format */
+        time = ows_psql_timestamp_to_xml_time(value->buf);
+        fprintf(o->output, "%s", time->buf);
+        buffer_free(time);
+    } else if (buffer_cmp(prop_type, "bool")) {
+        /* PSQL boolean must be transformed into GML format */
+        if (buffer_cmp(value, "t"))
+            fprintf(o->output, "true");
+
+        if (buffer_cmp(value, "f"))
+            fprintf(o->output, "false");
+    } else 
         fprintf(o->output, "%s", value->buf);
-        fprintf(o->output, "</gml:%s>\n", prop_name->buf);
-    }
-    /* boundedBy column must be treated as a bbox */
-    else if (buffer_cmp(prop_name, "boundedBy")) {
-        box = buffer_init();
-        buffer_copy(box, value);
-        box = buffer_replace(box, "BOX(", "");
-        box = buffer_replace(box, ")", "");
-        box = buffer_replace(box, " ", ",");
-
-        coord = list_explode(',', box);
-        buffer_free(box);
-        xmin = atof(coord->first->value->buf);
-        ymin = atof(coord->first->next->value->buf);
-        xmax = atof(coord->first->next->next->value->buf);
-        ymax = atof(coord->first->next->next->next->value->buf);
-
-        srid = ows_srs_get_srid_from_layer(o, layer_name);
-        wfs_gml_bounded_by(o, wr, xmin, ymin, xmax, ymax, srid);
-
-        list_free(coord);
-    } else if (!buffer_cmp(value, "") && !buffer_cmp(prop_name, pkey->buf)) {
-        fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
-
-        if (buffer_cmp(prop_type, "timestamptz")
-                || buffer_cmp(prop_type, "timestamp")
-                || buffer_cmp(prop_type, "datetime")
-                || buffer_cmp(prop_type, "date")) {
-            /* PSQL date must be transformed into GML format */
-            time = ows_psql_timestamp_to_xml_time(value->buf);
-            fprintf(o->output, "%s", time->buf);
-            buffer_free(time);
-        } else if (buffer_cmp(prop_type, "bool")) {
-            /* PSQL boolean must be transformed into GML format */
-            if (buffer_cmp(value, "t"))
-                fprintf(o->output, "true");
-
-            if (buffer_cmp(value, "f"))
-                fprintf(o->output, "false");
-        } else {
-            fprintf(o->output, "%s", value->buf);
-        }
-
-        fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name->buf);
-    }
+    
+    fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name->buf);
 }
 
 
@@ -370,6 +339,8 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
         wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin,
                        outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
         ows_bbox_free(outer_b);
+    } else {
+        wfs_gml_bounded_by(o, wr, DBL_MIN, DBL_MIN, DBL_MAX, DBL_MAX, -1);
     }
 
     /* initialize the nodes to run through requests */
@@ -459,16 +430,8 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
     for (an = prop_table->first; an != NULL; an = an->next) {
         /* geometry columns must be returned in GML */
         if (ows_psql_is_geometry_column(o, layer_name, an->key)) {
-            /* boundedBy column must be returned as a bbox */
-            if (buffer_cmp(an->key, "boundedBy")) {
-                buffer_add_str(select, "box2d(\"");
-                buffer_copy(select, an->key);
-                buffer_add_str(select, "\") As \"");
-                buffer_copy(select, an->key);
-                buffer_add_str(select, "\" ");
-            }
-            /* GML2 */
-            else if (wr->format == WFS_GML2) {
+
+            if (wr->format == WFS_GML2) {
                 buffer_add_str(select, "ST_AsGml(2, \"");
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\",");

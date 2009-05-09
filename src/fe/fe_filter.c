@@ -481,7 +481,6 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
     xmlFreeDoc(xmldoc);
     xmlCleanupParser();
 
-    buffer_flush(fe->sql, stderr);
     return fe;
 }
 

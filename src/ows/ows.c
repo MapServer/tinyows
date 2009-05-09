@@ -310,7 +310,9 @@ int main(int argc, char *argv[])
             o->request->method = OWS_METHOD_XML;
         /* WFS 1.0.0 && CITE Test compliant */
         else if (strcmp(getenv("CONTENT_TYPE"), "application/xml") == 0 ||
-                 strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") == 0)
+                 strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") == 0 ||
+                 strcmp(getenv("CONTENT_TYPE"), "text/plain") == 0)
+
             o->request->method = OWS_METHOD_XML;
 
         /* Command line Unit Test cases with XML values (not HTTP) */

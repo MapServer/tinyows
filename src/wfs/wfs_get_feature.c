@@ -43,8 +43,8 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
 
     fprintf(o->output, "<gml:boundedBy>\n");
 
-    if (floor(xmin) ==  floor(DBL_MIN)  || floor(ymin) == floor(DBL_MIN) 
-            || ceil(xmax) == ceil(DBL_MAX) || ceil(ymax) == ceil(DBL_MAX)) {
+    if (floor(xmin) ==  floor(DBL_MIN)  && floor(ymin) == floor(DBL_MIN) 
+            && ceil(xmax) == ceil(DBL_MAX) && ceil(ymax) == ceil(DBL_MAX)) {
         if (ows_version_get(o->request->version) == 100)
             fprintf(o->output, "<gml:null>unknown</gml:null>\n");
         else
@@ -84,6 +84,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
                              buffer * prop_type, buffer * value)
 {
     buffer *time, *pkey;
+    bool gml_ns = false;
 
     assert(o != NULL);
     assert(wr != NULL);
@@ -99,7 +100,14 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     if (buffer_cmp(value, "") || buffer_cmp(prop_name, pkey->buf)) 
         return;
 
-    fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
+    /* name and description fields if exists belong to GML namespace */
+    if (buffer_cmp(prop_name, "name") || buffer_cmp(prop_name, "description"))
+        gml_ns = true;
+
+    if (gml_ns == true)
+        fprintf(o->output, "   <gml:%s>", prop_name->buf);
+    else 
+        fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
 
     if (buffer_cmp(prop_type, "timestamptz")
             || buffer_cmp(prop_type, "timestamp")
@@ -119,7 +127,10 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     } else 
         fprintf(o->output, "%s", value->buf);
     
-    fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name->buf);
+    if (gml_ns)
+        fprintf(o->output, "</gml:%s>\n", prop_name->buf);
+    else
+        fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name->buf);
 }
 
 

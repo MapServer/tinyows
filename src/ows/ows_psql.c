@@ -117,14 +117,14 @@ bool ows_psql_is_geometry_valid(ows * o, buffer * geom)
     assert(geom != NULL);
 
     sql = buffer_init();
-    buffer_add_str(sql, "SELECT isvalid(geometryfromtext('");
+    buffer_add_str(sql, "SELECT ST_isvalid(ST_geometryfromtext('");
     buffer_copy(sql, geom);
     buffer_add_str(sql, "', -1));");
     
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
-    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
         PQclear(res);
         return false;
     }

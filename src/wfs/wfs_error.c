@@ -75,7 +75,7 @@ static void wfs_error_100(ows * o, wfs_request * wf,
     fprintf(o->output, " http://schemas.opengis.net/wms/1.1.1/OGC-exception.xsd\"\n");
     fprintf(o->output, "version=\"1.2.0\">\n");
     fprintf(o->output, "<ServiceException code=\"%s\"", wfs_error_code_string(code));
-    fprintf(o->output, " locator=\"%s\'>\n%s", locator, message);
+    fprintf(o->output, " locator=\"%s\">\n%s", locator, message);
     fprintf(o->output, "</ServiceException>\n");
     fprintf(o->output, "</ServiceExceptionReport>\n");
 

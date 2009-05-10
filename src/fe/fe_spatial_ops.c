@@ -215,6 +215,7 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
     xmlChar *content;
     xmlNodePtr node, node_coord;
     buffer *tmp, *geom;
+    bool first_ring = true;
     int bracket;
 
     assert(o != NULL);
@@ -234,15 +235,15 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 
     /* print the geometry type */
     if (buffer_cmp(geom, "MultiPolygon")) {
-        buffer_add_str(geom, "(((");
+        buffer_add_str(geom, "((");
         bracket = 3;
     } else if (buffer_cmp(geom, "MultiLineString")
                || buffer_cmp(geom, "Polygon")) {
         buffer_add_str(geom, "((");
-        bracket = 2;
+        bracket =2;
     } else if (buffer_cmp(geom, "MultiPoint")
-               || buffer_cmp(geom, "LineString")
-               || buffer_cmp(geom, "Point")) {
+               || buffer_cmp(geom, "Point") 
+               || buffer_cmp(geom, "LineString")) {
         buffer_add_str(geom, "(");
         bracket = 1;
     } else {
@@ -258,6 +259,9 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
     /* print the coordinates */
     for (node = n; node != NULL; node = node->next) {
 
+        /*
+         * Ignore GML properties if any
+         */
         if ((strcmp((char *) node->name, "description") == 0 
             || strcmp((char *) node->name, "name") == 0  
             || strcmp((char *) node->name, "metaDataProperty") == 0)  
@@ -266,6 +270,7 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 
         if (node->type == XML_ELEMENT_NODE) {
             node_coord = node;
+
 
             /* go to node <coordinates> */
             while (strcmp((char *) node_coord->name, "coordinates") != 0
@@ -281,6 +286,14 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
                     buffer_free(geom);
                     return fe->sql;
                }
+
+                if (node_coord != NULL && node_coord->type == XML_ELEMENT_NODE 
+                        && strcmp((char *) node_coord->name, "LinearRing") == 0) {
+                    buffer_pop(geom, 1); /* remove last coord comma or ( */
+                    if (!first_ring) buffer_add_str(geom, "),");
+                    buffer_add_str(geom, "(");
+                    first_ring = false;
+                }
 
                 /* jump to the next element if there are spaces */
                 if (strcmp((char *) node_coord->name, "coordinates") != 0

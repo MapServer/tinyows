@@ -475,8 +475,14 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
                         buffer_add_str(values, "''");
                     } else {
                         fe->sql = fe_transform_geometry_gml_to_psql(o, layer_name, fe, elemt);
-                        /* Carefull no error test on transform ! */
-                        buffer_copy(values, fe->sql);
+
+                        /* FIXME is it really the right way to handle that ? 
+                         * What about an ows error instead ?
+                         */
+                        if (fe->error_code)
+                            buffer_add_str(values, "NULL");
+                        else
+                            buffer_copy(values, fe->sql);
                     }
 
                     filter_encoding_free(fe);

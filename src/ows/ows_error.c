@@ -77,7 +77,7 @@ void ows_error(ows * o, enum ows_error_code code, char *message,
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
-    fprintf(o->output, "<ExceptionReport\n");
+    fprintf(o->output, "<ows:ExceptionReport\n");
     fprintf(o->output, " xmlns='http://www.opengis.net/ows'\n");
     fprintf(o->output, " xmlns:ows='http://www.opengis.net/ows'\n");
     fprintf(o->output,
@@ -87,11 +87,11 @@ void ows_error(ows * o, enum ows_error_code code, char *message,
             " http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd'\n");
     fprintf(o->output, " version='1.1.0' language='en'>\n");
     fprintf(o->output,
-            " <Exception exceptionCode='%s' locator='%s'>\n",
+            " <ows:Exception exceptionCode='%s' locator='%s'>\n",
             ows_error_code_string(code), locator);
-    fprintf(o->output, "  <ExceptionText>%s</ExceptionText>\n", message);
-    fprintf(o->output, " </Exception>\n");
-    fprintf(o->output, "</ExceptionReport>\n");
+    fprintf(o->output, "  <ows:ExceptionText>%s</ows:ExceptionText>\n", message);
+    fprintf(o->output, " </ows:Exception>\n");
+    fprintf(o->output, "</ows:ExceptionReport>\n");
 
     ows_free(o);
 

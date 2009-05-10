@@ -421,7 +421,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
         buffer_free(xmlstring);
 
         if (valid != 0)
-            ows_error(o, OWS_ERROR_OPERATION_NOT_SUPPORTED,
+            ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "xml isn't valid", "request");
     }
 }

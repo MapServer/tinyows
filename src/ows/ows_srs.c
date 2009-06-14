@@ -89,8 +89,7 @@ void ows_srs_flush(ows_srs * c, FILE * output)
 /*
  * Set projection value into srs structure
  */
-bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name,
-                 int auth_srid)
+bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
 {
     PGresult *res;
     buffer *sql, *request_name, *parameters;
@@ -101,8 +100,7 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name,
     assert(auth_name != NULL);
 
     sql = buffer_init();
-    buffer_add_str(sql,
-                   "SELECT srid, position('+units=m ' in proj4text) ");
+    buffer_add_str(sql, "SELECT srid, position('+units=m ' in proj4text) ");
     buffer_add_str(sql, "FROM spatial_ref_sys ");
     buffer_add_str(sql, "WHERE auth_name= $1 ");
     buffer_add_str(sql, "AND auth_srid= $2");
@@ -144,10 +142,10 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name,
     c->srid = atoi(PQgetvalue(res, 0, 0));
 
     /* Such a way to know if units is meter or degree */
-    if (atoi(PQgetvalue(res, 0, 1)) == 1)
-        c->is_unit_degree = false;
-    else
+    if (atoi(PQgetvalue(res, 0, 1)) == 0)
         c->is_unit_degree = true;
+    else
+        c->is_unit_degree = false;
 
     PQclear(res);
     return true;
@@ -160,7 +158,7 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name,
 bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
 {
     PGresult *res;
-    buffer *sql, *request_name, *parameters;
+    buffer *sql;
 
     assert(o != NULL);
     assert(s != NULL);
@@ -177,28 +175,12 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
     sql = buffer_init();
     buffer_add_str(sql, "SELECT auth_name, auth_srid, ");
     buffer_add_str(sql, "position('+units=m ' in proj4text) ");
-    buffer_add_str(sql, "FROM spatial_ref_sys WHERE srid = $1");
-
-    /* initialize the request's name and parameters */
-    request_name = buffer_init();
-    buffer_add_str(request_name, "srs_set_from_srid");
-    parameters = buffer_init();
-    buffer_add_str(parameters, "(int)");
-
-    /* check if the request has already been executed */
-    if (!in_list(o->psql_requests, request_name))
-        ows_psql_prepare(o, request_name, parameters, sql);
-
-    /* execute the request */
-    buffer_empty(sql);
-    buffer_add_str(sql, "EXECUTE srs_set_from_srid(");
+    buffer_add_str(sql, "FROM spatial_ref_sys WHERE srid = '");
     buffer_add_int(sql, srid);
-    buffer_add_str(sql, ")");
+    buffer_add_str(sql, "'");
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
-    buffer_free(parameters);
-    buffer_free(request_name);
 
     /* If query dont return exactly 1 result, it mean projection not handled */
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
@@ -211,13 +193,48 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
     s->srid = srid;
 
     /* Such a way to know if units is meter or degree */
-    if (atoi(PQgetvalue(res, 0, 2)) == 1)
-        s->is_unit_degree = false;
-    else
+    if (atoi(PQgetvalue(res, 0, 2)) == 0)
         s->is_unit_degree = true;
+    else
+        s->is_unit_degree = false;
 
     PQclear(res);
     return true;
+}
+
+
+/*
+ * Set projection value into srs structure
+ */
+bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
+{
+    int srid;
+    list * tokens = NULL;
+
+    assert(o != NULL);
+    assert(s != NULL);
+    assert(srsname != NULL);
+
+    /* Severals formats are available, cf WFS 1.1.0 -> 9.2 (p36)
+     * See also RFC 5165 <http://tools.ietf.org/html/rfc5165>
+     */
+    if (strncmp(srsname->buf, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
+        tokens = list_explode('#', srsname);
+    else if (strncmp(srsname->buf, "EPSG:", 5) == 0
+            || strncmp(srsname->buf, "urn:EPSG:geographicCRC:", 23) == 0
+            || strncmp(srsname->buf, "urn:ogc:def:crs:EPSG:", 21) == 0
+            || strncmp(srsname->buf, "urn:x-ogc:def:crs:EPSG:", 23) == 0) 
+        tokens = list_explode(':', srsname);
+
+    /* FIXME add here on in OWS request part, more strict regex tests, to
+     * be sure that srsname value pattern is right
+     *
+     * Remember that urn:ogc and urn:x-ogc ones could have an optional 
+     * version number
+     */
+    
+    srid = atoi(tokens->last->value->buf);
+    return ows_srs_set_from_srid(o, s, srid);
 }
 
 

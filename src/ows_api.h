@@ -161,6 +161,7 @@ ows_srs *ows_srs_init ();
 bool ows_srs_meter_units (ows * o, buffer * layer_name);
 bool ows_srs_set (ows * o, ows_srs * c, const buffer * auth_name, int auth_srid);
 bool ows_srs_set_from_srid (ows * o, ows_srs * s, int srid);
+bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname);
 void ows_usage (ows * o);
 void ows_version_flush (ows_version * v, FILE * output);
 void ows_version_free (ows_version * v);

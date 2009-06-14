@@ -345,6 +345,7 @@ typedef struct Wfs_request {
     ows_bbox * bbox;
     mlist * propertyname;
     int maxfeatures;
+    ows_srs * srs;
     mlist * featureid;
     list * filter;
     buffer * operation;

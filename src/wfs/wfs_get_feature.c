@@ -443,11 +443,25 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
         if (ows_psql_is_geometry_column(o, layer_name, an->key)) {
 
             if (wr->format == WFS_GML2) {
-                buffer_add_str(select, "ST_AsGml(2, \"");
-                buffer_copy(select, an->key);
-                buffer_add_str(select, "\",");
+                buffer_add_str(select, "ST_AsGml(2, ");
 
-                if (ows_srs_meter_units(o, layer_name))
+                /* Geometry Reprojection on the fly step if asked */
+                if (wr->srs != NULL) {
+                    buffer_add_str(select, "ST_Transform(");
+                    buffer_add(select, '"');
+                    buffer_copy(select, an->key);
+                    buffer_add(select, '"');
+                    buffer_add(select, ',');
+                    buffer_add_int(select, wr->srs->srid);
+                    buffer_add_str(select, "),");
+                } else {
+                    buffer_add(select, '"');
+                    buffer_copy(select, an->key);
+                    buffer_add_str(select, "\",");
+                }
+
+                if ((wr->srs != NULL && !wr->srs->is_unit_degree)
+                        || ows_srs_meter_units(o, layer_name))
                     buffer_add_int(select, o->meter_precision);
                 else
                     buffer_add_int(select, o->degree_precision);
@@ -458,11 +472,25 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
             }
             /* GML3 */
             else if (wr->format == WFS_GML3) {
-                buffer_add_str(select, "ST_AsGml(3, \"");
-                buffer_copy(select, an->key);
-                buffer_add_str(select, "\",");
+                buffer_add_str(select, "ST_AsGml(3, ");
 
-                if (ows_srs_meter_units(o, layer_name)) {
+                /* Geometry Reprojection on the fly step if asked */
+                if (wr->srs != NULL) {
+                    buffer_add_str(select, "ST_Transform(");
+                    buffer_add(select, '"');
+                    buffer_copy(select, an->key);
+                    buffer_add(select, '"');
+                    buffer_add(select, ',');
+                    buffer_add_int(select, wr->srs->srid);
+                    buffer_add_str(select, "),");
+                } else {
+                    buffer_add(select, '"');
+                    buffer_copy(select, an->key);
+                    buffer_add_str(select, "\",");
+                }
+
+                if ((wr->srs != NULL && !wr->srs->is_unit_degree)
+                        || ows_srs_meter_units(o, layer_name)) {
                     buffer_add_int(select, o->meter_precision);
                     buffer_add_str(select, ", 1) AS \"");
                 } else {
@@ -548,7 +576,6 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
             buffer_copy(layer_name, fid->first->value);
             list_free(fid);
         }
-
 
         /* SELECT */
         sql = wfs_retrieve_sql_request_select(o, wr, layer_name);

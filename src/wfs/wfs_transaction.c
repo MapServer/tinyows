@@ -327,6 +327,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
     sql = buffer_init();
     handle = buffer_init();
+    id =  buffer_init();
 
     /* retrieve handle attribute to report it in transaction response */
     if (xmlHasProp(n, (xmlChar *) "handle")) {

@@ -92,7 +92,7 @@ void ows_srs_flush(ows_srs * c, FILE * output)
 bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
 {
     PGresult *res;
-    buffer *sql, *request_name, *parameters;
+    buffer *sql;
 
     assert(o != NULL);
     assert(o->pg != NULL);
@@ -102,31 +102,13 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
     sql = buffer_init();
     buffer_add_str(sql, "SELECT srid, position('+units=m ' in proj4text) ");
     buffer_add_str(sql, "FROM spatial_ref_sys ");
-    buffer_add_str(sql, "WHERE auth_name= $1 ");
-    buffer_add_str(sql, "AND auth_srid= $2");
-
-    /* initialize the request's name and parameters */
-    request_name = buffer_init();
-    buffer_add_str(request_name, "srs_set");
-    parameters = buffer_init();
-    buffer_add_str(parameters, "(text,number)");
-
-    /* check if the request has already been executed */
-    if (!in_list(o->psql_requests, request_name))
-        ows_psql_prepare(o, request_name, parameters, sql);
-
-    /* execute the request */
-    buffer_empty(sql);
-    buffer_add_str(sql, "EXECUTE srs_set('");
+    buffer_add_str(sql, "WHERE auth_name='");
     buffer_copy(sql, auth_name);
-    buffer_add_str(sql, "',");
+    buffer_add_str(sql, "' AND auth_srid=");
     buffer_add_int(sql, auth_srid);
-    buffer_add_str(sql, ")");
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
-    buffer_free(parameters);
-    buffer_free(request_name);
 
     /* If query dont return exactly 1 result, it means projection is
        not handled */
@@ -314,7 +296,7 @@ list *ows_srs_get_from_srid(ows * o, list * l)
 buffer *ows_srs_get_from_a_srid(ows * o, int srid)
 {
     buffer *b;
-    buffer *sql, *request_name, *parameters;
+    buffer *sql;
     PGresult *res;
 
     assert(o != NULL);
@@ -322,28 +304,11 @@ buffer *ows_srs_get_from_a_srid(ows * o, int srid)
     sql = buffer_init();
     buffer_add_str(sql, "SELECT auth_name||':'||auth_srid AS srs ");
     buffer_add_str(sql, "FROM spatial_ref_sys ");
-    buffer_add_str(sql, "WHERE srid = $1");
-
-    /* initialize the request's name and parameters */
-    request_name = buffer_init();
-    buffer_add_str(request_name, "get_from_a_srid");
-    parameters = buffer_init();
-    buffer_add_str(parameters, "(integer)");
-
-    /* check if the request has already been executed */
-    if (!in_list(o->psql_requests, request_name))
-        ows_psql_prepare(o, request_name, parameters, sql);
-
-    /* execute the request */
-    buffer_empty(sql);
-    buffer_add_str(sql, "EXECUTE get_from_a_srid(");
+    buffer_add_str(sql, "WHERE srid=");
     buffer_add_int(sql, srid);
-    buffer_add_str(sql, ")");
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
-    buffer_free(parameters);
-    buffer_free(request_name);
 
     b = buffer_init();
 

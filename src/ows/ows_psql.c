@@ -30,35 +30,6 @@
 #include "ows.h"
 
 
-void ows_psql_prepare(ows * o, buffer * request_name, buffer * parameters, buffer * sql)
-{
-    buffer *prepare;
-    PGresult *res;
-
-    assert(o != NULL);
-    assert(request_name != NULL);
-    assert(parameters != NULL);
-    assert(sql != NULL);
-
-    prepare = buffer_init();
-
-    buffer_add_str(prepare, "PREPARE ");
-    buffer_copy(prepare, request_name);
-    buffer_add_str(prepare, " ");
-    buffer_copy(prepare, parameters);
-    buffer_add_str(prepare, " AS ");
-    buffer_copy(prepare, sql);
-
-    res = PQexec(o->pg, prepare->buf);
-    buffer_free(prepare);
-
-    if (PQresultStatus(res) == PGRES_COMMAND_OK)
-        list_add_by_copy(o->psql_requests, request_name);
-
-    PQclear(res);
-}
-
-
 /*
  * Return the name of the id column from table matching layer name
  */
@@ -79,6 +50,30 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
 
     assert(0); /* Should not happen */
     return NULL;
+}
+
+
+/*
+ * Return the column number of the id column from table matching layer name
+ * (needed in wfs_get_feature only)
+ */
+int ows_psql_column_number_id_column(ows * o, buffer * layer_name)
+{
+    ows_layer_node *ln = NULL;
+
+    assert(o != NULL);
+    assert(o->layers != NULL);
+    assert(layer_name != NULL);
+
+    for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        if (ln->layer->name != NULL
+                && ln->layer->storage != NULL
+                && ln->layer->name->use == layer_name->use
+                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+            return ln->layer->storage->pkey_column_number;
+
+    assert(0); /* Should not happen */
+    return -1;
 }
 
 
@@ -138,6 +133,7 @@ bool ows_psql_is_geometry_valid(ows * o, buffer * geom)
     return false;
 }
 
+
 /*
  * Check if the specified column from a layer_name is (or not) a geometry column
  */
@@ -185,6 +181,7 @@ list *ows_psql_not_null_properties(ows * o, buffer * layer_name)
 }
 
 
+#if 0
 /*
  * Return the number of the specified column from the table matching layer name
  */
@@ -239,14 +236,17 @@ int ows_psql_num_column(ows * o, buffer * layer_name, buffer * column)
 
     return number;
 }
+#endif
 
 
 /*
  * Return the column's name matching the specified number from table
+ * (Only use in specific FE position function, so not directly inside
+ *  storage handle mechanism)
  */
 buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
 {
-    buffer *sql, *request_name, *parameters;
+    buffer *sql;
     PGresult *res;
     buffer *column;
 
@@ -258,32 +258,14 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
 
     buffer_add_str(sql, "SELECT a.attname ");
     buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t ");
-    buffer_add_str(sql, "WHERE c.relname = $1 ");
-    buffer_add_str(sql, "AND a.attnum > 0 AND a.attrelid = c.oid ");
-    buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attnum = $2");
-
-    /* initialize the request's name and parameters */
-    request_name = buffer_init();
-    buffer_add_str(request_name, "column_name");
-    parameters = buffer_init();
-    buffer_add_str(parameters, "(text,int)");
-
-    /* check if the request has already been executed */
-    if (!in_list(o->psql_requests, request_name))
-        ows_psql_prepare(o, request_name, parameters, sql);
-
-    /* execute the request */
-    buffer_empty(sql);
-    buffer_add_str(sql, "EXECUTE column_name('");
+    buffer_add_str(sql, "WHERE c.relname ='");
     buffer_copy(sql, layer_name);
-    buffer_add_str(sql, "',");
+    buffer_add_str(sql, "' AND a.attnum > 0 AND a.attrelid = c.oid ");
+    buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attnum = ");
     buffer_add_int(sql, number);
-    buffer_add_str(sql, ")");
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
-    buffer_free(parameters);
-    buffer_free(request_name);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
         PQclear(res);
@@ -403,7 +385,9 @@ buffer *ows_psql_type(ows * o, buffer * layer_name, buffer * property)
 }
 
 
-
+/*
+ * Generate a new buffer id supposed to be unique for a given layer name
+ */
 buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
 {
     ows_layer_node *ln;
@@ -463,7 +447,7 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
      fp=fopen("/dev/urandom","r");
      if (fp != NULL) {
          for (i=0 ; i<seed_len ; i++)
-             sprintf(seed,"%s%03d",seed,fgetc(fp));
+             sprintf(seed,"%s%03d", seed, fgetc(fp));
          fclose(fp);
          buffer_add_str(id, seed);
          free(seed);

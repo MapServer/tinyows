@@ -215,7 +215,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
  */
 bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
 {
-    buffer *sql, *request_name, *parameters;
+    buffer *sql;
     PGresult *res;
 
     assert(o != NULL);
@@ -224,37 +224,20 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
     sql = buffer_init();
     buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM ");
     buffer_add_str(sql, "(SELECT transform(");
-    buffer_add_str(sql, "setSRID('BOX($1 $2,$3 $4'::box2d,");
-    buffer_add_str(sql, "$5))) AS g ) AS foo");
-
-    /* initialize the request's name and parameters */
-    request_name = buffer_init();
-    buffer_add_str(request_name, "bbox_transform");
-    parameters = buffer_init();
-    buffer_add_str(parameters, "(numeric,numeric,numeric,numeric,int)");
-
-    /* check if the request has already been executed */
-    if (!in_list(o->psql_requests, request_name))
-        ows_psql_prepare(o, request_name, parameters, sql);
-
-    /* execute the request */
-    buffer_empty(sql);
-    buffer_add_str(sql, "EXECUTE bbox_transform(");
+    buffer_add_str(sql, "setSRID('BOX(");
     buffer_add_double(sql, bb->xmin);
-    buffer_add_str(sql, ",");
+    buffer_add(sql, ' ');
     buffer_add_double(sql, bb->ymin);
-    buffer_add_str(sql, ",");
+    buffer_add(sql, ',');
     buffer_add_double(sql, bb->xmax);
-    buffer_add_str(sql, ",");
+    buffer_add(sql, ' ');
     buffer_add_double(sql, bb->ymax);
-    buffer_add_str(sql, ",");
+    buffer_add_str(sql, "'::box2d,");
     buffer_add_int(sql, srid);
-    buffer_add_str(sql, ")");
+    buffer_add_str(sql, "))) AS g ) AS foo");
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
-    buffer_free(parameters);
-    buffer_free(request_name);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
         PQclear(res);

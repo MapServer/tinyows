@@ -100,8 +100,23 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     if (buffer_cmp(value, "") || buffer_cmp(prop_name, pkey->buf)) 
         return;
 
+    /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
+    if (buffer_cmp(prop_name, "boundedBy")) return;
+
     /* name and description fields if exists belong to GML namespace */
-    if (buffer_cmp(prop_name, "name") || buffer_cmp(prop_name, "description"))
+    if (buffer_cmp(prop_name, "name")
+            || buffer_cmp(prop_name, "description"))
+        gml_ns = true;
+
+    /* Used in CITE 1.0 Unit test as geometry column name 
+       TODO: what about a more generic way to handle that ? */
+    if (wr->format == WFS_GML2
+            && (buffer_cmp(prop_name, "pointProperty")
+            || buffer_cmp(prop_name, "multiPointProperty")
+            || buffer_cmp(prop_name, "lineStringProperty")
+            || buffer_cmp(prop_name, "multiLineStringProperty")
+            || buffer_cmp(prop_name, "polygonProperty")
+            || buffer_cmp(prop_name, "multiPolygonProperty")))
         gml_ns = true;
 
     if (gml_ns == true)
@@ -152,11 +167,11 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
     /* NOTA: properties could be NULL ! */
 
     number = -1;
-
     id_name = ows_psql_id_column(o, layer_name);
 
+    /* We could imagine layer without PK ! */
     if (id_name->use != 0)
-        number = ows_psql_num_column(o, layer_name, id_name);
+        number = ows_psql_column_number_id_column(o, layer_name);
 
     prefix = ows_layer_prefix(o->layers, layer_name);
     mandatory_prop = ows_psql_not_null_properties(o, layer_name);
@@ -351,7 +366,7 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
                        outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
         ows_bbox_free(outer_b);
     } else {
-        wfs_gml_bounded_by(o, wr, DBL_MIN, DBL_MIN, DBL_MAX, DBL_MAX, -1);
+        wfs_gml_bounded_by(o, wr, -180, 180, -90, 90, 4326);  /* Full Earth */
     }
 
     /* initialize the nodes to run through requests */

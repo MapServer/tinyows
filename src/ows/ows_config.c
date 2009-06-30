@@ -90,9 +90,13 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "wfs_display_bbox");
 
+    o->wfs_display_bbox = true;
+
     if (a != NULL) {
         if (atoi((char *) a))
             o->wfs_display_bbox = true;
+        else
+            o->wfs_display_bbox = false;
 
         xmlFree(a);
     }

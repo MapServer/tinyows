@@ -47,7 +47,7 @@ wfs_request *wfs_request_init()
     wr->bbox = NULL;
     wr->srs = NULL;
 
-    wr->maxfeatures = 0;
+    wr->maxfeatures = -1;
     wr->featureid = NULL;
     wr->filter = NULL;
     wr->operation = NULL;

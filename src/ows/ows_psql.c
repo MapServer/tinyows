@@ -181,64 +181,6 @@ list *ows_psql_not_null_properties(ows * o, buffer * layer_name)
 }
 
 
-#if 0
-/*
- * Return the number of the specified column from the table matching layer name
- */
-int ows_psql_num_column(ows * o, buffer * layer_name, buffer * column)
-{
-    buffer *sql, *request_name, *parameters;
-    PGresult *res;
-    int number;
-
-    assert(o != NULL);
-    assert(layer_name != NULL);
-    assert(column != NULL);
-
-    sql = buffer_init();
-
-    buffer_add_str(sql, "SELECT a.attnum ");
-    buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t ");
-    buffer_add_str(sql, "WHERE c.relname = $1 ");
-    buffer_add_str(sql, "AND a.attnum > 0 AND a.attrelid = c.oid ");
-    buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attname = $2");
-
-    /* initialize the request's name and parameters */
-    request_name = buffer_init();
-    buffer_add_str(request_name, "num_column");
-    parameters = buffer_init();
-    buffer_add_str(parameters, "(text,text)");
-
-    /* check if the request has already been executed */
-    if (!in_list(o->psql_requests, request_name))
-        ows_psql_prepare(o, request_name, parameters, sql);
-
-    /* execute the request */
-    buffer_empty(sql);
-    buffer_add_str(sql, "EXECUTE num_column('");
-    buffer_copy(sql, layer_name);
-    buffer_add_str(sql, "','");
-    buffer_copy(sql, column);
-    buffer_add_str(sql, "')");
-
-    res = PQexec(o->pg, sql->buf);
-    buffer_free(sql);
-    buffer_free(parameters);
-    buffer_free(request_name);
-
-    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
-        PQclear(res);
-        return -1;
-    }
-
-    number = atoi(PQgetvalue(res, 0, 0)) - 1;
-    PQclear(res);
-
-    return number;
-}
-#endif
-
-
 /*
  * Return the column's name matching the specified number from table
  * (Only use in specific FE position function, so not directly inside
@@ -466,6 +408,51 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
      buffer_add_int(id, rand());
 
      return id;
+}
+
+
+
+/*
+ *  * Return the number of rows returned by the specified requests
+ *   */
+int ows_psql_number_features(ows * o, list * from, list * where)
+{
+        buffer *sql;
+        PGresult *res;
+        list_node *ln_from, *ln_where;
+        int nb;
+
+        assert(o != NULL);
+        assert(from != NULL);
+        assert(where != NULL);
+
+        nb = 0;
+
+        /* checks if from list and where list have the same size */
+        if (from->size != where->size) return nb;
+
+
+        for (ln_from = from->first, ln_where = where->first; ln_from != NULL;
+                 ln_from = ln_from->next, ln_where = ln_where->next) {
+                 sql = buffer_init();
+
+                 /* execute the request */
+                 buffer_add_str(sql, "SELECT count(*) FROM \"");
+                 buffer_copy(sql, ln_from->value);
+                 buffer_add_str(sql, "\" ");
+                 buffer_copy(sql, ln_where->value);
+                 res = PQexec(o->pg, sql->buf);
+                 buffer_free(sql);
+
+                 if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+                     PQclear(res);
+                     return -1;
+                 }
+                 nb = nb + atoi(PQgetvalue(res, 0, 0));
+                 PQclear(res);
+         }
+
+        return nb;
 }
 
 /*

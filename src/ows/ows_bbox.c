@@ -40,10 +40,10 @@ ows_bbox *ows_bbox_init()
     b = malloc(sizeof(ows_bbox));
     assert(b != NULL);
 
-    b->xmin = DBL_MIN;
-    b->ymin = DBL_MIN;
-    b->xmax = DBL_MAX;
-    b->ymax = DBL_MAX;
+    b->xmin = DBL_MIN + 1;
+    b->ymin = DBL_MIN + 1;
+    b->xmax = DBL_MAX - 1;
+    b->ymax = DBL_MAX - 1;
 
     b->srs = ows_srs_init();
 

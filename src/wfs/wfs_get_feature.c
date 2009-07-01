@@ -43,8 +43,7 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
 
     fprintf(o->output, "<gml:boundedBy>\n");
 
-    if (floor(xmin) ==  floor(DBL_MIN)  && floor(ymin) == floor(DBL_MIN) 
-            && ceil(xmax) == ceil(DBL_MAX) && ceil(ymax) == ceil(DBL_MAX)) {
+    if (xmin + DBL_MIN <= 1 + DBL_EPSILON ) {
         if (ows_version_get(o->request->version) == 100)
             fprintf(o->output, "<gml:null>unknown</gml:null>\n");
         else
@@ -365,8 +364,6 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
         wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin,
                        outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
         ows_bbox_free(outer_b);
-    } else {
-        wfs_gml_bounded_by(o, wr, -180, 180, -90, 90, 4326);  /* Full Earth */
     }
 
     /* initialize the nodes to run through requests */
@@ -412,8 +409,7 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
 
         /* display each feature member */
         if (wr->propertyname != NULL)
-            wfs_gml_feature_member(o, wr, layer_name,
-                                   mln_property->value, res);
+            wfs_gml_feature_member(o, wr, layer_name, mln_property->value, res);
         else
             /* Use NULL if propertynames not defined */
             wfs_gml_feature_member(o, wr, layer_name, NULL, res);
@@ -677,17 +673,13 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
 
         /* maxfeatures parameter, or max_features ows'limits, limits the
            number of results */
-        if (wr->maxfeatures != 0 || o->max_features != 0) {
+        if (wr->maxfeatures > 0) {
             buffer_add_str(where, " LIMIT ");
-
-            if (wr->maxfeatures != 0) {
-#if 0
-                nb = ows_psql_number_features(o, from_list, where_list);
-                buffer_add_int(where, wr->maxfeatures - nb);
-#endif
-                buffer_add_int(where, wr->maxfeatures);
-            } else
-                buffer_add_int(where, o->max_features);
+            nb = ows_psql_number_features(o, from_list, where_list);
+            buffer_add_int(where, wr->maxfeatures - nb);
+        } else if (o->max_features > 0) {
+            buffer_add_str(where, " LIMIT ");
+            buffer_add_int(where, o->max_features);
         }
 
         buffer_copy(sql, where);

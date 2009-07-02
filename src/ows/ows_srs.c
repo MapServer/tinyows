@@ -199,6 +199,8 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
 
     /* Severals formats are available, cf WFS 1.1.0 -> 9.2 (p36)
      * See also RFC 5165 <http://tools.ietf.org/html/rfc5165>
+     *
+     * x-ogc should become obsolete a day, and only urn:ogc should remain
      */
     if (strncmp(srsname->buf, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
         tokens = list_explode('#', srsname);
@@ -213,6 +215,7 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
      *
      * Remember that urn:ogc and urn:x-ogc ones could have an optional 
      * version number
+     *
      */
     
     srid = atoi(tokens->last->value->buf);

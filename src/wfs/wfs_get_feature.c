@@ -45,9 +45,9 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
 
     if (xmin + DBL_MIN <= 1 + DBL_EPSILON ) {
         if (ows_version_get(o->request->version) == 100)
-            fprintf(o->output, "<gml:null>unknown</gml:null>\n");
+            fprintf(o->output, "<gml:null>missing</gml:null>\n");
         else
-            fprintf(o->output, "<gml:Null>unknown</gml:Null>\n");
+            fprintf(o->output, "<gml:Null>missing</gml:Null>\n");
     } else {
         if (wr->format == WFS_GML2) {
             fprintf(o->output, "<gml:Box srsName=\"EPSG:%d\">", srid);
@@ -471,10 +471,10 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs != NULL && !wr->srs->is_unit_degree)
-                        || ows_srs_meter_units(o, layer_name))
-                    buffer_add_int(select, o->meter_precision);
-                else
+                if ((wr->srs != NULL && !wr->srs->is_unit_degree) || 
+                        (wr->srs == NULL && ows_srs_meter_units(o, layer_name)))
+                    buffer_add_int(select, o->meter_precision); 
+                else 
                     buffer_add_int(select, o->degree_precision);
 
                 buffer_add_str(select, ") AS \"");
@@ -500,8 +500,8 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs != NULL && !wr->srs->is_unit_degree)
-                        || ows_srs_meter_units(o, layer_name)) {
+                if ((wr->srs != NULL && !wr->srs->is_unit_degree) || 
+                        (wr->srs == NULL && ows_srs_meter_units(o, layer_name))) {
                     buffer_add_int(select, o->meter_precision);
                     buffer_add_str(select, ", 1) AS \"");
                 } else {

@@ -73,13 +73,17 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
     name = buffer_init();
     buffer_add_str(name, (char *) n->name);
 
-    /* BBOX is transformed into a polygon so that point corners are included */
-    buffer_add_str(fe->sql, "setsrid('BOX(");
+    if (o->request->request.wfs->srs != NULL)
+        srid_int = o->request->request.wfs->srs->srid;
+    else
+        srid_int = ows_srs_get_srid_from_layer(o, typename);
 
-    srid_int = ows_srs_get_srid_from_layer(o, typename);
     srid = buffer_init();
     buffer_add_int(srid, srid_int);
     srsname = xmlGetProp(n, (xmlChar *) "srsName");
+
+    /* BBOX is transformed into a polygon so that point corners are included */
+    buffer_add_str(fe->sql, "setsrid('BOX(");
 
     if (srsname != NULL) {
         if (!check_regexp((char *) srsname, srid->buf)) {
@@ -361,6 +365,8 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
 static buffer *fe_spatial_functions(ows * o, buffer * typename,
                                     filter_encoding * fe, xmlNodePtr n)
 {
+    bool transform = false;
+
     assert(o != NULL);
     assert(typename != NULL);
     assert(fe != NULL);
@@ -395,8 +401,20 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename,
     /* jump to the next element if there are spaces */
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
+    /* FIXME: add schema name */
+    if (o->request->request.wfs->srs != NULL) {
+        transform = true;
+        buffer_add_str(fe->sql, "st_transform(");
+    }
+
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
+    if (transform) {
+        buffer_add(fe->sql, ',');
+        buffer_add_int(fe->sql, o->request->request.wfs->srs->srid);
+        buffer_add(fe->sql, ')');
+    }
+        
     n = n->next;
 
     /* jump to the next element if there are spaces */
@@ -509,6 +527,8 @@ static buffer *fe_distance_functions(ows * o, buffer * typename,
 static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe,
                        xmlNodePtr n)
 {
+    bool transform = false;
+
     assert(o != NULL);
     assert(typename != NULL);
     assert(fe != NULL);
@@ -516,13 +536,24 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe,
 
     buffer_add_str(fe->sql, "st_intersects(");
 
-    n = n->children;
+    if (o->request->request.wfs->srs != NULL) {
+        transform = true;
+        buffer_add_str(fe->sql, "st_transform(");
+    }
 
+    n = n->children;
     while (n->type != XML_ELEMENT_NODE)
         n = n->next;
 
+    /* FIXME add schema name ! */ 
     /* display the property name */
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
+
+    if (transform) {
+        buffer_add(fe->sql, ',');
+        buffer_add_int(fe->sql, o->request->request.wfs->srs->srid);
+        buffer_add(fe->sql, ')');
+    }
 
     n = n->next;
 

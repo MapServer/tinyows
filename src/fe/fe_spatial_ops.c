@@ -235,11 +235,14 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
     buffer_add_str(fe->sql, "setsrid('");
 
     geom = buffer_init();
-    buffer_add_str(geom, (char *) n->name);
+    if (strcmp((char *) n->name, "MultiSurface") == 0)
+        buffer_add_str(geom, "MultiPolygon");
+    else
+        buffer_add_str(geom, (char *) n->name);
 
     /* print the geometry type */
-    if (buffer_cmp(geom, "MultiPolygon")) {
-        buffer_add_str(geom, "((");
+    if (buffer_cmp(geom, "MultiPolygon") || buffer_cmp(geom, "MultiSurface")) {
+        buffer_add_str(geom, "(((");
         bracket = 3;
     } else if (buffer_cmp(geom, "MultiLineString")
                || buffer_cmp(geom, "Polygon")) {
@@ -326,8 +329,8 @@ buffer *fe_transform_geometry_gml_to_psql(ows * o, buffer * typename,
                 if (strcmp((char *) node->next->name,
                            "lineStringMember") == 0)
                     buffer_add_str(geom, "),(");
-                else if (strcmp((char *) node->next->name,
-                                "polygonMember") == 0)
+                else if (strcmp((char *) node->next->name, "polygonMember") == 0
+                     || strcmp((char *) node->next->name, "surfaceMember") == 0)
                     buffer_add_str(geom, ")),((");
                 else
                     buffer_add_str(geom, ",");

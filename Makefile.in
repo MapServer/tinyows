@@ -32,13 +32,13 @@ clean:
 install:
 	@echo "-----"
 	@echo "TinyOWS Schema install dir in $(PREFIX)/tinyows/schema"
-	@mkdir -p $(PREFIX)/tinyows
-	@cp -rf schema $(PREFIX)/tinyows/
+	mkdir -p $(PREFIX)/tinyows
+	cp -rf schema $(PREFIX)/tinyows/
 	@echo "-----"
 	@echo "Now:"
 	@echo " 1) copy 'tinyows' binary to cgi-bin directory"
 	@echo " 2) - put a workable config.xml file in $(PREFIX) dir"
-	@echo "    - OR launch 'make install-demo'"
+	@echo "    - OR launch 'make install-demo' as a superuser"
 
 install-demo:
 	@chmod +x demo/install.sh

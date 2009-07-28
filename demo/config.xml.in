@@ -21,7 +21,7 @@
 	 writable="1"
 	 prefix="tows"
 	 server="http://www.tinyows.org/"
-         name="france_dept"
+         name="france"
          title="French Administrative Sub Boundaries (IGN - GeoFLA Departements)" />
 
 </tinyows>

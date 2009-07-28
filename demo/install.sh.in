@@ -3,20 +3,24 @@
 # don't launch directly this script
 # use 'make install-demo' to do so
 
-PG_BIN=@POSTGIS_BIN@
-PG_SHARE=@POSTGIS_SHARE@/contrib/
-export PGUSER=postgres
+PGBIN=@POSTGIS_BIN@
+PGSHARE=@POSTGIS_SHARE@/contrib/
+PGUSER=postgres
 DB=tinyows_demo
 
 echo "Create Spatial Database: $DB"
-$PG_BIN/dropdb $DB > /dev/null 2> /dev/null
-$PG_BIN/createdb $DB
-$PG_BIN/createlang plpgsql $DB
-$PG_BIN/psql $DB < $PG_SHARE/postgis.sql
-$PG_BIN/psql $DB < $PG_SHARE/spatial_ref_sys.sql
+su $PGUSER -c "$PGBIN/dropdb $DB > /dev/null 2> /dev/null"
+su $PGUSER -c "$PGBIN/createdb $DB"
+su $PGUSER -c "$PGBIN/createlang plpgsql $DB"
+su $PGUSER -c "$PGBIN/psql $DB < $PGSHARE/postgis.sql"
+su $PGUSER -c "$PGBIN/psql $DB < $PGSHARE/spatial_ref_sys.sql"
 
 echo "Import layer data: world" 
-$PG_BIN/shp2pgsql -s 4326 -I demo/world.shp world | $PG_BIN/psql $DB
+$PGBIN/shp2pgsql -s 4326 -I demo/world.shp world > _world.sql
+su $PGUSER -c "$PGBIN/psql $DB < _world.sql"
 
 echo "Import layer data: france_dept" 
-$PG_BIN/shp2pgsql -s 27582 -I -W latin1 demo/france_dept.shp france_dept | $PG_BIN/psql $DB
+$PGBIN/shp2pgsql -s 27582 -I -W latin1 demo/france.shp france > _france.sql
+su $PGUSER -c "$PGBIN/psql $DB < _france.sql"
+
+rm _world.sql _france.sql

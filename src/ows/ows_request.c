@@ -395,10 +395,8 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
 
             if (ows_version_get(or->version) == 100) {
                 if (buffer_cmp(b, "Transaction")) {
-                    schema = buffer_init();
-                    buffer_copy(schema, o->schema_dir);
-                    buffer_add_str(schema, WFS_SCHEMA_100_TRANS);
-                    valid = ows_schema_validation(schema, xmlstring, true);
+                    schema = wfs_generate_schema(o);
+                    valid = ows_schema_validation(schema, xmlstring, false);
                 } else {
                     schema = buffer_init();
                     buffer_copy(schema, o->schema_dir);

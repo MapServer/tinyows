@@ -82,7 +82,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
                              buffer * layer_name, buffer * prefix, buffer * prop_name,
                              buffer * prop_type, buffer * value)
 {
-    buffer *time, *pkey;
+    buffer *time, *pkey, *value_encoded;
     bool gml_ns = false;
 
     assert(o != NULL);
@@ -138,6 +138,12 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 
         if (buffer_cmp(value, "f"))
             fprintf(o->output, "false");
+
+    /* FIXME what about varchar or char postgreSQL type ? */ 
+    } if (buffer_cmp(prop_type, "text")) {
+	value_encoded = buffer_encode_xml_entities(value);
+        fprintf(o->output, "%s", value_encoded->buf);
+        buffer_free(value_encoded);
     } else 
         fprintf(o->output, "%s", value->buf);
     

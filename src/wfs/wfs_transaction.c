@@ -259,10 +259,11 @@ static void wfs_transaction_response(ows * o, wfs_request * wr,
 /*
  * Add a content node value to a buffer
  */
-static buffer *wfs_retrieve_value(ows * o, wfs_request * wr,
-                                  buffer * value, xmlNodePtr n)
+static buffer *wfs_retrieve_value(ows * o, wfs_request * wr, buffer * value,
+						xmlDocPtr xmldoc, xmlNodePtr n)
 {
     xmlChar *content;
+    xmlChar *content_escaped;
 
     assert(o != NULL);
     assert(wr != NULL);
@@ -270,12 +271,14 @@ static buffer *wfs_retrieve_value(ows * o, wfs_request * wr,
     assert(n != NULL);
 
     content = xmlNodeGetContent(n);
+    content_escaped = xmlEncodeSpecialChars(xmldoc, content);
 
     buffer_add_str(value, "'");
-    buffer_add_str(value, (char *) content);
+    buffer_add_str(value, (char *) content_escaped);
     buffer_add_str(value, "'");
 
     xmlFree(content);
+    xmlFree(content_escaped);
 
     return value;
 }
@@ -310,7 +313,7 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
  * Insert features into the database
  * Method POST, XML
  */
-static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
+static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
     buffer *values, *column, *layer_name, *layer_prefix, *result, *sql;
     buffer *id, *handle, *id_column, *fid_full_name, *dup_sql;
@@ -323,6 +326,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
     assert(o != NULL);
     assert(wr != NULL);
+    assert(xmldoc != NULL);
     assert(n != NULL);
 
     sql = buffer_init();
@@ -488,7 +492,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
                     filter_encoding_free(fe);
                 } else {
-                    values = wfs_retrieve_value(o, wr, values, node);
+                    values = wfs_retrieve_value(o, wr, values, xmldoc, node);
                 }
 
                 buffer_free(column);
@@ -714,7 +718,7 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
  * Update features in database
  * Method POST / XML
  */
-static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
+static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
     buffer *typename, *xmlstring, *result, *sql, *property_name, *values;
     filter_encoding *filter, *fe;
@@ -723,6 +727,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
     assert(o != NULL);
     assert(wr != NULL);
+    assert(xmldoc != NULL);
     assert(n != NULL);
 
     sql = buffer_init();
@@ -802,7 +807,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
                         filter_encoding_free(fe);
                     } else {
-                        values = wfs_retrieve_value(o, wr, values, node);
+                        values = wfs_retrieve_value(o, wr, values, xmldoc, node);
                     }
 
                     buffer_copy(sql, values);
@@ -907,7 +912,7 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
 
         if (strcmp((char *) n->name, "Insert") == 0) {
             buffer_free(result);
-            result = wfs_insert_xml(o, wr, n);
+            result = wfs_insert_xml(o, wr, xmldoc, n);
         }
 
         if (strcmp((char *) n->name, "Delete") == 0) {
@@ -917,7 +922,7 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
 
         if (strcmp((char *) n->name, "Update") == 0) {
             buffer_free(result);
-            result = wfs_update_xml(o, wr, n);
+            result = wfs_update_xml(o, wr, xmldoc, n);
         }
 
         /* fill locator only if transaction failed */

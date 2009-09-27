@@ -423,5 +423,54 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
 
 
 /*
+ * Modify string to replace encoded characters by their true value
+ * Function originaly written by Assefa
+ *
+ * The replacements performed are:
+ *  &	-> &amp;
+ *  "	-> &quot;
+ *  <	-> &lt;
+ *  >	-> &gt;
+ */
+buffer *buffer_encode_xml_entities(const buffer * buf)
+{
+    buffer *new_buf;
+    int i;
+
+    assert(buf != NULL);
+    new_buf = buffer_init();
+
+    for(i=0 ; i < buf->use ; i++) {
+    	switch(buf->buf[i]) {
+	    case '&':
+ 	        buffer_add_str(new_buf, "&amp;");
+       	        break;
+
+            case '<':
+                buffer_add_str(new_buf, "&lt;");
+                break;
+
+            case '>':
+                buffer_add_str(new_buf, "&gt;");
+                break;
+
+            case '"':
+                buffer_add_str(new_buf, "&quot;");
+                break;
+
+            case '\'':
+                buffer_add_str(new_buf, "&#39;");
+                break;
+
+            default:
+		buffer_add(new_buf, buf->buf[i]);
+	}
+    }
+
+    return new_buf;
+}
+
+
+/*
  * vim: expandtab sw=4 ts=4
  */

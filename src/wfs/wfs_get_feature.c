@@ -93,10 +93,10 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     assert(prop_type != NULL);
     assert(value != NULL);
 
-    pkey = ows_psql_id_column(o, layer_name);
+    pkey = ows_psql_id_column(o, layer_name); /* pkey could be NULL !!! */
 
     /* No Pkey display in GML */
-    if (buffer_cmp(value, "") || buffer_cmp(prop_name, pkey->buf)) 
+    if (buffer_cmp(value, "") || (pkey != NULL && buffer_cmp(prop_name, pkey->buf))) 
         return;
 
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
@@ -175,7 +175,7 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
     id_name = ows_psql_id_column(o, layer_name);
 
     /* We could imagine layer without PK ! */
-    if (id_name->use != 0)
+    if (id_name != NULL && id_name->use > 0)
         number = ows_psql_column_number_id_column(o, layer_name);
 
     prefix = ows_layer_prefix(o->layers, layer_name);
@@ -187,7 +187,7 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
         fprintf(o->output, "  <gml:featureMember>\n");
 
         /* print layer's name and id according to GML version */
-        if (id_name->use != 0) {
+        if (id_name != NULL && id_name->use != 0) {
             if (wr->format == WFS_GML3)
                 fprintf(o->output, "   <%s:%s gml:id=\"%s.%s\">\n",
                         prefix->buf, layer_name->buf, layer_name->buf,

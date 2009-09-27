@@ -184,8 +184,9 @@ array *cgi_parse_kvp(ows * o, char *query)
 
         } else if (query[i] == '=') {
             /* char '=' inside filter key mustn't be taken into account */
-            if (buffer_case_cmp(key, "filter") == false
-                    || buffer_cmp(val, "") == true)
+            if ((buffer_case_cmp(key, "filter") == false
+                    || buffer_case_cmp(key, "outputformat") == false)
+                    && buffer_cmp(val, "") == true)
                 in_key = false;
             else
                 buffer_add(val, query[i]);
@@ -210,7 +211,7 @@ array *cgi_parse_kvp(ows * o, char *query)
                               "request");
                 }
             else {
-                if (check_regexp(string, "[A-Za-zà-ÿ0-9.\\,():/\\*_ \\-]")
+                if (check_regexp(string, "[A-Za-zà-ÿ0-9.\\=;,():/\\*_ \\-]")
                         /* if word is filter key, more characters are allowed */
                         || (buffer_cmp(key, "filter")
                             && check_regexp(string, "[A-Za-zà-ÿ0-9.#\\,():/_<> \"\'=\\*!\\-]")))

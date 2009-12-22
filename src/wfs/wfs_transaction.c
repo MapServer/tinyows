@@ -450,7 +450,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         /* fill fields and values at the same time */
         for (; node; node = node->next) {
             if (node->type == XML_ELEMENT_NODE && 
-                buffer_cmp(layer_prefix, (char *) node->ns->prefix)) {
+                buffer_cmp(ows_layer_server(o->layers, layer_prefix), (char *) node->ns->href)) {
 
                 buffer_add(sql, ',');
                 buffer_add(values, ',');

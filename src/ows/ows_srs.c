@@ -190,7 +190,7 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
  */
 bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
 {
-    int srid;
+    int srid = -1;
     list * tokens = NULL;
 
     assert(o != NULL);
@@ -204,6 +204,8 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
      */
     if (strncmp(srsname->buf, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
         tokens = list_explode('#', srsname);
+    else if (strncmp(srsname->buf,   "http://www.epsg.org/", 20) == 0)
+        tokens = list_explode('/', srsname);
     else if (strncmp(srsname->buf, "EPSG:", 5) == 0
             || strncmp(srsname->buf, "urn:EPSG:geographicCRC:", 23) == 0
             || strncmp(srsname->buf, "urn:ogc:def:crs:EPSG:", 21) == 0
@@ -215,10 +217,11 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
      *
      * Remember that urn:ogc and urn:x-ogc ones could have an optional 
      * version number
-     *
      */
     
-    srid = atoi(tokens->last->value->buf);
+    if (tokens->last->value && tokens->last->value->buf)
+        srid = atoi(tokens->last->value->buf);
+
     list_free(tokens);
     return ows_srs_set_from_srid(o, s, srid);
 }

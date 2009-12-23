@@ -219,6 +219,7 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
      */
     
     srid = atoi(tokens->last->value->buf);
+    list_free(tokens);
     return ows_srs_set_from_srid(o, s, srid);
 }
 

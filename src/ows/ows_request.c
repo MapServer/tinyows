@@ -160,6 +160,7 @@ int ows_schema_validation(buffer * xml_schema, buffer * xml, bool schema_is_file
     if (schema == NULL) {
         xmlSchemaCleanupTypes();
         xmlMemoryDump();
+        xmlCleanupParser();
         return ret;
     }
 

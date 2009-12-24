@@ -524,8 +524,6 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name,
             buffer_add_str(where, " AND ");
     }
 
-    list_free(geom);
-
     return where;
 }
 

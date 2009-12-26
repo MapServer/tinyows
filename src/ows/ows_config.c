@@ -499,7 +499,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     if (a != NULL) {
         buffer_add_str(layer->storage->schema, (char *) a);
         xmlFree(a);
-    }
+    } else buffer_add_str(layer->storage->schema, "public");
 
     /* inherits from layer parent and replaces with specified value
        if defined */

@@ -35,9 +35,8 @@ ows_layer_storage * ows_layer_storage_init()
     storage = malloc(sizeof(ows_layer_storage));
     assert(storage != NULL);
 
-    /* default values:  schema='public',    srid='-1' */
+    /* default values:  srid='-1' */
     storage->schema = buffer_init();
-    buffer_add_str(storage->schema, "public");
     storage->srid = -1;
     storage->geom_columns = list_init();
     storage->is_degree = true;

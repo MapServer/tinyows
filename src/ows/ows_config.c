@@ -494,13 +494,12 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         buffer_free(b);
     }
 
-    a = xmlTextReaderGetAttribute(r, (xmlChar *) "pg_schema");
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "schema");
 
     if (a != NULL) {
         buffer_add_str(layer->storage->schema, (char *) a);
         xmlFree(a);
     }
-
 
     /* inherits from layer parent and replaces with specified value
        if defined */

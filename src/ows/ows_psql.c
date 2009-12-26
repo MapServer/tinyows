@@ -101,6 +101,28 @@ list *ows_psql_geometry_column(ows * o, buffer * layer_name)
 
 
 /*
+ * Return schema name from a given layer 
+ */
+buffer *ows_psql_schema_name(ows * o, buffer * layer_name)
+{
+    ows_layer_node *ln = NULL;
+
+    assert(o != NULL);
+    assert(o->layers != NULL);
+    assert(layer_name != NULL);
+
+    for (ln = o->layers->first; ln != NULL; ln = ln->next)
+        if (ln->layer->name != NULL
+                && ln->layer->storage != NULL
+                && !strcmp(ln->layer->name->buf, layer_name->buf))
+            return ln->layer->storage->schema;
+
+    assert(0); /* Should not happen */
+    return NULL;
+}
+
+
+/*
  * Check if a given WKT geometry is or not valid
  */
 bool ows_psql_is_geometry_valid(ows * o, buffer * geom)

@@ -135,6 +135,7 @@ void ows_parse_config (ows * o, const char *filename);
 buffer *ows_psql_column_name (ows * o, buffer * layer_name, int number);
 array *ows_psql_describe_table (ows * o, buffer * layer_name);
 list *ows_psql_geometry_column (ows * o, buffer * layer_name);
+buffer *ows_psql_schema_name(ows * o, buffer * layer_name);
 buffer *ows_psql_id_column (ows * o, buffer * layer_name);
 int ows_psql_column_number_id_column(ows * o, buffer * layer_name);
 bool ows_psql_is_geometry_column (ows * o, buffer * layer_name, buffer * column);

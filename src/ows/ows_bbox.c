@@ -172,7 +172,9 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
         for (ln_geom = geom->first ; ln_geom != NULL ; ln_geom = ln_geom->next) {
             buffer_add_str(sql, " (SELECT \"");
             buffer_copy(sql, ln_geom->value);
-            buffer_add_str(sql, "\" AS \"the_geom\" FROM \"");
+            buffer_add_str(sql, "\" AS \"the_geom\" FROM ");
+            buffer_copy(sql, ows_psql_schema_name(o, ln_from->value));
+            buffer_add_str(sql, ".\"");
             buffer_copy(sql, ln_from->value);
             buffer_add_str(sql, "\" ");
             buffer_copy(sql, ln_where->value);

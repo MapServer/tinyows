@@ -400,8 +400,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 	   if (idgen == WFS_REPLACE_DUPLICATE) {
            dup_sql = buffer_init();
 
-           buffer_add_str(dup_sql, "SELECT count(*) FROM \""); 
-           /* FIXME add Postgres schema */ 
+           buffer_add_str(dup_sql, "SELECT count(*) FROM "); 
+           buffer_copy(dup_sql, ows_psql_schema_name(o, layer_name));
+           buffer_add_str(dup_sql, ".\"");
            buffer_copy(dup_sql, layer_name);
            buffer_add_str(dup_sql, "\" WHERE "); 
            buffer_copy(dup_sql, id_column);
@@ -575,7 +576,9 @@ void wfs_delete(ows * o, wfs_request * wr)
         }
 
         /* FROM */
-        buffer_add_str(sql, "DELETE FROM \"");
+        buffer_add_str(sql, "DELETE FROM ");
+        buffer_copy(sql, ows_psql_schema_name(o, layer_name));
+        buffer_add_str(sql, ".\"");
         buffer_copy(sql, layer_name);
         buffer_add_str(sql, "\" ");
 
@@ -666,10 +669,12 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     sql = buffer_init();
     xmlstring = buffer_init();
 
-    buffer_add_str(sql, "DELETE FROM \"");
+    buffer_add_str(sql, "DELETE FROM ");
 
     /*retrieve the name of the table in which features must be deleted */
     typename = wfs_retrieve_typename(o, wr, n);
+    buffer_copy(sql, ows_psql_schema_name(o, typename));
+    buffer_add_str(sql, ".\"");
     buffer_copy(sql, typename);
     buffer_add_str(sql, "\"");
 

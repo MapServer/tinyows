@@ -4,7 +4,7 @@
 # use 'make install-demo' to do so
 
 PGBIN=@POSTGIS_BIN@
-PGSHARE=@POSTGIS_SHARE@/contrib/
+PGSHARE=@POSTGIS_SHARE@/contrib/postgis-1.5
 PGUSER=postgres
 DB=tinyows_demo
 

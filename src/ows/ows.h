@@ -420,6 +420,9 @@ typedef struct Ows {
     ows_geobbox * max_geobbox;
     bool wfs_display_bbox;
 
+    bool check_schema;
+    bool check_valid_geom;
+
     array * cgi;
     list * psql_requests;
     ows_layer_list * layers;

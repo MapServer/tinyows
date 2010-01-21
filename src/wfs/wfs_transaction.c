@@ -315,7 +315,7 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
  */
 static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
-    buffer *values, *column, *layer_name, *layer_prefix, *result, *sql;
+    buffer *values, *column, *layer_name, *layer_prefix, *result, *sql, *gml;
     buffer *id, *handle, *id_column, *fid_full_name, *dup_sql;
     filter_encoding *fe;
     xmlNodePtr node, elemt;
@@ -331,7 +331,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
     sql = buffer_init();
     handle = buffer_init();
-    id =  buffer_init();
 
     /* retrieve handle attribute to report it in transaction response */
     if (xmlHasProp(n, (xmlChar *) "handle")) {
@@ -470,28 +469,27 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                     /* jump to the next element if there are spaces */
                     while (elemt->type != XML_ELEMENT_NODE) elemt = elemt->next;
 
-                    fe = filter_encoding_init();
-                    fe->sql = buffer_init();
-
                     if (strcmp((char *) elemt->name, "Box") == 0
                             || strcmp((char *) elemt->name, "Envelope") == 0) {
+
+                        fe = filter_encoding_init();
+                        fe->sql = buffer_init();
                         fe->sql = fe_envelope(o, layer_name, fe, elemt);
                         buffer_copy(values, fe->sql);
+                        filter_encoding_free(fe);
+
                     } else if (strcmp((char *) elemt->name, "Null") == 0) {
                         buffer_add_str(values, "''");
                     } else {
-                        fe->sql = fe_transform_geometry_gml_to_psql(o, layer_name, fe, elemt);
-
-                        /* FIXME is it really the right way to handle that ? 
-                         * What about an ows error instead ?
-                         */
-                        if (fe->error_code)
-                            buffer_add_str(values, "NULL");
-                        else
-                            buffer_copy(values, fe->sql);
+                        gml = ows_psql_gml_to_sql(o, n);
+                        if (gml != NULL) {
+                            buffer_add_str(values, "'");
+                            buffer_copy(values, gml);
+                            buffer_add_str(values, "'");
+                            buffer_free(gml);
+                        } /* TODO else case */
                     }
 
-                    filter_encoding_free(fe);
                 } else {
                     values = wfs_retrieve_value(o, wr, values, xmldoc, node);
                 }
@@ -725,7 +723,7 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
  */
 static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
-    buffer *typename, *xmlstring, *result, *sql, *property_name, *values;
+    buffer *typename, *xmlstring, *result, *sql, *property_name, *values, *gml;
     filter_encoding *filter, *fe;
     xmlNodePtr node, elemt;
     xmlChar *content;
@@ -796,21 +794,27 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                         while (elemt->type != XML_ELEMENT_NODE)
                             elemt = elemt->next;
 
-                        fe = filter_encoding_init();
-                        fe->sql = buffer_init();
-
                         if (strcmp((char *) elemt->name, "Box") == 0
                                 || strcmp((char *) elemt->name, "Envelope") == 0) {
+
+                            fe = filter_encoding_init();
+                            fe->sql = buffer_init();
                             fe->sql = fe_envelope(o, typename, fe, elemt);
                             buffer_copy(values, fe->sql);
+                            filter_encoding_free(fe);
+
                         } else if (strcmp((char *) elemt->name, "Null") == 0) {
                             buffer_add_str(values, "''");
                         } else {
-                            fe->sql = fe_transform_geometry_gml_to_psql(o, typename, fe, elemt);
-                            buffer_copy(values, fe->sql);
+                            gml = ows_psql_gml_to_sql(o, n);
+                            if (gml != NULL) {
+                                buffer_add_str(values, "'");
+                                buffer_copy(values, gml);
+                                buffer_add_str(values, "'");
+                                buffer_free(gml);
+                            } /* TODO else case */
                         }
 
-                        filter_encoding_free(fe);
                     } else {
                         values = wfs_retrieve_value(o, wr, values, xmldoc, node);
                     }

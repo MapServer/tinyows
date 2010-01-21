@@ -41,7 +41,6 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
     assert(r != NULL);
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "online_resource");
-
     if (a != NULL) {
         o->online_resource = buffer_init();
         buffer_add_str(o->online_resource, (char *) a);
@@ -49,7 +48,6 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "schema_dir");
-
     if (a != NULL) {
         o->schema_dir = buffer_init();
         buffer_add_str(o->schema_dir, (char *) a);
@@ -57,7 +55,6 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "log");
-
     if (a != NULL) {
         o->log = buffer_init();
         buffer_add_str(o->log, (char *) a);
@@ -65,42 +62,46 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "degree_precision");
-
     if (a != NULL) {
         o->schema_dir = buffer_init();
         precision = atoi((char *) a);
-
         if (precision > 0 && precision < 12)
             o->degree_precision = precision;
-
         xmlFree(a);
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "meter_precision");
-
     if (a != NULL) {
         o->schema_dir = buffer_init();
         precision = atoi((char *) a);
-
         if (precision > 0 && precision < 12)
             o->meter_precision = precision;
-
         xmlFree(a);
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "wfs_display_bbox");
-
     o->wfs_display_bbox = true;
-
     if (a != NULL) {
-        if (atoi((char *) a))
-            o->wfs_display_bbox = true;
-        else
-            o->wfs_display_bbox = false;
-
+        if (atoi((char *) a)) o->wfs_display_bbox = true;
+        else                  o->wfs_display_bbox = false;
         xmlFree(a);
     }
 
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "check_schema");
+    o->check_schema = true;
+    if (a != NULL) {
+        if (atoi((char *) a)) o->check_schema = true;
+        else                  o->check_schema = false;
+        xmlFree(a);
+    }
+
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "check_valid_geom");
+    o->check_valid_geom = true;
+    if (a != NULL) {
+        if (atoi((char *) a)) o->check_valid_geom = true;
+        else                  o->check_valid_geom = false;
+        xmlFree(a);
+    }
 }
 
 

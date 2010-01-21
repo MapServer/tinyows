@@ -433,49 +433,159 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
 }
 
 
-
 /*
- *  * Return the number of rows returned by the specified requests
- *   */
+ * Return the number of rows returned by the specified requests
+ */
 int ows_psql_number_features(ows * o, list * from, list * where)
 {
-        buffer *sql;
-        PGresult *res;
-        list_node *ln_from, *ln_where;
-        int nb;
+    buffer *sql;
+    PGresult *res;
+    list_node *ln_from, *ln_where;
+    int nb;
 
-        assert(o != NULL);
-        assert(from != NULL);
-        assert(where != NULL);
+    assert(o != NULL);
+    assert(from != NULL);
+    assert(where != NULL);
 
-        nb = 0;
+    nb = 0;
 
-        /* checks if from list and where list have the same size */
-        if (from->size != where->size) return nb;
+    /* checks if from list and where list have the same size */
+    if (from->size != where->size) return nb;
 
 
-        for (ln_from = from->first, ln_where = where->first; ln_from != NULL;
-                 ln_from = ln_from->next, ln_where = ln_where->next) {
-                 sql = buffer_init();
+    for (ln_from = from->first, ln_where = where->first; ln_from != NULL;
+             ln_from = ln_from->next, ln_where = ln_where->next) {
+             sql = buffer_init();
 
-                 /* execute the request */
-                 buffer_add_str(sql, "SELECT count(*) FROM \"");
-                 buffer_copy(sql, ln_from->value);
-                 buffer_add_str(sql, "\" ");
-                 buffer_copy(sql, ln_where->value);
-                 res = PQexec(o->pg, sql->buf);
-                 buffer_free(sql);
+             /* execute the request */
+             buffer_add_str(sql, "SELECT count(*) FROM \"");
+             buffer_copy(sql, ln_from->value);
+             buffer_add_str(sql, "\" ");
+             buffer_copy(sql, ln_where->value);
+             res = PQexec(o->pg, sql->buf);
+             buffer_free(sql);
 
-                 if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-                     PQclear(res);
-                     return -1;
-                 }
-                 nb = nb + atoi(PQgetvalue(res, 0, 0));
+             if (PQresultStatus(res) != PGRES_TUPLES_OK) {
                  PQclear(res);
-         }
+                 return -1;
+             }
+             nb = nb + atoi(PQgetvalue(res, 0, 0));
+             PQclear(res);
+     }
 
-        return nb;
+    return nb;
 }
+
+
+static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n)
+{
+    xmlNodePtr c;
+    static xmlNodePtr result=NULL;
+
+    assert(o != NULL);
+    assert(n != NULL);
+
+    if (result) return result;  /* avoid recursive loop */
+
+    /* We are looking for the geometry part inside GML doc */
+    for (; n ; n = n->next) {
+
+        if (n->type != XML_ELEMENT_NODE) continue;
+
+        /* GML SF Geometries Types */
+        if (   !strcmp((char *) n->name, "Point")
+            || !strcmp((char *) n->name, "LineString")
+            || !strcmp((char *) n->name, "Curve")
+            || !strcmp((char *) n->name, "Polygon")
+            || !strcmp((char *) n->name, "Surface")
+            || !strcmp((char *) n->name, "MultiPoint")
+            || !strcmp((char *) n->name, "MultiLineString")
+            || !strcmp((char *) n->name, "MultiCurve")
+            || !strcmp((char *) n->name, "MultiPolygon")
+            || !strcmp((char *) n->name, "MultiSurface")
+            || !strcmp((char *) n->name, "MultiGeometry")) {
+
+            return n;
+        }
+        /* TODO Add check on namespace GML 3 and GML 3.2 */
+
+        /* Recursive exploration */
+        if (n->children)
+            for (c = n->children ; c ; c = c->next)
+                if ((result = ows_psql_recursive_parse_gml(o, c)))
+                    return result;
+    }
+
+    return NULL;
+}
+
+
+/*
+ * Transform a GML geometry to PostGIS EWKT
+ * Return NULL on error
+ */
+buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n)
+{
+    PGresult *res;
+    xmlNodePtr g;
+    buffer *result, *sql, *gml;
+
+    assert(o != NULL);
+    assert(n != NULL);
+
+    g = ows_psql_recursive_parse_gml(o, n);
+    if (!g) return NULL;    /* No Geometry founded in GML doc */
+
+    /* Retrieve the sub doc and launch GML parse via PostGIS */
+    gml = buffer_init();
+    cgi_add_xml_into_buffer(gml, g);
+    
+    sql = buffer_init();
+    buffer_add_str(sql, "SELECT ST_GeomFromGML('");
+    buffer_add_str(sql, gml->buf);
+    buffer_add_str(sql, "')");
+
+    res = PQexec(o->pg, sql->buf);
+    buffer_free(gml);
+
+
+    /* GML Parse errors cases */
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        buffer_free(sql);
+        PQclear(res);
+        return NULL;
+    }
+
+    result = buffer_init();
+    buffer_add_str(result, PQgetvalue(res, 0, 0));
+    PQclear(res);
+
+    /* Check if geometry is valid */
+    if (o->check_valid_geom) {
+
+        buffer_empty(sql);
+        buffer_add_str(sql, "SELECT ST_IsValid('");
+        buffer_add_str(sql, result->buf);
+        buffer_add_str(sql, "')");
+
+        res = PQexec(o->pg, sql->buf);
+
+        if (   PQresultStatus(res) != PGRES_TUPLES_OK
+            || PQntuples(res) != 1
+            || (char) PQgetvalue(res, 0, 0)[0] !=  't') {
+            buffer_free(sql);
+            buffer_free(result);
+            PQclear(res);
+            return NULL;
+        }
+    }
+
+    buffer_free(sql);
+    PQclear(res);
+
+    return result;
+}
+
 
 /*
  * vim: expandtab sw=4 ts=4

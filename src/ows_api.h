@@ -54,9 +54,6 @@ buffer *fe_logical_op (ows * o, buffer * typename, filter_encoding * fe, xmlNode
 void fe_node_flush (xmlNodePtr node, FILE * output);
 buffer *fe_property_name (ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n, bool check_geom_column);
 buffer *fe_spatial_op (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
-buffer *fe_transform_coord_gml3_to_psql (buffer * coord);
-buffer *fe_transform_coord_gml_to_psql (buffer * coord);
-buffer *fe_transform_geometry_gml_to_psql (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
 buffer *fe_xpath_property_name (ows * o, buffer * typename, buffer * property);
 buffer *fill_fe_error (ows * o, filter_encoding * fe);
 void filter_encoding_flush (ows * o, filter_encoding * fe, FILE * output);
@@ -146,6 +143,7 @@ char *ows_psql_to_xsd (buffer * type);
 buffer *ows_psql_type (ows * o, buffer * layer_name, buffer * property);
 buffer *ows_psql_generate_id (ows * o, buffer * layer_name);
 int ows_psql_number_features(ows * o, list * from, list * where);
+buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n);
 void ows_request_check (ows * o, ows_request * or, const array * cgi, const char *query);
 void ows_request_flush (ows_request * or, FILE * output);
 void ows_request_free (ows_request * or);

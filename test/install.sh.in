@@ -4,7 +4,7 @@
 # use 'make install-test' to do so
 
 PG_BIN=@POSTGIS_BIN@
-PG_SHARE=@POSTGIS_SHARE@/contrib/
+PG_SHARE=@POSTGIS_SHARE@/contrib/postgis-1.5
 PG_USER=postgres
 DB=tinyows_test
 

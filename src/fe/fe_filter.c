@@ -39,7 +39,7 @@ filter_encoding *filter_encoding_init()
     fe = malloc(sizeof(filter_encoding));
     assert(fe != NULL);
 
-    fe->sql = NULL;
+    fe->sql = buffer_init();
     fe->error_code = FE_NO_ERROR;
 
     return fe;
@@ -55,7 +55,7 @@ void filter_encoding_free(filter_encoding * fe)
 
     if (fe->sql != NULL)
         buffer_free(fe->sql);
-
+    
     free(fe);
     fe = NULL;
 }
@@ -442,7 +442,6 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
 
     xmlInitParser();
     LIBXML_TEST_VERSION 
-    fe->sql = buffer_init();
 
     xmldoc = xmlParseMemory(xmlchar->buf, xmlchar->use);
 

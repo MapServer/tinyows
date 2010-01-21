@@ -389,10 +389,11 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
     /* check XML Validity */
     if ((cgi_method_post() && strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded") != 0)
             || (!cgi_method_post() && !cgi_method_get() && query[0] == '<')) {
-        xmlstring = buffer_init();
-        buffer_add_str(xmlstring, query);
 
-        if (or->service == WFS) {
+        if (or->service == WFS && o->check_schema) {
+
+            xmlstring = buffer_init();
+            buffer_add_str(xmlstring, query);
 
             if (ows_version_get(or->version) == 100) {
                 if (buffer_cmp(b, "Transaction")) {
@@ -417,13 +418,12 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
             }
 
             buffer_free(schema);
-        }
-
-        buffer_free(xmlstring);
-
-        if (valid != 0)
-            ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+            buffer_free(xmlstring);
+            
+            if (valid != 0)
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "xml isn't valid", "request");
+        }
     }
 }
 

@@ -64,9 +64,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr,
         if (!buffer_cmp(an->key, id_name->buf)) {
             fprintf(o->output, "    <xs:element name ='");
             buffer_flush(an->key, o->output);
-            fprintf(o->output, "' type='");
-            fprintf(o->output, ows_psql_to_xsd(an->value));
-            fprintf(o->output, "' ");
+            fprintf(o->output, "' type='%s' ", ows_psql_to_xsd(an->value));
 
             if (in_list(mandatory_prop, an->key))
                 fprintf(o->output, "minOccurs='1' ");

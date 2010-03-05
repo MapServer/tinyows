@@ -434,7 +434,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         buffer_copy(fid_full_name, id);
         alist_add(wr->insert_results, handle, fid_full_name);
 
-        buffer_add_str(sql, "INSERT INTO \"");
+        buffer_add_str(sql, "INSERT INTO ");
+        buffer_copy(sql, ows_psql_schema_name(o, layer_name));
+        buffer_add_str(sql, ".\"");
         buffer_copy(sql, layer_name);
         buffer_add_str(sql, "\" (");
 

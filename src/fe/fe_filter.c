@@ -505,9 +505,10 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name,
     buffer_add_str(where, " WHERE");
 
     for (ln = geom->first; ln != NULL; ln = ln->next) {
-        buffer_add_str(where, " not(disjoint(\"");
+        buffer_add_str(where, " ");
         buffer_copy(where, ln->value);
-        buffer_add_str(where, "\",SetSRID('BOX(");
+        buffer_add_str(where, " && ");
+        buffer_add_str(where, "SetSRID('BOX(");
         buffer_add_double(where, wr->bbox->xmin);
         buffer_add_str(where, " ");
         buffer_add_double(where, wr->bbox->ymin);
@@ -517,11 +518,12 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name,
         buffer_add_double(where, wr->bbox->ymax);
         buffer_add_str(where, ")'::box2d,");
         buffer_add_int(where, wr->bbox->srs->srid);
-        buffer_add_str(where, ")))");
+        buffer_add_str(where, ")");
 
         if (ln->next != NULL)
             buffer_add_str(where, " AND ");
     }
+
 
     return where;
 }

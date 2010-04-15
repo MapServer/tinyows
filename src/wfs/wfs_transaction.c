@@ -316,10 +316,11 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
 static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
     buffer *values, *column, *layer_name, *layer_prefix, *result, *sql, *gml;
-    buffer *id, *handle, *id_column, *fid_full_name, *dup_sql;
+    buffer *handle, *id_column, *fid_full_name, *dup_sql;
     filter_encoding *fe;
     xmlNodePtr node, elemt;
     PGresult *res;
+    buffer *id = NULL;
     xmlChar *attr = NULL;
     enum wfs_insert_idgen idgen = WFS_GENERATE_NEW;
     enum wfs_insert_idgen handle_idgen = WFS_GENERATE_NEW;
@@ -376,9 +377,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
          * and in both cases (f)id is optionnal !
          */ 
         if (xmlHasProp(n, (xmlChar *) "id"))
-            attr =  xmlGetProp(n, (xmlChar *) "id");
+            attr = xmlGetProp(n, (xmlChar *) "id");
         else if (xmlHasProp(n, (xmlChar *) "fid"))
-            attr =  xmlGetProp(n, (xmlChar *) "fid");
+            attr = xmlGetProp(n, (xmlChar *) "fid");
         
         if (attr != NULL) {
             id = buffer_init();

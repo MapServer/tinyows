@@ -116,7 +116,7 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
 
     fprintf(output, "pkey_column_number: %i\n", storage->pkey_column_number);
 
-    if (storage->pkey != NULL) {
+    if (storage->pkey_sequence != NULL) {
         fprintf(output, "pkey_sequence: ");
         buffer_flush(storage->pkey_sequence, output);
         fprintf(output, "\n");

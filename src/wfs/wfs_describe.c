@@ -97,10 +97,16 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     assert(wr != NULL);
 
     wfs_version = ows_version_get(o->request->version);
+    prefix = ows_layer_list_prefix(o->layers, wr->typename);
+    if (prefix->first == NULL) {
+            list_free(prefix);
+            ows_error(o, OWS_ERROR_CONFIG_FILE,
+                    "Not a single layer is available. Check config file",
+                    "describe");
+    }
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
-    prefix = ows_layer_list_prefix(o->layers, wr->typename);
 
     /* if all layers belong to different prefixes, import the matching namespaces */
     if (prefix->first->next != NULL) {

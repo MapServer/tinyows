@@ -286,6 +286,9 @@ int main(int argc, char *argv[])
                          || strncmp(argv[1], "-h", 2) == 0)) {
             ows_parse_config(o, o->config_file->buf);
             ows_usage(o);
+        } else if (argc > 1 && (strncmp(argv[1], "--version", 9) == 0
+                         || strncmp(argv[1], "-v", 2) == 0)) {
+            printf("%s\n", TINYOWS_VERSION);
         } else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                              "Service Unknown", "service");
 

@@ -30,6 +30,8 @@
 #define OWS_DEBUG
 #endif
 
+#define TINYOWS_VERSION             "0.8.0 SVN"
+
 #define OWS_CONFIG_FILE_PATH        "@prefix@/tinyows/config.xml"
 
 #define WFS_SCHEMA_100_BASIC        "wfs/1.0.0/WFS-basic.xsd"

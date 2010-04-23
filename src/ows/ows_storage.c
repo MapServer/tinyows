@@ -357,7 +357,8 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l)
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
         PQclear(res);
         ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                  "Unable to access geometry_columns table", "storage");
+                  "Some layer(s) described in config file are not available from geometry_columns table",
+                  "storage");
     }
 
     l->storage->srid = atoi(PQgetvalue(res, 0, 0));
@@ -385,6 +386,23 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l)
     ows_storage_fill_not_null(o, l);
     ows_storage_fill_pkey(o, l);
 }
+
+
+void ows_layers_storage_flush(ows * o, FILE * output)
+{
+    ows_layer_node *ln;
+
+    assert(o != NULL);
+    assert(o->layers != NULL);
+
+    for (ln = o->layers->first; ln != NULL; ln = ln->next) {
+        if (ln->layer->storage != NULL) {
+                fprintf(output, " - %s.%s  -> %i\n", ln->layer->storage->schema->buf,
+                                                        ln->layer->storage->table->buf,
+                                                        ln->layer->storage->srid);
+        }
+    }
+} 
 
 
 void ows_layers_storage_fill(ows * o)

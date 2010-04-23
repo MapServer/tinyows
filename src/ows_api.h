@@ -195,3 +195,4 @@ ows_layer_storage * ows_layer_storage_init();
 void ows_layer_storage_free(ows_layer_storage * storage);
 void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output);
 void ows_layers_storage_fill(ows * o);
+void ows_layers_storage_flush(ows * o, FILE * output);

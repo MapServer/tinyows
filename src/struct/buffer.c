@@ -306,6 +306,25 @@ bool buffer_cmp(const buffer * buf, const char *str)
 
 
 /*
+ * Check if a buffer string is the same than another, on the n first char
+ */
+bool buffer_ncmp(const buffer * buf, const char *str, size_t n)
+{
+    size_t i;
+
+    assert(buf != NULL);
+    assert(str != NULL);
+
+    if (buf->use < n) return false;
+
+    for (i = 0 ; i < n ; i++)
+        if (buf->buf[i] != str[i])
+            return false;
+
+    return true;
+}
+
+/*
  * Check if a buffer string is the same than anoter for a specified length
  * (insensitive case check)
  */

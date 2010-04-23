@@ -139,13 +139,14 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
         if (buffer_cmp(value, "f"))
             fprintf(o->output, "false");
 
-    /* FIXME what about varchar or char postgreSQL type ? */ 
-    } else if (buffer_cmp(prop_type, "text")) {
-	value_encoded = buffer_encode_xml_entities(value);
+    } else if (buffer_cmp(prop_type, "text")
+            || buffer_ncmp(prop_type, "char", 4)
+            || buffer_ncmp(prop_type, "varchar", 7)) {
+	    value_encoded = buffer_encode_xml_entities(value);
         fprintf(o->output, "%s", value_encoded->buf);
         buffer_free(value_encoded);
-    } else 
-        fprintf(o->output, "%s", value->buf);
+
+    } else fprintf(o->output, "%s", value->buf);
     
     if (gml_ns)
         fprintf(o->output, "</gml:%s>\n", prop_name->buf);

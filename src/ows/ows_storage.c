@@ -397,9 +397,12 @@ void ows_layers_storage_flush(ows * o, FILE * output)
 
     for (ln = o->layers->first; ln != NULL; ln = ln->next) {
         if (ln->layer->storage != NULL) {
-                fprintf(output, " - %s.%s  -> %i\n", ln->layer->storage->schema->buf,
+                fprintf(output, " - %s.%s  -> %i ", ln->layer->storage->schema->buf,
                                                         ln->layer->storage->table->buf,
                                                         ln->layer->storage->srid);
+                if (ln->layer->retrievable) fprintf(output, "R");
+                if (ln->layer->writable)   fprintf(output, "W");
+                fprintf(output, "\n");
         }
     }
 } 

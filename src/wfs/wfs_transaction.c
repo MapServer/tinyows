@@ -490,8 +490,19 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                             buffer_copy(values, gml);
                             buffer_add_str(values, "'");
                             buffer_free(gml);
-                        } /* TODO else case */
-                    }
+                        } else {
+                            buffer_free(sql);
+                            buffer_free(values);
+                            buffer_free(layer_name);
+                            buffer_free(column);
+                            buffer_free(layer_prefix);
+                            buffer_free(id);
+
+                            result = buffer_init();
+                            buffer_add_str(result, "Error invalid Geometry");
+                            return result;
+                        }
+                   }
 
                 } else {
                     values = wfs_retrieve_value(o, wr, values, xmldoc, node);

@@ -59,7 +59,7 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
             fprintf(o->output, "%f</gml:coordinates>", ymax);
             fprintf(o->output, "</gml:Box>\n");
         } else {
-            fprintf(o->output, "<gml:Envelope srsName=\"urn:ogc:def:crs:EPSG:%d\">", srid);
+            fprintf(o->output, "<gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::%d\">", srid);
             fprintf(o->output, "<gml:lowerCorner>");
             fprintf(o->output, "%f ", xmin);
             fprintf(o->output, "%f", ymin);
@@ -510,10 +510,10 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                 if ((wr->srs != NULL && !wr->srs->is_unit_degree) || 
                         (wr->srs == NULL && ows_srs_meter_units(o, layer_name))) {
                     buffer_add_int(select, o->meter_precision);
-                    buffer_add_str(select, ", 1) AS \"");
+                    buffer_add_str(select, ", 3) AS \"");
                 } else {
                     buffer_add_int(select, o->degree_precision);
-                    buffer_add_str(select, ", 17) AS \"");
+                    buffer_add_str(select, ", 19) AS \"");
                 }
 
                 buffer_copy(select, an->key);

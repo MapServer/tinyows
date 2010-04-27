@@ -312,7 +312,7 @@ static void wfs_feature_type_list(ows * o)
                     fprintf(o->output, "</SRS>\n");
                 } else if (ows_version_get(o->request->version) == 110) {
                     fprintf(o->output, " <DefaultSRS>");
-                    fprintf(o->output, "urn:ogc:def:crs:EPSG:%s", srid->buf);
+                    fprintf(o->output, "urn:ogc:def:crs:EPSG::%s", srid->buf);
                     fprintf(o->output, "</DefaultSRS>\n");
 
                     if (ln->layer->srid != NULL) {
@@ -321,7 +321,7 @@ static void wfs_feature_type_list(ows * o)
                                 other_srid = other_srid->next) {
                             if (!buffer_cmp(srid, other_srid->value->buf)) {
                                 fprintf(o->output, " <OtherSRS>");
-                                fprintf(o->output, "urn:ogc:def:crs:EPSG:%s",
+                                fprintf(o->output, "urn:ogc:def:crs:EPSG::%s",
                                         other_srid->value->buf);
                                 fprintf(o->output, "</OtherSRS>\n");
                             }

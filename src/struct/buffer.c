@@ -115,16 +115,10 @@ void buffer_empty(buffer * buf)
  */
 void buffer_flush(buffer * buf, FILE * output)
 {
-    size_t i;
-    int ret;
-
     assert(buf != NULL);
     assert(output != NULL);
 
-    for (i = 0; i < buf->use; i++) {
-        ret = fputc((int) buf->buf[i], output);
-        assert(ret != EOF);
-    }
+    fprintf(output, "%s", buf->buf);
 }
 
 

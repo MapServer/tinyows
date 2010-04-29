@@ -49,16 +49,18 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
         else
             fprintf(o->output, "<gml:Null>missing</gml:Null>\n");
     } else {
+
+
         if (wr->format == WFS_GML2) {
             fprintf(o->output, "<gml:Box srsName=\"EPSG:%d\">", srid);
-            fprintf(o->output,
-                    "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">");
+            fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">");
             fprintf(o->output, "%f,", xmin);
             fprintf(o->output, "%f ", ymin);
             fprintf(o->output, "%f,", xmax);
             fprintf(o->output, "%f</gml:coordinates>", ymax);
             fprintf(o->output, "</gml:Box>\n");
-        } else {
+
+        } else if (wr->format == WFS_GML3) {
             fprintf(o->output, "<gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::%d\">", srid);
             fprintf(o->output, "<gml:lowerCorner>");
             fprintf(o->output, "%f ", xmin);
@@ -107,6 +109,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
             || buffer_cmp(prop_name, "description"))
         gml_ns = true;
 
+#if 0
     /* Used in CITE 1.0 Unit test as geometry column name 
        TODO: what about a more generic way to handle that ? */
     if (wr->format == WFS_GML2
@@ -117,6 +120,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
             || buffer_cmp(prop_name, "polygonProperty")
             || buffer_cmp(prop_name, "multiPolygonProperty")))
         gml_ns = true;
+#endif
 
     if (gml_ns == true)
         fprintf(o->output, "   <gml:%s>", prop_name->buf);
@@ -518,9 +522,36 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
 
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\" ");
+            } 
+            else if (wr->format == WFS_GEOJSON) {
+                buffer_add_str(select, "ST_AsGeoJSON(");
+
+                /* Geometry Reprojection on the fly step if asked */
+                if (wr->srs != NULL) {
+                    buffer_add_str(select, "ST_Transform(");
+                    buffer_add(select, '"');
+                    buffer_copy(select, an->key);
+                    buffer_add(select, '"');
+                    buffer_add(select, ',');
+                    buffer_add_int(select, wr->srs->srid);
+                    buffer_add_str(select, "),");
+                } else {
+                    buffer_add(select, '"');
+                    buffer_copy(select, an->key);
+                    buffer_add_str(select, "\",");
+                }
+
+                if ((wr->srs != NULL && !wr->srs->is_unit_degree) || 
+                        (wr->srs == NULL && ows_srs_meter_units(o, layer_name)))
+                    buffer_add_int(select, o->meter_precision); 
+                else 
+                    buffer_add_int(select, o->degree_precision);
+
+                buffer_add_str(select, ", 4) AS \"");
+                buffer_copy(select, an->key);
+                buffer_add_str(select, "\" ");
             }
 
-            /* add here other formats */
         }
         /* columns are written in quotation marks */
         else {
@@ -720,6 +751,91 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
 
 
 /*
+ * Diplay in GeoJSON result of a GetFeature request
+ */
+static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * request_list)
+{
+    PGresult *res;
+    list_node *ln, *ll;
+    array *prop_table;
+    array_node *an;
+    buffer *prop, *geom;
+    bool first;
+    int i,j;
+    int geoms;
+
+    assert(o != NULL);
+    assert(wr != NULL);
+    assert(request_list != NULL);
+
+    ln = ll= NULL;
+
+    ll = request_list->first->next->value->first;
+    geom = buffer_init();
+    prop = buffer_init();
+
+
+    for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
+        /* execute the sql request */
+        res = PQexec(o->pg, ln->value->buf);
+
+
+        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+            PQclear(res);
+            ll = ll->next;
+            break;
+        }
+
+        prop_table = ows_psql_describe_table(o, ll->value);
+
+        for (j=0 ; j < PQntuples(res) ; j++) {
+
+            first = true;
+            geoms = 0;
+
+            for (an = prop_table->first, i=0 ; an != NULL ; an = an->next, i++) {
+
+                if (ows_psql_is_geometry_column(o, ll->value, an->key)) {
+                    buffer_add_str(geom, PQgetvalue(res, j, i));
+                    geoms++;
+                } else {
+
+                    if (first)  first = false;
+                    else buffer_add_str(prop, ", \"");
+
+                    buffer_copy(prop, an->key); 
+                    buffer_add_str(prop, "\": \"");
+                    buffer_add_str(prop, PQgetvalue(res, j, i));
+                    buffer_add(prop, '"');
+                }
+            }
+
+            if (geoms == 0) {
+                     fprintf(o->output,
+                            "{\"type\":\"Feature\", \"properties\":{\"%s}}\n",
+                            prop->buf);
+            } else if (geoms == 1) {
+                fprintf(o->output,
+                        "{\"type\":\"Feature\", \"properties\":{\"%s}, \"geometry\":%s}\n",
+                        prop->buf, geom->buf);
+            } else if (geoms > 1) {
+                fprintf(o->output,
+                        "{\"type\":\"Feature\", \"properties\":{\"%s}, \"geometry\":%s%s]}}\n",
+                        prop->buf, "{ \"type\": \"GeometryCollection\", \"geometries\": [", geom->buf);
+            } 
+
+            buffer_empty(prop);
+            buffer_empty(geom);
+        }
+
+        PQclear(res);
+        ll = ll->next;
+    }
+}
+
+
+
+/*
  * Execute the GetFeature request
  */
 void wfs_get_feature(ows * o, wfs_request * wr)
@@ -732,11 +848,17 @@ void wfs_get_feature(ows * o, wfs_request * wr)
     /* retrieve a list of SQL requests from the GetFeature parameters */
     request_list = wfs_retrieve_sql_request_list(o, wr);
 
-    /* display result of the GetFeature request in GML */
-    if (buffer_cmp(wr->resulttype, "hits"))
-        wfs_gml_display_hits(o, wr, request_list);
-    else
-        wfs_gml_display_results(o, wr, request_list);
+       
+    if (wr->format == WFS_GML2 || wr->format == WFS_GML3) {
+        /* display result of the GetFeature request in GML */
+        if (buffer_cmp(wr->resulttype, "hits"))
+            wfs_gml_display_hits(o, wr, request_list);
+        else
+            wfs_gml_display_results(o, wr, request_list);
+
+    } else if (wr->format == WFS_GEOJSON) {
+                wfs_geojson_display_results(o, wr, request_list);
+    }
 
     /* add here other functions to display GetFeature response in
            other formats */

@@ -167,7 +167,7 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
         buffer_copy(sql, ln->value);
         buffer_add_str(sql, "\" AS \"the_geom\" FROM ");
         buffer_copy(sql, ows_psql_schema_name(o, layer_name));
-        buffer_add_str(sql, ".\")");
+        buffer_add_str(sql, ".\"");
         buffer_copy(sql, layer_name);
         buffer_add_str(sql, "\")");
 

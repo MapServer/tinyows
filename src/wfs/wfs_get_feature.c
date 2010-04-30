@@ -43,8 +43,8 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
 
     fprintf(o->output, "<gml:boundedBy>\n");
 
-    if (abs(xmin) + DBL_MIN <= 1 + DBL_EPSILON &&
-	abs(ymin) + DBL_MIN <= 1 + DBL_EPSILON) {
+    if (fabs(xmin) + DBL_MIN <= 1 + DBL_EPSILON &&
+	fabs(ymin) + DBL_MIN <= 1 + DBL_EPSILON) {
         if (ows_version_get(o->request->version) == 100)
             fprintf(o->output, "<gml:null>missing</gml:null>\n");
         else

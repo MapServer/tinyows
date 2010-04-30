@@ -276,6 +276,8 @@ char *ows_psql_to_xsd(buffer * type)
 
     if (buffer_cmp(type, "geometry"))
         return "gml:GeometryPropertyType";
+    if (buffer_cmp(type, "geography"))
+        return "gml:GeometryPropertyType";
     else if (buffer_cmp(type, "int2"))
         return "short";
     else if (buffer_cmp(type, "int4"))

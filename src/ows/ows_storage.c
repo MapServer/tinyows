@@ -333,7 +333,7 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
 }
 
 
-static void ows_layer_storage_fill(ows * o, ows_layer * l)
+static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
 {
     buffer * sql;
     PGresult *res;
@@ -344,12 +344,16 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l)
     assert(l->storage != NULL);
 
     sql = buffer_init();
-    buffer_add_str(sql, "SELECT srid, f_geometry_column FROM geometry_columns");
+    if (is_geom)
+    	buffer_add_str(sql, "SELECT srid, f_geometry_column FROM geometry_columns");
+    else 
+    	buffer_add_str(sql, "SELECT '4326', f_geography_column FROM geography_columns");
+
     buffer_add_str(sql, " WHERE f_table_schema='");
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND f_table_name='");
     buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "';");
+    buffer_add_str(sql, "'");
 
     res = PQexec(o->pg, sql->buf);
     buffer_empty(sql);
@@ -357,7 +361,7 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l)
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
         PQclear(res);
         ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                  "Some layer(s) described in config file are not available from geometry_columns table",
+                  "Some layer(s) described in config file are not available in geometry_columns or geography_columns",
                   "storage");
     }
 
@@ -411,8 +415,8 @@ void ows_layers_storage_flush(ows * o, FILE * output)
 void ows_layers_storage_fill(ows * o)
 {
     ows_layer_node *ln;
-    buffer * sql;
-    PGresult *res;
+    buffer *sql;
+    PGresult *res, *res_g;
     int i, end;
     bool filled;
 
@@ -422,6 +426,10 @@ void ows_layers_storage_fill(ows * o)
     sql = buffer_init();
     buffer_add_str(sql, "SELECT DISTINCT f_table_schema, f_table_name FROM geometry_columns");
     res = PQexec(o->pg, sql->buf);
+    buffer_empty(sql);
+
+    buffer_add_str(sql, "SELECT DISTINCT f_table_schema, f_table_name FROM geography_columns");
+    res_g = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
     for (ln = o->layers->first; ln != NULL; ln = ln->next) {
@@ -429,11 +437,18 @@ void ows_layers_storage_fill(ows * o)
 
         for (i = 0, end = PQntuples(res); i < end; i++) {
             if (buffer_cmp(ln->layer->name, (char *) PQgetvalue(res, i, 1))) {
-                ows_layer_storage_fill(o, ln->layer);
+                ows_layer_storage_fill(o, ln->layer, true);
                 filled = true;
             }
         }
             
+        for (i = 0, end = PQntuples(res_g); i < end; i++) {
+            if (buffer_cmp(ln->layer->name, (char *) PQgetvalue(res_g, i, 1))) {
+                ows_layer_storage_fill(o, ln->layer, false);
+                filled = true;
+            }
+        }
+
         if (!filled) {
             if (ln->layer->storage != NULL)
                 ows_layer_storage_free(ln->layer->storage);

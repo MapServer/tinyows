@@ -544,7 +544,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                 else 
                     buffer_add_int(select, o->degree_precision);
 
-                buffer_add_str(select, ", 4) AS \"");
+                buffer_add_str(select, ", 1) AS \"");
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\" ");
             }
@@ -756,7 +756,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     list_node *ln, *ll;
     array *prop_table;
     array_node *an;
-    buffer *prop, *geom;
+    buffer *prop, *value, *value_enc, *geom;
     bool first;
     int i,j;
     int geoms;
@@ -770,6 +770,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     ll = request_list->first->next->value->first;
     geom = buffer_init();
     prop = buffer_init();
+    value = buffer_init();
 
 
     for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
@@ -802,7 +803,11 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
                     buffer_copy(prop, an->key); 
                     buffer_add_str(prop, "\": \"");
-                    buffer_add_str(prop, PQgetvalue(res, j, i));
+                    buffer_add_str(value, PQgetvalue(res, j, i));
+                    value_enc = buffer_encode_json(value);
+                    buffer_copy(prop, value_enc);
+                    buffer_free(value_enc);
+                    buffer_empty(value);
                     buffer_add(prop, '"');
                 }
             }

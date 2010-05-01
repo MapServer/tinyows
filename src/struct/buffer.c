@@ -414,6 +414,7 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
 
         /* add the string after */
         buffer_add_str(new_buf, after);
+buffer_flush(new_buf, stderr);        
 
         /* add the remaining string */
         rest = buffer_init();
@@ -455,8 +456,8 @@ buffer *buffer_encode_xml_entities(const buffer * buf)
 
     for(i=0 ; i < buf->use ; i++) {
     	switch(buf->buf[i]) {
-	    case '&':
- 	        buffer_add_str(new_buf, "&amp;");
+	        case '&':
+ 	            buffer_add_str(new_buf, "&amp;");
        	        break;
 
             case '<':
@@ -476,8 +477,38 @@ buffer *buffer_encode_xml_entities(const buffer * buf)
                 break;
 
             default:
-		buffer_add(new_buf, buf->buf[i]);
-	}
+		        buffer_add(new_buf, buf->buf[i]);
+	    }
+    }
+
+    return new_buf;
+}
+
+
+/*
+ * Modify string to replace encoded characters by their true value
+ * for JSON output
+ *
+ * The replacements performed are:
+ *  " -> \"
+ */
+buffer *buffer_encode_json(const buffer * buf)
+{
+    buffer *new_buf;
+    int i;
+
+    assert(buf != NULL);
+    new_buf = buffer_init();
+
+    for(i=0 ; i < buf->use ; i++) {
+    	switch(buf->buf[i]) {
+    	    case '"':
+ 	            buffer_add_str(new_buf, "\\\"");
+       	        break;
+
+            default:
+		        buffer_add(new_buf, buf->buf[i]);
+	    }
     }
 
     return new_buf;

@@ -30,6 +30,7 @@ void buffer_pop (buffer * buf, size_t len);
 buffer *buffer_replace (buffer * buf, char *before, char *after);
 void buffer_shift (buffer * buf, size_t len);
 buffer *buffer_encode_xml_entities(const buffer * buf);
+buffer *buffer_encode_json(const buffer * buf);
 buffer *cgi_add_xml_into_buffer (buffer * element, xmlNodePtr n);
 char *cgi_getback_query (ows * o);
 bool cgi_method_get ();

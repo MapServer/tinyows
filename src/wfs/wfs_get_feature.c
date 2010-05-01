@@ -833,6 +833,10 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
         PQclear(res);
         ll = ll->next;
     }
+
+    buffer_free(geom);
+    buffer_free(prop);
+    buffer_free(value);
 }
 
 

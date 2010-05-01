@@ -1,0 +1,81 @@
+# compiler flags 
+CC=@CC@
+CFLAGS=@CFLAGS@ -ansi -pedantic -Wall
+
+# postgresql ... required
+POSTGIS_INC=@POSTGIS_INC@
+POSTGIS_LIB=@POSTGIS_LIB@
+PGFLAGS=$(POSTGIS_INC) $(POSTGIS_LIB)
+# libxml2 ... required
+XML2_INC=@XML2_INC@
+XML2_LIB=@XML2_LIB@
+XMLFLAGS=$(XML2_INC) $(XML2_LIB)
+# install path
+PREFIX=@prefix@
+
+SRC = $(wildcard src/*/*.c)
+
+all:
+	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(SRC) -o tinyows
+	@rm -rf tinyows.dSYM
+
+svn-clean: clean doc-clean astyle
+	@find . -name '*~' -exec rm {} \;
+	@rm -f configure
+
+clean: 
+	@rm -f tinyows Makefile src/ows_define.h
+	@rm -rf tinyows.dSYM
+	@rm -f demo/config.xml demo/install.sh
+	@rm -f test/config.xml test/install.sh
+
+install:
+	@echo "-----"
+	@echo "TinyOWS Schema install dir in $(PREFIX)/tinyows/schema"
+	mkdir -p $(PREFIX)/tinyows
+	cp -rf schema $(PREFIX)/tinyows/
+	@echo "-----"
+	@echo "Now:"
+	@echo " 1) copy 'tinyows' binary to cgi-bin directory"
+	@echo " 2) - put a workable config.xml file in $(PREFIX) dir"
+	@echo "    - OR launch 'make install-demo' as a superuser"
+
+install-demo:
+	@chmod +x demo/install.sh
+	@demo/install.sh
+	cp -i demo/config.xml $(PREFIX)/tinyows
+
+install-test:
+	@chmod +x test/install.sh
+	@test/install.sh
+	cp -i test/config.xml $(PREFIX)/tinyows
+
+doc-clean:
+	@rm -rf doc/doxygen
+
+doxygen: doc-clean
+	@(which doxygen 2> /dev/null > /dev/null	\
+	&& mkdir -p doc/doxygen				\
+	&& doxygen doc/Doxyfile				\
+	) || echo "doxygen seems not installed"
+
+test-valgrind:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 1
+
+test-output:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 3
+
+test-exception:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 4
+
+test-stderr:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 5
+
+test-time:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 7
+
+
+
+astyle:
+	@(astyle -A4 -S -M -m -f -p -U -o -c $(SRC)) \
+	|| echo "astyle seems not installed"

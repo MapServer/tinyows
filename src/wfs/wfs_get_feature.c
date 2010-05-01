@@ -773,6 +773,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     value = buffer_init();
 
     fprintf(o->output, "Content-Type: application/json\n\n");
+    fprintf(o->output, "{\"type\": \"FeatureCollection\", \"features\": [");
 
     for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
         /* execute the sql request */
@@ -787,15 +788,15 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
         prop_table = ows_psql_describe_table(o, ll->value);
 
-        for (j=0 ; j < PQntuples(res) ; j++) {
+        for (i=0 ; i < PQntuples(res) ; i++) {
 
             first = true;
             geoms = 0;
 
-            for (an = prop_table->first, i=0 ; an != NULL ; an = an->next, i++) {
+            for (an = prop_table->first, j=0 ; an != NULL ; an = an->next, j++) {
 
                 if (ows_psql_is_geometry_column(o, ll->value, an->key)) {
-                    buffer_add_str(geom, PQgetvalue(res, j, i));
+                    buffer_add_str(geom, PQgetvalue(res, i, j));
                     geoms++;
                 } else {
 
@@ -804,7 +805,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
                     buffer_copy(prop, an->key); 
                     buffer_add_str(prop, "\": \"");
-                    buffer_add_str(value, PQgetvalue(res, j, i));
+                    buffer_add_str(value, PQgetvalue(res, i, j));
                     value_enc = buffer_encode_json(value);
                     buffer_copy(prop, value_enc);
                     buffer_free(value_enc);
@@ -826,6 +827,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
                         "{\"type\":\"Feature\", \"properties\":{\"%s}, \"geometry\":%s%s]}}\n",
                         prop->buf, "{ \"type\": \"GeometryCollection\", \"geometries\": [", geom->buf);
             } 
+	    if (j) fprintf(o->output, ",");
 
             buffer_empty(prop);
             buffer_empty(geom);
@@ -834,6 +836,8 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
         PQclear(res);
         ll = ll->next;
     }
+
+    fprintf(o->output, "]}");
 
     buffer_free(geom);
     buffer_free(prop);

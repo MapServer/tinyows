@@ -772,6 +772,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     prop = buffer_init();
     value = buffer_init();
 
+    fprintf(o->output, "Content-Type: application/json\n\n");
 
     for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
         /* execute the sql request */

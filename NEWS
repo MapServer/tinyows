@@ -1,0 +1,8 @@
+0.8.0
+ - PostgreSQL schema support 
+ - Command line --check option, to check configure stuff
+ - JSON output format for GetFeature (use OUTPUTFORMAT=application/json)
+ - Input request log mechanism
+ - Ability to deactivate XSD schema and/or OGC SFS validation 
+ - Up to date documentation and OpenLayers integration step by step HowTo
+ - And a lot of debug stuff

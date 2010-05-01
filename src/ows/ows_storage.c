@@ -456,6 +456,7 @@ void ows_layers_storage_fill(ows * o)
         }
     }
     PQclear(res);
+    PQclear(res_g);
 
 }
 

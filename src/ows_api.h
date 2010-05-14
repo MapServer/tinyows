@@ -150,7 +150,7 @@ void ows_request_check (ows * o, ows_request * or, const array * cgi, const char
 void ows_request_flush (ows_request * or, FILE * output);
 void ows_request_free (ows_request * or);
 ows_request *ows_request_init ();
-int ows_schema_validation (buffer * xml_schema, buffer * xml, bool schema_is_file);
+int ows_schema_validation (const ows * o, buffer * xml_schema, buffer * xml, bool schema_is_file);
 void ows_service_identification (const ows * o);
 void ows_service_metadata (const ows * o);
 void ows_service_provider (const ows * o);

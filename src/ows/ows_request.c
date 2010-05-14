@@ -114,13 +114,17 @@ void ows_request_flush(ows_request * or, FILE * output)
  * If OWS_DEBUG mode output to stderr, else do nothing
  */
 static void libxml2_callback  (void * ctx, const char * msg, ...) {
-#ifdef OWS_DEBUG
     va_list varg;
     char * str;
+    ows *o;
 
+    o = (ows *) ctx;
     va_start(varg, msg);
-    str = (char *) va_arg(varg, int);
-    fprintf(stderr, "%s\n", str);
+    str = (char *)va_arg( varg, char *);
+
+    if (o->log != NULL) fprintf(o->log, "[ERROR] %s", str);
+#ifdef OWS_DEBUG
+    fprintf(stderr, "%s", str);
 #endif
 }
 
@@ -129,7 +133,7 @@ static void libxml2_callback  (void * ctx, const char * msg, ...) {
  * Valid an xml string against an XML schema
  * Inpired from: http://xml.developpez.com/sources/?page=validation#validate_XSD_CppCLI_2
  */
-int ows_schema_validation(buffer * xml_schema, buffer * xml, bool schema_is_file)
+int ows_schema_validation(const ows *o, buffer * xml_schema, buffer * xml, bool schema_is_file)
 {
     xmlSchemaPtr schema;
     xmlSchemaParserCtxtPtr ctxt;
@@ -150,7 +154,7 @@ int ows_schema_validation(buffer * xml_schema, buffer * xml, bool schema_is_file
 
     xmlSchemaSetParserErrors(ctxt,
                              (xmlSchemaValidityErrorFunc) libxml2_callback,
-                             (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
+                             (xmlSchemaValidityWarningFunc) libxml2_callback, (void *) o);
 
 
     schema = xmlSchemaParse(ctxt);
@@ -171,7 +175,7 @@ int ows_schema_validation(buffer * xml_schema, buffer * xml, bool schema_is_file
         validctxt = xmlSchemaNewValidCtxt(schema);
         xmlSchemaSetValidErrors(validctxt,
                                 (xmlSchemaValidityErrorFunc) libxml2_callback,
-                                (xmlSchemaValidityWarningFunc) libxml2_callback, stderr);
+                                (xmlSchemaValidityWarningFunc) libxml2_callback, (void *) o);
         /* validation */
         ret = xmlSchemaValidateDoc(validctxt, doc);
         xmlSchemaFreeValidCtxt(validctxt);
@@ -398,22 +402,22 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
             if (ows_version_get(or->version) == 100) {
                 if (buffer_cmp(b, "Transaction")) {
                     schema = wfs_generate_schema(o);
-                    valid = ows_schema_validation(schema, xmlstring, false);
+                    valid = ows_schema_validation(o, schema, xmlstring, false);
                 } else {
                     schema = buffer_init();
                     buffer_copy(schema, o->schema_dir);
                     buffer_add_str(schema, WFS_SCHEMA_100_BASIC);
-                    valid = ows_schema_validation(schema, xmlstring, true);
+                    valid = ows_schema_validation(o, schema, xmlstring, true);
                 }
             } else {
                 if (buffer_cmp(b, "Transaction")) {
                    schema = wfs_generate_schema(o);
-                   valid = ows_schema_validation(schema, xmlstring, false);
+                   valid = ows_schema_validation(o, schema, xmlstring, false);
                 } else {
                    schema = buffer_init();
                    buffer_copy(schema, o->schema_dir);
                    buffer_add_str(schema, WFS_SCHEMA_110);
-                   valid = ows_schema_validation(schema, xmlstring, true);
+                   valid = ows_schema_validation(o, schema, xmlstring, true);
                 }
             }
 

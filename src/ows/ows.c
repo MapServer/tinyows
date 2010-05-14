@@ -65,6 +65,7 @@ static ows *ows_init()
     o->config_file = NULL;
     o->online_resource = NULL;
     o->schema_dir = NULL;
+    o->log_file = NULL;
     o->log = NULL;
 
     o->layers = NULL;
@@ -122,9 +123,9 @@ void ows_flush(ows * o, FILE * output)
         fprintf(output, "\n");
     }
 
-    if (o->log != NULL) {
-        fprintf(output, "log: ");
-        buffer_flush(o->log, output);
+    if (o->log_file != NULL) {
+        fprintf(output, "log file: ");
+        buffer_flush(o->log_file, output);
         fprintf(output, "\n");
     }
 
@@ -208,8 +209,8 @@ void ows_free(ows * o)
     if (o->pg != NULL)
         PQfinish(o->pg);
 
-    if (o->log != NULL)
-        buffer_free(o->log);
+    if (o->log_file != NULL)
+        buffer_free(o->log_file);
 
     if (o->pg_dsn != NULL)
         buffer_free(o->pg_dsn);
@@ -253,8 +254,8 @@ void ows_usage(ows * o)
     printf("___________\n");
     printf("Schema dir: %s\n", o->schema_dir->buf);
     printf("___________\n");
-    if (o->log != NULL) {
-        printf("Log file: %s\n", o->log->buf);
+    if (o->log_file != NULL) {
+        printf("Log file: %s\n", o->log_file->buf);
         printf("___________\n");
     }
 }
@@ -264,7 +265,6 @@ int main(int argc, char *argv[])
 {
     char *query;
     ows *o;
-    FILE *log;
 
     o = ows_init();
     o->config_file = buffer_init();
@@ -275,7 +275,6 @@ int main(int argc, char *argv[])
     else
         buffer_add_str(o->config_file, OWS_CONFIG_FILE_PATH);
 
-    /* TODO add an alternative cache system */
     o->output = stdout;
 
     /* retrieve the query in HTTP request */
@@ -361,14 +360,10 @@ int main(int argc, char *argv[])
     ows_layers_storage_fill(o);
 
     /* Log input query if asked
-     * Mainly usefull for debug purpose indeed...
      */
-    if (o->log != NULL) {
-        log = fopen(o->log->buf, "a");
-        if (log != NULL) {
-            fprintf(log, "%s\n", query);
-            fclose(log);
-        }
+    if (o->log_file != NULL) {
+        o->log = fopen(o->log_file->buf, "a");
+        if (o->log != NULL) fprintf(o->log, "%s\n", query);
     }
 
     /* Process service request */
@@ -391,6 +386,7 @@ int main(int argc, char *argv[])
                       "Service Unknown", "service");
     }
 
+    if (o->log) fclose (o->log);
     ows_free(o);
 
     return EXIT_SUCCESS;

@@ -68,8 +68,7 @@ static char *ows_error_code_string(enum ows_error_code code)
 /*
  * Return an ExceptionReport as specified in OWS 1.1.0 specification
  */
-void ows_error(ows * o, enum ows_error_code code, char *message,
-               char *locator)
+void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
 {
     assert(o != NULL);
     assert(message != NULL);
@@ -80,18 +79,19 @@ void ows_error(ows * o, enum ows_error_code code, char *message,
     fprintf(o->output, "<ows:ExceptionReport\n");
     fprintf(o->output, " xmlns='http://www.opengis.net/ows'\n");
     fprintf(o->output, " xmlns:ows='http://www.opengis.net/ows'\n");
-    fprintf(o->output,
-            " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
+    fprintf(o->output, " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'\n");
     fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/ows");
-    fprintf(o->output,
-            " http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd'\n");
+    fprintf(o->output, " http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd'\n");
     fprintf(o->output, " version='1.1.0' language='en'>\n");
-    fprintf(o->output,
-            " <ows:Exception exceptionCode='%s' locator='%s'>\n",
+    fprintf(o->output, " <ows:Exception exceptionCode='%s' locator='%s'>\n",
             ows_error_code_string(code), locator);
     fprintf(o->output, "  <ows:ExceptionText>%s</ows:ExceptionText>\n", message);
     fprintf(o->output, " </ows:Exception>\n");
     fprintf(o->output, "</ows:ExceptionReport>\n");
+
+    if (o->log != NULL)
+	fprintf(o->log, "[ERROR] {%s:%s} %s\n",
+	ows_error_code_string(code), locator, message);
 
     ows_free(o);
 

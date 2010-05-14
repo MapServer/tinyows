@@ -404,7 +404,8 @@ typedef struct Ows {
     buffer * schema_dir;
     buffer * online_resource;
     buffer * pg_dsn;
-    buffer * log;
+    buffer * log_file;
+    FILE* log;
     FILE* output;
 
     ows_meta * metadata;

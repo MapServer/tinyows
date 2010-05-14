@@ -56,8 +56,8 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "log");
     if (a != NULL) {
-        o->log = buffer_init();
-        buffer_add_str(o->log, (char *) a);
+        o->log_file = buffer_init();
+        buffer_add_str(o->log_file, (char *) a);
         xmlFree(a);
     }
 

@@ -414,7 +414,6 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
 
         /* add the string after */
         buffer_add_str(new_buf, after);
-buffer_flush(new_buf, stderr);        
 
         /* add the remaining string */
         rest = buffer_init();

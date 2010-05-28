@@ -1,4 +1,5 @@
 0.9.0
+ - Fast-CGI support
  - Error log handle
 
 0.8.0

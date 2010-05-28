@@ -79,6 +79,9 @@ static void wfs_error_100(ows * o, wfs_request * wf,
     fprintf(o->output, "</ServiceException>\n");
     fprintf(o->output, "</ServiceExceptionReport>\n");
 
+#if TINYOWS_FCGI
+    OS_LibShutdown();
+#endif
     ows_free(o);
 
     exit(EXIT_SUCCESS);
@@ -109,6 +112,9 @@ static void wfs_error_110(ows * o, wfs_request * wf,
     fprintf(o->output, " </Exception>\n");
     fprintf(o->output, "</ExceptionReport>\n");
 
+#if TINYOWS_FCGI
+    OS_LibShutdown();
+#endif
     ows_free(o);
 
     exit(EXIT_SUCCESS);

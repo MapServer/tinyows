@@ -23,10 +23,18 @@
 
 #ifndef OWS_H 
 #define OWS_H
+
+#include "../ows_define.h"
+
 #include <stdio.h> 		/* FILE prototype */
 #include <libpq-fe.h>
 #include <libxml/xmlreader.h>
-#include "../ows_define.h"
+
+#if TINYOWS_FCGI
+#include "fcgi_config.h"
+#include "fcgi_stdio.h"
+#include "fcgios.h"
+#endif
 
 
 /* ========= Structures ========= */
@@ -405,6 +413,7 @@ typedef struct Ows {
     buffer * online_resource;
     buffer * pg_dsn;
     buffer * log_file;
+
     FILE* log;
     FILE* output;
 

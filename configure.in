@@ -1,4 +1,5 @@
 AC_INIT()
+AC_CHECK_FUNCS()
 
 dnl ---------------------------------------------------------------------
 dnl Look for libxml2
@@ -44,15 +45,15 @@ dnl ---------------------------------------------------------------------------
 dnl PostgreSQL / PostGIS support
 dnl ---------------------------------------------------------------------------
 
-AC_ARG_WITH(pg_config,[  --with-pg_config[[=ARG]]    Include PostGIS Support (ARG=yes/path to pg_config)],,)
+AC_ARG_WITH(pg_config,[  --with-pg_config[[=ARG]]  Include PostGIS Support (ARG=yes/path to pg_config)],,)
 
-if test "$with_postgis" = "no" ; then
+if test "$with_pg_config" = "no" ; then
   AC_MSG_ERROR([PostGIS support is a need to TinyOWS !])
-elif test "$with_postgis" = "yes" -o "$with_postgis" = "" ; then
+elif test "$with_pg_config" = "yes" -o "$with_pg_config" = "" ; then
   AC_PATH_PROG(PG_CONFIG, pg_config, no)
 else
   AC_MSG_RESULT(yes)
-  PG_CONFIG=$with_postgis
+  PG_CONFIG=$with_pg_config
 fi
 
 if ! test -f "$PG_CONFIG" -a -x "$PG_CONFIG" ; then
@@ -78,7 +79,44 @@ AC_SUBST(POSTGIS_LIB)
 AC_SUBST(POSTGIS_SHARE)
 AC_SUBST(POSTGIS_BIN)
 
-AC_CHECK_FUNCS()
+
+dnl ---------------------------------------------------------------------------
+dnl FastCGI
+dnl ---------------------------------------------------------------------------
+
+USE_FCGI=0
+AC_ARG_WITH(fastcgi,
+	    [  --with-fastcgi[[=ARG]]    Include FastCGI support: recommanded (ARG=no/path to fastcgi dir)],
+	    [FCGI_PATH="$withval"], [FCGI_PATH=""]) 
+
+
+if test "x$FCGI_PATH" != "x"; then
+        AC_MSG_RESULT([checking user-specified fast-cgi location: $FCGI_PATH])
+        FCGI_INC="-I$LIBICONV_PATH/include"
+        FCGI_LIB="-L$LIBICONV_PATH/lib"
+fi
+
+
+if test "x$FCGI_PATH" != "xno"; then
+	AC_CHECK_LIB(fcgi, FCGI_Accept, [
+ 		AC_CHECK_HEADERS([fcgi_config.h fcgi_stdio.h],[
+   		USE_FCGI=1
+ 		])
+	])
+fi
+
+if test "$USE_FCGI" = "0" ; then
+  AC_MSG_WARN([No FastCGI support. Performances will be strongly reduced !])
+else
+  FCGI_LIB="$FCGI_LIB -lfcgi"
+fi
+
+AC_SUBST(FCGI_INC)
+AC_SUBST(FCGI_LIB)
+AC_SUBST(USE_FCGI)
+
+
+
 AC_OUTPUT(Makefile src/ows_define.h demo/config.xml demo/install.sh test/config.xml test/install.sh)
 
 rm -rf autom4te.cache

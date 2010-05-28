@@ -25,9 +25,10 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
-#include "ows.h"
 #include "../ows_define.h"
+#include "ows.h"
 
 
 /*
@@ -246,18 +247,17 @@ void ows_free(ows * o)
 
 void ows_usage(ows * o)
 {
-    printf("TinyOWS should be called by CGI throw a Web Server !\n\n");
-    printf("___________\n");
-    printf("Config File Path: %s\n", o->config_file->buf);
-    printf("___________\n");
-    printf("PostGIS dsn: '%s'\n", o->pg_dsn->buf);
-    printf("___________\n");
-    printf("Schema dir: %s\n", o->schema_dir->buf);
-    printf("___________\n");
-    if (o->log_file != NULL) {
-        printf("Log file: %s\n", o->log_file->buf);
-        printf("___________\n");
-    }
+    fprintf(stderr, "TinyOWS version:   %s\n", TINYOWS_VERSION);
+
+    fprintf(stderr, "Config File Path:  %s\n", o->config_file->buf);
+    fprintf(stderr, "PostGIS dsn:       %s\n", o->pg_dsn->buf);
+    fprintf(stderr, "Schema dir:        %s\n", o->schema_dir->buf);
+
+    if (o->log_file != NULL)
+        fprintf(stderr, "Log file:          %s\n", o->log_file->buf);
+
+    fprintf(stderr, "Available layers:\n");
+    ows_layers_storage_flush(o, stderr);
 }
 
 
@@ -265,6 +265,10 @@ int main(int argc, char *argv[])
 {
     char *query;
     ows *o;
+#if 0
+    time_t now;
+    char *t;
+#endif
 
     o = ows_init();
     o->config_file = buffer_init();
@@ -277,52 +281,85 @@ int main(int argc, char *argv[])
 
     o->output = stdout;
 
+
     /* retrieve the query in HTTP request */
     query = cgi_getback_query(o);
 
+    /* Parse the configuration file and initialize ows struct */
+    ows_parse_config(o, o->config_file->buf);
+
+    /* Connect the ows to the database */
+    ows_pg(o, o->pg_dsn->buf);
+
+    /* Fill layers storage metadata */
+    ows_layers_storage_fill(o);
+
+    /* Open Log file */
+    if (o->log_file != NULL)
+        o->log = fopen(o->log_file->buf, "a");
+
+
+#if TINYOWS_FCGI
+   while (FCGI_Accept() >= 0)
+   {
+
+#endif
+
+    query = cgi_getback_query(o);
+
+    /* Usage or Version command line options */
     if (query == NULL || strlen(query) == 0) {
-        if (argc > 1 && (strncmp(argv[1], "--help", 6) == 0
-                         || strncmp(argv[1], "-h", 2) == 0)) {
-            ows_parse_config(o, o->config_file->buf);
-            ows_usage(o);
-        } else if (argc > 1 && (strncmp(argv[1], "--version", 9) == 0
-                         || strncmp(argv[1], "-v", 2) == 0)) {
-            printf("%s\n", TINYOWS_VERSION);
-        } else if (argc > 1 && (strncmp(argv[1], "--check", 7) == 0)) {
-            ows_parse_config(o, o->config_file->buf);
-            fprintf(stderr, "Config File:\t OK\n");
-            ows_pg(o, o->pg_dsn->buf);
-            fprintf(stderr, "PG Connection:\t OK\n");
-            ows_layers_storage_fill(o);
-            fprintf(stderr, "Available layers:\n");
-            ows_layers_storage_flush(o, stderr);
-        } else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+        if (argc > 1) {
+
+		if (	!strncmp(argv[1], "--help", 6)
+                     || !strncmp(argv[1], "-h", 2)     
+                     || !strncmp(argv[1], "--check", 7))
+			ows_usage(o);
+
+        	else if (    !strncmp(argv[1], "--version", 9) 
+			  || !strncmp(argv[1], "-v", 2))
+			printf("%s\n", TINYOWS_VERSION);
+
+        	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                              "Service Unknown", "service");
 
-        return EXIT_SUCCESS;
+        	return EXIT_SUCCESS;
+	}
+
+    } 
+
+
+    /* Log input query if asked */
+   if (o->log != NULL) {
+#if 0
+	time(&now);
+	t = ctime(&now);
+#endif
+	fprintf(o->log, "[QUERY]\n%s\n---\n", query);
     }
+
+
+    o->request = ows_request_init();
 
     /*
      * Request encoding and HTTP method WFS 1.1.0 -> 6.5
      */
-
-    o->request = ows_request_init();
 
     /* GET could only handle KVP */
     if (cgi_method_get()) o->request->method = OWS_METHOD_KVP;
     /* POST could handle KVP or XML encoding */
     else if (cgi_method_post()) {
         /* WFS 1.1.0 mandatory */
-        if (strcmp(getenv("CONTENT_TYPE"),
-                   "application/x-www-form-urlencoded") == 0)
+        if (     !strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded"))
             o->request->method = OWS_METHOD_KVP;
-        else if (strcmp(getenv("CONTENT_TYPE"), "text/xml") == 0)
-            o->request->method = OWS_METHOD_XML;
-        /* WFS 1.0.0 && CITE Test compliant */
-        else if (strcmp(getenv("CONTENT_TYPE"), "application/xml") == 0 ||
-                 strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") == 0 ||
-                 strcmp(getenv("CONTENT_TYPE"), "text/plain") == 0)
 
+        else if (!strcmp(getenv("CONTENT_TYPE"), "text/xml"))
+            o->request->method = OWS_METHOD_XML;
+
+        /* WFS 1.0.0 && CITE Test compliant */
+        else if (!strcmp(getenv("CONTENT_TYPE"), "application/xml") ||
+                 !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") ||
+                 !strcmp(getenv("CONTENT_TYPE"), "text/plain"))
             o->request->method = OWS_METHOD_XML;
 
         /* Command line Unit Test cases with XML values (not HTTP) */
@@ -330,8 +367,7 @@ int main(int argc, char *argv[])
         o->request->method = OWS_METHOD_XML;
     else if (!cgi_method_post() && !cgi_method_get())
         o->request->method = OWS_METHOD_KVP;
-    else ows_error(o, OWS_ERROR_REQUEST_HTTP,
-                       "Wrong HTTP request Method", "http");
+    else ows_error(o, OWS_ERROR_REQUEST_HTTP, "Wrong HTTP request Method", "http");
 
     switch (o->request->method) {
         case OWS_METHOD_KVP:
@@ -342,29 +378,13 @@ int main(int argc, char *argv[])
             break;
 
         default: ows_error(o, OWS_ERROR_REQUEST_HTTP,
-                               "Wrong HTTP request Method", "http");
+			"Wrong HTTP request Method", "http");
     }
 
     o->psql_requests = list_init();
 
-    /* Parse the configuration file and initialize ows struct */
-    ows_parse_config(o, o->config_file->buf);
-
-    /* Connect the ows to the database */
-    ows_pg(o, o->pg_dsn->buf);
-
     /* Fill service's metadata */
     ows_metadata_fill(o, o->cgi);
-
-    /* Fill layers storage metadata */
-    ows_layers_storage_fill(o);
-
-    /* Log input query if asked
-     */
-    if (o->log_file != NULL) {
-        o->log = fopen(o->log_file->buf, "a");
-        if (o->log != NULL) fprintf(o->log, "%s\n", query);
-    }
 
     /* Process service request */
     ows_request_check(o, o->request, o->cgi, query);
@@ -385,6 +405,14 @@ int main(int argc, char *argv[])
             ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "Service Unknown", "service");
     }
+
+    ows_request_free(o->request);
+    o->request=NULL;
+
+#if TINYOWS_FCGI
+    } 
+    OS_LibShutdown();
+#endif
 
     if (o->log) fclose (o->log);
     ows_free(o);

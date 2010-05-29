@@ -34,6 +34,7 @@
      </layer>
 
 
+     <!--
      <layer name="OGCfeatures" title="OGCfeatures" prefix="cdf"
           server="http://www.opengis.net/cite/data" srid="32615">
           <layer name="Nulls" title="Nulls" />
@@ -55,6 +56,7 @@
           <layer name="MLines" title="MLines" />
           <layer name="MPolygons" title="MPolygons" />
       </layer>
+      -->
   </layer>
 
 </tinyows>

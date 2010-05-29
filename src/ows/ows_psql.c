@@ -117,7 +117,6 @@ buffer *ows_psql_schema_name(ows * o, buffer * layer_name)
                 && !strcmp(ln->layer->name->buf, layer_name->buf))
             return ln->layer->storage->schema;
 
-    assert(0); /* Should not happen */
     return NULL;
 }
 

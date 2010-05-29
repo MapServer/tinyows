@@ -671,7 +671,7 @@ void wfs_delete(ows * o, wfs_request * wr)
  */
 static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 {
-    buffer *typename, *xmlstring, *result, *sql;
+    buffer *typename, *xmlstring, *result, *sql, *t;
     filter_encoding *filter;
 
     assert(o != NULL);
@@ -685,7 +685,17 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
     /*retrieve the name of the table in which features must be deleted */
     typename = wfs_retrieve_typename(o, wr, n);
-    buffer_copy(sql, ows_psql_schema_name(o, typename));
+    t = ows_psql_schema_name(o, typename);
+    if (t == NULL) {
+        buffer_free(xmlstring);
+        buffer_free(typename);
+        buffer_free(sql);
+        result = buffer_init();
+        buffer_add_str(result, "Typename provided is unknown");
+        return result;
+    }
+
+    buffer_copy(sql, t);
     buffer_add_str(sql, ".\"");
     buffer_copy(sql, typename);
     buffer_add_str(sql, "\"");

@@ -241,20 +241,22 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename,
     /* jump to the next element if there are spaces */
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    buffer_add_str(fe->sql, ",'");
+    buffer_add_str(fe->sql, ",");
 
     if (strcmp((char *) n->name, "Box") == 0
             || strcmp((char *) n->name, "Envelope") == 0)
         fe->sql = fe_envelope(o, typename, fe, n);
     else  {
+   	buffer_add_str(fe->sql, "'");
         sql = ows_psql_gml_to_sql(o, n);
         if (sql != NULL) { 
             buffer_copy(fe->sql, sql);
             buffer_free(sql);
         } /* TODO else case */
+   	buffer_add_str(fe->sql, "'");
     }
 
-    buffer_add_str(fe->sql, "')");
+    buffer_add_str(fe->sql, ")");
 
     return fe->sql;
 }

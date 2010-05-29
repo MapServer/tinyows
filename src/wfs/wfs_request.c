@@ -217,11 +217,8 @@ static void wfs_request_check_version(ows * o, wfs_request * wr,
     if (!array_is_key(cgi, "version")) {
         /* Tests WFS 1.1.0 require a default value for requests
            encoded in XML if version is not set */
-        if (cgi_method_get())
-            ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-                      "VERSION parameter is missing", "DescribeFeatureType");
-        else
-            ows_version_set(o->request->version, 1, 1, 0);
+        ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
+           "VERSION parameter is missing", "DescribeFeatureType");
 
     } else if (ows_version_get(o->request->version) != 100
                && ows_version_get(o->request->version) != 110)

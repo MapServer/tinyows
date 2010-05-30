@@ -505,20 +505,19 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name,
     buffer_add_str(where, " WHERE");
 
     for (ln = geom->first; ln != NULL; ln = ln->next) {
-        buffer_add_str(where, " st_intersects(");
+
+	/* We use intersects and &&
+           rather than st_intersects
+           for performances issues */
+
+        buffer_add_str(where, " intersects(");
         buffer_copy(where, ln->value);
         buffer_add_str(where, ", ");
-        buffer_add_str(where, "SetSRID('BOX(");
-        buffer_add_double(where, wr->bbox->xmin);
-        buffer_add_str(where, " ");
-        buffer_add_double(where, wr->bbox->ymin);
-        buffer_add_str(where, ",");
-        buffer_add_double(where, wr->bbox->xmax);
-        buffer_add_str(where, " ");
-        buffer_add_double(where, wr->bbox->ymax);
-        buffer_add_str(where, ")'::box2d,");
-        buffer_add_int(where, wr->bbox->srs->srid);
-        buffer_add_str(where, "))");
+        ows_bbox_to_query(o, wr->bbox, where);
+        buffer_add_str(where, " AND ");
+        buffer_copy(where, ln->value);
+        buffer_add_str(where, " && ");
+        ows_bbox_to_query(o, wr->bbox, where);
 
         if (ln->next != NULL)
             buffer_add_str(where, " AND ");

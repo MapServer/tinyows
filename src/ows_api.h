@@ -90,6 +90,7 @@ bool ows_bbox_set (ows * o, ows_bbox * b, double xmin, double ymin, double xmax,
 bool ows_bbox_set_from_geobbox (ows * o, ows_bbox * bb, ows_geobbox * geo);
 bool ows_bbox_set_from_str (ows * o, ows_bbox * bb, const char *str, int srid);
 bool ows_bbox_transform (ows * o, ows_bbox * bb, int srid);
+void ows_bbox_to_query(ows * o, ows_bbox *bbox, buffer *query);
 void ows_contact_flush (ows_contact * contact, FILE * output);
 void ows_contact_free (ows_contact * contact);
 ows_contact *ows_contact_init ();

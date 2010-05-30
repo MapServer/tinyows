@@ -46,7 +46,7 @@ enum Bool {
 
 typedef enum Bool bool;
 
-#define BUFFER_SIZE_INIT   32
+#define BUFFER_SIZE_INIT   256
 
 typedef struct Buffer {
     size_t use; 		/** size used for data */

@@ -40,8 +40,8 @@ ows_bbox *ows_bbox_init()
     b = malloc(sizeof(ows_bbox));
     assert(b != NULL);
 
-    b->xmin = DBL_MIN + 1;
-    b->ymin = DBL_MIN + 1;
+    b->xmin = -DBL_MAX + 1;
+    b->ymin = -DBL_MAX + 1;
     b->xmax = DBL_MAX - 1;
     b->ymax = DBL_MAX - 1;
 
@@ -74,14 +74,12 @@ bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin,
     assert(o != NULL);
     assert(b != NULL);
 
-    if (xmin >= xmax || ymin >= ymax)
-        return false;
+    if (xmin >= xmax || ymin >= ymax) return false;
 
-    if (fabs(xmin - DBL_MIN) < DBL_EPSILON
-            || fabs(ymin - DBL_MIN) < DBL_EPSILON
+    if (       fabs(xmin - DBL_MAX) < DBL_EPSILON
+            || fabs(ymin - DBL_MAX) < DBL_EPSILON
             || fabs(xmax - DBL_MAX) < DBL_EPSILON
-            || fabs(ymax - DBL_MAX) < DBL_EPSILON)
-        return false;
+            || fabs(ymax - DBL_MAX) < DBL_EPSILON) return false;
 
     b->xmin = xmin;
     b->xmax = xmax;
@@ -226,17 +224,8 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
     sql = buffer_init();
     buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM ");
     buffer_add_str(sql, "(SELECT transform(");
-    buffer_add_str(sql, "setSRID('BOX(");
-    buffer_add_double(sql, bb->xmin);
-    buffer_add(sql, ' ');
-    buffer_add_double(sql, bb->ymin);
-    buffer_add(sql, ',');
-    buffer_add_double(sql, bb->xmax);
-    buffer_add(sql, ' ');
-    buffer_add_double(sql, bb->ymax);
-    buffer_add_str(sql, "'::box2d,");
-    buffer_add_int(sql, srid);
-    buffer_add_str(sql, "))) AS g ) AS foo");
+    ows_bbox_to_query(o, bb, sql);
+    buffer_add_str(sql, ")) AS g ) AS foo");
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
@@ -281,6 +270,48 @@ bool ows_bbox_set_from_geobbox(ows * o, ows_bbox * bb, ows_geobbox * geo)
     }
 
     return ows_srs_set_from_srid(o, bb->srs, 4326);
+}
+
+
+/*
+ * Convert a bbox to PostGIS query Polygon
+ */
+void ows_bbox_to_query(ows * o, ows_bbox *bbox, buffer *query)
+{
+    assert(o);
+    assert(bbox);
+    assert(query);
+
+   /* We use explicit POLYGON geometry rather than BBOX 
+      related to precision handle (Float4 vs Double)    */
+
+    buffer_add_str(query, "'SRID=");
+    buffer_add_int(query, bbox->srs->srid);
+    buffer_add_str(query, ";POLYGON((");
+    buffer_add_double(query, bbox->xmin);
+    buffer_add_str(query, " ");
+    buffer_add_double(query, bbox->ymin);
+    buffer_add_str(query, ",");
+    buffer_add_double(query, bbox->xmin);
+    buffer_add_str(query, " ");
+    buffer_add_double(query, bbox->ymax);
+    buffer_add_str(query, ",");
+    buffer_add_double(query, bbox->xmax);
+    buffer_add_str(query, " ");
+    buffer_add_double(query, bbox->ymax);
+    buffer_add_str(query, ",");
+    buffer_add_double(query, bbox->xmin);
+    buffer_add_str(query, " ");
+    buffer_add_double(query, bbox->ymax);
+    buffer_add_str(query, ",");
+    buffer_add_double(query, bbox->xmin);
+    buffer_add_str(query, " ");
+    buffer_add_double(query, bbox->ymax);
+    buffer_add_str(query, ",");
+    buffer_add_double(query, bbox->xmin);
+    buffer_add_str(query, " ");
+    buffer_add_double(query, bbox->ymin);
+    buffer_add_str(query, "))'::geometry");
 }
 
 

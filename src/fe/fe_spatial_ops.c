@@ -58,7 +58,7 @@ bool fe_is_spatial_op(char *name)
 /*
  * Transform syntax coordinates from GML 2.1.2 (x1,y1 x2,y2) into Postgis (x1 y1,x2 y2)
  */
-static  buffer *fe_transform_coord_gml_to_psql(buffer * coord)
+static  buffer *fe_transform_coord_gml2_to_psql(buffer * coord)
 {
     size_t i;
     assert(coord != NULL);
@@ -84,11 +84,13 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
     buffer *srid, *name, *tmp;
     list *coord_min, *coord_max, *coord_pair;
     int srid_int;
+    ows_bbox *bbox;
 
     assert(o != NULL);
     assert(typename != NULL);
     assert(fe != NULL);
     assert(n != NULL);
+
 
     name = buffer_init();
     buffer_add_str(name, (char *) n->name);
@@ -97,13 +99,10 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         srid_int = o->request->request.wfs->srs->srid;
     else
         srid_int = ows_srs_get_srid_from_layer(o, typename);
-
     srid = buffer_init();
     buffer_add_int(srid, srid_int);
-    srsname = xmlGetProp(n, (xmlChar *) "srsName");
 
-    /* BBOX is transformed into a polygon so that point corners are included */
-    buffer_add_str(fe->sql, "setsrid('BOX(");
+    srsname = xmlGetProp(n, (xmlChar *) "srsName");
 
     if (srsname != NULL) {
         if (!check_regexp((char *) srsname, srid->buf)) {
@@ -115,11 +114,11 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         }
     }
 
+
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     content = xmlNodeGetContent(n->children);
 
@@ -130,8 +129,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         n = n->next;
 
         /* jump to the next element if there are spaces */
-        while (n->type != XML_ELEMENT_NODE)
-            n = n->next;
+        while (n->type != XML_ELEMENT_NODE) n = n->next;
 
         xmlFree(content);
         content = xmlNodeGetContent(n->children);
@@ -143,7 +141,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         tmp = buffer_init();
         buffer_add_str(tmp, (char *) content);
 
-        tmp = fe_transform_coord_gml_to_psql(tmp);
+        tmp = fe_transform_coord_gml2_to_psql(tmp);
 
         coord_pair = list_explode(',', tmp);
         coord_min = list_explode(' ', coord_pair->first->value);
@@ -152,28 +150,32 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         list_free(coord_pair);
     }
 
-    /* display the polygon's coordinates matching the bbox */
 
-    buffer_copy(fe->sql, coord_min->first->value);
-    buffer_add_str(fe->sql, " ");
-    buffer_copy(fe->sql, coord_min->first->next->value);
-    buffer_add_str(fe->sql, ",");
-    buffer_copy(fe->sql, coord_max->first->value);
-    buffer_add_str(fe->sql, " ");
-    buffer_copy(fe->sql, coord_max->first->next->value);
+    buffer_free(name);
+    xmlFree(srsname);
+    xmlFree(content);
+    buffer_free(srid);
+
+    /* return the polygon's coordinates matching the bbox */
+    bbox = ows_bbox_init();
+    if (!ows_bbox_set(o, bbox, atof(coord_min->first->value->buf),
+                          atof(coord_min->first->next->value->buf),
+                          atof(coord_max->first->value->buf),
+                          atof(coord_max->first->next->value->buf),
+			  srid_int)) {
+        fe->error_code = FE_ERROR_BBOX;
+	list_free(coord_min);
+        list_free(coord_max);
+        ows_bbox_free(bbox);
+
+	return fe->sql;
+    }
 
     list_free(coord_min);
     list_free(coord_max);
 
-    buffer_add_str(fe->sql, ")'::box2d,");
-
-    buffer_copy(fe->sql, srid);
-    buffer_add_str(fe->sql, ")");
-
-    xmlFree(srsname);
-    xmlFree(content);
-    buffer_free(srid);
-    buffer_free(name);
+    ows_bbox_to_query(o, bbox, fe->sql);
+    ows_bbox_free(bbox);
 
     return fe->sql;
 }

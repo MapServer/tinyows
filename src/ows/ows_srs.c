@@ -43,7 +43,8 @@ ows_srs *ows_srs_init()
     c->srid = -1;
     c->auth_name = buffer_init();
     c->auth_srid = 0;
-    c->is_unit_degree = true;
+    c->is_degree = true;
+    c->is_reverse_axis = false;
 
     return c;
 }
@@ -78,10 +79,15 @@ void ows_srs_flush(ows_srs * c, FILE * output)
     fprintf(output, " auth_name: %s\n", c->auth_name->buf);
     fprintf(output, " auth_srid: %i\n", c->auth_srid);
 
-    if (c->is_unit_degree)
-        fprintf(output, " is_unit_degree: true\n]\n");
+    if (c->is_degree)
+        fprintf(output, " is_degree: true\n]\n");
     else
-        fprintf(output, " is_unit_degree: false\n]\n");
+        fprintf(output, " is_degree: false\n]\n");
+
+    if (c->is_reverse_axis)
+        fprintf(output, " is_reverse_axis: true\n]\n");
+    else
+        fprintf(output, " is_reverse_axis: false\n]\n");
 }
 #endif
 
@@ -125,9 +131,9 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
 
     /* Such a way to know if units is meter or degree */
     if (atoi(PQgetvalue(res, 0, 1)) == 0)
-        c->is_unit_degree = true;
+        c->is_degree = true;
     else
-        c->is_unit_degree = false;
+        c->is_degree = false;
 
     PQclear(res);
     return true;
@@ -149,7 +155,8 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
         s->srid = -1;
         buffer_empty(s->auth_name);
         s->auth_srid = 0;
-        s->is_unit_degree = true;
+        s->is_degree = true;
+	s->is_reverse_axis=false;
 
         return true;
     }
@@ -176,9 +183,9 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
 
     /* Such a way to know if units is meter or degree */
     if (atoi(PQgetvalue(res, 0, 2)) == 0)
-        s->is_unit_degree = true;
+        s->is_degree = true;
     else
-        s->is_unit_degree = false;
+        s->is_degree = false;
 
     PQclear(res);
     return true;
@@ -192,37 +199,57 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
 {
     int srid = -1;
     list * tokens = NULL;
+    char sep;
 
     assert(o != NULL);
     assert(s != NULL);
     assert(srsname != NULL);
 
-    /* Severals formats are available, cf WFS 1.1.0 -> 9.2 (p36)
-     * See also RFC 5165 <http://tools.ietf.org/html/rfc5165>
-     *
-     * x-ogc should become obsolete a day, and only urn:ogc should remain
+    /* Severals srsName formats are available...
+     *  cf WFS 1.1.0 -> 9.2 (p36)
+     *  cf ISO 19142 -> 7.9.2.4.4 (p34)
+     *  cf RFC 5165 <http://tools.ietf.org/html/rfc5165>
+     *  cf CITE WFS-1.1 (GetFeature-tc17.2)
      */
-    if (strncmp(srsname->buf, "http://www.opengis.net/gml/srs/epsg.xml#", 40) == 0)
-        tokens = list_explode('#', srsname);
-    else if (strncmp(srsname->buf,   "http://www.epsg.org/", 20) == 0)
-        tokens = list_explode('/', srsname);
-    else if (strncmp(srsname->buf, "EPSG:", 5) == 0
-            || strncmp(srsname->buf, "urn:EPSG:geographicCRC:", 23) == 0
-            || strncmp(srsname->buf, "urn:ogc:def:crs:EPSG:", 21) == 0
-            || strncmp(srsname->buf, "urn:x-ogc:def:crs:EPSG:", 23) == 0) 
-        tokens = list_explode(':', srsname);
 
-    /* FIXME add here on in OWS request part, more strict regex tests, to
-     * be sure that srsname value pattern is right
-     *
-     * Remember that urn:ogc and urn:x-ogc ones could have an optional 
-     * version number
+     /* SRS pattern like:    EPSG:4326
+                             urn:EPSG:geographicCRS:4326
+                             urn:ogc:def:crs:EPSG:4326
+                             urn:ogc:def:crs:EPSG::4326
+                             urn:ogc:def:crs:EPSG:6.6:4326
+                             urn:x-ogc:def:crs:EPSG:6.6:4326
+                             http://www.opengis.net/gml/srs/epsg.xml#4326
+                             http://www.epsg.org/6.11.2/4326
      */
-    
+
+     if (!strncmp((char *) srsname->buf,        "EPSG:", 5)) {
+         sep = ':';
+         s->is_reverse_axis = false;
+
+     } else if (!strncmp((char *) srsname->buf, "urn:ogc:def:crs:EPSG:", 21)
+             || !strncmp((char *) srsname->buf, "urn:x-ogc:def:crs:EPSG:", 23)
+             || !strncmp((char *) srsname->buf, "urn:EPSG:geographicCRS:", 23)) {
+         sep = ':';
+         s->is_reverse_axis = true;
+
+     } else if (!strncmp((char *) srsname->buf, "http://www.opengis.net/gml/srs/epsg.xml#", 40)) {
+         sep = '#';
+         s->is_reverse_axis = false;
+
+     } else if (!strncmp((char *) srsname->buf, "http://www.epsg.org/", 20)) {
+         sep = '/';
+         s->is_reverse_axis = false;
+
+     } else return false;
+
+     tokens = list_explode(sep, srsname);
+
     if (tokens->last->value && tokens->last->value->buf)
-        srid = atoi(tokens->last->value->buf);
+        srid = atoi(tokens->last->value->buf);  /* TODO Add regexp isdigit test */
+    else return false;
 
     list_free(tokens);
+
     return ows_srs_set_from_srid(o, s, srid);
 }
 

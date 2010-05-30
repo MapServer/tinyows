@@ -390,6 +390,7 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
     for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
         /* execute the sql request */
         res = PQexec(o->pg, ln->value->buf);
+buffer_flush(ln->value, stderr);
 
         if (PQresultStatus(res) != PGRES_TUPLES_OK) {
             PQclear(res);
@@ -481,7 +482,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs != NULL && !wr->srs->is_unit_degree) || 
+                if ((wr->srs != NULL && !wr->srs->is_degree) || 
                         (wr->srs == NULL && ows_srs_meter_units(o, layer_name)))
                     buffer_add_int(select, o->meter_precision); 
                 else 
@@ -509,7 +510,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs != NULL && !wr->srs->is_unit_degree) || 
+                if ((wr->srs != NULL && !wr->srs->is_degree) || 
                         (wr->srs == NULL && ows_srs_meter_units(o, layer_name))) {
                     buffer_add_int(select, o->meter_precision);
                     buffer_add_str(select, ", 3) AS \"");
@@ -538,7 +539,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs != NULL && !wr->srs->is_unit_degree) || 
+                if ((wr->srs != NULL && !wr->srs->is_degree) || 
                         (wr->srs == NULL && ows_srs_meter_units(o, layer_name)))
                     buffer_add_int(select, o->meter_precision); 
                 else 

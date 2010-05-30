@@ -81,10 +81,12 @@ static  buffer *fe_transform_coord_gml2_to_psql(buffer * coord)
 buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
     xmlChar *content, *srsname;
-    buffer *srid, *name, *tmp;
+    buffer *srid, *name, *tmp, *srsname_b;
     list *coord_min, *coord_max, *coord_pair;
     int srid_int;
+    bool ret;
     ows_bbox *bbox;
+    ows_srs *s=NULL;
 
     assert(o != NULL);
     assert(typename != NULL);
@@ -104,14 +106,24 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
 
     srsname = xmlGetProp(n, (xmlChar *) "srsName");
 
+
     if (srsname != NULL) {
-        if (!check_regexp((char *) srsname, srid->buf)) {
+        srsname_b = buffer_init();
+        buffer_add_str(srsname_b, (char *) srsname);
+	s = ows_srs_init();
+
+	if (!ows_srs_set_from_srsname(o, s, srsname_b)) {
             fe->error_code = FE_ERROR_SRS;
             xmlFree(srsname);
+            buffer_free(srsname_b);
             buffer_free(name);
             buffer_free(srid);
+            ows_srs_free(s);
             return fe->sql;
         }
+
+        xmlFree(srsname);
+        buffer_free(srsname_b);
     }
 
 
@@ -135,6 +147,8 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         content = xmlNodeGetContent(n->children);
 
         coord_max = list_explode_str(' ', (char *) content);
+
+	
     }
     /* GML2 */
     else {
@@ -152,21 +166,33 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
 
 
     buffer_free(name);
-    xmlFree(srsname);
     xmlFree(content);
     buffer_free(srid);
 
     /* return the polygon's coordinates matching the bbox */
     bbox = ows_bbox_init();
-    if (!ows_bbox_set(o, bbox, atof(coord_min->first->value->buf),
+    if (s && s->is_reverse_axis) {
+    	ret = ows_bbox_set(o, bbox,
+                          atof(coord_min->first->next->value->buf),
+			  atof(coord_min->first->value->buf),
+                          atof(coord_max->first->next->value->buf),
+                          atof(coord_max->first->value->buf),
+			  srid_int);
+    } else {
+    	ret = ows_bbox_set(o, bbox,
+			  atof(coord_min->first->value->buf),
                           atof(coord_min->first->next->value->buf),
                           atof(coord_max->first->value->buf),
                           atof(coord_max->first->next->value->buf),
-			  srid_int)) {
+			  srid_int);
+    }
+
+    if (!ret) {
         fe->error_code = FE_ERROR_BBOX;
 	list_free(coord_min);
         list_free(coord_max);
         ows_bbox_free(bbox);
+        if (s) ows_srs_free(s);
 
 	return fe->sql;
     }
@@ -176,6 +202,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
 
     ows_bbox_to_query(o, bbox, fe->sql);
     ows_bbox_free(bbox);
+    if (s) ows_srs_free(s);
 
     return fe->sql;
 }

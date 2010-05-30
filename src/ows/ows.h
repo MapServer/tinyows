@@ -122,10 +122,11 @@ typedef struct Ows_layer_storage {
 } ows_layer_storage;
 
 typedef struct Ows_srs {
-	int srid;
-	buffer * auth_name;
-	int auth_srid;
-    bool is_unit_degree;
+    int srid;
+    buffer * auth_name;
+    int auth_srid;
+    bool is_degree;
+    bool is_reverse_axis;
 } ows_srs;
 
 

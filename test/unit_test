@@ -10,6 +10,7 @@ mode=$2
 file_tmp=._file_tmp
 list_tmp=._list_tmp
 
+#valgrind_opt="--leak-check=yes --run-libc-freeres=no --show-reachable=yes --gen-suppressions=yes"
 valgrind_opt="--leak-check=yes --run-libc-freeres=no --show-reachable=yes"
 
 # Check tinyows binary
@@ -50,11 +51,11 @@ if [ $mode -eq 1 ]; then
 	    	    | sed -e 's/^==[0-9]\+== ERROR SUMMARY: //g'          \
 	  	          -e 's/from.\+$//'                               \
 			  -e 's/ errors //'`
-    valgrind_leak=`grep LEAK $file_tmp | wc -l`
+    valgrind_leak=`(grep "definitely lost: 0 bytes in 0 blocks" $file_tmp && grep "indirectly lost: 0 bytes in 0 blocks" $file_tmp && grep "possibly lost: 0 bytes in 0 blocks" $file_tmp && grep "still reachable: 0 bytes in 0 blocks" $file_tmp) | wc -l`
 			
     echo -n "$unit_id		-> $valgrind_error errors "
 
-    if [ $valgrind_leak -eq 0 ] ; then
+    if [ $valgrind_leak -eq 4 ] ; then
       echo " |  No leak detected"
     else
       echo " |  Memory leak detected"
@@ -90,7 +91,16 @@ elif [ $mode -eq 5 ]; then
 elif [ $mode -eq 7 ]; then
     echo -n "$unit_id  -> "
     `which time` -p ./tinyows 2>&1 | grep user | sed -e 's/user //'
+
+# curl mode
+elif [ $mode -eq 8 ]; then
+    if [ ! $TINYOWS_CONFIG_FILE ]; then
+	TINYOWS_CONFIG_FILE=/usr/local/tinyows/config.xml
+    fi
+    IP=`grep online_resource $TINYOWS_CONFIG_FILE | sed -e 's/.*online_resource="//' -e 's/".*//'`
+    curl -i -H "Content-Type: text/xml" --data @$unit_id $IP
 fi
+
 
 done
 rm -f $list_tmp

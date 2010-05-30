@@ -3,7 +3,7 @@
 -- Copyright: GeoServer Project
 -- <https://svn.codehaus.org/geoserver/trunk/data/citewfs-1.1/>
 --
-SET client_encoding = 'UTF8';
+--SET client_encoding = 'UTF8';
 
 delete from geometry_columns where f_table_name = 'PrimitiveGeoFeature' ;
 delete from geometry_columns where f_table_name = 'AggregateGeoFeature' ;

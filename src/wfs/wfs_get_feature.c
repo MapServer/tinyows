@@ -577,6 +577,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     buffer *geom, *sql, *where, *layer_name;
     int srid, size, cpt, nb;
     filter_encoding *fe;
+    ows_bbox *bbox;
 
     assert(o != NULL);
     assert(wr != NULL);
@@ -686,20 +687,20 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
 
         /* geobbox's limits of ows */
         if (o->max_geobbox != NULL) {
+
+            bbox = ows_bbox_init();
+	    ows_bbox_set_from_geobbox(o, bbox, o->max_geobbox);
+
             buffer_add_str(where, "not(disjoint(");
             buffer_copy(where, geom);
-            buffer_add_str(where, ",SetSRID('BOX(");
-            buffer_add_double(where, o->max_geobbox->west);
-            buffer_add_str(where, " ");
-            buffer_add_double(where, o->max_geobbox->north);
+            buffer_add_str(where, ",ST_Transform(");
+            ows_bbox_to_query(o, bbox, where);
             buffer_add_str(where, ",");
-            buffer_add_double(where, o->max_geobbox->east);
-            buffer_add_str(where, " ");
-            buffer_add_double(where, o->max_geobbox->south);
-            buffer_add_str(where, ")'::box2d,");
             srid = ows_srs_get_srid_from_layer(o, layer_name);
             buffer_add_int(where, srid);
             buffer_add_str(where, ")))");
+
+            ows_bbox_free(bbox);
         }
 
         /* sortby parameter */

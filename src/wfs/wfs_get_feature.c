@@ -390,7 +390,6 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
     for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
         /* execute the sql request */
         res = PQexec(o->pg, ln->value->buf);
-buffer_flush(ln->value, stderr);
 
         if (PQresultStatus(res) != PGRES_TUPLES_OK) {
             PQclear(res);

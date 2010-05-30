@@ -49,10 +49,9 @@ static void buffer_realloc(buffer * buf)
     assert(buf->buf != NULL);
 
     buf->size = buf->realloc;
-    buf->realloc *= 2;
+    buf->realloc *= 4;
 
-    if (buf->realloc >= SIZE_MAX)
-        assert(true);
+    if (buf->realloc >= SIZE_MAX) assert(true);
 }
 
 
@@ -144,21 +143,12 @@ void buffer_add(buffer * buf, char c)
 buffer *buffer_ftoa(double f)
 {
     buffer *res;
-    buffer *mant;
-    int real;
 
-    /* FIXME What about scientific notation ? */
-    if (f >= 0.0)
-        real = (int) floor(f);
-    else
-        real = (int) ceil(f);
-
-    res = buffer_itoa(real);
-    mant = buffer_itoa((int)((fabs(f) - fabs(real)) * pow(10.0, 6)));
-    buffer_add(res, '.');
-    buffer_copy(res, mant);
-
-    buffer_free(mant);
+    res = buffer_init();
+    /* FIXME use snprintf instead ! */
+    while (res->size < 100) buffer_realloc(res);
+    sprintf(res->buf, "%f", f);
+    res->use = strlen(res->buf);
 
     return res;
 }
@@ -199,32 +189,15 @@ void buffer_add_int(buffer * buf, int i)
  */
 buffer *buffer_itoa(int i)
 {
-    bool minus;
-    buffer *buf;
+    buffer *res;
 
-    buf = buffer_init();
+    res = buffer_init();
+    /* FIXME use snprintf instead ! */
+    while (res->size < 100) buffer_realloc(res);
+    sprintf(res->buf, "%i", i);
+    res->use = strlen(res->buf);
 
-    if (i < 0) {
-        i = -i;
-        minus = true;
-    } else {
-        minus = false;
-    }
-
-    if (i == 0) {
-        buffer_add(buf, '0');
-    } else {
-        while (i > 0) {
-            /* 48 mean '0' char in ASCII */
-            buffer_add_head(buf, (char)(i % 10 + 48));
-            i /= 10;
-        }
-
-        if (minus)
-            buffer_add_head(buf, '-');
-    }
-
-    return buf;
+    return res;
 }
 
 

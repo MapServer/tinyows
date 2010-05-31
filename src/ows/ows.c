@@ -328,14 +328,8 @@ int main(int argc, char *argv[])
 
 
     /* Log input query if asked */
-   if (o->log != NULL) {
-#if 0
-	time(&now);
-	t = ctime(&now);
-#endif
+   if (o->log != NULL)
 	fprintf(o->log, "[QUERY]\n%s\n---\n", query);
-    }
-
 
     o->request = ows_request_init();
 

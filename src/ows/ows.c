@@ -248,7 +248,9 @@ void ows_free(ows * o)
 void ows_usage(ows * o)
 {
     fprintf(stderr, "TinyOWS version:   %s\n", TINYOWS_VERSION);
-
+#if TINYOWS_FCGI
+    fprintf(stderr, "FCGI support:      Yes\n");
+#endif
     fprintf(stderr, "Config File Path:  %s\n", o->config_file->buf);
     fprintf(stderr, "PostGIS dsn:       %s\n", o->pg_dsn->buf);
     fprintf(stderr, "Schema dir:        %s\n", o->schema_dir->buf);
@@ -265,10 +267,6 @@ int main(int argc, char *argv[])
 {
     char *query;
     ows *o;
-#if 0
-    time_t now;
-    char *t;
-#endif
 
     o = ows_init();
     o->config_file = buffer_init();

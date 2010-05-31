@@ -96,9 +96,10 @@ void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
 #if TINYOWS_FCGI
     OS_LibShutdown();
 #endif
-    ows_free(o);
 
-    exit(EXIT_SUCCESS);
+   if (o->log) fclose (o->log);
+   ows_free(o);
+   exit(EXIT_SUCCESS);
 }
 
 

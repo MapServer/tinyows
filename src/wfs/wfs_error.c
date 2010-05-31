@@ -82,6 +82,7 @@ static void wfs_error_100(ows * o, wfs_request * wf,
 #if TINYOWS_FCGI
     OS_LibShutdown();
 #endif
+    if (o->log) fclose (o->log);
     ows_free(o);
 
     exit(EXIT_SUCCESS);
@@ -115,6 +116,7 @@ static void wfs_error_110(ows * o, wfs_request * wf,
 #if TINYOWS_FCGI
     OS_LibShutdown();
 #endif
+    if (o->log) fclose (o->log);
     ows_free(o);
 
     exit(EXIT_SUCCESS);

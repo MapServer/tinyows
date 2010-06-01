@@ -685,44 +685,60 @@ static void ows_parse_config_style(ows * o, xmlTextReaderPtr r)
  */
 static void ows_config_check(ows * o)
 {
-    if (o->online_resource == NULL)
+    if (o->online_resource == NULL) {
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                   "No 'online_resource' property in tinyows element",
                   "parse_config_file");
+        return;
+    }
 
-    if (o->schema_dir == NULL)
+    if (o->schema_dir == NULL) {
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                   "No 'schema_dir' property in tinyows element",
                   "parse_config_file");
+        return;
+    }
 
-    if (o->metadata == NULL)
+    if (o->metadata == NULL) {
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                   "No 'metadata' element", "parse_config_file");
+        return;
+    }
 
-    if (o->metadata->name == NULL)
+    if (o->metadata->name == NULL) {
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                   "No 'name' property in metadata element",
                   "parse_config_file");
+        return;
+    }
 
-    if (o->metadata->title == NULL)
+    if (o->metadata->title == NULL) {
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                   "No 'title' property in metadata element",
                   "parse_config_file");
+        return;
+    }
 
-    if (o->pg_dsn == NULL)
+    if (o->pg_dsn == NULL) {
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                   "No 'pg' element",
                   "parse_config_file");
+        return;
+    }
 
-    if (o->contact == NULL)
+    if (o->contact == NULL) {
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                   "No 'contact' element",
                   "parse_config_file");
+        return;
+    }
 
-    if (o->contact->name == NULL)
+    if (o->contact->name == NULL) {
         ows_error(o, OWS_ERROR_CONFIG_FILE,
                   "No 'name' property in contact element",
                   "parse_config_file");
+        return;
+    }
 }
 
 
@@ -745,6 +761,7 @@ void ows_parse_config(ows * o, const char *filename)
         xmlCleanupParser();
         ows_error(o, OWS_ERROR_CONFIG_FILE, "Unable to open config file !",
                   "parse_config_file");
+        return;
     }
 
     if (o->layers == NULL)
@@ -785,6 +802,7 @@ void ows_parse_config(ows * o, const char *filename)
         xmlCleanupParser();
         ows_error(o, OWS_ERROR_CONFIG_FILE, "Unable to open config file !",
                   "parse_config_file");
+        return;
     }
 
     xmlFreeTextReader(r);

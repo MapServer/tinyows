@@ -169,6 +169,7 @@ static void ows_storage_fill_not_null(ows * o, ows_layer * l)
         PQclear(res);
         ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
                   "Unable to access pg_* tables.", "not_null columns");
+        return;
     }
 
     for (i = 0, end = PQntuples(res); i < end; i++) {
@@ -220,6 +221,7 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         buffer_free(sql);
         ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
                   "Unable to access pg_* tables.", "pkey column");
+	return;
     }
 
     /* Layer could have no Pkey indeed... (An SQL view for example) */
@@ -247,6 +249,7 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
             buffer_free(sql);
             ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
                   "Unable to find pkey column number.", "pkey_column number");
+	    return;
         }
 
         /* -1 because column number start at 1 */
@@ -270,6 +273,7 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
             buffer_free(sql);
             ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
                   "Unable to use pg_get_serial_sequence.", "pkey_sequence retrieve");
+            return;
         }
         
         /* Even if no sequence found, this function return an empty row
@@ -319,6 +323,7 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
         PQclear(res);
         ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
                   "Unable to access pg_* tables.", "fill_attributes");
+        return;
     }
 
     for (i = 0, end = PQntuples(res); i < end; i++) {
@@ -363,6 +368,7 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
         ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
                   "Some layer(s) described in config file are not available in geometry_columns or geography_columns",
                   "storage");
+        return;
     }
 
     l->storage->srid = atoi(PQgetvalue(res, 0, 0));

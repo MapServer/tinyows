@@ -74,6 +74,9 @@ void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
     assert(message != NULL);
     assert(locator != NULL);
 
+    assert(!o->exit);
+    o->exit = true;
+
     if (o->log != NULL)
 	fprintf(o->log, "[ERROR] {%s:%s} %s\n",
 	ows_error_code_string(code), locator, message);
@@ -92,18 +95,7 @@ void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
     fprintf(o->output, "  <ows:ExceptionText>%s</ows:ExceptionText>\n", message);
     fprintf(o->output, " </ows:Exception>\n");
     fprintf(o->output, "</ows:ExceptionReport>\n");
-
-#if 0
-#if TINYOWS_FCGI
-    OS_LibShutdown();
-#endif
-#endif
-
-   if (o->log) fclose (o->log);
-   ows_free(o);
-   exit(EXIT_SUCCESS);
 }
-
 
 /*
  * vim: expandtab sw=4 ts=4

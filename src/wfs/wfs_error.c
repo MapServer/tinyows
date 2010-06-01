@@ -67,6 +67,13 @@ static void wfs_error_100(ows * o, wfs_request * wf,
     assert(message != NULL);
     assert(locator != NULL);
 
+    assert(!o->exit);
+    o->exit = true;
+
+    if (o->log != NULL)
+        fprintf(o->log, "[ERROR] {%s:%s} %s\n",
+        wfs_error_code_string(code), locator, message);
+
     fprintf(o->output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     fprintf(o->output, "<ServiceExceptionReport\n");
     fprintf(o->output, " xmlns=\"http://www.opengis.net/ogc\"\n");
@@ -78,14 +85,6 @@ static void wfs_error_100(ows * o, wfs_request * wf,
     fprintf(o->output, " locator=\"%s\">\n%s", locator, message);
     fprintf(o->output, "</ServiceException>\n");
     fprintf(o->output, "</ServiceExceptionReport>\n");
-
-#if TINYOWS_FCGI
-    OS_LibShutdown();
-#endif
-    if (o->log) fclose (o->log);
-    ows_free(o);
-
-    exit(EXIT_SUCCESS);
 }
 
 
@@ -100,6 +99,13 @@ static void wfs_error_110(ows * o, wfs_request * wf,
     assert(message != NULL);
     assert(locator != NULL);
 
+    assert(!o->exit);
+    o->exit = true;
+
+    if (o->log != NULL)
+        fprintf(o->log, "[ERROR] {%s:%s} %s\n",
+        wfs_error_code_string(code), locator, message);
+
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
     fprintf(o->output, "<ExceptionReport\n");
     fprintf(o->output, " xmlns='http://www.opengis.net/ows'\n");
@@ -112,14 +118,6 @@ static void wfs_error_110(ows * o, wfs_request * wf,
     fprintf(o->output, "  <ExceptionText>%s</ExceptionText>\n", message);
     fprintf(o->output, " </Exception>\n");
     fprintf(o->output, "</ExceptionReport>\n");
-
-#if TINYOWS_FCGI
-    OS_LibShutdown();
-#endif
-    if (o->log) fclose (o->log);
-    ows_free(o);
-
-    exit(EXIT_SUCCESS);
 }
 
 

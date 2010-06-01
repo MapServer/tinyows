@@ -607,6 +607,7 @@ void wfs_delete(ows * o, wfs_request * wr)
                 wfs_error(o, wr, WFS_ERROR_NO_MATCHING,
                           "error : an id_column is required to use featureid",
                           "Delete");
+                return;
             }
         }
         /* BBOX */
@@ -919,6 +920,7 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
         xmlFreeDoc(xmldoc);
         xmlCleanupParser();
         wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "xml isn't valid", "transaction");
+        return;
     }
 
     n = xmldoc->children;

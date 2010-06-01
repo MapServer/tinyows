@@ -408,6 +408,7 @@ typedef struct Ows_request {
 } ows_request;
 
 typedef struct Ows {
+    bool exit;
     PGconn * pg;
     buffer * config_file;
     buffer * schema_dir;

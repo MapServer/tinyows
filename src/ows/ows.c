@@ -57,12 +57,13 @@ static ows *ows_init()
     o = malloc(sizeof(ows));
     assert(o != NULL);
 
+    o->exit = false;
     o->request = NULL;
     o->cgi = NULL;
     o->psql_requests = NULL;
     o->pg = NULL;
     o->pg_dsn = NULL;
-    o->output = NULL;
+    o->output = stdout;
     o->config_file = NULL;
     o->online_resource = NULL;
     o->schema_dir = NULL;
@@ -99,6 +100,8 @@ void ows_flush(ows * o, FILE * output)
 {
     assert(o != NULL);
     assert(output != NULL);
+
+    fprintf(output, "exit : %d\n", o->exit?1:0);
 
     if (o->config_file != NULL) {
         fprintf(output, "config_file: ");
@@ -263,76 +266,8 @@ void ows_usage(ows * o)
 }
 
 
-int main(int argc, char *argv[])
+static void ows_kvp_or_xml(ows *o, char *query)
 {
-    char *query;
-    ows *o;
-
-    o = ows_init();
-    o->config_file = buffer_init();
-
-    /* Config Files */
-    if (getenv("TINYOWS_CONFIG_FILE") != NULL)
-        buffer_add_str(o->config_file, getenv("TINYOWS_CONFIG_FILE"));
-    else
-        buffer_add_str(o->config_file, OWS_CONFIG_FILE_PATH);
-
-    o->output = stdout;
-
-
-    /* retrieve the query in HTTP request */
-    query = cgi_getback_query(o);
-
-    /* Parse the configuration file and initialize ows struct */
-    ows_parse_config(o, o->config_file->buf);
-
-    /* Connect the ows to the database */
-    ows_pg(o, o->pg_dsn->buf);
-
-    /* Fill layers storage metadata */
-    ows_layers_storage_fill(o);
-
-    /* Open Log file */
-    if (o->log_file != NULL)
-        o->log = fopen(o->log_file->buf, "a");
-
-
-#if TINYOWS_FCGI
-   while (FCGI_Accept() >= 0)
-   {
-
-#endif
-
-    query = cgi_getback_query(o);
-
-    /* Usage or Version command line options */
-    if (query == NULL || strlen(query) == 0) {
-        if (argc > 1) {
-
-		if (	!strncmp(argv[1], "--help", 6)
-                     || !strncmp(argv[1], "-h", 2)     
-                     || !strncmp(argv[1], "--check", 7))
-			ows_usage(o);
-
-        	else if (    !strncmp(argv[1], "--version", 9) 
-			  || !strncmp(argv[1], "-v", 2))
-			printf("%s\n", TINYOWS_VERSION);
-
-        	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                             "Service Unknown", "service");
-
-        	return EXIT_SUCCESS;
-	}
-
-    } 
-
-
-    /* Log input query if asked */
-   if (o->log != NULL)
-	fprintf(o->log, "[QUERY]\n%s\n---\n", query);
-
-    o->request = ows_request_init();
-
     /*
      * Request encoding and HTTP method WFS 1.1.0 -> 6.5
      */
@@ -353,7 +288,6 @@ int main(int argc, char *argv[])
                  !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") ||
                  !strcmp(getenv("CONTENT_TYPE"), "text/plain"))
             o->request->method = OWS_METHOD_XML;
-
         /* Command line Unit Test cases with XML values (not HTTP) */
     } else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
         o->request->method = OWS_METHOD_XML;
@@ -361,46 +295,118 @@ int main(int argc, char *argv[])
         o->request->method = OWS_METHOD_KVP;
     else ows_error(o, OWS_ERROR_REQUEST_HTTP, "Wrong HTTP request Method", "http");
 
-    switch (o->request->method) {
-        case OWS_METHOD_KVP:
-            o->cgi = cgi_parse_kvp(o, query);
-            break;
-        case OWS_METHOD_XML:
-            o->cgi = cgi_parse_xml(o, query);
-            break;
+}
 
-        default: ows_error(o, OWS_ERROR_REQUEST_HTTP,
+
+int main(int argc, char *argv[])
+{
+    ows *o;
+    char *query=NULL;
+
+    o = ows_init();
+    o->config_file = buffer_init();
+
+    /* Config Files */
+    if (getenv("TINYOWS_CONFIG_FILE") != NULL)
+        buffer_add_str(o->config_file, getenv("TINYOWS_CONFIG_FILE"));
+    else
+        buffer_add_str(o->config_file, OWS_CONFIG_FILE_PATH);
+
+    /* Parse the configuration file and initialize ows struct */
+    if (!o->exit) ows_parse_config(o, o->config_file->buf);
+
+    /* Connect the ows to the database */
+    if (!o->exit) ows_pg(o, o->pg_dsn->buf);
+
+    /* Fill layers storage metadata */
+    if (!o->exit) ows_layers_storage_fill(o);
+
+    /* Open Log file */
+    if (o->log_file != NULL)
+        o->log = fopen(o->log_file->buf, "a");
+
+
+#if TINYOWS_FCGI
+   while (FCGI_Accept() >= 0)
+   {
+#endif
+
+    if (!o->exit) query = cgi_getback_query(o);
+
+    /* Usage or Version command line options */
+    if (query == NULL || strlen(query) == 0) {
+        if (argc > 1) {
+
+		if (	!strncmp(argv[1], "--help", 6)
+                     || !strncmp(argv[1], "-h", 2)     
+                     || !strncmp(argv[1], "--check", 7))
+			ows_usage(o);
+
+        	else if (    !strncmp(argv[1], "--version", 9) 
+			  || !strncmp(argv[1], "-v", 2))
+			printf("%s\n", TINYOWS_VERSION);
+
+        	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+                             "Service Unknown", "service");
+
+		o->exit = true;
+	}
+    } 
+
+
+    /* Log input query if asked */
+   if (o->log != NULL)
+	fprintf(o->log, "[QUERY]\n%s\n---\n", query);
+
+    o->request = ows_request_init();
+    if (!o->exit) ows_kvp_or_xml(o, query);
+
+    if (!o->exit) {
+
+    	switch (o->request->method) {
+            case OWS_METHOD_KVP:
+                o->cgi = cgi_parse_kvp(o, query);
+                break;
+            case OWS_METHOD_XML:
+                o->cgi = cgi_parse_xml(o, query);
+                break;
+
+            default: ows_error(o, OWS_ERROR_REQUEST_HTTP,
 			"Wrong HTTP request Method", "http");
+        }
     }
 
-    o->psql_requests = list_init();
+    if (!o->exit) o->psql_requests = list_init();
 
     /* Fill service's metadata */
-    ows_metadata_fill(o, o->cgi);
+    if (!o->exit) ows_metadata_fill(o, o->cgi);
 
     /* Process service request */
-    ows_request_check(o, o->request, o->cgi, query);
+    if (!o->exit) ows_request_check(o, o->request, o->cgi, query);
 
     /* Run the right OWS service */
-    switch (o->request->service) {
-        case WFS:
-            o->request->request.wfs = wfs_request_init();
-            wfs_request_check(o, o->request->request.wfs, o->cgi);
-            wfs(o, o->request->request.wfs);
-            break;
-        default:
-            ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+    if (!o->exit) {
+        switch (o->request->service) {
+            case WFS:
+                o->request->request.wfs = wfs_request_init();
+                wfs_request_check(o, o->request->request.wfs, o->cgi);
+                if (!o->exit) wfs(o, o->request->request.wfs);
+                break;
+            default:
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "Service Unknown", "service");
+        }
     }
 
-    ows_request_free(o->request);
-    o->request=NULL;
+    if (o->request) {
+        ows_request_free(o->request);
+        o->request=NULL;
+    }
 
 #if TINYOWS_FCGI
     } 
     OS_LibShutdown();
 #endif
-
     if (o->log) fclose (o->log);
     ows_free(o);
 

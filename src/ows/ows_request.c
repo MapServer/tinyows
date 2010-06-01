@@ -217,9 +217,11 @@ static ows_version *ows_request_check_version(ows * o, ows_request * or,
         ows_version_set(o->request->version, 0, 0, 0);
     } else {
         /* check if version format is x.y.z */
-        if (b->use < 5)
+        if (b->use < 5) {
             ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "VERSION parameter is not valid (use x.y.z)", "version");
+	    return v;
+        }
 
         l = list_explode('.', b);
 
@@ -227,6 +229,7 @@ static ows_version *ows_request_check_version(ows * o, ows_request * or,
             list_free(l);
             ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "VERSION parameter is not valid (use x.y.z)", "version");
+            return v;
         }
 
         if (check_regexp(l->first->value->buf, "^[0-9]+$")
@@ -239,6 +242,7 @@ static ows_version *ows_request_check_version(ows * o, ows_request * or,
             list_free(l);
             ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "VERSION parameter is not valid (use x.y.z)", "version");
+            return v;
         }
 
         list_free(l);
@@ -276,17 +280,20 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
     if (!array_is_key(cgi, "service")) {
         /* Tests WFS 1.1.0 require a default value for requests
            encoded in XML if service is not set */
-        if (cgi_method_get())
+        if (cgi_method_get()) {
             ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
                       "SERVICE is not set", "SERVICE");
-        else {
+            return;
+        } else {
             if (buffer_case_cmp(o->metadata->type, "WMS"))
                 or->service = WMS;
             else if (buffer_case_cmp(o->metadata->type, "WFS"))
                 or->service = WFS;
-            else
+            else {
                 ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                           "service unknown", "service");
+                return;
+            }
         }
     } else {
         b = array_get(cgi, "service");
@@ -295,29 +302,30 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
             or->service = WMS;
         else if (buffer_case_cmp(b, "WFS"))
             or->service = WFS;
-        else if (buffer_case_cmp(b, "WCS"))
-            ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                      "service not implemented", "service");
         else if (buffer_case_cmp(b, "")) {
             if (buffer_case_cmp(o->metadata->type, "WMS"))
                 or->service = WMS;
             else if (buffer_case_cmp(o->metadata->type, "WFS"))
                 or->service = WFS;
-            else
+            else { 
                 ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                           "service unknown", "service");
-        } else
-            ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+                return;
+            }
+        } else {
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "service unknown", "service");
+                return;
+        }
     }
 
 
     /* check if REQUEST is set */
-    if (!array_is_key(cgi, "request"))
+    if (!array_is_key(cgi, "request")) {
         ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
                   "REQUEST is not set", "REQUEST");
-    else
-        b = array_get(cgi, "request");
+        return;
+    } else b = array_get(cgi, "request");
 
     /* check if VERSION is set and init Version */
     or->version = ows_version_init();
@@ -325,9 +333,11 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
     if (!array_is_key(cgi, "version") || buffer_cmp(array_get(cgi, "version"), "")) {
         if (!buffer_case_cmp(b, "GetCapabilities")) {
             /* WFS 1.1.0 with KVP need a version set */
-            if (o->request->method == OWS_METHOD_KVP)
+            if (o->request->method == OWS_METHOD_KVP) {
                 ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
                           "VERSION is not set", "VERSION");
+                return;
+            }
             /* WFS 1.1.0 require a default value for requests
                encoded in XML if version is not set */
             else if (o->request->method == OWS_METHOD_XML) {
@@ -341,23 +351,31 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
 
     /* check if layers have name or title and srs */
     for (ln = o->layers->first; ln != NULL; ln = ln->next) {
-        if (ln->layer->name == NULL)
+        if (ln->layer->name == NULL) {
             ows_error(o, OWS_ERROR_CONFIG_FILE,
                       "No layer name defined", "config_file");
+            return;
+        }
 
         if (ows_layer_match_table(o, ln->layer->name)) {
-            if (ln->layer->title == NULL)
+            if (ln->layer->title == NULL) {
                 ows_error(o, OWS_ERROR_CONFIG_FILE,
                           "No layer title defined", "config_file");
+                return;
+            }
 
             if (or->service == WFS) {
-                if (ln->layer->prefix == NULL)
+                if (ln->layer->prefix == NULL) {
                     ows_error(o, OWS_ERROR_CONFIG_FILE,
                               "No layer prefix defined", "config_file");
+                    return;
+                }
 
-                if (ln->layer->server == NULL)
+                if (ln->layer->server == NULL) {
                     ows_error(o, OWS_ERROR_CONFIG_FILE,
                               "No layer server defined", "config_file");
+                    return;
+                }
             }
 
             if (ln->layer->srid != NULL) {
@@ -370,9 +388,11 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
 
                         if (!check_regexp(b->buf, "^http://www.opengis.net")
                                 && !check_regexp(b->buf, "^EPSG")
-                                && !check_regexp(b->buf, "^urn:"))
+                                && !check_regexp(b->buf, "^urn:")) {
                             ows_error(o, OWS_ERROR_CONFIG_FILE,
                                       "srsname isn't valid", "srsName");
+                            return;
+                        }
 
                         for (srid = ln->layer->srid->first; srid != NULL;
                                 srid = srid->next) {
@@ -380,10 +400,12 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
                                 srsname = true;
                         }
 
-                        if (srsname == false)
+                        if (srsname == false) {
                             ows_error(o, OWS_ERROR_CONFIG_FILE,
                                       "srsname doesn't match srid",
                                       "config_file");
+                            return;
+                        }
                     }
                 }
             }
@@ -424,9 +446,11 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi,
             buffer_free(schema);
             buffer_free(xmlstring);
             
-            if (valid != 0)
+            if (valid != 0) {
                 ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                       "xml isn't valid", "request");
+                return;
+            }
         }
     }
 }

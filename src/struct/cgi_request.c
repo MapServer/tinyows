@@ -82,9 +82,11 @@ char *cgi_getback_query(ows * o)
     else if (cgi_method_post()) {
         query_size = atoi(getenv("CONTENT_LENGTH"));
 
-        if (query_size > CGI_QUERY_MAX)
+        if (query_size > CGI_QUERY_MAX) {
             ows_error(o, OWS_ERROR_REQUEST_HTTP, "QUERY_STRING too long",
                       "request");
+            return NULL;
+        }
 
         query = malloc(sizeof(char) * CGI_QUERY_MAX);
         assert(query != NULL);
@@ -209,6 +211,7 @@ array *cgi_parse_kvp(ows * o, char *query)
                     ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
                               "QUERY_STRING contains forbidden characters",
                               "request");
+                    return NULL;
                 }
             else {
                 if (check_regexp(string, "[A-Za-zà-ÿ0-9.\\=;,():/\\*_ \\-]")
@@ -223,6 +226,7 @@ array *cgi_parse_kvp(ows * o, char *query)
                     ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
                               "QUERY_STRING contains forbidden characters",
                               "request");
+                    return NULL;
                 }
             }
         }
@@ -234,6 +238,7 @@ array *cgi_parse_kvp(ows * o, char *query)
         array_free(arr);
         ows_error(o, OWS_ERROR_REQUEST_HTTP, "QUERY_STRING too long",
                   "request");
+        return NULL;
     }
 
     array_add(arr, key, val);
@@ -460,6 +465,7 @@ array *cgi_parse_xml(ows * o, char *query)
         xmlCleanupParser();
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "xml isn't valid",
                   "request");
+        return NULL;
     }
 
     arr = array_init();

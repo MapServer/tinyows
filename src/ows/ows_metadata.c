@@ -202,6 +202,7 @@ void ows_metadata_fill(ows * o, array * cgi)
     } else {
         ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
                   "service unknown", "service");
+        return;
     }
 
     /* initialize supported versions from service type */

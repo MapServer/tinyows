@@ -103,6 +103,7 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
             ows_error(o, OWS_ERROR_CONFIG_FILE,
                     "Not a single layer is available. Check config file",
                     "describe");
+            return;
     }
 
     if (wr->format == WFS_GML2)

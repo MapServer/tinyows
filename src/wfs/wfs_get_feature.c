@@ -650,6 +650,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
                 wfs_error(o, wr, WFS_ERROR_NO_MATCHING,
                           "error : an id_column is required to use featureid",
                           "GetFeature");
+		return NULL;
             }
         }
         /* BBOX */
@@ -672,6 +673,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
                     list_free(where_list);
                     buffer_free(layer_name);
                     fe_error(o, fe);
+		    return NULL;
                 }
 
                 buffer_copy(where, fe->sql);
@@ -859,7 +861,7 @@ void wfs_get_feature(ows * o, wfs_request * wr)
 
     /* retrieve a list of SQL requests from the GetFeature parameters */
     request_list = wfs_retrieve_sql_request_list(o, wr);
-
+    if (!request_list) return;
        
     if (wr->format == WFS_GML2 || wr->format == WFS_GML3) {
         /* display result of the GetFeature request in GML */

@@ -383,11 +383,6 @@ int main(int argc, char *argv[])
 
     /* Run the right OWS service */
     switch (o->request->service) {
-        case WMS:
-            o->request->request.wms = wms_request_init();
-            wms_request_check(o, o->request->request.wms, o->cgi);
-            wms(o, o->request->request.wms);
-            break;
         case WFS:
             o->request->request.wfs = wfs_request_init();
             wfs_request_check(o, o->request->request.wfs, o->cgi);

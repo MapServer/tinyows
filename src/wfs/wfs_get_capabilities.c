@@ -214,7 +214,7 @@ static void wfs_feature_type_list(ows * o)
 
     /* print global operations */
     
-    if (   ows_layer_list_writable(o->layers)
+    if (   ows_layer_list_retrievable(o->layers)
         || ows_layer_list_writable(o->layers)) 
     	fprintf(o->output, "  <Operations>\n");
 
@@ -241,7 +241,7 @@ static void wfs_feature_type_list(ows * o)
         writable = true;
     }
 
-    if (   ows_layer_list_writable(o->layers)
+    if (   ows_layer_list_retrievable(o->layers)
         || ows_layer_list_writable(o->layers)) 
     	fprintf(o->output, "  </Operations>\n");
 
@@ -357,7 +357,7 @@ static void wfs_feature_type_list(ows * o)
                         fprintf(o->output, "   <Operation>Query</Operation>\n");
                 }
 
-                if (writable == true && ln->layer->writable == true) {
+                if (writable == false && ln->layer->writable == true) {
                     if (ows_version_get(o->request->version) == 100) {
                         fprintf(o->output, "   <Insert/>\n");
                         fprintf(o->output, "   <Update/>\n");

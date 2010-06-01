@@ -113,18 +113,16 @@ static void wfs_capability(ows * o)
     fprintf(o->output, "     <SchemaDescriptionLanguage>\n");
     fprintf(o->output, "        <XMLSCHEMA/>\n");
     fprintf(o->output, "     </SchemaDescriptionLanguage>\n");
-    wfs_get_capabilities_dcpt_100(o, "REQUEST=DescribeFeatureType");
+    wfs_get_capabilities_dcpt_100(o, "");
     fprintf(o->output, "   </DescribeFeatureType>\n");
     fprintf(o->output, "   <GetFeature>\n");
     fprintf(o->output, "<ResultFormat>\n");
     fprintf(o->output, "<GML2/>\n");
-    fprintf(o->output, "<GML3/>\n");
-    fprintf(o->output, "<JSON/>\n");
     fprintf(o->output, "</ResultFormat>\n");
-    wfs_get_capabilities_dcpt_100(o, "REQUEST=GetFeature");
+    wfs_get_capabilities_dcpt_100(o, "");
     fprintf(o->output, "   </GetFeature>\n");
     fprintf(o->output, "   <Transaction>\n");
-    wfs_get_capabilities_dcpt_100(o, "REQUEST=Transaction");
+    wfs_get_capabilities_dcpt_100(o, "");
     fprintf(o->output, "   </Transaction>\n");
     fprintf(o->output, "  </Request>\n");
     fprintf(o->output, " </Capability>\n");
@@ -159,14 +157,14 @@ static void wfs_operations_metadata(ows * o)
     fprintf(o->output, "  </ows:Parameter>\n");
     fprintf(o->output, "   </ows:Operation>\n");
     fprintf(o->output, "   <ows:Operation name='DescribeFeatureType'>\n");
-    ows_get_capabilities_dcpt(o, "REQUEST=DescribeFeatureType");
+    ows_get_capabilities_dcpt(o, "");
     fprintf(o->output, "  <ows:Parameter name='outputFormat'>\n");
     fprintf(o->output, "  <ows:Value>text/xml; subtype=gml/3.1.1</ows:Value>\n");
     fprintf(o->output, "  <ows:Value>text/xml; subtype=gml/2.1.2</ows:Value>\n");
     fprintf(o->output, "  </ows:Parameter>\n");
     fprintf(o->output, "   </ows:Operation>\n");
     fprintf(o->output, "   <ows:Operation name='GetFeature'>\n");
-    ows_get_capabilities_dcpt(o, "REQUEST=GetFeature");
+    ows_get_capabilities_dcpt(o, "");
     fprintf(o->output, "  <ows:Parameter name='resultType'>\n");
     fprintf(o->output, "  <ows:Value>results</ows:Value>\n");
     fprintf(o->output, "  <ows:Value>hits</ows:Value>\n");
@@ -178,7 +176,7 @@ static void wfs_operations_metadata(ows * o)
     fprintf(o->output, "  </ows:Parameter>\n");
     fprintf(o->output, "   </ows:Operation>\n");
     fprintf(o->output, "   <ows:Operation name='Transaction'>\n");
-    ows_get_capabilities_dcpt(o, "REQUEST=Transaction");
+    ows_get_capabilities_dcpt(o, "");
     fprintf(o->output, "    <ows:Parameter name='inputFormat'>\n"); 
     fprintf(o->output, "     <ows:Value>text/xml; subtype=gml/3.1.1</ows:Value>\n");
     fprintf(o->output, "    </ows:Parameter>\n"); 
@@ -215,7 +213,10 @@ static void wfs_feature_type_list(ows * o)
     fprintf(o->output, " <FeatureTypeList>\n");
 
     /* print global operations */
-    fprintf(o->output, "  <Operations>\n");
+    
+    if (   ows_layer_list_writable(o->layers)
+        || ows_layer_list_writable(o->layers)) 
+    	fprintf(o->output, "  <Operations>\n");
 
     if (ows_layer_list_retrievable(o->layers)) {
         if (ows_version_get(o->request->version) == 100)
@@ -240,7 +241,9 @@ static void wfs_feature_type_list(ows * o)
         writable = true;
     }
 
-    fprintf(o->output, "  </Operations>\n");
+    if (   ows_layer_list_writable(o->layers)
+        || ows_layer_list_writable(o->layers)) 
+    	fprintf(o->output, "  </Operations>\n");
 
     for (ln = o->layers->first; ln != NULL; ln = ln->next) {
         /* print each feature type */

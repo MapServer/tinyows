@@ -274,6 +274,7 @@ static void ows_kvp_or_xml(ows *o, char *query)
 
     /* GET could only handle KVP */
     if (cgi_method_get()) o->request->method = OWS_METHOD_KVP;
+
     /* POST could handle KVP or XML encoding */
     else if (cgi_method_post()) {
         /* WFS 1.1.0 mandatory */
@@ -288,11 +289,13 @@ static void ows_kvp_or_xml(ows *o, char *query)
                  !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") ||
                  !strcmp(getenv("CONTENT_TYPE"), "text/plain"))
             o->request->method = OWS_METHOD_XML;
+
         /* Command line Unit Test cases with XML values (not HTTP) */
     } else if (!cgi_method_post() && !cgi_method_get() && query[0] == '<')
         o->request->method = OWS_METHOD_XML;
     else if (!cgi_method_post() && !cgi_method_get())
         o->request->method = OWS_METHOD_KVP;
+
     else ows_error(o, OWS_ERROR_REQUEST_HTTP, "Wrong HTTP request Method", "http");
 
 }
@@ -333,8 +336,9 @@ int main(int argc, char *argv[])
 
     if (!o->exit) query = cgi_getback_query(o);
 
-    /* Usage or Version command line options */
     if (query == NULL || strlen(query) == 0) {
+
+    	/* Usage or Version command line options */
         if (argc > 1) {
 
 		if (	!strncmp(argv[1], "--help", 6)
@@ -348,17 +352,20 @@ int main(int argc, char *argv[])
 
         	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                              "Service Unknown", "service");
-
 		o->exit = true;
-	}
+
+	} else {
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, 
+                             "Service Unknown", "service");
+	        o->exit = true;
+        }
     } 
 
-
     /* Log input query if asked */
-   if (o->log != NULL)
-	fprintf(o->log, "[QUERY]\n%s\n---\n", query);
+   if (o->log && query)
+	fprintf(o->log, "[QUERY]\n%s\n", query);
 
-    o->request = ows_request_init();
+    if (!o->exit) o->request = ows_request_init();
     if (!o->exit) ows_kvp_or_xml(o, query);
 
     if (!o->exit) {
@@ -404,7 +411,10 @@ int main(int argc, char *argv[])
     }
 
 #if TINYOWS_FCGI
-    } 
+    if (o->log) fprintf(o->log, "---\n"); 
+    o->exit = false;
+    }
+    if (o->log) fprintf(o->log, "== FCGI SHUTDOWN == \n");
     OS_LibShutdown();
 #endif
     if (o->log) fclose (o->log);

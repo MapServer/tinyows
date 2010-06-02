@@ -949,10 +949,12 @@ static void wfs_request_check_describe_feature_type(ows * o,
 
     /* output format */
     wfs_request_check_output(o, wr);
+    if(o->exit) return;
 
     /* typename */
     layer_name = list_init();
     layer_name = wfs_request_check_typename(o, wr, layer_name);
+    if(o->exit) return;
     list_free(layer_name);
 
     /* if no typename parameter is given, retrieve all layers defined in configuration file */

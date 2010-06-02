@@ -304,7 +304,7 @@ static void ows_kvp_or_xml(ows *o, char *query)
 int main(int argc, char *argv[])
 {
     ows *o;
-    char *query=NULL;
+    char *query;
 
     o = ows_init();
     o->config_file = buffer_init();
@@ -334,7 +334,12 @@ int main(int argc, char *argv[])
    {
 #endif
 
+    query=NULL;
     if (!o->exit) query = cgi_getback_query(o);
+
+    /* Log input query if asked */
+   if (o->log && query)
+	fprintf(o->log, "[QUERY]\n%s\n", query);
 
     if (query == NULL || strlen(query) == 0) {
 
@@ -360,10 +365,6 @@ int main(int argc, char *argv[])
 	        o->exit = true;
         }
     } 
-
-    /* Log input query if asked */
-   if (o->log && query)
-	fprintf(o->log, "[QUERY]\n%s\n", query);
 
     if (!o->exit) o->request = ows_request_init();
     if (!o->exit) ows_kvp_or_xml(o, query);
@@ -409,7 +410,7 @@ int main(int argc, char *argv[])
         ows_request_free(o->request);
         o->request=NULL;
     }
-
+    
 #if TINYOWS_FCGI
     if (o->log) fprintf(o->log, "---\n"); 
     o->exit = false;

@@ -91,6 +91,7 @@ char *cgi_getback_query(ows * o)
         query = malloc(sizeof(char) * CGI_QUERY_MAX);
         assert(query != NULL);
         result = fread(query, query_size, 1, stdin);
+        query[query_size] = '\0';
     }
     /* local tests */
     else

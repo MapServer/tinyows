@@ -80,6 +80,9 @@ test-stderr:
 test-time:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 7
 
+test-curl:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 8
+
 
 
 astyle:

@@ -94,6 +94,7 @@ elif [ $mode -eq 7 ]; then
 
 # curl mode
 elif [ $mode -eq 8 ]; then
+    echo $unit_id
     if [ ! $TINYOWS_CONFIG_FILE ]; then
 	TINYOWS_CONFIG_FILE=/usr/local/tinyows/config.xml
     fi

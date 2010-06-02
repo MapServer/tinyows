@@ -111,7 +111,6 @@ void ows_request_flush(ows_request * or, FILE * output)
 /*
  * Simple callback used to catch error and warning from libxml2 schema
  * validation
- * If OWS_DEBUG mode output to stderr, else do nothing
  */
 static void libxml2_callback  (void * ctx, const char * msg, ...) {
     va_list varg;

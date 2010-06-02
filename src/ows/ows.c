@@ -318,18 +318,24 @@ int main(int argc, char *argv[])
     /* Parse the configuration file and initialize ows struct */
     if (!o->exit) ows_parse_config(o, o->config_file->buf);
 
+    /* Open Log file */
+    if (!o->exit && o->log_file)
+        o->log = fopen(o->log_file->buf, "a");
+
+    if (!o->exit && o->log) fprintf(o->log, "== TINYOWS STARTUP == \n");
+
     /* Connect the ows to the database */
     if (!o->exit) ows_pg(o, o->pg_dsn->buf);
+    if (!o->exit && o->log) fprintf(o->log, "== Connection PostGIS == \n");
 
     /* Fill layers storage metadata */
     if (!o->exit) ows_layers_storage_fill(o);
+    if (!o->exit && o->log) fprintf(o->log, "== Filling Storage == \n");
 
-    /* Open Log file */
-    if (o->log_file != NULL)
-        o->log = fopen(o->log_file->buf, "a");
 
 
 #if TINYOWS_FCGI
+   if (o->log) fprintf(o->log, "== FCGI START == \n");
    while (FCGI_Accept() >= 0)
    {
 #endif
@@ -411,13 +417,14 @@ int main(int argc, char *argv[])
         o->request=NULL;
     }
     
-#if TINYOWS_FCGI
     if (o->log) fprintf(o->log, "---\n"); 
+#if TINYOWS_FCGI
     o->exit = false;
-    }
     if (o->log) fprintf(o->log, "== FCGI SHUTDOWN == \n");
+    }
     OS_LibShutdown();
 #endif
+    if (o->log) fprintf(o->log, "== TINYOWS SHUTDOWN == \n");
     if (o->log) fclose (o->log);
     ows_free(o);
 

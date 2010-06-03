@@ -627,7 +627,7 @@ void wfs_delete(ows * o, wfs_request * wr)
                     buffer_free(sql);
                     buffer_free(layer_name);
                     fe_error(o, filter);
-
+                    return;
                 }
 
                 buffer_copy(where, filter->sql);

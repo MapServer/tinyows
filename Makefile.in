@@ -77,11 +77,8 @@ test-exception:
 test-stderr:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 5
 
-test-time:
-	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 7
-
-test-curl:
-	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 8
+test-http:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 6
 
 
 

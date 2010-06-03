@@ -87,13 +87,8 @@ elif [ $mode -eq 5 ]; then
     fi
     rm -f $file_tmp
 
-# time mode
-elif [ $mode -eq 7 ]; then
-    echo -n "$unit_id  -> "
-    `which time` -p ./tinyows 2>&1 | grep user | sed -e 's/user //'
-
 # curl mode
-elif [ $mode -eq 8 ]; then
+elif [ $mode -eq 6 ]; then
     echo $unit_id
     if [ ! $TINYOWS_CONFIG_FILE ]; then
 	TINYOWS_CONFIG_FILE=/usr/local/tinyows/config.xml

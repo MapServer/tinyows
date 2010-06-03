@@ -77,9 +77,7 @@ void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
     assert(!o->exit);
     o->exit = true;
 
-    if (o->log != NULL)
-	fprintf(o->log, "[ERROR] {%s:%s} %s\n",
-	ows_error_code_string(code), locator, message);
+    ows_log(o, 1, message);
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");

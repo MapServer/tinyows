@@ -248,6 +248,17 @@ void ows_free(ows * o)
 }
 
 
+void ows_log(ows *o, int log_level, const char *log)
+{
+    if (!o->log) return;
+
+    if      (log_level == 1) fprintf(o->log, "[ERROR] %s\n", log);
+    else if (log_level == 2) fprintf(o->log, "[EVENT] %s\n", log);
+    else if (log_level == 3) fprintf(o->log, "[QUERY] %s\n", log);
+    else if (log_level == 4) fprintf(o->log, "[DEBUG] %s\n", log);
+}
+
+
 void ows_usage(ows * o)
 {
     fprintf(stderr, "TinyOWS version:   %s\n", TINYOWS_VERSION);
@@ -322,20 +333,20 @@ int main(int argc, char *argv[])
     if (!o->exit && o->log_file)
         o->log = fopen(o->log_file->buf, "a");
 
-    if (!o->exit && o->log) fprintf(o->log, "== TINYOWS STARTUP == \n");
+    if (!o->exit) ows_log(o, 2, "== TINYOWS STARTUP ==");
 
     /* Connect the ows to the database */
     if (!o->exit) ows_pg(o, o->pg_dsn->buf);
-    if (!o->exit && o->log) fprintf(o->log, "== Connection PostGIS == \n");
+    if (!o->exit) ows_log(o, 2, "== Connection PostGIS ==");
 
     /* Fill layers storage metadata */
     if (!o->exit) ows_layers_storage_fill(o);
-    if (!o->exit && o->log) fprintf(o->log, "== Filling Storage == \n");
+    if (!o->exit) ows_log(o, 2, "== Filling Storage ==");
 
 
 
 #if TINYOWS_FCGI
-   if (o->log) fprintf(o->log, "== FCGI START == \n");
+   if (!o->exit) ows_log(o, 2, "== FCGI START ==");
    while (FCGI_Accept() >= 0)
    {
 #endif
@@ -344,8 +355,7 @@ int main(int argc, char *argv[])
     if (!o->exit) query = cgi_getback_query(o);
 
     /* Log input query if asked */
-   if (o->log && query)
-	fprintf(o->log, "[QUERY]\n%s\n", query);
+    if (!o->exit) ows_log(o, 3, query);
 
     if (query == NULL || strlen(query) == 0) {
 
@@ -417,14 +427,15 @@ int main(int argc, char *argv[])
         o->request=NULL;
     }
     
-    if (o->log) fprintf(o->log, "---\n"); 
+    if (cgi_method_post() && query) free(query);  /* We allocated memory only on post case */
+    ows_log(o, 2, "== End QUERY =="); 
 #if TINYOWS_FCGI
     o->exit = false;
-    if (o->log) fprintf(o->log, "== FCGI SHUTDOWN == \n");
     }
+    ows_log(o, 2, "== FCGI SHUTDOWN ==");
     OS_LibShutdown();
 #endif
-    if (o->log) fprintf(o->log, "== TINYOWS SHUTDOWN == \n");
+    ows_log(o, 2, "== TINYOWS SHUTDOWN ==");
     if (o->log) fclose (o->log);
     ows_free(o);
 

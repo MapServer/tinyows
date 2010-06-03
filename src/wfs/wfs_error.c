@@ -70,9 +70,7 @@ static void wfs_error_100(ows * o, wfs_request * wf,
     assert(!o->exit);
     o->exit = true;
 
-    if (o->log != NULL)
-        fprintf(o->log, "[ERROR] {%s:%s} %s\n",
-        wfs_error_code_string(code), locator, message);
+    ows_log(o, 1, message);
 
     fprintf(o->output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     fprintf(o->output, "<ServiceExceptionReport\n");
@@ -102,9 +100,7 @@ static void wfs_error_110(ows * o, wfs_request * wf,
     assert(!o->exit);
     o->exit = true;
 
-    if (o->log != NULL)
-        fprintf(o->log, "[ERROR] {%s:%s} %s\n",
-        wfs_error_code_string(code), locator, message);
+    ows_log(o, 1, message);
 
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
     fprintf(o->output, "<ExceptionReport\n");

@@ -250,12 +250,22 @@ void ows_free(ows * o)
 
 void ows_log(ows *o, int log_level, const char *log)
 {
+    char *t, *p;
+    time_t ts;
+
     if (!o->log) return;
 
-    if      (log_level == 1) fprintf(o->log, "[ERROR] %s\n", log);
-    else if (log_level == 2) fprintf(o->log, "[EVENT] %s\n", log);
-    else if (log_level == 3) fprintf(o->log, "[QUERY] %s\n", log);
-    else if (log_level == 4) fprintf(o->log, "[DEBUG] %s\n", log);
+    ts = time(NULL);
+    t = ctime(&ts);
+
+    /* Suppress ctime \n last char */
+    for (p = t; *p && *p != '\n'; p++);
+    *p = '\0';
+
+    if      (log_level == 1) fprintf(o->log, "[%s] [ERROR] %s\n", t, log);
+    else if (log_level == 2) fprintf(o->log, "[%s] [EVENT] %s\n", t, log);
+    else if (log_level == 3) fprintf(o->log, "[%s] [QUERY] %s\n", t, log);
+    else if (log_level == 4) fprintf(o->log, "[%s] [DEBUG] %s\n", t, log);
 }
 
 

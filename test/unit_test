@@ -70,8 +70,17 @@ elif [ $mode -eq 2 ]; then
 elif [ $mode -eq 3 ]; then
     ./tinyows
 
-# Exception mode
+# http mode
 elif [ $mode -eq 4 ]; then
+    echo $unit_id
+    if [ ! $TINYOWS_CONFIG_FILE ]; then
+	TINYOWS_CONFIG_FILE=/usr/local/tinyows/config.xml
+    fi
+    IP=`grep online_resource $TINYOWS_CONFIG_FILE | sed -e 's/.*online_resource="//' -e 's/".*//'`
+    curl -i -H "Content-Type: text/xml" --data @$unit_id $IP
+
+# Exception mode
+elif [ $mode -eq 5 ]; then
     ows_ret=`./tinyows 2> /dev/null | grep ExceptionText`
     if [ "$ows_ret" ]; then
 	    echo -n "$unit_id  -> "
@@ -79,7 +88,7 @@ elif [ $mode -eq 4 ]; then
     fi
 
 # stderr mode
-elif [ $mode -eq 5 ]; then
+elif [ $mode -eq 6 ]; then
     ./tinyows > /dev/null 2> $file_tmp
     ows_ret=`cat $file_tmp`
     if [ "$ows_ret" ]; then
@@ -87,14 +96,6 @@ elif [ $mode -eq 5 ]; then
     fi
     rm -f $file_tmp
 
-# curl mode
-elif [ $mode -eq 6 ]; then
-    echo $unit_id
-    if [ ! $TINYOWS_CONFIG_FILE ]; then
-	TINYOWS_CONFIG_FILE=/usr/local/tinyows/config.xml
-    fi
-    IP=`grep online_resource $TINYOWS_CONFIG_FILE | sed -e 's/.*online_resource="//' -e 's/".*//'`
-    curl -i -H "Content-Type: text/xml" --data @$unit_id $IP
 fi
 
 

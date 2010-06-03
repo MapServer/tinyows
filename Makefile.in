@@ -71,13 +71,13 @@ test-valgrind:
 test-output:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 3
 
-test-exception:
+test-http:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 4
 
-test-stderr:
+test-exception:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 5
 
-test-http:
+test-stderr:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 6
 
 

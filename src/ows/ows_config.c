@@ -754,11 +754,9 @@ void ows_parse_config(ows * o, const char *filename)
     assert(o != NULL);
     assert(filename != NULL);
 
-    xmlInitParser();
     r = xmlReaderForFile(filename, "UTF-8", 0);
 
     if (r == NULL) {
-        xmlCleanupParser();
         ows_error(o, OWS_ERROR_CONFIG_FILE, "Unable to open config file !",
                   "parse_config_file");
         return;
@@ -799,14 +797,12 @@ void ows_parse_config(ows * o, const char *filename)
 
     if (ret != 0) {
         xmlFreeTextReader(r);
-        xmlCleanupParser();
         ows_error(o, OWS_ERROR_CONFIG_FILE, "Unable to open config file !",
                   "parse_config_file");
         return;
     }
 
     xmlFreeTextReader(r);
-    xmlCleanupParser();
 
     ows_config_check(o);
 }

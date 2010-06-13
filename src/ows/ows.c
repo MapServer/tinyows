@@ -336,6 +336,8 @@ int main(int argc, char *argv[])
     else
         buffer_add_str(o->config_file, OWS_CONFIG_FILE_PATH);
 
+    LIBXML_TEST_VERSION
+
     /* Parse the configuration file and initialize ows struct */
     if (!o->exit) ows_parse_config(o, o->config_file->buf);
 
@@ -352,7 +354,6 @@ int main(int argc, char *argv[])
     /* Fill layers storage metadata */
     if (!o->exit) ows_layers_storage_fill(o);
     if (!o->exit) ows_log(o, 2, "== Filling Storage ==");
-
 
 
 #if TINYOWS_FCGI
@@ -445,6 +446,7 @@ int main(int argc, char *argv[])
     ows_log(o, 2, "== FCGI SHUTDOWN ==");
     OS_LibShutdown();
 #endif
+    xmlCleanupParser();
     ows_log(o, 2, "== TINYOWS SHUTDOWN ==");
     if (o->log) fclose (o->log);
     ows_free(o);

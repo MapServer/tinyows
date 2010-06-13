@@ -463,12 +463,10 @@ array *cgi_parse_xml(ows * o, char *query)
     typ_need_comma = false;
     n = NULL;
 
-    xmlInitParser();
     xmldoc = xmlParseMemory(query, strlen(query));
 
     if (!xmldoc || (n = xmlDocGetRootElement(xmldoc)) == NULL) {
         xmlFreeDoc(xmldoc);
-        xmlCleanupParser();
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "xml isn't valid",
                   "request");
         return NULL;
@@ -607,7 +605,6 @@ array *cgi_parse_xml(ows * o, char *query)
     buffer_free(typename);
 
     xmlFreeDoc(xmldoc);
-    xmlCleanupParser();
 
     return arr;
 }

@@ -913,12 +913,10 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
     wr->insert_results = alist_init();
     content = NULL;
 
-    xmlInitParser();
     xmldoc = xmlParseMemory(op->buf, op->use);
 
     if (!xmldoc) {
         xmlFreeDoc(xmldoc);
-        xmlCleanupParser();
         wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "xml isn't valid", "transaction");
         return;
     }
@@ -995,7 +993,6 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
     buffer_free(locator);
 
     xmlFreeDoc(xmldoc);
-    xmlCleanupParser();
 }
 
 

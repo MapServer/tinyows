@@ -130,7 +130,6 @@ static void libxml2_callback  (void * ctx, const char * msg, ...) {
 
 /*
  * Valid an xml string against an XML schema
- * Inpired from: http://xml.developpez.com/sources/?page=validation#validate_XSD_CppCLI_2
  */
 int ows_schema_validation(const ows *o, buffer * xml_schema, buffer * xml, bool schema_is_file)
 {
@@ -162,8 +161,6 @@ int ows_schema_validation(const ows *o, buffer * xml_schema, buffer * xml, bool 
     /* If XML Schema hasn't been rightly loaded */
     if (schema == NULL) {
         xmlSchemaCleanupTypes();
-        xmlMemoryDump();
-        xmlCleanupParser();
         return ret;
     }
 
@@ -182,7 +179,6 @@ int ows_schema_validation(const ows *o, buffer * xml_schema, buffer * xml, bool 
 
     xmlSchemaFree(schema);
     xmlFreeDoc(doc);
-    xmlCleanupParser();
 
     return ret;
 }

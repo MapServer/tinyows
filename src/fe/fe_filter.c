@@ -440,15 +440,11 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
         buffer_free(schema_path);
     }
 
-    xmlInitParser();
-    LIBXML_TEST_VERSION 
-
     xmldoc = xmlParseMemory(xmlchar->buf, xmlchar->use);
 
     if (!xmldoc) {
         fe->error_code = FE_ERROR_FILTER;
         xmlFreeDoc(xmldoc);
-        xmlCleanupParser();
         return fe;
     }
 
@@ -478,7 +474,6 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
         fe->sql = fe_feature_id(o, typename, fe, n);
 
     xmlFreeDoc(xmldoc);
-    xmlCleanupParser();
 
     return fe;
 }

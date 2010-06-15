@@ -478,10 +478,9 @@ int ows_psql_number_features(ows * o, list * from, list * where)
 }
 
 
-static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n)
+static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n, xmlNodePtr result)
 {
     xmlNodePtr c;
-    static xmlNodePtr result=NULL;
 
     assert(o != NULL);
     assert(n != NULL);
@@ -513,7 +512,7 @@ static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n)
         /* Recursive exploration */
         if (n->children)
             for (c = n->children ; c ; c = c->next)
-                if ((result = ows_psql_recursive_parse_gml(o, c)))
+                if ((result = ows_psql_recursive_parse_gml(o, c, NULL)))
                     return result;
     }
 
@@ -534,7 +533,7 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n)
     assert(o != NULL);
     assert(n != NULL);
 
-    g = ows_psql_recursive_parse_gml(o, n);
+    g = ows_psql_recursive_parse_gml(o, n, NULL);
     if (!g) return NULL;    /* No Geometry founded in GML doc */
 
     /* Retrieve the sub doc and launch GML parse via PostGIS */

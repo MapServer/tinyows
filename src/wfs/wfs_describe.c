@@ -204,8 +204,8 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
 buffer * wfs_generate_schema(ows * o)
 {
     int wfs_version;
-    list_node *elemt;
-    list *prefix;
+    list_node *elemt, *t;
+    list *prefix, *typename;
     buffer *namespace;
     buffer *schema;
     list * layers;
@@ -237,7 +237,18 @@ buffer * wfs_generate_schema(ows * o)
         buffer_copy(schema, namespace);
         buffer_add_str(schema, "' schemaLocation='");
         buffer_copy(schema, o->online_resource);
+
         buffer_add_str(schema, "?service=WFS&amp;request=DescribeFeatureType");
+
+        if (elemt->next || elemt != prefix->first) {
+            buffer_add_str(schema, "&amp;Typename=");
+
+            typename = ows_layer_list_by_prefix(o->layers, layers, elemt->value);
+            for (t = typename->first; t != NULL; t = t->next) {
+        	buffer_copy(schema, t->value);
+	  	if (t->next) buffer_add(schema, ',');
+	    }
+        } 
 
         if (wfs_version == 100)
             buffer_add_str(schema, "&amp;version=1.0.0");

@@ -509,7 +509,7 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name,
         buffer_copy(where, ln->value);
         buffer_add_str(where, ", ");
         ows_bbox_to_query(o, wr->bbox, where);
-        buffer_add_str(where, " AND ");
+        buffer_add_str(where, ") AND ");
         buffer_copy(where, ln->value);
         buffer_add_str(where, " && ");
         ows_bbox_to_query(o, wr->bbox, where);

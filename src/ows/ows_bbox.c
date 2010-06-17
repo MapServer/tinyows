@@ -300,13 +300,9 @@ void ows_bbox_to_query(ows * o, ows_bbox *bbox, buffer *query)
     buffer_add_str(query, " ");
     buffer_add_double(query, bbox->ymax);
     buffer_add_str(query, ",");
-    buffer_add_double(query, bbox->xmin);
+    buffer_add_double(query, bbox->xmax);
     buffer_add_str(query, " ");
-    buffer_add_double(query, bbox->ymax);
-    buffer_add_str(query, ",");
-    buffer_add_double(query, bbox->xmin);
-    buffer_add_str(query, " ");
-    buffer_add_double(query, bbox->ymax);
+    buffer_add_double(query, bbox->ymin);
     buffer_add_str(query, ",");
     buffer_add_double(query, bbox->xmin);
     buffer_add_str(query, " ");

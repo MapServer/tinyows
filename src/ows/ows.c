@@ -384,12 +384,10 @@ int main(int argc, char *argv[])
 
         	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                              "Service Unknown", "service");
-		o->exit = true;
 
 	} else {
                 ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, 
                              "Service Unknown", "service");
-	        o->exit = true;
         }
     } 
 

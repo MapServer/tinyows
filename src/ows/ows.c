@@ -385,10 +385,10 @@ int main(int argc, char *argv[])
         	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                              "Service Unknown", "service");
 
-	} else {
-                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, 
+	} else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, 
                              "Service Unknown", "service");
-        }
+
+        o->exit=true; /* Have done what we have to */
     } 
 
     if (!o->exit) o->request = ows_request_init();

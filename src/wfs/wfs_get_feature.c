@@ -101,8 +101,10 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     if (buffer_cmp(value, "") || (pkey != NULL && buffer_cmp(prop_name, pkey->buf))) 
         return;
 
+#if 0
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
     if (buffer_cmp(prop_name, "boundedBy")) return;
+#endif
 
     /* name and description fields if exists belong to GML namespace */
     if (buffer_cmp(prop_name, "name")

@@ -30,7 +30,7 @@
 #define OWS_DEBUG
 #endif
 
-#define TINYOWS_VERSION             "0.9.0 SVN"
+#define TINYOWS_VERSION             "0.9.0"
 #define TINYOWS_FCGI                @USE_FCGI@
 
 #define OWS_CONFIG_FILE_PATH        "@prefix@/tinyows/config.xml"

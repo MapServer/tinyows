@@ -57,6 +57,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr,
     id_name = ows_psql_id_column(o, layer_name);
     table = ows_psql_describe_table(o, layer_name);
 
+    assert(id_name != NULL);
     assert(table != NULL);
 
     /* Output the description of the layer_name */
@@ -236,6 +237,15 @@ buffer * wfs_generate_schema(ows * o)
         buffer_add_str(schema, "<xs:import namespace='");
         buffer_copy(schema, namespace);
         buffer_add_str(schema, "' schemaLocation='");
+
+#if 0
+    buffer_copy(schema, o->schema_dir);
+    buffer_add_str(schema, "tows/");
+    buffer_copy(schema, elemt->value);
+#endif
+
+
+#if 1
         buffer_copy(schema, o->online_resource);
 
         buffer_add_str(schema, "?service=WFS&amp;request=DescribeFeatureType");
@@ -254,6 +264,7 @@ buffer * wfs_generate_schema(ows * o)
             buffer_add_str(schema, "&amp;version=1.0.0");
         else
             buffer_add_str(schema, "&amp;version=1.1.0");
+#endif
 
         buffer_add_str(schema, "'/>\n");
     }
@@ -261,6 +272,10 @@ buffer * wfs_generate_schema(ows * o)
     buffer_add_str(schema, "</xs:schema>");
     list_free(prefix);
     list_free(layers);
+
+#if 0
+fprintf(stderr, "\n%s\n", schema->buf);
+#endif
 
     return schema;
 }

@@ -379,7 +379,7 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             id_name = ows_psql_id_column(o, typename);
 
             /* if there is no id column, raise an error */
-            if (id_name->use == 0) {
+            if (!id_name || id_name->use == 0) {
                 fe->error_code = FE_ERROR_FEATUREID;
                 list_free(fe_list);
                 buffer_free(buf_fid);
@@ -541,8 +541,7 @@ buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name,
     where = buffer_init();
 
     id_name = ows_psql_id_column(o, layer_name);
-
-    if (id_name->use == 0) return where;
+    if (!id_name || id_name->use == 0) return where;
 
     buffer_add_str(where, " WHERE ");
 

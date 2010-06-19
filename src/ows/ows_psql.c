@@ -48,7 +48,6 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
                 && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
             return ln->layer->storage->pkey;
 
-    assert(0); /* Should not happen */
     return NULL;
 }
 

@@ -390,6 +390,16 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
            or Replace without id set ? */
 
         id_column = ows_psql_id_column(o, layer_name);
+	if (!id_column) {
+             buffer_free(id);
+             buffer_free(sql);
+             buffer_free(handle);
+             buffer_free(values);
+             buffer_free(layer_name);
+             result = buffer_init();
+             buffer_add_str(result, "Error unknown Layer Name");
+             return result;
+	}
         layer_prefix = ows_layer_prefix(o->layers, layer_name);
 
         /* ReplaceDuplicate look if an ID is already used

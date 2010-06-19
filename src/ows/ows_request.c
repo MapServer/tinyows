@@ -120,8 +120,8 @@ static void libxml2_callback  (void * ctx, const char * msg, ...) {
     o = (ows *) ctx;
     va_start(varg, msg);
     str = (char *)va_arg( varg, char *);
+    ows_log(o, 1, str);
 
-    if (o->log != NULL) fprintf(o->log, "[ERROR] %s", str);
 #ifdef OWS_DEBUG
     fprintf(stderr, "%s", str);
 #endif

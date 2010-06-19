@@ -253,6 +253,9 @@ void ows_log(ows *o, int log_level, const char *log)
     char *t, *p;
     time_t ts;
 
+    if (o->log_file)
+	o->log = fopen(o->log_file->buf, "a");
+
     if (!o->log) return;
 
     ts = time(NULL);
@@ -266,6 +269,9 @@ void ows_log(ows *o, int log_level, const char *log)
     else if (log_level == 2) fprintf(o->log, "[%s] [EVENT] %s\n", t, log);
     else if (log_level == 3) fprintf(o->log, "[%s] [QUERY] %s\n", t, log);
     else if (log_level == 4) fprintf(o->log, "[%s] [DEBUG] %s\n", t, log);
+
+
+    fclose(o->log);
 }
 
 
@@ -340,10 +346,6 @@ int main(int argc, char *argv[])
 
     /* Parse the configuration file and initialize ows struct */
     if (!o->exit) ows_parse_config(o, o->config_file->buf);
-
-    /* Open Log file */
-    if (!o->exit && o->log_file)
-        o->log = fopen(o->log_file->buf, "a");
 
     if (!o->exit) ows_log(o, 2, "== TINYOWS STARTUP ==");
 
@@ -437,7 +439,6 @@ int main(int argc, char *argv[])
     }
     
     if (cgi_method_post() && query) free(query);  /* We allocated memory only on post case */
-    ows_log(o, 2, "== End QUERY =="); 
 #if TINYOWS_FCGI
     o->exit = false;
     }
@@ -446,7 +447,6 @@ int main(int argc, char *argv[])
 #endif
     xmlCleanupParser();
     ows_log(o, 2, "== TINYOWS SHUTDOWN ==");
-    if (o->log) fclose (o->log);
     ows_free(o);
 
     return EXIT_SUCCESS;

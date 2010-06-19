@@ -1,0 +1,16 @@
+0.9.0   (19/06/2010)
+ - Fast-CGI support
+ - Error log handle
+ - Improve --check behaviour
+ - And a still a lot of debug stuff
+
+0.8.0   (01/05/2010)
+ - PostgreSQL schema support 
+ - Command line --check option, to check configure stuff
+ - JSON output format for GetFeature (use OUTPUTFORMAT=application/json)
+ - PostGIS geography support (Need PostGIS 1.5) 
+ - Input request log mechanism
+ - Ability to deactivate XSD schema and/or OGC SFS validation 
+ - Up to date documentation and OpenLayers integration step by step HowTo
+ - Slighlty improve performance for GetFeature operation
+ - And a lot of debug stuff

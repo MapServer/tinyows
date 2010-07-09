@@ -63,7 +63,6 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "degree_precision");
     if (a != NULL) {
-        o->schema_dir = buffer_init();
         precision = atoi((char *) a);
         if (precision > 0 && precision < 12)
             o->degree_precision = precision;
@@ -72,7 +71,6 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "meter_precision");
     if (a != NULL) {
-        o->schema_dir = buffer_init();
         precision = atoi((char *) a);
         if (precision > 0 && precision < 12)
             o->meter_precision = precision;

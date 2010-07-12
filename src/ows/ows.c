@@ -298,7 +298,7 @@ static void ows_kvp_or_xml(ows *o, char *query)
     /*
      * Request encoding and HTTP method WFS 1.1.0 -> 6.5
      */
-
+   
     /* GET could only handle KVP */
     if (cgi_method_get()) o->request->method = OWS_METHOD_KVP;
 
@@ -315,6 +315,10 @@ static void ows_kvp_or_xml(ows *o, char *query)
         else if (!strcmp(getenv("CONTENT_TYPE"), "application/xml") ||
                  !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") ||
                  !strcmp(getenv("CONTENT_TYPE"), "text/plain"))
+            o->request->method = OWS_METHOD_XML;
+
+	/* Udig buggy: to remove a day */
+        else if (!strcmp(getenv("CONTENT_TYPE"), "text/xml, application/xml"))
             o->request->method = OWS_METHOD_XML;
 
         /* Command line Unit Test cases with XML values (not HTTP) */

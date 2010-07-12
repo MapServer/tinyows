@@ -144,17 +144,26 @@ static void cgi_unescape_url(char *url)
 
 /*
  * Transform url's plus into spaces
- * Source : http://hoohoo.ncsa.uiuc.edu/docs/
  */
 static void cgi_plustospace(char *str)
 {
     int x;
 
-    for (x = 0; str[x]; x++)
-        if (str[x] == '+')
-            str[x] = ' ';
+    for (x=0 ; str[x] ; x++)
+        if (str[x] == '+') str[x] = ' ';
 }
 
+/*
+ * Remove CR or LF in URL 
+ */
+static void cgi_remove_crlf(char *str)
+{
+    int x;
+
+    for (x=0 ; str[x] ; x++)
+        if (str[x] == '\n' || str[x] == '\r')
+		str[x] = ' ';
+}
 
 /*
  * Parse char by char QUERY_STRING request and return an array key/value
@@ -178,6 +187,7 @@ array *cgi_parse_kvp(ows * o, char *query)
     in_key = true;
 
     cgi_unescape_url(query);
+    cgi_remove_crlf(query);
     cgi_plustospace(query);
 
     for (i = 0; i < CGI_QUERY_MAX && query[i] != '\0'; i++) {

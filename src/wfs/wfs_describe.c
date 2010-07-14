@@ -57,12 +57,11 @@ static void wfs_complex_type(ows * o, wfs_request * wr,
     id_name = ows_psql_id_column(o, layer_name);
     table = ows_psql_describe_table(o, layer_name);
 
-    assert(id_name != NULL);
     assert(table != NULL);
 
     /* Output the description of the layer_name */
     for (an = table->first; an != NULL; an = an->next) {
-        if (!buffer_cmp(an->key, id_name->buf)) {
+        if (!id_name || (id_name && !buffer_cmp(an->key, id_name->buf))) {
             fprintf(o->output, "    <xs:element name ='");
             buffer_flush(an->key, o->output);
             fprintf(o->output, "' type='%s' ", ows_psql_to_xsd(an->value));

@@ -35,7 +35,6 @@
 static void wfs_complex_type(ows * o, wfs_request * wr,
                              buffer * layer_name)
 {
-    buffer *id_name;
     array *table;
     array_node *an;
     list *mandatory_prop;
@@ -54,25 +53,22 @@ static void wfs_complex_type(ows * o, wfs_request * wr,
             "  <xs:extension base='gml:AbstractFeatureType'>\n");
     fprintf(o->output, "   <xs:sequence>\n");
 
-    id_name = ows_psql_id_column(o, layer_name);
     table = ows_psql_describe_table(o, layer_name);
 
     assert(table != NULL);
 
     /* Output the description of the layer_name */
     for (an = table->first; an != NULL; an = an->next) {
-        if (!id_name || (id_name && !buffer_cmp(an->key, id_name->buf))) {
             fprintf(o->output, "    <xs:element name ='");
             buffer_flush(an->key, o->output);
             fprintf(o->output, "' type='%s' ", ows_psql_to_xsd(an->value));
 
             if (in_list(mandatory_prop, an->key))
-                fprintf(o->output, "minOccurs='1' ");
+                fprintf(o->output, "nillable='false' minOccurs='1' ");
             else
-                fprintf(o->output, "minOccurs='0' ");
+                fprintf(o->output, "nillable='true' minOccurs='0' ");
 
             fprintf(o->output, "maxOccurs='1'/>\n");
-        }
     }
 
     fprintf(o->output, "   </xs:sequence>\n");

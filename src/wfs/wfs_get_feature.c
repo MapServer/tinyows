@@ -323,10 +323,12 @@ static void wfs_gml_display_hits(ows * o, wfs_request * wr, mlist * request_list
 
     /* just count the number of features */
     for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
+	buffer_add_head_str(ln->value, "SELECT count(*) FROM (");
+	buffer_add_str(ln->value, ") as foo");
         res = PQexec(o->pg, ln->value->buf);
 
         if (PQresultStatus(res) == PGRES_TUPLES_OK)
-            hits = hits + PQnfields(res);
+            hits = hits + atoi(PQgetvalue(res, 0, 0));
 
         PQclear(res);
     }

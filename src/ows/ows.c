@@ -374,7 +374,8 @@ int main(int argc, char *argv[])
     /* Log input query if asked */
     if (!o->exit) ows_log(o, 3, query);
 
-    if (query == NULL || strlen(query) == 0) {
+    if (!o->exit && (query == NULL || strlen(query) == 0))
+    {
 
     	/* Usage or Version command line options */
         if (argc > 1) {

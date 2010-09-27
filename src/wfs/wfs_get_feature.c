@@ -548,7 +548,11 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                 else 
                     buffer_add_int(select, o->degree_precision);
 
-                buffer_add_str(select, ", 1) AS \"");
+		if (ows_version_get(o->request->version) == 100)
+                	buffer_add_str(select, ", 3) AS \"");	/* Bbox + short SRS */
+		else
+                	buffer_add_str(select, ", 5) AS \"");   /* Bbox + long SRS */
+
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\" ");
             }

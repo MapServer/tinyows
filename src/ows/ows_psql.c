@@ -586,6 +586,29 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n)
 }
 
 
+/* 
+ * Use PostgreSQL native handling to escape string
+ * string returned must be freed by the caller
+ * return NULL on error
+ */
+char *ows_psql_escape_string(ows *o, const char *content)
+{
+    char *content_escaped;
+    int *error = 0;
+
+    assert(o);
+    assert(o->pg);
+    assert(content);
+
+    content_escaped = malloc(strlen(content) * 2 + 1);
+    PQescapeStringConn(o->pg, content_escaped, content, strlen(content), error);
+    
+    if (*error != 0) return NULL;
+
+    return content_escaped;
+}
+
+
 /*
  * vim: expandtab sw=4 ts=4
  */

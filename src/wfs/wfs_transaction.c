@@ -263,7 +263,7 @@ static buffer *wfs_retrieve_value(ows * o, wfs_request * wr, buffer * value,
 						xmlDocPtr xmldoc, xmlNodePtr n)
 {
     xmlChar *content;
-    xmlChar *content_escaped;
+    char *content_escaped;
 
     assert(o != NULL);
     assert(wr != NULL);
@@ -271,14 +271,24 @@ static buffer *wfs_retrieve_value(ows * o, wfs_request * wr, buffer * value,
     assert(n != NULL);
 
     content = xmlNodeGetContent(n);
-    content_escaped = xmlEncodeSpecialChars(xmldoc, content);
+    content_escaped = ows_psql_escape_string(o, (char *) content);
+
+    if (content_escaped == NULL)
+    {
+        free(content_escaped);
+        xmlFree(content);
+	buffer_free(value);
+        xmlFreeDoc(xmldoc);
+        ows_error(o, OWS_ERROR_FORBIDDEN_CHARACTER,
+	    "Some forbidden character are present into the request", "transaction");
+    }
 
     buffer_add_str(value, "'");
-    buffer_add_str(value, (char *) content_escaped);
+    buffer_add_str(value, content_escaped);
     buffer_add_str(value, "'");
 
     xmlFree(content);
-    xmlFree(content_escaped);
+    free(content_escaped);
 
     return value;
 }

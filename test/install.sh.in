@@ -3,15 +3,15 @@
 # don't launch directly this script
 # use 'make install-test' to do so
 
-PG_BIN=@POSTGIS_BIN@
-PG_SHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
-PG_USER=postgres
+PGBIN=@POSTGIS_BIN@
+PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
+PGUSER=postgres
 DB=tinyows_test
 
 echo "Create Spatial Database: $DB"
-su $PG_USER -c "$PG_BIN/dropdb $DB > /dev/null 2> /dev/null"
-su $PG_USER -c "$PG_BIN/createdb $DB"
-su $PG_USER -c "$PG_BIN/createlang plpgsql $DB"
-su $PG_USER -c "$PG_BIN/psql $DB < $PG_SHARE/postgis.sql"
-su $PG_USER -c "$PG_BIN/psql $DB < $PG_SHARE/spatial_ref_sys.sql"
-su $PG_USER -c "$PG_BIN/psql $DB < test/ogc_wfs_data_110.sql"
+su $PGUSER -c "$PGBIN/dropdb $DB > /dev/null 2> /dev/null"
+su $PGUSER -c "$PGBIN/createdb $DB"
+su $PGUSER -c "$PGBIN/createlang plpgsql $DB"
+su $PGUSER -c "$PGBIN/psql $DB < $PGSHARE/postgis.sql"
+su $PGUSER -c "$PGBIN/psql $DB < $PGSHARE/spatial_ref_sys.sql"
+su $PGUSER -c "$PGBIN/psql $DB < test/ogc_wfs_data_110.sql"

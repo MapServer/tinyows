@@ -82,13 +82,7 @@ char *cgi_getback_query(ows * o)
     else if (cgi_method_post()) {
         query_size = atoi(getenv("CONTENT_LENGTH"));
 
-        if (query_size >= CGI_QUERY_MAX) {
-            ows_error(o, OWS_ERROR_REQUEST_HTTP, "QUERY_STRING too long",
-                      "request");
-            return NULL;
-        }
-
-        query = malloc(sizeof(char) * CGI_QUERY_MAX);
+        query = malloc(sizeof(char) * query_size + 1);
         assert(query != NULL);
         result = fread(query, query_size, 1, stdin);
         if (ferror(stdin)) {

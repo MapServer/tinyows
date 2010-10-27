@@ -781,12 +781,12 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     sql = buffer_init();
     content = NULL;
 
-    buffer_add_str(sql, "UPDATE \"");
+    buffer_add_str(sql, "UPDATE ");
 
     /*retrieve the name of the table in which features must be updated */
     typename = wfs_retrieve_typename(o, wr, n);
     buffer_copy(sql, ows_psql_schema_name(o, typename));
-    buffer_add_str(sql, "\".\"");
+    buffer_add_str(sql, ".\"");
     buffer_copy(sql, typename);
     buffer_add_str(sql, "\"");
 

@@ -442,14 +442,16 @@ void ows_layers_storage_fill(ows * o)
         filled = false;
 
         for (i = 0, end = PQntuples(res); i < end; i++) {
-            if (buffer_cmp(ln->layer->name, (char *) PQgetvalue(res, i, 1))) {
+            if (buffer_cmp(ln->layer->name, (char *) PQgetvalue(res, i, 1)) && 
+		buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res, i, 0))) {
                 ows_layer_storage_fill(o, ln->layer, true);
                 filled = true;
             }
         }
             
         for (i = 0, end = PQntuples(res_g); i < end; i++) {
-            if (buffer_cmp(ln->layer->name, (char *) PQgetvalue(res_g, i, 1))) {
+            if (buffer_cmp(ln->layer->name, (char *) PQgetvalue(res_g, i, 1)) &&
+		buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res, i, 0))) {
                 ows_layer_storage_fill(o, ln->layer, false);
                 filled = true;
             }

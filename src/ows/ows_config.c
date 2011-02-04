@@ -100,6 +100,18 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
         else                  o->check_valid_geom = false;
         xmlFree(a);
     }
+    
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "encoding");
+    if (a != NULL) {
+        o->encoding = buffer_init();
+        buffer_add_str(o->encoding, (char *) a);
+        xmlFree(a);
+    }
+    else {
+        o->encoding = buffer_init();
+        buffer_add_str(o->encoding, "UTF-8");
+    }
+
 }
 
 

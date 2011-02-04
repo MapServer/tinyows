@@ -119,6 +119,7 @@ typedef struct Ows_layer_storage {
     int pkey_column_number;
     bool is_degree;
     array * attributes;
+    buffer * encoding;
 } ows_layer_storage;
 
 typedef struct Ows_srs {
@@ -188,6 +189,7 @@ typedef struct Ows_layer {
     list * keywords;
     buffer * prefix;
     buffer * server;
+    buffer * encoding;
     ows_layer_storage * storage;
 } ows_layer;
 
@@ -415,6 +417,9 @@ typedef struct Ows {
     buffer * online_resource;
     buffer * pg_dsn;
     buffer * log_file;
+    
+    /* Carlos Ruiz - cruizch@gmail.com - 2010-01-24 */
+	buffer * encoding;
 
     FILE* log;
     FILE* output;

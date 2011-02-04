@@ -467,7 +467,7 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
     else
         fprintf(o->output, "Content-Type: application/xml\n\n");
 
-    fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
+    fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
     fprintf(o->output, "<WFS_Capabilities");
     fprintf(o->output, " version='1.1.0' updateSequence='0'\n");
     fprintf(o->output, "  xmlns='http://www.opengis.net/wfs'\n");
@@ -565,7 +565,7 @@ static void wfs_get_capabilities_100(ows * o, wfs_request * wr)
     assert(wr != NULL);
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
-    fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
+    fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
     fprintf(o->output, "<WFS_Capabilities\n");
     fprintf(o->output, "version='1.0.0' updateSequence='0'\n");
     fprintf(o->output, " xmlns='http://www.opengis.net/wfs'\n");

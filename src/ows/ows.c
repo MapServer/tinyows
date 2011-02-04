@@ -44,6 +44,10 @@ static void ows_pg(ows * o, char *con_str)
     if (PQstatus(o->pg) != CONNECTION_OK)
         ows_error(o, OWS_ERROR_CONNECTION_FAILED,
                   "connection to database failed", "init_OWS");
+
+    if (PQsetClientEncoding(o->pg, o->encoding->buf))
+        ows_error(o, OWS_ERROR_CONNECTION_FAILED,
+                  "Wrong databse encoding", "init_OWS");
 }
 
 
@@ -68,10 +72,9 @@ static ows *ows_init()
     o->online_resource = NULL;
     o->schema_dir = NULL;
     o->log_file = NULL;
+    o->encoding = NULL;
     o->log = NULL;
-
     o->layers = NULL;
-
     o->max_width = 0;
     o->max_height = 0;
     o->max_layers = 0;
@@ -130,6 +133,13 @@ void ows_flush(ows * o, FILE * output)
     if (o->log_file != NULL) {
         fprintf(output, "log file: ");
         buffer_flush(o->log_file, output);
+        fprintf(output, "\n");
+    }
+    
+    /* Carlos Ruiz - cruizch@gmail.com - 2010-01-24 */
+    if (o->encoding != NULL) {
+        fprintf(output, "encoding: ");
+        buffer_flush(o->encoding, output);
         fprintf(output, "\n");
     }
 
@@ -243,6 +253,9 @@ void ows_free(ows * o)
     if (o->sld_path != NULL)
         buffer_free(o->sld_path);
 
+    if (o->encoding != NULL)
+        buffer_free(o->encoding);
+
     free(o);
     o = NULL;
 }
@@ -283,6 +296,7 @@ void ows_usage(ows * o)
 #endif
     fprintf(stderr, "Config File Path:  %s\n", o->config_file->buf);
     fprintf(stderr, "PostGIS dsn:       %s\n", o->pg_dsn->buf);
+    fprintf(stderr, "Encoding:          %s\n", o->encoding->buf);
     fprintf(stderr, "Schema dir:        %s\n", o->schema_dir->buf);
 
     if (o->log_file != NULL)

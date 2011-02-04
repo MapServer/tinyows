@@ -72,7 +72,7 @@ static void wfs_error_100(ows * o, wfs_request * wf,
 
     ows_log(o, 1, message);
 
-    fprintf(o->output, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    fprintf(o->output, "<?xml version=\"1.0\" encoding=\"%s\"?>\n", o->encoding->buf);
     fprintf(o->output, "<ServiceExceptionReport\n");
     fprintf(o->output, " xmlns=\"http://www.opengis.net/ogc\"\n");
     fprintf(o->output, " xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n");

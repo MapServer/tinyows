@@ -97,8 +97,9 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 
     pkey = ows_psql_id_column(o, layer_name); /* pkey could be NULL !!! */
 
-    /* No Pkey display in GML */
-    if (buffer_cmp(value, "") || (pkey != NULL && buffer_cmp(prop_name, pkey->buf))) 
+    /* No Pkey display in GML (default behaviour) */
+    if (buffer_cmp(value, "") || 
+       (pkey != NULL && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk))
         return;
 
 #if 0

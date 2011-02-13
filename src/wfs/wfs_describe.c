@@ -32,9 +32,9 @@
  * Describe the layer_name in GML according
  * with PostGIS table definition
  */
-static void wfs_complex_type(ows * o, wfs_request * wr,
-                             buffer * layer_name)
+static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 {
+    buffer *id_name;
     array *table;
     array_node *an;
     list *mandatory_prop;
@@ -49,26 +49,31 @@ static void wfs_complex_type(ows * o, wfs_request * wr,
     buffer_flush(layer_name, o->output);
     fprintf(o->output, "Type'>\n");
     fprintf(o->output, " <xs:complexContent>\n");
-    fprintf(o->output,
-            "  <xs:extension base='gml:AbstractFeatureType'>\n");
+    fprintf(o->output, "  <xs:extension base='gml:AbstractFeatureType'>\n");
     fprintf(o->output, "   <xs:sequence>\n");
 
     table = ows_psql_describe_table(o, layer_name);
+    id_name = ows_psql_id_column(o, layer_name);
 
     assert(table != NULL);
 
     /* Output the description of the layer_name */
     for (an = table->first; an != NULL; an = an->next) {
-            fprintf(o->output, "    <xs:element name ='");
-            buffer_flush(an->key, o->output);
-            fprintf(o->output, "' type='%s' ", ows_psql_to_xsd(an->value));
+            if ( !id_name ||
+		(id_name && !buffer_cmp(an->key, id_name->buf)) ||
+		(id_name && buffer_cmp(an->key, id_name->buf) && o->expose_pk)) 
+		{
+        		fprintf(o->output, "    <xs:element name ='");
+         	   	buffer_flush(an->key, o->output);
+         	   	fprintf(o->output, "' type='%s' ", ows_psql_to_xsd(an->value));
 
-            if (in_list(mandatory_prop, an->key))
-                fprintf(o->output, "nillable='false' minOccurs='1' ");
-            else
-                fprintf(o->output, "nillable='true' minOccurs='0' ");
-
-            fprintf(o->output, "maxOccurs='1'/>\n");
+          		if (in_list(mandatory_prop, an->key))
+                		fprintf(o->output, "nillable='false' minOccurs='1' ");
+            	 	else
+        	        	fprintf(o->output, "nillable='true' minOccurs='0' ");
+	
+        		fprintf(o->output, "maxOccurs='1'/>\n");
+		}
     }
 
     fprintf(o->output, "   </xs:sequence>\n");
@@ -107,13 +112,13 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     else
     	fprintf(o->output, "Content-Type: text/xml; subtype=gml/3.1.1\n\n");
 
-    fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
+    fprintf(o->output, "<?xml version='1.0' encoding='utf-8'?>\n");
 
     /* if all layers belong to different prefixes, import the matching namespaces */
     if (prefix->first->next != NULL) {
-        fprintf(o->output,
-                "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema' xmlns='http://www.w3.org/2001/XMLSchema' ");
-        fprintf(o->output, "elementFormDefault='qualified'> ");
+        fprintf(o->output, "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'");
+        fprintf(o->output, " xmlns='http://www.w3.org/2001/XMLSchema'");
+        fprintf(o->output, " elementFormDefault='qualified'> ");
 
         for (elemt = prefix->first; elemt != NULL; elemt = elemt->next) {
             namespace = ows_layer_server(o->layers, elemt->value);
@@ -145,10 +150,8 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     /* if all layers belong to the same prefix, print the xsd schema describing features */
     else {
         namespace = ows_layer_server(o->layers, prefix->first->value);
-        fprintf(o->output,
-                "<xs:schema targetNamespace='%s' ", namespace->buf);
-        fprintf(o->output,
-                "xmlns:%s='%s' ", prefix->first->value->buf, namespace->buf);
+        fprintf(o->output, "<xs:schema targetNamespace='%s' ", namespace->buf);
+        fprintf(o->output, "xmlns:%s='%s' ", prefix->first->value->buf, namespace->buf);
         fprintf(o->output, "xmlns:ogc='http://www.opengis.net/ogc' ");
         fprintf(o->output, "xmlns:xs='http://www.w3.org/2001/XMLSchema' ");
         fprintf(o->output, "xmlns='http://www.w3.org/2001/XMLSchema' ");
@@ -160,27 +163,21 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
         else
             fprintf(o->output, "version='1.1'>\n");
 
-        fprintf(o->output,
-                "<xs:import namespace='http://www.opengis.net/gml'");
+        fprintf(o->output, "<xs:import namespace='http://www.opengis.net/gml'");
 
         if (wfs_version == 100)
-            fprintf(o->output,
-                    " schemaLocation='http://schemas.opengis.net/gml/2.1.2/feature.xsd'/>\n");
+            fprintf(o->output, " schemaLocation='http://schemas.opengis.net/gml/2.1.2/feature.xsd'/>\n");
         else
-            fprintf(o->output,
-                    " schemaLocation='http://schemas.opengis.net/gml/3.1.1/base/gml.xsd'/>\n");
+            fprintf(o->output, " schemaLocation='http://schemas.opengis.net/gml/3.1.1/base/gml.xsd'/>\n");
 
         /* Describe each feature type specified in the request */
-        for (elemt = wr->typename->first; elemt != NULL;
-                elemt = elemt->next)
-
+        for (elemt = wr->typename->first; elemt != NULL; elemt = elemt->next)
         {
             fprintf(o->output, "<xs:element name='");
             buffer_flush(elemt->value, o->output);
             fprintf(o->output, "' type='%s:", prefix->first->value->buf);
             buffer_flush(elemt->value, o->output);
-            fprintf(o->output,
-                    "Type' substitutionGroup='gml:_Feature' />\n");
+            fprintf(o->output, "Type' substitutionGroup='gml:_Feature' />\n");
             wfs_complex_type(o, wr, elemt->value);
         }
 
@@ -212,9 +209,7 @@ buffer * wfs_generate_schema(ows * o)
     schema = buffer_init();
     layers = ows_layer_list_having_storage(o->layers);
 
-    buffer_add_str(schema, "<?xml version='1.0' encoding='");
-    buffer_copy(schema, o->encoding);
-    buffer_add_str(schema, "'?>\n");
+    buffer_add_str(schema, "<?xml version='1.0' encoding='utf-8'?>\n");
 
     prefix = ows_layer_list_prefix(o->layers, layers);
 

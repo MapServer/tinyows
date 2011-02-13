@@ -106,10 +106,17 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
         o->encoding = buffer_init();
         buffer_add_str(o->encoding, (char *) a);
         xmlFree(a);
-    }
-    else {
+    } else {
         o->encoding = buffer_init();
         buffer_add_str(o->encoding, "UTF-8");
+    }
+
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "expose_pk");
+    o->expose_pk = false;
+    if (a != NULL) {
+        if (atoi((char *) a)) o->expose_pk = true;
+        else                  o->expose_pk = false;
+        xmlFree(a);
     }
 
 }

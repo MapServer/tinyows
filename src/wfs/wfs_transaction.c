@@ -221,7 +221,7 @@ static void wfs_transaction_response(ows * o, wfs_request * wr,
     assert(result != NULL);
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
-    fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
+    fprintf(o->output, "<?xml version='1.0' encoding='utf-8'?>\n");
 
     if (ows_version_get(o->request->version) == 100)
         fprintf(o->output, "<wfs:WFS_TransactionResponse version=\"1.0.0\"\n");
@@ -311,11 +311,16 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
             content = xmlNodeGetContent(att->children);
             buffer_add_str(typename, (char *) content);
             wfs_request_remove_namespaces(o, typename);
+            if (!ows_layer_writable(o->layers, typename)) {
+            	xmlFree(content);
+    		return NULL;
+	    }
             xmlFree(content);
+    	    return typename;
         }
     }
 
-    return typename;
+    return NULL;
 }
 
 
@@ -377,8 +382,18 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         layer_name = buffer_init();
 
         /* name of the table in which features must be inserted */
-        buffer_add_str(layer_name, (char *) n->name);
+	buffer_add_str(layer_name, (char *) n->name);
         wfs_request_remove_namespaces(o, layer_name);
+
+        if (!layer_name || !ows_layer_writable(o->layers, layer_name)) {
+             buffer_free(sql);
+             buffer_free(handle);
+             buffer_free(values);
+	     if (layer_name) buffer_free(layer_name);
+             result = buffer_init();
+             buffer_add_str(result, "Error unknown or not writable Layer Name");
+             return result;
+	}
 
         idgen = handle_idgen;
 
@@ -401,7 +416,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
         id_column = ows_psql_id_column(o, layer_name);
 	if (!id_column) {
-             buffer_free(id);
+             if (id) buffer_free(id);
              buffer_free(sql);
              buffer_free(handle);
              buffer_free(values);
@@ -700,20 +715,21 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     assert(n != NULL);
 
     sql = buffer_init();
-    xmlstring = buffer_init();
+    t = NULL;
 
     buffer_add_str(sql, "DELETE FROM ");
 
     /*retrieve the name of the table in which features must be deleted */
     typename = wfs_retrieve_typename(o, wr, n);
-    t = ows_psql_schema_name(o, typename);
-    if (t == NULL) {
-        buffer_free(xmlstring);
-        buffer_free(typename);
+    if (typename) t = ows_psql_schema_name(o, typename);
+
+    if (!typename || !t) {
+        if (typename) buffer_free(typename);
         buffer_free(sql);
         result = buffer_init();
-        buffer_add_str(result, "Typename provided is unknown");
-        return result;
+        buffer_add_str(result, "Typename provided is unknown or not writable");
+
+	return result;
     }
 
     buffer_copy(sql, t);
@@ -723,7 +739,6 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
     n = n->children;
     if (n == NULL) {
-        buffer_free(xmlstring);
         buffer_free(typename);
         buffer_free(sql);
         result = buffer_init();
@@ -738,6 +753,7 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     buffer_add_str(sql, " WHERE ");
 
     /* put xml filter into a buffer */
+    xmlstring = buffer_init();
     xmlstring = cgi_add_xml_into_buffer(xmlstring, n);
 
     filter = filter_encoding_init();
@@ -768,7 +784,7 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
  */
 static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
-    buffer *typename, *xmlstring, *result, *sql, *property_name, *values, *gml;
+    buffer *typename, *xmlstring, *result, *sql, *property_name, *values, *gml, *t;
     filter_encoding *filter, *fe;
     xmlNodePtr node, elemt;
     xmlChar *content;
@@ -780,11 +796,21 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
     sql = buffer_init();
     content = NULL;
+    t = NULL;
 
     buffer_add_str(sql, "UPDATE ");
 
     /*retrieve the name of the table in which features must be updated */
     typename = wfs_retrieve_typename(o, wr, n);
+    if (typename) t = ows_psql_schema_name(o, typename);
+
+    if (!typename || !t) {
+        if (typename) buffer_free(typename);
+        buffer_free(sql);
+        result = buffer_init();
+        buffer_add_str(result, "Typename provided is unknown or not writable");
+    }
+
     buffer_copy(sql, ows_psql_schema_name(o, typename));
     buffer_add_str(sql, ".\"");
     buffer_copy(sql, typename);

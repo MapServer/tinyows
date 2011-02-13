@@ -417,9 +417,7 @@ typedef struct Ows {
     buffer * online_resource;
     buffer * pg_dsn;
     buffer * log_file;
-    
-    /* Carlos Ruiz - cruizch@gmail.com - 2010-01-24 */
-	buffer * encoding;
+    buffer * encoding;
 
     FILE* log;
     FILE* output;
@@ -437,6 +435,7 @@ typedef struct Ows {
 
     ows_geobbox * max_geobbox;
     bool wfs_display_bbox;
+    bool expose_pk;
 
     bool check_schema;
     bool check_valid_geom;

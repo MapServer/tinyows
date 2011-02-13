@@ -255,7 +255,7 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     assert(namespaces != NULL);
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
-    fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
+    fprintf(o->output, "<?xml version='1.0' encoding='utf-8'?>\n");
     fprintf(o->output, "<wfs:FeatureCollection\n");
 
     for (an = namespaces->first; an != NULL; an = an->next)

@@ -284,19 +284,18 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr,
                 return NULL;
             }
 
-            /* check if layer is retrievable if request is GetFeature */
-            if (wr->request == WFS_GET_FEATURE
-                    && !ows_layer_retrievable(o->layers, ln->value)) {
+            /* check if layer is retrievable */
+            if ((wr->request == WFS_GET_FEATURE || wr->request == WFS_DESCRIBE_FEATURE_TYPE) 
+                 && !ows_layer_retrievable(o->layers, ln->value)) {
                 list_free(layer_name);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_RETRIEVABLE,
-                          "not-retrievable layer(s), GetFeature Operation impossible, change configuration file",
+                          "not-retrievable layer(s), Operation impossible, change configuration file",
                           "typename");
                 return NULL;
             }
 
             /* check if layer is writable if request is a transaction operation */
-            if (wr->operation != NULL
-                    && !ows_layer_writable(o->layers, ln->value)) {
+            if (wr->operation != NULL && !ows_layer_writable(o->layers, ln->value)) {
                 list_free(layer_name);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_WRITABLE,
                           "not-writable layer(s), Transaction Operation impossible, change configuration file",

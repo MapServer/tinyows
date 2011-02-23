@@ -44,8 +44,7 @@ static void ows_pg(ows * o, char *con_str)
     if (PQstatus(o->pg) != CONNECTION_OK)
         ows_error(o, OWS_ERROR_CONNECTION_FAILED,
                   "connection to database failed", "init_OWS");
-
-    if (PQsetClientEncoding(o->pg, o->encoding->buf))
+    else if (PQsetClientEncoding(o->pg, o->encoding->buf))
         ows_error(o, OWS_ERROR_CONNECTION_FAILED,
                   "Wrong databse encoding", "init_OWS");
 }
@@ -136,7 +135,6 @@ void ows_flush(ows * o, FILE * output)
         fprintf(output, "\n");
     }
     
-    /* Carlos Ruiz - cruizch@gmail.com - 2010-01-24 */
     if (o->encoding != NULL) {
         fprintf(output, "encoding: ");
         buffer_flush(o->encoding, output);
@@ -390,7 +388,6 @@ int main(int argc, char *argv[])
 
     if (!o->exit && (query == NULL || strlen(query) == 0))
     {
-
     	/* Usage or Version command line options */
         if (argc > 1) {
 
@@ -456,8 +453,10 @@ int main(int argc, char *argv[])
         ows_request_free(o->request);
         o->request=NULL;
     }
-    
-    if (cgi_method_post() && query) free(query);  /* We allocated memory only on post case */
+
+    /* We allocated memory only on post case */
+    if (cgi_method_post() && query) free(query);
+
 #if TINYOWS_FCGI
     o->exit = false;
     }

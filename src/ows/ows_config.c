@@ -116,9 +116,9 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     } else {
         o->encoding = buffer_init();
-        buffer_add_str(o->encoding, "UTF-8");
+        buffer_add_str(o->encoding, DEFAULT_XML_ENCODING);
     }
-
+    
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "expose_pk");
     o->expose_pk = false;
     if (a != NULL) {
@@ -415,21 +415,30 @@ static void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
     if (xmlTextReaderMoveToFirstAttribute(r) != 1)
         return;
 
+    o->db_encoding = buffer_init();
+    buffer_add_str(o->db_encoding, DEFAULT_DB_ENCODING);
+
     do {
         a = xmlTextReaderName(r);
 
-        if (strcmp((char *) a, "host") == 0
-                || strcmp((char *) a, "user") == 0
-                || strcmp((char *) a, "password") == 0
-                || strcmp((char *) a, "dbname") == 0
-                || strcmp((char *) a, "port") == 0) {
+        if (!strcmp((char *) a, "host")	    ||
+            !strcmp((char *) a, "user")     || 
+            !strcmp((char *) a, "password") ||
+            !strcmp((char *) a, "dbname")   ||
+            !strcmp((char *) a, "port")) 
+	{
             buffer_add_str(b, (char *) a);
             buffer_add_str(b, "=");
             v = xmlTextReaderValue(r);
             buffer_add_str(b, (char *) v);
             buffer_add_str(b, " ");
             xmlFree(v);
-        }
+        } else if (!strcmp((char *) a, "encoding")) {
+            v = xmlTextReaderValue(r);
+	    buffer_empty(o->db_encoding);
+       	    buffer_add_str(o->db_encoding, (char *) v);
+            xmlFree(v);
+	}
 
         xmlFree(a);
     } while (xmlTextReaderMoveToNextAttribute(r) == 1);

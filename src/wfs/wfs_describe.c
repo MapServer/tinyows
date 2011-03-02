@@ -112,7 +112,7 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     else
     	fprintf(o->output, "Content-Type: text/xml; subtype=gml/3.1.1\n\n");
 
-    fprintf(o->output, "<?xml version='1.0' encoding='utf-8'?>\n");
+    fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
 
     /* if all layers belong to different prefixes, import the matching namespaces */
     if (prefix->first->next != NULL) {

@@ -409,6 +409,9 @@ typedef struct Ows_request {
         } request;
 } ows_request;
 
+#define DEFAULT_XML_ENCODING "UTF-8"
+#define DEFAULT_DB_ENCODING "UTF8"
+
 typedef struct Ows {
     bool exit;
     PGconn * pg;
@@ -418,6 +421,7 @@ typedef struct Ows {
     buffer * pg_dsn;
     buffer * log_file;
     buffer * encoding;
+    buffer * db_encoding;
 
     FILE* log;
     FILE* output;

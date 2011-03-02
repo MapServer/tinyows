@@ -144,12 +144,14 @@ ows_geobbox *ows_geobbox_set_from_str(ows * o, ows_geobbox * g, char *str)
  */
 ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
 {
+    double xmin, ymin, xmax, ymax;
     buffer *sql;
     PGresult *res;
     ows_geobbox *g;
     ows_bbox *bb;
     list *geom;
     list_node *ln;
+    bool first = true;
 
     assert(o != NULL);
     assert(layer_name != NULL);
@@ -159,42 +161,69 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
     geom = ows_psql_geometry_column(o, layer_name);
     assert(geom != NULL);
 
-    buffer_add_str(sql, "SELECT ST_xmin(g.extent), ST_ymin(g.extent), ST_xmax(g.extent), ST_ymax(g.extent) ");
-    buffer_add_str(sql, "FROM (SELECT ST_Extent(ST_transform(foo.the_geom, 4326)) AS extent FROM (");
+    g = ows_geobbox_init();
+    xmin = ymin = xmax = ymax = 0.0;
 
-    for (ln = geom->first; ln != NULL; ln = ln->next) {
-        buffer_add_str(sql, " (SELECT \"");
-        buffer_copy(sql, ln->value);
-        buffer_add_str(sql, "\" AS \"the_geom\" FROM ");
-        buffer_copy(sql, ows_psql_schema_name(o, layer_name));
-        buffer_add_str(sql, ".\"");
-        buffer_copy(sql, layer_name);
-        buffer_add_str(sql, "\")");
+    for (ln = geom->first; ln != NULL; ln = ln->next)
+    {
+    	buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM ");
+	if (o->estimated_extent) 
+	{
+		buffer_add_str(sql, "(SELECT ST_Transform(ST_SetSRID(ST_Estimated_Extent('");
+    		buffer_copy(sql, ows_psql_schema_name(o, layer_name));
+ 	   	buffer_add_str(sql, "','");
+    		buffer_copy(sql, layer_name);
+	    	buffer_add_str(sql, "','");
+	    	buffer_copy(sql, ln->value);
+   	 	buffer_add_str(sql, "'), (SELECT ST_SRID(\"");
+    		buffer_copy(sql, ln->value);
+    		buffer_add_str(sql, "\") FROM ");
+    		buffer_copy(sql, ows_psql_schema_name(o, layer_name));
+    		buffer_add_str(sql, ".\"");
+    		buffer_copy(sql, layer_name);
+    		buffer_add_str(sql, "\" LIMIT 1)) ,4326) AS g) AS foo");
+	} else {
+		buffer_add_str(sql, "(SELECT ST_Transform(ST_SetSRID(ST_Extent(\"");
+	    	buffer_copy(sql, ln->value);
+   	 	buffer_add_str(sql, "\"), (SELECT ST_SRID(\"");
+    		buffer_copy(sql, ln->value);
+    		buffer_add_str(sql, "\") FROM ");
+    		buffer_copy(sql, ows_psql_schema_name(o, layer_name));
+    		buffer_add_str(sql, ".\"");
+    		buffer_copy(sql, layer_name);
+    		buffer_add_str(sql, "\" LIMIT 1)), 4326) AS g ");
+    		buffer_add_str(sql, " FROM ");
+    		buffer_copy(sql, ows_psql_schema_name(o, layer_name));
+    		buffer_add_str(sql, ".\"");
+    		buffer_copy(sql, layer_name);
+    		buffer_add_str(sql, "\" ) AS foo");
+	}
 
-        if (ln->next != NULL) buffer_add_str(sql, " UNION ALL ");
+	res = PQexec(o->pg, sql->buf);
+    	buffer_empty(sql);
+    	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        	PQclear(res);
+    		buffer_free(sql);
+        	return g;
+    	}
+
+	if (first || atof(PQgetvalue(res, 0, 0)) < xmin)
+		xmin = atof(PQgetvalue(res, 0, 0));
+	if (first || atof(PQgetvalue(res, 0, 1)) < ymin)
+		ymin = atof(PQgetvalue(res, 0, 1));
+	if (first || atof(PQgetvalue(res, 0, 2)) > xmax)
+		xmax = atof(PQgetvalue(res, 0, 2));
+	if (first || atof(PQgetvalue(res, 0, 3)) > ymax)
+		ymax = atof(PQgetvalue(res, 0, 3));
+
+	first = false;
+	PQclear(res);
     }
 
-    buffer_add_str(sql, " ) AS foo) AS g");
-
-    res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
-    g = ows_geobbox_init();
-
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        PQclear(res);
-        return g;
-    }
-
     bb = ows_bbox_init();
-    /* FIXME atof don't handle error */
-    ows_bbox_set(o, bb,
-                 atof(PQgetvalue(res, 0, 0)),
-                 atof(PQgetvalue(res, 0, 1)),
-                 atof(PQgetvalue(res, 0, 2)),
-                 atof(PQgetvalue(res, 0, 3)), 4326);
-    PQclear(res);
-
+    ows_bbox_set(o, bb, xmin, ymin, xmax, ymax, 4326);
     ows_geobbox_set_from_bbox(o, g, bb);
     ows_bbox_free(bb);
 

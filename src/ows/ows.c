@@ -82,6 +82,7 @@ static ows *ows_init()
     o->meter_precision = 0;
     o->max_geobbox = NULL;
     o->wfs_display_bbox = false;
+    o->estimated_extent = true;
 
     o->metadata = NULL;
     o->contact = NULL;
@@ -190,6 +191,7 @@ void ows_flush(ows * o, FILE * output)
         fprintf(output, "\n");
     }
     fprintf(output, "wfs_display_bbox: %d\n", o->wfs_display_bbox?1:0);
+    fprintf(output, "estimated_extent: %d\n", o->estimated_extent?1:0);
 
     if (o->sld_path != NULL) {
         fprintf(output, "sld_path: ");

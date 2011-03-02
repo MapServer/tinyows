@@ -85,6 +85,14 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     }
 
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "estimated_extent");
+    o->estimated_extent = true;
+    if (a != NULL) {
+        if (atoi((char *) a)) o->estimated_extent = true;
+        else                  o->estimated_extent = false;
+        xmlFree(a);
+    }
+
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "check_schema");
     o->check_schema = true;
     if (a != NULL) {

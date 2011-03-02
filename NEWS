@@ -1,4 +1,7 @@
+0.10.0
  - Encoding support Carlos Ruiz: cruizch@gmail.com
+ - Estimated_bbox option for GetCapabilities response (default is true)
+ - Improve drasticaly GetCapabilities performance on huge layer 
 
 0.9.0   (19/06/2010)
  - Fast-CGI support

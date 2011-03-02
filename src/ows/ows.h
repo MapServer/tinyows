@@ -436,6 +436,7 @@ typedef struct Ows {
     ows_geobbox * max_geobbox;
     bool wfs_display_bbox;
     bool expose_pk;
+    bool estimated_extent;
 
     bool check_schema;
     bool check_valid_geom;

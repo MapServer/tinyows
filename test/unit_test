@@ -72,17 +72,16 @@ elif [ $mode -eq 3 ]; then
 
 # http mode
 elif [ $mode -eq 4 ]; then
-    echo $unit_id
     if [ ! $TINYOWS_CONFIG_FILE ]; then
 	TINYOWS_CONFIG_FILE=/usr/local/tinyows/config.xml
     fi
     IP=`grep online_resource $TINYOWS_CONFIG_FILE | sed -e 's/.*online_resource="//' -e 's/".*//'`
     FIRST_CHAR=`cat $unit_id | sed -e '2,$d' -e 's/\(.\).*/\1/'` 
     if [ $FIRST_CHAR = '<' ]; then
-        curl -i -H "Content-Type: text/xml" --data @$unit_id $IP
+        curl -s -i -H "Content-Type: text/xml" --data @$unit_id $IP
     else
         QUERY=`cat $unit_id`
-        curl -i "$IP?$QUERY"
+        curl -s -i "$IP?$QUERY"
     fi
 
 # Exception mode

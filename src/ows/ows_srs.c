@@ -294,7 +294,6 @@ int ows_srs_get_srid_from_layer(ows * o, buffer * layer_name)
                 && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
             return ln->layer->storage->srid;
 
-    assert(0); /* Should not happen */
     return -1;
 }
 

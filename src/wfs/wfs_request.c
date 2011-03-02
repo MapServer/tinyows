@@ -255,8 +255,7 @@ buffer *wfs_request_remove_namespaces(ows * o, buffer * b)
  * Check and fill typename parameter
  * Return a list of layers' names
  */
-static list *wfs_request_check_typename(ows * o, wfs_request * wr,
-                                        list * layer_name)
+static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_name)
 {
     buffer *b;
     list_node *ln;
@@ -456,7 +455,7 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
         srid = ows_srs_get_srid_from_layer(o, layer_name->first->value);
 
         /* And check if all layers have the same SRS */
-        if (wr->typename->first->next != NULL) {
+        if (wr->typename && wr->typename->first->next) {
             for (ln = layer_name->first->next; ln != NULL; ln = ln->next) {
                 srid_tmp = ows_srs_get_srid_from_layer(o, ln->value);
 

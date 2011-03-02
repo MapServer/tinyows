@@ -98,9 +98,8 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     pkey = ows_psql_id_column(o, layer_name); /* pkey could be NULL !!! */
 
     /* No Pkey display in GML (default behaviour) */
-    if (buffer_cmp(value, "") || 
-       (pkey != NULL && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk))
-        return;
+    if (pkey != NULL && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk) return;
+    if (buffer_cmp(value, "")) return;
 
 #if 0
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
@@ -273,17 +272,22 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     fprintf(o->output, " xsi:schemaLocation='");
 
     if (ows_version_get(o->request->version) == 100)
-        fprintf(o->output, "%s\n    %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType&amp;Typename=",
+        fprintf(o->output, "%s\n    %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType",
                 namespaces->first->value->buf, o->online_resource->buf);
     else 
-        fprintf(o->output, "%s\n    %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType&amp;Typename=",
+        fprintf(o->output, "%s\n    %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType",
                 namespaces->first->value->buf, o->online_resource->buf);
 
-    for (ln = wr->typename->first; ln != NULL; ln = ln->next) {
-        prefix = ows_layer_prefix(o->layers, ln->value);
-        fprintf(o->output, "%s:%s", prefix->buf, ln->value->buf);
-        buffer_free(prefix);
-        if (ln->next) fprintf(o->output, ",");
+    /* FeatureId request could be without Typename parameter */
+    if (wr->typename) 
+    {
+	fprintf("&amp;Typename=");
+   	 for (ln = wr->typename->first; ln != NULL; ln = ln->next) {
+        	prefix = ows_layer_prefix(o->layers, ln->value);
+        	fprintf(o->output, "%s:%s", prefix->buf, ln->value->buf);
+        	buffer_free(prefix);
+        	if (ln->next) fprintf(o->output, ",");
+    	}
     }
 
     if (ows_version_get(o->request->version) == 100) {
@@ -375,10 +379,8 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
      */
     if (o->wfs_display_bbox) {
         /* print the outerboundaries of the requests */
-        outer_b = ows_bbox_boundaries(o, request_list->first->next->value,
-                                  request_list->last->value);
-        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin,
-                       outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
+        outer_b = ows_bbox_boundaries(o, request_list->first->next->value, request_list->last->value);
+        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin, outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
         ows_bbox_free(outer_b);
     }
 

@@ -81,6 +81,27 @@ AC_SUBST(POSTGIS_BIN)
 
 
 dnl ---------------------------------------------------------------------------
+dnl Shp2PgSQL
+dnl ---------------------------------------------------------------------------
+AC_ARG_WITH(shp2pgsql,[  --with-shp2pgsql[[=ARG]]  shp2pgsql directory Support (ARG=path to shp2pgsql)],,)
+
+if test "$with_shp2gpsql" = "no" ; then
+  AC_MSG_ERROR([shp2pgsql is a need to TinyOWS !])
+elif test "$with_shp2pgsql" = "yes" -o "$with_shp2pgsql" = "" ; then
+  AC_PATH_PROG(SHP2PGSQL, shp2pgsql, no)
+else
+  AC_MSG_RESULT(yes)
+  SHP2PGSQL=$with_shp2pgsql
+fi
+
+if ! test -f "$SHP2PGSQL" -a -x "$SHP2PGSQL" ; then
+  AC_MSG_ERROR(['$SHP2PGSQL' is not an executable.  Make sure you use --with-shp2pgsql=/path/to/shp2pgsql])
+fi
+
+AC_SUBST(SHP2PGSQL)
+
+
+dnl ---------------------------------------------------------------------------
 dnl FastCGI
 dnl ---------------------------------------------------------------------------
 

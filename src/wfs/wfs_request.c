@@ -275,8 +275,8 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_
             /* fill the global layer name list */
             list_add_by_copy(layer_name, ln->value);
 
-            /* check if layer exists */
-            if (!ows_layer_in_list(o->layers, ln->value)) {
+            /* check if layer exists and have storage */
+            if (!ows_layer_match_table(o, ln->value)) {
                 list_free(layer_name);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_DEFINED,
                           "unknown layer name", "typename");

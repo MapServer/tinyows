@@ -281,7 +281,6 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     /* FeatureId request could be without Typename parameter */
     if (wr->typename) 
     {
-	fprintf("&amp;Typename=");
    	 for (ln = wr->typename->first; ln != NULL; ln = ln->next) {
         	prefix = ows_layer_prefix(o->layers, ln->value);
         	fprintf(o->output, "%s:%s", prefix->buf, ln->value->buf);

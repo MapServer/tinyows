@@ -99,7 +99,6 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 
     /* No Pkey display in GML (default behaviour) */
     if (pkey != NULL && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk) return;
-    if (buffer_cmp(value, "")) return;
 
 #if 0
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */

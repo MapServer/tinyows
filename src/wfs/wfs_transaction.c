@@ -313,6 +313,7 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
             wfs_request_remove_namespaces(o, typename);
             if (!ows_layer_writable(o->layers, typename)) {
             	xmlFree(content);
+		buffer_free(typename);
     		return NULL;
 	    }
             xmlFree(content);
@@ -320,6 +321,7 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
         }
     }
 
+    buffer_free(typename);
     return NULL;
 }
 

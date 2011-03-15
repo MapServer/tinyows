@@ -24,9 +24,7 @@
 #ifndef OWS_DEFINE_H 
 #define OWS_DEFINE_H
 
-
-/* define OWS_DEBUG if needed */
-#if 0
+#if @TINYOWS_DEBUG@
 #define OWS_DEBUG
 #endif
 

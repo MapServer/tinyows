@@ -41,6 +41,16 @@ XML2_LIB=`$LIBXML2_CONFIG --libs`
 AC_SUBST(XML2_INC)
 AC_SUBST(XML2_LIB)
 
+
+dnl ---------------------------------------------------------------------
+dnl Debug
+dnl ---------------------------------------------------------------------
+
+AC_ARG_ENABLE(debug,
+[  --enable-debug          enable debug mode], TINYOWS_DEBUG=1, TINYOWS_DEBUG=0)
+AC_SUBST(TINYOWS_DEBUG)
+
+
 dnl ---------------------------------------------------------------------------
 dnl PostgreSQL / PostGIS support
 dnl ---------------------------------------------------------------------------

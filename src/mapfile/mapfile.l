@@ -351,10 +351,7 @@ static void end_layer()
 
 %%
 
-<INITIAL,MAP,LAYER,METADATA,LAYER_METADATA># {
-	 char c;
-	 while ( (c = input()) != '\n' || c != EOF ) break;
-}
+<INITIAL,MAP,LAYER,METADATA,LAYER_METADATA># { char c ; for (c=input() ; c && c != '\n' ; c=input()); }
 
 <INITIAL>MAP			{BEGIN MAP;}
 <MAP>END			{BEGIN INITIAL;}
@@ -368,8 +365,8 @@ static void end_layer()
 <LAYER_CONNECTIONTYPE>POSTGIS	{BEGIN LAYER; map_is_postgis=true;}
 <LAYER_CONNECTIONTYPE>[A-Za-z]+	{BEGIN LAYER; map_is_postgis=false;}
 <LAYER>DUMP			{BEGIN LAYER_DUMP;}
-<LAYER_DUMP>TRUE		{BEGIN LAYER; map_l->retrievable = true;}
-<LAYER_DUMP>[A-Za-z]+		{BEGIN LAYER; map_l->retrievable = false;}
+<LAYER_DUMP>TRUE		{BEGIN LAYER; map_l->retrievable=true;}
+<LAYER_DUMP>[A-Za-z]+		{BEGIN LAYER; map_l->retrievable=false;}
 <LAYER>FEATURE 			{BEGIN FEATURE;}
 <FEATURE>END 			{BEGIN LAYER;}
 <LAYER>GRID 			{BEGIN GRID;}

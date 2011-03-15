@@ -408,14 +408,14 @@ static void end_layer()
 <LAYER_VALUE_SINGLE>[']		{BEGIN LAYER_METADATA;}
 <LAYER_VALUE_DOUBLE>["]		{BEGIN LAYER_METADATA;}
 
-<PROPERTIES>['][a-zA-Z0-9"/ \t_-]+[']		{properties(yytext); BEGIN MAP;}
-<PROPERTIES>["][a-zA-Z0-9'/ \t_-]+["]		{properties(yytext); BEGIN MAP;}		
-<LAYER_PROPERTIES>['][a-zA-Z0-9"/ \t.=_-]+[']	{layer_properties(yytext); BEGIN LAYER;}
-<LAYER_PROPERTIES>["][a-zA-Z0-9'/ \t.=_-]+["]	{layer_properties(yytext); BEGIN LAYER;}		
-<KEY_SINGLE>[a-zA-Z0-9" _-]+			{metadata_key(yytext);}
-<KEY_DOUBLE>[a-zA-Z0-9' _-]+			{metadata_key(yytext);}
-<LAYER_KEY_SINGLE>[a-zA-Z0-9" _-]+		{metadata_layer_key(yytext);}
-<LAYER_KEY_DOUBLE>[a-zA-Z0-9' _-]+		{metadata_layer_key(yytext);}
+<PROPERTIES>['][^']*[']		{properties(yytext); BEGIN MAP;}
+<PROPERTIES>["][^"]*["]		{properties(yytext); BEGIN MAP;}		
+<LAYER_PROPERTIES>['][^']*[']	{layer_properties(yytext); BEGIN LAYER;}
+<LAYER_PROPERTIES>["][^"]*["]	{layer_properties(yytext); BEGIN LAYER;}		
+<KEY_SINGLE>[^']+		{metadata_key(yytext);}
+<KEY_DOUBLE>[^"]+		{metadata_key(yytext);}
+<LAYER_KEY_SINGLE>[^']+		{metadata_layer_key(yytext);}
+<LAYER_KEY_DOUBLE>[^"]+		{metadata_layer_key(yytext);}
 
 <VALUE_DOUBLE>[a-zA-Z0-9.:/ '_-]+		{metadata_value(yytext);}
 <VALUE_SINGLE>[a-zA-Z0-9.:/ "_-]+		{metadata_value(yytext);}
@@ -447,7 +447,10 @@ void ows_parse_config_mapfile(ows * o, const char *filename)
 
  	while( yylex() ) ;
 
-	if (!map_o->encoding->use) buffer_add_str(map_o->encoding, "utf-8");
+	if (!map_o->db_encoding) {
+		map_o->db_encoding = buffer_init();
+		buffer_add_str(map_o->db_encoding, OWS_DEFAULT_DB_ENCODING);
+	}
 	
 	if (map_srid) {
 		for (ln = o->layers->first ; ln ; ln = ln->next)

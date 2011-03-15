@@ -98,7 +98,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     pkey = ows_psql_id_column(o, layer_name); /* pkey could be NULL !!! */
 
     /* No Pkey display in GML (default behaviour) */
-    if (pkey && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk) return;
+    if (pkey && pkey->buf && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk) return;
 
 #if 0
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
@@ -265,7 +265,6 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
          for (ln = wr->typename->first ; ln ; ln = ln->next) { 
                 ns_prefix = ows_layer_ns_prefix(o->layers, ln->value); 
                 fprintf(o->output, "%s:%s", ns_prefix->buf, ln->value->buf); 
-                buffer_free(ns_prefix); 
                 if (ln->next) fprintf(o->output, ","); 
          } 
     }

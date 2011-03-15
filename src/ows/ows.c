@@ -85,6 +85,7 @@ static ows *ows_init()
     o->max_geobbox = NULL;
     o->wfs_display_bbox = false;
     o->estimated_extent = true;
+    o->expose_pk = false;
 
     o->metadata = NULL;
     o->contact = NULL;

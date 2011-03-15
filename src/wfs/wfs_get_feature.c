@@ -263,9 +263,9 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     if (wr->typename)  
     { 
          for (ln = wr->typename->first ; ln ; ln = ln->next) { 
-                prefix = ows_layer_prefix(o->layers, ln->value); 
-                fprintf(o->output, "%s:%s", prefix->buf, ln->value->buf); 
-                buffer_free(prefix); 
+                ns_prefix = ows_layer_ns_prefix(o->layers, ln->value); 
+                fprintf(o->output, "%s:%s", ns_prefix->buf, ln->value->buf); 
+                buffer_free(ns_prefix); 
                 if (ln->next) fprintf(o->output, ","); 
          } 
     }

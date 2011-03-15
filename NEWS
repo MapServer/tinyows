@@ -1,7 +1,14 @@
 0.10.0
  - Encoding support Carlos Ruiz: cruizch@gmail.com
  - Estimated_bbox option for GetCapabilities response (default is true)
- - Improve drasticaly GetCapabilities performance on huge layer 
+ - Improve drasticaly GetCapabilities performance on huge layer (Thanks to Nicklas Aven)
+ - Change server and prefix to ns_uri ans ns_prefix
+ - Add ability to use different names for layer and storage table (table property)
+ - Mapfile config file (TINYOWS_MAPFILE var)
+ - Debug option available from configure step (--enable-debug) 
+ - Improve result from --check option 
+ - Lot of debug stuff
+
 
 0.9.0   (19/06/2010)
  - Fast-CGI support

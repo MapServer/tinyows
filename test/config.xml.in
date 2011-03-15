@@ -17,26 +17,21 @@
   <metadata
     name="TinyOWS-OGC-CITE"
     title="TinyOWS - OGC CITE Test">
-    <contact
-      name="TinyOWS Team"
-      site="http://www.tinyows.org"
-      email="tinyows-dev@lists.maptools.org" />
   </metadata>
 
   <layer name="root" title="root" srid="4326" 
          queryable="1" retrievable="1" writable="1">
 
-     <layer name="SimpleFeatures" title="features110" prefix="sf" 
-           server="http://cite.opengeospatial.org/gmlsf" >
+     <layer name="SimpleFeatures" title="features110"
+            ns_prefix="sf" ns_uri="http://cite.opengeospatial.org/gmlsf" >
           <layer name="AggregateGeoFeature" title="AggregateGeoFeature" />
           <layer name="EntitéGénérique" title="EntitéGénérique" />
           <layer name="PrimitiveGeoFeature" title="PrimitiveGeoFeature" />
      </layer>
 
-
      <!--
-     <layer name="OGCfeatures" title="OGCfeatures" prefix="cdf"
-          server="http://www.opengis.net/cite/data" srid="32615">
+     <layer name="OGCfeatures" title="OGCfeatures" srid="32615"
+            ns_prefix="cdf" ns_uri="http://www.opengis.net/cite/data">
           <layer name="Nulls" title="Nulls" />
           <layer name="Seven" title="Seven" />
           <layer name="Fifteen" title="Fifteen" />
@@ -47,8 +42,8 @@
           <layer name="Locks" title="Locks" />
       </layer>
 
-      <layer name="OGCgeometries" title="OGCgeometries" prefix="cgf"
-              server="http://www.opengis.net/cite/geometry" srid="32615" >
+      <layer name="OGCgeometries" title="OGCgeometries" srid="32615"
+             ns_prefix="cgf" ns_uri="http://www.opengis.net/cite/geometry">
           <layer name="Points" title="Points" />
           <layer name="Lines" title="Lines" />
           <layer name="Polygons" title="Polygons" />

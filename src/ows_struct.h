@@ -328,8 +328,8 @@ typedef struct Ows_request {
         } request;
 } ows_request;
 
-#define DEFAULT_XML_ENCODING "UTF-8" 
-#define DEFAULT_DB_ENCODING "UTF8" 
+#define OWS_DEFAULT_XML_ENCODING "UTF-8" 
+#define OWS_DEFAULT_DB_ENCODING "UTF8" 
 
 typedef struct Ows {
     bool exit;

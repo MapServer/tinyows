@@ -19,12 +19,14 @@ FCGIFLAGS=$(FCGI_INC) $(FCGI_LIB)
 # install path
 PREFIX=@prefix@
 
+SRC=$(wildcard src/*/*.c) src/mapfile/mapfile.c
+
 all:
 	lex -i -o src/mapfile/mapfile.c src/mapfile/mapfile.l
-	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(FCGIFLAGS) $(wildcard src/*/*.c) -o tinyows -L/usr/lib -lfl
+	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(FCGIFLAGS) $(SRC) -o tinyows -L/usr/lib -lfl
 	@rm -rf tinyows.dSYM
 
-svn-clean: clean doc-clean astyle
+svn-clean: clean doc-clean 
 	@find . -name '*~' -exec rm {} \;	
 	@rm -f configure
 

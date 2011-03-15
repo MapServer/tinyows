@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -39,9 +39,9 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
     array_node *an;
     list *mandatory_prop;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(wr);
+    assert(layer_name);
 
     mandatory_prop = ows_psql_not_null_properties(o, layer_name);
 
@@ -55,11 +55,11 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
     table = ows_psql_describe_table(o, layer_name);
     id_name = ows_psql_id_column(o, layer_name);
 
-    assert(table != NULL);
+    assert(table);
 
     /* Output the description of the layer_name */
-    for (an = table->first; an != NULL; an = an->next) {
-            if ( !id_name ||
+    for (an = table->first ; an ; an = an->next) {
+            if (!id_name ||
 		(id_name && !buffer_cmp(an->key, id_name->buf)) ||
 		(id_name && buffer_cmp(an->key, id_name->buf) && o->expose_pk)) 
 		{
@@ -67,10 +67,9 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
          	   	buffer_flush(an->key, o->output);
          	   	fprintf(o->output, "' type='%s' ", ows_psql_to_xsd(an->value));
 
-          		if (in_list(mandatory_prop, an->key))
+          		if (mandatory_prop && in_list(mandatory_prop, an->key))
                 		fprintf(o->output, "nillable='false' minOccurs='1' ");
-            	 	else
-        	        	fprintf(o->output, "nillable='true' minOccurs='0' ");
+            	 	else    fprintf(o->output, "nillable='true' minOccurs='0' ");
 	
         		fprintf(o->output, "maxOccurs='1'/>\n");
 		}
@@ -91,19 +90,18 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
 {
     int wfs_version;
     list_node *elemt, *ln;
-    list *prefix, *typ;
+    list *ns_prefix, *typ;
     buffer *namespace;
 
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     wfs_version = ows_version_get(o->request->version);
-    prefix = ows_layer_list_prefix(o->layers, wr->typename);
-    if (prefix->first == NULL) {
-            list_free(prefix);
+    ns_prefix = ows_layer_list_ns_prefix(o->layers, wr->typename);
+    if (!ns_prefix->first) {
+            list_free(ns_prefix);
             ows_error(o, OWS_ERROR_CONFIG_FILE,
-                    "Not a single layer is available. Check config file",
-                    "describe");
+                    "Not a single layer is available. Check config file", "describe");
             return;
     }
 
@@ -115,15 +113,14 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
 
     /* if all layers belong to different prefixes, import the matching namespaces */
-    if (prefix->first->next != NULL) {
+    if (ns_prefix->first->next) {
         fprintf(o->output, "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'");
         fprintf(o->output, " xmlns='http://www.w3.org/2001/XMLSchema'");
         fprintf(o->output, " elementFormDefault='qualified'> ");
 
-        for (elemt = prefix->first; elemt != NULL; elemt = elemt->next) {
-            namespace = ows_layer_server(o->layers, elemt->value);
-            fprintf(o->output, "<xs:import namespace='%s' ",
-                    namespace->buf);
+        for (elemt = ns_prefix->first ; elemt ; elemt = elemt->next) {
+            namespace = ows_layer_ns_uri(o->layers, elemt->value);
+            fprintf(o->output, "<xs:import namespace='%s' ", namespace->buf);
             fprintf(o->output, "schemaLocation='%s?service=WFS&amp;version=",
                     o->online_resource->buf);
 
@@ -133,12 +130,12 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
                 fprintf(o->output, "1.1.0&amp;request=DescribeFeatureType&amp;typename=");
 
             /* print the describeFeatureType request with typenames for each prefix */
-            typ = ows_layer_list_by_prefix(o->layers, wr->typename, elemt->value);
+            typ = ows_layer_list_by_ns_prefix(o->layers, wr->typename, elemt->value);
 
-            for (ln = typ->first; ln != NULL; ln = ln->next) {
+            for (ln = typ->first ; ln ; ln = ln->next) {
                 fprintf(o->output, "%s", ln->value->buf);
 
-                if (ln->next != NULL) fprintf(o->output, ",");
+                if (ln->next) fprintf(o->output, ",");
             }
 
             list_free(typ);
@@ -149,9 +146,9 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     }
     /* if all layers belong to the same prefix, print the xsd schema describing features */
     else {
-        namespace = ows_layer_server(o->layers, prefix->first->value);
+        namespace = ows_layer_ns_uri(o->layers, ns_prefix->first->value);
         fprintf(o->output, "<xs:schema targetNamespace='%s' ", namespace->buf);
-        fprintf(o->output, "xmlns:%s='%s' ", prefix->first->value->buf, namespace->buf);
+        fprintf(o->output, "xmlns:%s='%s' ", ns_prefix->first->value->buf, namespace->buf);
         fprintf(o->output, "xmlns:ogc='http://www.opengis.net/ogc' ");
         fprintf(o->output, "xmlns:xs='http://www.w3.org/2001/XMLSchema' ");
         fprintf(o->output, "xmlns='http://www.w3.org/2001/XMLSchema' ");
@@ -171,11 +168,11 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
             fprintf(o->output, " schemaLocation='http://schemas.opengis.net/gml/3.1.1/base/gml.xsd'/>\n");
 
         /* Describe each feature type specified in the request */
-        for (elemt = wr->typename->first; elemt != NULL; elemt = elemt->next)
+        for (elemt = wr->typename->first ; elemt ; elemt = elemt->next)
         {
             fprintf(o->output, "<xs:element name='");
             buffer_flush(elemt->value, o->output);
-            fprintf(o->output, "' type='%s:", prefix->first->value->buf);
+            fprintf(o->output, "' type='%s:", ns_prefix->first->value->buf);
             buffer_flush(elemt->value, o->output);
             fprintf(o->output, "Type' substitutionGroup='gml:_Feature' />\n");
             wfs_complex_type(o, wr, elemt->value);
@@ -184,7 +181,7 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
         fprintf(o->output, "</xs:schema>");
     }
 
-    list_free(prefix);
+    list_free(ns_prefix);
 }
 
 
@@ -198,12 +195,12 @@ buffer * wfs_generate_schema(ows * o)
 {
     int wfs_version;
     list_node *elemt, *t;
-    list *prefix, *typename;
+    list *ns_prefix, *typename;
     buffer *namespace;
     buffer *schema;
     list * layers;
 
-    assert(o != NULL);
+    assert(o);
 
     wfs_version = ows_version_get(o->request->version);
     schema = buffer_init();
@@ -211,7 +208,7 @@ buffer * wfs_generate_schema(ows * o)
 
     buffer_add_str(schema, "<?xml version='1.0' encoding='utf-8'?>\n");
 
-    prefix = ows_layer_list_prefix(o->layers, layers);
+    ns_prefix = ows_layer_list_ns_prefix(o->layers, layers);
 
     buffer_add_str(schema, "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'");
     buffer_add_str(schema, " xmlns='http://www.w3.org/2001/XMLSchema'");
@@ -225,8 +222,8 @@ buffer * wfs_generate_schema(ows * o)
 
     buffer_add_str(schema, "'/>\n");
 
-    for (elemt = prefix->first; elemt != NULL; elemt = elemt->next) {
-        namespace = ows_layer_server(o->layers, elemt->value);
+    for (elemt = ns_prefix->first ; elemt ; elemt = elemt->next) {
+        namespace = ows_layer_ns_uri(o->layers, elemt->value);
         buffer_add_str(schema, "<xs:import namespace='");
         buffer_copy(schema, namespace);
         buffer_add_str(schema, "' schemaLocation='");
@@ -234,26 +231,24 @@ buffer * wfs_generate_schema(ows * o)
         buffer_copy(schema, o->online_resource);
         buffer_add_str(schema, "?service=WFS&amp;request=DescribeFeatureType");
 
-        if (elemt->next || elemt != prefix->first) {
+        if (elemt->next || elemt != ns_prefix->first) {
             buffer_add_str(schema, "&amp;Typename=");
 
-            typename = ows_layer_list_by_prefix(o->layers, layers, elemt->value);
-            for (t = typename->first; t != NULL; t = t->next) {
+            typename = ows_layer_list_by_ns_prefix(o->layers, layers, elemt->value);
+            for (t = typename->first ; t ; t = t->next) {
         	buffer_copy(schema, t->value);
 	  	if (t->next) buffer_add(schema, ',');
 	    }
         } 
 
-        if (wfs_version == 100)
-            buffer_add_str(schema, "&amp;version=1.0.0");
-        else
-            buffer_add_str(schema, "&amp;version=1.1.0");
+        if (wfs_version == 100) buffer_add_str(schema, "&amp;version=1.0.0");
+        else                    buffer_add_str(schema, "&amp;version=1.1.0");
 
         buffer_add_str(schema, "'/>\n");
     }
 
     buffer_add_str(schema, "</xs:schema>");
-    list_free(prefix);
+    list_free(ns_prefix);
     list_free(layers);
 
     return schema;

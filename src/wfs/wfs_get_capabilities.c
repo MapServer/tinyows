@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -38,8 +38,8 @@
  */
 static void wfs_get_capabilities_dcpt_100(const ows * o, char * req)
 {
-    assert(o != NULL);
-    assert(o->online_resource != NULL);
+    assert(o);
+    assert(o->online_resource);
 
     fprintf(o->output, "    <DCPType>\n");
     fprintf(o->output, "     <HTTP>\n");
@@ -62,8 +62,8 @@ static void wfs_get_capabilities_dcpt_100(const ows * o, char * req)
  */
 static void wfs_gml_object_type(ows * o, char *type)
 {
-    assert(o != NULL);
-    assert(type != NULL);
+    assert(o);
+    assert(type);
 
     fprintf(o->output, "  <GMLObjectType>\n");
     fprintf(o->output, "   <Name>gml:%s</Name>\n", type);
@@ -82,7 +82,7 @@ static void wfs_gml_object_type(ows * o, char *type)
  */
 static void wfs_gml_object_type_list(ows * o)
 {
-    assert(o != NULL);
+    assert(o);
 
     fprintf(o->output, " <SupportsGMLObjectTypeList>\n");
     wfs_gml_object_type(o, "AbstractGMLFeatureType");
@@ -102,7 +102,7 @@ static void wfs_gml_object_type_list(ows * o)
  */
 static void wfs_capability(ows * o)
 {
-    assert(o != NULL);
+    assert(o);
 
     fprintf(o->output, " <Capability>\n");
     fprintf(o->output, "  <Request>\n");
@@ -135,7 +135,7 @@ static void wfs_capability(ows * o)
  */
 static void wfs_operations_metadata(ows * o)
 {
-    assert(o != NULL);
+    assert(o);
 
     fprintf(o->output, " <ows:OperationsMetadata>\n");
     fprintf(o->output, "  <ows:Operation name='GetCapabilities'>\n");
@@ -201,11 +201,11 @@ static void wfs_feature_type_list(ows * o)
     int srid_int;
     buffer *srid;
     buffer *srs;
-    list_node *keyword, *other_srid;
+    list_node *keyword, *l_srid;
     int s;
     bool writable, retrievable;
 
-    assert(o != NULL);
+    assert(o);
 
     writable = false;
     retrievable = false;
@@ -245,27 +245,27 @@ static void wfs_feature_type_list(ows * o)
         || ows_layer_list_writable(o->layers)) 
     	fprintf(o->output, "  </Operations>\n");
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next) {
+    for (ln = o->layers->first ; ln ; ln = ln->next) {
         /* print each feature type */
         if (ows_layer_match_table(o, ln->layer->name)) {
 
             fprintf(o->output, "<FeatureType xmlns:%s=\"%s\">\n",
-                    ln->layer->prefix->buf, ln->layer->server->buf);
+                    ln->layer->ns_prefix->buf, ln->layer->ns_uri->buf);
 
             /* name */
-            if (ln->layer->name != NULL) {
+            if (ln->layer->name) {
                 for (s = 0; s < ln->layer->depth; s++)
                     fprintf(o->output, " ");
 
                 fprintf(o->output, " <Name>");
-                buffer_flush(ln->layer->prefix, o->output);
+                buffer_flush(ln->layer->ns_prefix, o->output);
                 fprintf(o->output, ":");
                 buffer_flush(ln->layer->name, o->output);
                 fprintf(o->output, "</Name>\n");
             }
 
             /* title */
-            if (ln->layer->title != NULL) {
+            if (ln->layer->title) {
                 for (s = 0; s < ln->layer->depth; s++)
                     fprintf(o->output, " ");
 
@@ -275,7 +275,7 @@ static void wfs_feature_type_list(ows * o)
             }
 
             /* abstract */
-            if (ln->layer->abstract != NULL) {
+            if (ln->layer->abstract) {
                 for (s = 0; s < ln->layer->depth; s++)
                     fprintf(o->output, " ");
 
@@ -285,14 +285,13 @@ static void wfs_feature_type_list(ows * o)
             }
 
             /* keywords */
-            if (ln->layer->keywords != NULL) {
+            if (ln->layer->keywords) {
                 for (s = 0; s < ln->layer->depth; s++)
                     fprintf(o->output, " ");
 
                 fprintf(o->output, " <Keywords>");
 
-                for (keyword = ln->layer->keywords->first; keyword != NULL;
-                        keyword = keyword->next) {
+                for (keyword = ln->layer->keywords->first ; keyword ; keyword = keyword->next) {
                     if (ows_version_get(o->request->version) == 100)
                         fprintf(o->output, "%s,", keyword->value->buf);
                     else if (ows_version_get(o->request->version) == 110) {
@@ -315,7 +314,7 @@ static void wfs_feature_type_list(ows * o)
             buffer_add_int(srid, srid_int);
             srs = ows_srs_get_from_a_srid(o, srid_int);
 
-            if (srs->use != 0) {
+            if (srs->use) {
                 if (ows_version_get(o->request->version) == 100) {
                     fprintf(o->output, " <SRS>");
                     buffer_flush(srs, o->output);
@@ -325,14 +324,12 @@ static void wfs_feature_type_list(ows * o)
                     fprintf(o->output, "urn:ogc:def:crs:EPSG::%s", srid->buf);
                     fprintf(o->output, "</DefaultSRS>\n");
 
-                    if (ln->layer->srid != NULL) {
-                        for (other_srid = ln->layer->srid->first;
-                                other_srid != NULL;
-                                other_srid = other_srid->next) {
-                            if (!buffer_cmp(srid, other_srid->value->buf)) {
+                    if (ln->layer->srid) {
+                        for (l_srid = ln->layer->srid->first; l_srid; l_srid = l_srid->next) {
+                            if (!buffer_cmp(srid, l_srid->value->buf)) {
                                 fprintf(o->output, " <OtherSRS>");
                                 fprintf(o->output, "urn:ogc:def:crs:EPSG::%s",
-                                        other_srid->value->buf);
+                                        l_srid->value->buf);
                                 fprintf(o->output, "</OtherSRS>\n");
                             }
                         }
@@ -344,10 +341,8 @@ static void wfs_feature_type_list(ows * o)
                 else if (ows_version_get(o->request->version) == 110)
                     fprintf(o->output, " <NoSRS/>");
             }
-
             /* operations */
-            if (retrievable != ln->layer->retrievable
-                    || writable != ln->layer->writable) {
+            if (retrievable != ln->layer->retrievable || writable != ln->layer->writable) {
                 fprintf(o->output, "  <Operations>\n");
 
                 if (retrievable == false && ln->layer->retrievable == true) {
@@ -373,7 +368,7 @@ static void wfs_feature_type_list(ows * o)
             }
 
             /* boundaries */
-            if (ln->layer->geobbox == NULL) {
+            if (!ln->layer->geobbox) {
                 gb = ows_geobbox_compute(o, ln->layer->name);
             } else {
                 gb = ows_geobbox_init();
@@ -382,6 +377,7 @@ static void wfs_feature_type_list(ows * o)
                 gb->south = ln->layer->geobbox->south;
                 gb->north = ln->layer->geobbox->north;
             }
+            assert(gb);
 
             for (s = 0; s < ln->layer->depth; s++)
                 fprintf(o->output, " ");
@@ -390,8 +386,6 @@ static void wfs_feature_type_list(ows * o)
                 fprintf(o->output, " <LatLongBoundingBox");
             else if (ows_version_get(o->request->version) == 110)
                 fprintf(o->output, " <ows:WGS84BoundingBox>");
-
-            assert(gb != NULL);
 
             if (gb->east != DBL_MIN) {
                 if (ows_version_get(o->request->version) == 100) {
@@ -459,8 +453,8 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
 {
     buffer *name;
 
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     if (wr->format == WFS_TEXT_XML)
         fprintf(o->output, "Content-Type: text/xml\n\n");
@@ -485,36 +479,30 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
        WFS service iself */
     buffer_add_str(name, "ServiceIdentification");
 
-    if (wr->sections != NULL) {
-        if (in_list(wr->sections, name)
-                || buffer_case_cmp(wr->sections->first->value, "all"))
+    if (wr->sections) {
+        if (in_list(wr->sections, name) || buffer_case_cmp(wr->sections->first->value, "all"))
             ows_service_identification(o);
-    } else
-        ows_service_identification(o);
+    } else ows_service_identification(o);
 
     /* Service Provider Section : provides metadata about
        the organization operating the WFS server */
     buffer_empty(name);
     buffer_add_str(name, "ServiceProvider");
 
-    if (wr->sections != NULL) {
-        if (in_list(wr->sections, name)
-                || buffer_case_cmp(wr->sections->first->value, "all"))
+    if (wr->sections) {
+        if (in_list(wr->sections, name) || buffer_case_cmp(wr->sections->first->value, "all"))
             ows_service_provider(o);
-    } else
-        ows_service_provider(o);
+    } else ows_service_provider(o);
 
     /* Operation Metadata Section : specifies the list of requests
        that the WFS can handle */
     buffer_empty(name);
     buffer_add_str(name, "OperationsMetadata");
 
-    if (wr->sections != NULL) {
-        if (in_list(wr->sections, name)
-                || buffer_case_cmp(wr->sections->first->value, "all"))
+    if (wr->sections) {
+        if (in_list(wr->sections, name) || buffer_case_cmp(wr->sections->first->value, "all"))
             wfs_operations_metadata(o);
-    } else
-        wfs_operations_metadata(o);
+    } else wfs_operations_metadata(o);
 
 
     /* FeatureType list Section : specifies the list of feature types
@@ -522,12 +510,10 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
     buffer_empty(name);
     buffer_add_str(name, "FeatureTypeList");
 
-    if (wr->sections != NULL) {
-        if (in_list(wr->sections, name)
-                || buffer_case_cmp(wr->sections->first->value, "all"))
+    if (wr->sections) {
+        if (in_list(wr->sections, name) || buffer_case_cmp(wr->sections->first->value, "all"))
             wfs_feature_type_list(o);
-    } else
-        wfs_feature_type_list(o);
+    } else wfs_feature_type_list(o);
 
     /* No ServesGMLObjectType list Section since there isn't any supported
        GML Object types not derived from gml:AbstractFeatureType */
@@ -537,12 +523,10 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
     buffer_empty(name);
     buffer_add_str(name, "SupportsGMLObjectTypeList");
 
-    if (wr->sections != NULL) {
-        if (in_list(wr->sections, name)
-                || buffer_case_cmp(wr->sections->first->value, "all"))
+    if (wr->sections) {
+        if (in_list(wr->sections, name) || buffer_case_cmp(wr->sections->first->value, "all"))
             wfs_gml_object_type_list(o);
-    } else
-        wfs_gml_object_type_list(o);
+    } else wfs_gml_object_type_list(o);
 
 
     /* Filter Capabilities Section : describe what specific filter capabilties
@@ -561,8 +545,8 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
  */
 static void wfs_get_capabilities_100(ows * o, wfs_request * wr)
 {
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
@@ -601,8 +585,8 @@ void wfs_get_capabilities(ows * o, wfs_request * wr)
 {
     int version;
 
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     version = ows_version_get(o->request->version);
 

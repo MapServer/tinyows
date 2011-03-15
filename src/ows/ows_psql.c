@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -37,15 +37,13 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
 {
     ows_layer_node *ln = NULL;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage
+	    && !strcmp(ln->layer->name->buf, layer_name->buf))
             return ln->layer->storage->pkey;
 
     return NULL;
@@ -60,18 +58,15 @@ int ows_psql_column_number_id_column(ows * o, buffer * layer_name)
 {
     ows_layer_node *ln = NULL;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf))
             return ln->layer->storage->pkey_column_number;
 
-    assert(0); /* Should not happen */
     return -1;
 }
 
@@ -83,18 +78,15 @@ list *ows_psql_geometry_column(ows * o, buffer * layer_name)
 {
     ows_layer_node *ln = NULL;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf))
             return ln->layer->storage->geom_columns;
 
-    assert(0); /* Should not happen */
     return NULL;
 }
 
@@ -106,15 +98,34 @@ buffer *ows_psql_schema_name(ows * o, buffer * layer_name)
 {
     ows_layer_node *ln = NULL;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && !strcmp(ln->layer->name->buf, layer_name->buf))
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf))
             return ln->layer->storage->schema;
+
+    return NULL;
+}
+
+
+/*
+ * Return table name from a given layer 
+ */
+buffer *ows_psql_table_name(ows * o, buffer * layer_name)
+{
+    ows_layer_node *ln = NULL;
+
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
+
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf))
+            return ln->layer->storage->table;
 
     return NULL;
 }
@@ -127,9 +138,10 @@ bool ows_psql_is_geometry_valid(ows * o, buffer * geom)
 {
     buffer *sql;
     PGresult *res;
+    bool ret = false;
 
-    assert(o != NULL);
-    assert(geom != NULL);
+    assert(o);
+    assert(geom);
 
     sql = buffer_init();
     buffer_add_str(sql, "SELECT ST_isvalid(ST_geometryfromtext('");
@@ -139,18 +151,11 @@ bool ows_psql_is_geometry_valid(ows * o, buffer * geom)
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
-    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
-        PQclear(res);
-        return false;
-    }
-
-    if ((char) PQgetvalue(res, 0, 0)[0] ==  't') {
-        PQclear(res);
-        return true;
-    }
+    if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1
+	&& (char) PQgetvalue(res, 0, 0)[0] ==  't') ret = true;
 
     PQclear(res);
-    return false;
+    return ret;
 }
 
 
@@ -161,19 +166,16 @@ bool ows_psql_is_geometry_column(ows * o, buffer * layer_name, buffer * column)
 {
     ows_layer_node *ln;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
-    assert(column != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
+    assert(column);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf))
             return in_list(ln->layer->storage->geom_columns, column);
 
-    assert(0); /* should not happen */
     return false;
 }
 
@@ -185,19 +187,16 @@ list *ows_psql_not_null_properties(ows * o, buffer * layer_name)
 {
     ows_layer_node *ln;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf))
             return ln->layer->storage->not_null_columns;
 
-    assert(0); /* should not happen */
-    return false;
+    return NULL;
 }
 
 
@@ -212,8 +211,8 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
     PGresult *res;
     buffer *column;
 
-    assert(o != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(layer_name);
 
     sql = buffer_init();
     column = buffer_init();
@@ -248,18 +247,15 @@ array *ows_psql_describe_table(ows * o, buffer * layer_name)
 {
     ows_layer_node *ln = NULL;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf))
             return ln->layer->storage->attributes;
 
-    assert(0); /* should not happen */
     return NULL;
 }
 
@@ -270,7 +266,7 @@ array *ows_psql_describe_table(ows * o, buffer * layer_name)
  */
 char *ows_psql_to_xsd(buffer * type)
 {
-    assert(type != NULL);
+    assert(type);
 
     if (buffer_cmp(type, "geometry"))
         return "gml:GeometryPropertyType";
@@ -308,7 +304,7 @@ buffer *ows_psql_timestamp_to_xml_time(char *timestamp)
 {
     buffer *time;
 
-    assert(timestamp != NULL);
+    assert(timestamp);
 
     time = buffer_init();
     buffer_add_str(time, timestamp);
@@ -331,20 +327,17 @@ buffer *ows_psql_type(ows * o, buffer * layer_name, buffer * property)
 {
     ows_layer_node *ln;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
-    assert(property != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
+    assert(property);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next) {
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+    for (ln = o->layers->first ; ln ; ln = ln->next) {
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf))
             return array_get(ln->layer->storage->attributes, property->buf);
     }
 
-    assert(0); /* should not happen */
     return NULL;
 }
 
@@ -361,25 +354,23 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
     int i, seed_len;
     char * seed = NULL;
 
-    assert(o != NULL);
-    assert(o->layers != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(o->layers);
+    assert(layer_name);
 
     /* Retrieve layer node pointer */
-    for (ln = o->layers->first; ln != NULL; ln = ln->next) {
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0) break;
+    for (ln = o->layers->first ; ln ; ln = ln->next) {
+        if (ln->layer->name && ln->layer->storage
+            && !strcmp(ln->layer->name->buf, layer_name->buf)) break;
     }
-    assert(ln != NULL);
+    assert(ln);
 
     id = buffer_init();
 
     /* If PK have a sequence in PostgreSQL database,
      * retrieve next available sequence value
      */
-     if (ln->layer->storage->pkey_sequence != NULL) {
+     if (ln->layer->storage->pkey_sequence) {
          sql_id = buffer_init();
          buffer_add_str(sql_id, "SELECT nextval('");
          buffer_copy(sql_id, ln->layer->storage->pkey_sequence);
@@ -405,11 +396,11 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
      seed_len = 6;
      seed = malloc(sizeof(char) * (seed_len * 3 + 1));  /* multiply by 3 to be able to deal
                                                            with hex2dec conversion */ 
-     assert(seed != NULL);
+     assert(seed);
      seed[0] = '\0';
 
-     fp=fopen("/dev/urandom","r");
-     if (fp != NULL) {
+     fp = fopen("/dev/urandom","r");
+     if (fp) {
          for (i=0 ; i<seed_len ; i++)
              sprintf(seed,"%s%03d", seed, fgetc(fp));
          fclose(fp);
@@ -443,9 +434,9 @@ int ows_psql_number_features(ows * o, list * from, list * where)
     list_node *ln_from, *ln_where;
     int nb;
 
-    assert(o != NULL);
-    assert(from != NULL);
-    assert(where != NULL);
+    assert(o);
+    assert(from);
+    assert(where);
 
     nb = 0;
 
@@ -453,8 +444,9 @@ int ows_psql_number_features(ows * o, list * from, list * where)
     if (from->size != where->size) return nb;
 
 
-    for (ln_from = from->first, ln_where = where->first; ln_from != NULL;
-             ln_from = ln_from->next, ln_where = ln_where->next) {
+    for (ln_from = from->first, ln_where = where->first; 
+	 ln_from;
+         ln_from = ln_from->next, ln_where = ln_where->next) {
              sql = buffer_init();
 
              /* execute the request */
@@ -481,8 +473,8 @@ static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n, xmlNodePtr
 {
     xmlNodePtr c;
 
-    assert(o != NULL);
-    assert(n != NULL);
+    assert(o);
+    assert(n);
 
     if (result) return result;  /* avoid recursive loop */
 
@@ -529,8 +521,8 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n)
     xmlNodePtr g;
     buffer *result, *sql, *gml;
 
-    assert(o != NULL);
-    assert(n != NULL);
+    assert(o);
+    assert(n);
 
     g = ows_psql_recursive_parse_gml(o, n, NULL);
     if (!g) return NULL;    /* No Geometry founded in GML doc */

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -44,10 +44,9 @@ static void ows_pg(ows * o, char *con_str)
     if (PQstatus(o->pg) != CONNECTION_OK)
         ows_error(o, OWS_ERROR_CONNECTION_FAILED,
                   "connection to database failed", "init_OWS");
-    else if (PQsetClientEncoding(o->pg, o->db_encoding->buf)) {
+    else if (PQsetClientEncoding(o->pg, o->db_encoding->buf))
         ows_error(o, OWS_ERROR_CONNECTION_FAILED,
-                  "Wrong database encoding", "init_OWS");
-	}
+                  "Wrong databse encoding", "init_OWS");
 }
 
 
@@ -66,13 +65,14 @@ static ows *ows_init()
     o->cgi = NULL;
     o->psql_requests = NULL;
     o->pg = NULL;
-    o->pg_dsn = NULL;
+    o->pg_dsn = buffer_init();
     o->output = stdout;
     o->config_file = NULL;
-    o->online_resource = NULL;
-    o->schema_dir = NULL;
+    o->mapfile = false;
+    o->online_resource = buffer_init();
+    o->schema_dir = buffer_init();
     o->log_file = NULL;
-    o->encoding = NULL;
+    o->encoding = buffer_init();
     o->db_encoding = NULL;
     o->log = NULL;
     o->layers = NULL;
@@ -89,9 +89,6 @@ static ows *ows_init()
     o->metadata = NULL;
     o->contact = NULL;
 
-    o->sld_path = NULL;
-    o->sld_writable = 0;
-
     return o;
 }
 
@@ -103,84 +100,84 @@ static ows *ows_init()
 #ifdef OWS_DEBUG
 void ows_flush(ows * o, FILE * output)
 {
-    assert(o != NULL);
-    assert(output != NULL);
+    assert(o);
+    assert(output);
 
     fprintf(output, "exit : %d\n", o->exit?1:0);
 
-    if (o->config_file != NULL) {
+    if (o->config_file) {
         fprintf(output, "config_file: ");
         buffer_flush(o->config_file, output);
-        fprintf(output, "\n");
+	fprintf(output, "\nmapfile: %d\n", o->mapfile?1:0);
     }
 
-    if (o->schema_dir != NULL) {
+    if (o->schema_dir) {
         fprintf(output, "schema_dir: ");
         buffer_flush(o->schema_dir, output);
         fprintf(output, "\n");
     }
 
-    if (o->online_resource != NULL) {
+    if (o->online_resource) {
         fprintf(output, "online_resource: ");
         buffer_flush(o->online_resource, output);
         fprintf(output, "\n");
     }
 
-    if (o->pg_dsn != NULL) {
+    if (o->pg_dsn) {
         fprintf(output, "pg: ");
         buffer_flush(o->pg_dsn, output);
         fprintf(output, "\n");
     }
 
-    if (o->log_file != NULL) {
+    if (o->log_file) {
         fprintf(output, "log file: ");
         buffer_flush(o->log_file, output);
         fprintf(output, "\n");
     }
     
-    if (o->encoding != NULL) {
+    if (o->encoding) {
         fprintf(output, "encoding: ");
         buffer_flush(o->encoding, output);
         fprintf(output, "\n");
     }
 
-    if (o->db_encoding != NULL) {
-         fprintf(output, "database encoding: ");
-         buffer_flush(o->db_encoding, output);
-         fprintf(output, "\n");
+    if (o->db_encoding) {
+        fprintf(output, "db_encoding: ");
+        buffer_flush(o->db_encoding, output);
+        fprintf(output, "\n");
     }
 
-    if (o->metadata != NULL) {
+    if (o->metadata) {
         fprintf(output, "metadata: ");
         ows_metadata_flush(o->metadata, output);
         fprintf(output, "\n");
     }
 
-    if (o->contact != NULL) {
+    if (o->contact) {
         fprintf(output, "contact: ");
         ows_contact_flush(o->contact, output);
         fprintf(output, "\n");
     }
 
-    if (o->cgi != NULL) {
+    if (o->cgi) {
         fprintf(output, "cgi: ");
         array_flush(o->cgi, output);
         fprintf(output, "\n");
     }
 
-    if (o->psql_requests != NULL) {
+    if (o->psql_requests) {
         fprintf(output, "SQL requests: ");
         list_flush(o->psql_requests, output);
         fprintf(output, "\n");
     }
 
-    if (o->layers != NULL) {
+    if (o->layers) {
         fprintf(output, "layers: ");
         ows_layer_list_flush(o->layers, output);
         fprintf(output, "\n");
     }
 
-    if (o->request != NULL) {
+    if (o->request) {
         fprintf(output, "request: ");
         ows_request_flush(o->request, output);
         fprintf(output, "\n");
@@ -193,21 +190,13 @@ void ows_flush(ows * o, FILE * output)
     fprintf(output, "degree_precision: %d\n", o->degree_precision);
     fprintf(output, "meter_precision: %d\n", o->meter_precision);
 
-    if (o->max_geobbox != NULL) {
+    if (o->max_geobbox) {
         fprintf(output, "max_geobbox: ");
         ows_geobbox_flush(o->max_geobbox, output);
         fprintf(output, "\n");
     }
     fprintf(output, "wfs_display_bbox: %d\n", o->wfs_display_bbox?1:0);
     fprintf(output, "estimated_extent: %d\n", o->estimated_extent?1:0);
-
-    if (o->sld_path != NULL) {
-        fprintf(output, "sld_path: ");
-        buffer_flush(o->sld_path, output);
-        fprintf(output, "\n");
-    }
-
-    fprintf(output, "sld_writable: %d\n", o->sld_writable);
 }
 #endif
 
@@ -217,55 +206,22 @@ void ows_flush(ows * o, FILE * output)
  */
 void ows_free(ows * o)
 {
-    assert(o != NULL);
+    assert(o);
 
-    if (o->config_file != NULL)
-        buffer_free(o->config_file);
-
-    if (o->schema_dir != NULL)
-        buffer_free(o->schema_dir);
-
-    if (o->online_resource != NULL)
-        buffer_free(o->online_resource);
-
-    if (o->pg != NULL)
-        PQfinish(o->pg);
-
-    if (o->log_file != NULL)
-        buffer_free(o->log_file);
-
-    if (o->pg_dsn != NULL)
-        buffer_free(o->pg_dsn);
-
-    if (o->cgi != NULL)
-        array_free(o->cgi);
-
-    if (o->psql_requests != NULL)
-        list_free(o->psql_requests);
-
-    if (o->layers != NULL)
-        ows_layer_list_free(o->layers);
-
-    if (o->request != NULL)
-        ows_request_free(o->request);
-
-    if (o->max_geobbox != NULL)
-        ows_geobbox_free(o->max_geobbox);
-
-    if (o->metadata != NULL)
-        ows_metadata_free(o->metadata);
-
-    if (o->contact != NULL)
-        ows_contact_free(o->contact);
-
-    if (o->sld_path != NULL)
-        buffer_free(o->sld_path);
-
-    if (o->encoding != NULL)
-        buffer_free(o->encoding);
-
-    if (o->db_encoding != NULL)
-        buffer_free(o->db_encoding);
+    if (o->config_file) 	buffer_free(o->config_file);
+    if (o->schema_dir) 		buffer_free(o->schema_dir);
+    if (o->online_resource) 	buffer_free(o->online_resource);
+    if (o->pg)			PQfinish(o->pg);
+    if (o->log_file)		buffer_free(o->log_file);
+    if (o->pg_dsn)		buffer_free(o->pg_dsn);
+    if (o->cgi)			array_free(o->cgi);
+    if (o->psql_requests)	list_free(o->psql_requests);
+    if (o->layers)		ows_layer_list_free(o->layers);
+    if (o->request)		ows_request_free(o->request);
+    if (o->max_geobbox)		ows_geobbox_free(o->max_geobbox);
+    if (o->metadata)		ows_metadata_free(o->metadata);
+    if (o->contact)		ows_contact_free(o->contact);
+    if (o->encoding)		buffer_free(o->encoding);
 
     free(o);
     o = NULL;
@@ -277,9 +233,7 @@ void ows_log(ows *o, int log_level, const char *log)
     char *t, *p;
     time_t ts;
 
-    if (o->log_file)
-	o->log = fopen(o->log_file->buf, "a");
-
+    if (o->log_file) o->log = fopen(o->log_file->buf, "a");
     if (!o->log) return;
 
     ts = time(NULL);
@@ -304,15 +258,21 @@ void ows_usage(ows * o)
     fprintf(stderr, "TinyOWS version:   %s\n", TINYOWS_VERSION);
 #if TINYOWS_FCGI
     fprintf(stderr, "FCGI support:      Yes\n");
+#else
+    fprintf(stderr, "FCGI support:      No\n");
 #endif
-    fprintf(stderr, "Config File Path:  %s\n", o->config_file->buf);
+    if (o->mapfile)
+    fprintf(stderr, "Config File Path:  %s (Mapfile)\n", o->config_file->buf);
+    else 
+    fprintf(stderr, "Config File Path:  %s (TinyOWS XML)\n", o->config_file->buf);
+
     fprintf(stderr, "PostGIS dsn:       %s\n", o->pg_dsn->buf);
     fprintf(stderr, "Output Encoding:   %s\n", o->encoding->buf);
-    fprintf(stderr, "Database encoding: %s\n", o->db_encoding->buf);
+    fprintf(stderr, "Database Encoding: %s\n", o->db_encoding->buf);
     fprintf(stderr, "Schema dir:        %s\n", o->schema_dir->buf);
 
-    if (o->log_file != NULL)
-        fprintf(stderr, "Log file:          %s\n", o->log_file->buf);
+    if (o->log_file)
+    fprintf(stderr, "Log file:          %s\n", o->log_file->buf);
 
     fprintf(stderr, "Available layers:\n");
     ows_layers_storage_flush(o, stderr);
@@ -354,7 +314,6 @@ static void ows_kvp_or_xml(ows *o, char *query)
         o->request->method = OWS_METHOD_KVP;
 
     else ows_error(o, OWS_ERROR_REQUEST_HTTP, "Wrong HTTP request Method", "http");
-
 }
 
 
@@ -369,14 +328,16 @@ int main(int argc, char *argv[])
     /* Config Files */
     if (getenv("TINYOWS_CONFIG_FILE") != NULL)
         buffer_add_str(o->config_file, getenv("TINYOWS_CONFIG_FILE"));
-    else
+    else if (getenv("TINYOWS_MAPFILE") != NULL) {
+        buffer_add_str(o->config_file, getenv("TINYOWS_MAPFILE"));
+        o->mapfile = true;
+    } else
         buffer_add_str(o->config_file, OWS_CONFIG_FILE_PATH);
 
     LIBXML_TEST_VERSION
 
     /* Parse the configuration file and initialize ows struct */
     if (!o->exit) ows_parse_config(o, o->config_file->buf);
-
     if (!o->exit) ows_log(o, 2, "== TINYOWS STARTUP ==");
 
     /* Connect the ows to the database */
@@ -400,7 +361,7 @@ int main(int argc, char *argv[])
     /* Log input query if asked */
     if (!o->exit) ows_log(o, 3, query);
 
-    if (!o->exit && (query == NULL || strlen(query) == 0))
+    if (!o->exit && (!query || !strlen(query)))
     {
     	/* Usage or Version command line options */
         if (argc > 1) {

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -38,8 +38,8 @@
 void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
                         float xmax, float ymax, int srid)
 {
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     fprintf(o->output, "<gml:boundedBy>\n");
 
@@ -87,18 +87,18 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     buffer *time, *pkey, *value_encoded;
     bool gml_ns = false;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(layer_name != NULL);
-    assert(prefix != NULL);
-    assert(prop_name != NULL);
-    assert(prop_type != NULL);
-    assert(value != NULL);
+    assert(o);
+    assert(wr);
+    assert(layer_name);
+    assert(prefix);
+    assert(prop_name);
+    assert(prop_type);
+    assert(value);
 
     pkey = ows_psql_id_column(o, layer_name); /* pkey could be NULL !!! */
 
     /* No Pkey display in GML (default behaviour) */
-    if (pkey != NULL && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk) return;
+    if (pkey && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk) return;
 
 #if 0
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
@@ -106,8 +106,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 #endif
 
     /* name and description fields if exists belong to GML namespace */
-    if (buffer_cmp(prop_name, "name")
-            || buffer_cmp(prop_name, "description"))
+    if (buffer_cmp(prop_name, "name") || buffer_cmp(prop_name, "description"))
         gml_ns = true;
 
 #if 0
@@ -123,26 +122,22 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
         gml_ns = true;
 #endif
 
-    if (gml_ns == true)
-        fprintf(o->output, "   <gml:%s>", prop_name->buf);
-    else 
-        fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
+    if (gml_ns == true) fprintf(o->output, "   <gml:%s>", prop_name->buf);
+    else                fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
 
+    /* PSQL date must be transformed into GML format */
     if (buffer_cmp(prop_type, "timestamptz")
             || buffer_cmp(prop_type, "timestamp")
             || buffer_cmp(prop_type, "datetime")
             || buffer_cmp(prop_type, "date")) {
-        /* PSQL date must be transformed into GML format */
         time = ows_psql_timestamp_to_xml_time(value->buf);
         fprintf(o->output, "%s", time->buf);
         buffer_free(time);
-    } else if (buffer_cmp(prop_type, "bool")) {
-        /* PSQL boolean must be transformed into GML format */
-        if (buffer_cmp(value, "t"))
-            fprintf(o->output, "true");
 
-        if (buffer_cmp(value, "f"))
-            fprintf(o->output, "false");
+    /* PSQL boolean must be transformed into GML format */
+    } else if (buffer_cmp(prop_type, "bool")) {
+        if (buffer_cmp(value, "t")) fprintf(o->output, "true");
+        if (buffer_cmp(value, "f")) fprintf(o->output, "false");
 
     } else if (buffer_cmp(prop_type, "text")
             || buffer_ncmp(prop_type, "char", 4)
@@ -153,10 +148,8 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
 
     } else fprintf(o->output, "%s", value->buf);
     
-    if (gml_ns)
-        fprintf(o->output, "</gml:%s>\n", prop_name->buf);
-    else
-        fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name->buf);
+    if (gml_ns) fprintf(o->output, "</gml:%s>\n", prop_name->buf);
+    else        fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name->buf);
 }
 
 
@@ -167,24 +160,23 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
                             list * properties, PGresult * res)
 {
     int i, j, number, end, nb_fields;
-    buffer *id_name, *prefix, *prop_name, *prop_type, *value;
+    buffer *id_name, *ns_prefix, *prop_name, *prop_type, *value;
     array * describe;
     list *mandatory_prop;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(layer_name != NULL);
-    assert(res != NULL);
+    assert(o);
+    assert(wr);
+    assert(layer_name);
+    assert(res);
     /* NOTA: properties could be NULL ! */
 
     number = -1;
     id_name = ows_psql_id_column(o, layer_name);
 
     /* We could imagine layer without PK ! */
-    if (id_name != NULL && id_name->use > 0)
-        number = ows_psql_column_number_id_column(o, layer_name);
+    if (id_name && id_name->use) number = ows_psql_column_number_id_column(o, layer_name);
 
-    prefix = ows_layer_prefix(o->layers, layer_name);
+    ns_prefix = ows_layer_ns_prefix(o->layers, layer_name);
     mandatory_prop = ows_psql_not_null_properties(o, layer_name);
     describe = ows_psql_describe_table(o, layer_name);
 
@@ -193,46 +185,37 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
         fprintf(o->output, "  <gml:featureMember>\n");
 
         /* print layer's name and id according to GML version */
-        if (id_name != NULL && id_name->use != 0) {
+        if (id_name && id_name->use) {
             if (wr->format == WFS_GML3)
-                fprintf(o->output, "   <%s:%s gml:id=\"%s.%s\">\n",
-                        prefix->buf, layer_name->buf, layer_name->buf,
+                fprintf(o->output,  "   <%s:%s gml:id=\"%s.%s\">\n",
+                        ns_prefix->buf, layer_name->buf, layer_name->buf,
                         PQgetvalue(res, i, number));
-            else
-                fprintf(o->output, "   <%s:%s fid=\"%s.%s\">\n",
-                        prefix->buf, layer_name->buf, layer_name->buf,
+            else fprintf(o->output, "   <%s:%s fid=\"%s.%s\">\n",
+                        ns_prefix->buf, layer_name->buf, layer_name->buf,
                         PQgetvalue(res, i, number));
-        } else
-            fprintf(o->output, "   <%s:%s>\n", prefix->buf,
-                    layer_name->buf);
+        } else fprintf(o->output,   "   <%s:%s>\n",
+			ns_prefix->buf, layer_name->buf);
 
         /* print properties */
-        for (j = 0, nb_fields = PQnfields(res); j < nb_fields; j++) {
+        for (j = 0, nb_fields = PQnfields(res) ; j < nb_fields ; j++) {
             prop_name = buffer_init();
             value = buffer_init();
+
             buffer_add_str(prop_name, PQfname(res, j));
             buffer_add_str(value, PQgetvalue(res, i, j));
             prop_type = array_get(describe, prop_name->buf);
 
-            if (properties == NULL || properties->first == NULL)
-                wfs_gml_display_feature(o, wr, layer_name, prefix,
-                                        prop_name, prop_type, value);
-            else if (in_list(properties, prop_name)
-                     || in_list(mandatory_prop, prop_name)
-                     || buffer_cmp(properties->first->value, "*"))
-                wfs_gml_display_feature(o, wr, layer_name, prefix,
-                                        prop_name, prop_type, value);
+            wfs_gml_display_feature(o, wr, layer_name, ns_prefix, prop_name, prop_type, value);
 
             buffer_free(value);
             buffer_free(prop_name);
         }
 
-        fprintf(o->output, "   </%s:%s>\n", prefix->buf, layer_name->buf);
+        fprintf(o->output, "   </%s:%s>\n", ns_prefix->buf, layer_name->buf);
         fprintf(o->output, "  </gml:featureMember>\n");
     }
 
     buffer_free(layer_name);
-    buffer_free(prefix);
 }
 
 
@@ -244,14 +227,13 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     array *namespaces;
     array_node *an;
     list_node *ln;
-    buffer * prefix;
+    buffer * ns_prefix;
 
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     namespaces = ows_layer_list_namespaces(o->layers);
-
-    assert(namespaces != NULL);
+    assert(namespaces);
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
@@ -277,15 +259,15 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
         fprintf(o->output, "%s\n    %s?service=WFS&amp;version=1.1.0&amp;request=DescribeFeatureType",
                 namespaces->first->value->buf, o->online_resource->buf);
 
-    /* FeatureId request could be without Typename parameter */
-    if (wr->typename) 
-    {
-   	 for (ln = wr->typename->first; ln != NULL; ln = ln->next) {
-        	prefix = ows_layer_prefix(o->layers, ln->value);
-        	fprintf(o->output, "%s:%s", prefix->buf, ln->value->buf);
-        	buffer_free(prefix);
-        	if (ln->next) fprintf(o->output, ",");
-    	}
+    /* FeatureId request could be without Typename parameter */ 
+    if (wr->typename)  
+    { 
+         for (ln = wr->typename->first ; ln ; ln = ln->next) { 
+                prefix = ows_layer_prefix(o->layers, ln->value); 
+                fprintf(o->output, "%s:%s", prefix->buf, ln->value->buf); 
+                buffer_free(prefix); 
+                if (ln->next) fprintf(o->output, ","); 
+         } 
     }
 
     if (ows_version_get(o->request->version) == 100) {
@@ -318,14 +300,14 @@ static void wfs_gml_display_hits(ows * o, wfs_request * wr, mlist * request_list
     buffer * date;
     int hits = 0;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(request_list != NULL);
+    assert(o);
+    assert(wr);
+    assert(request_list);
 
     wfs_gml_display_namespaces(o, wr);
 
     /* just count the number of features */
-    for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
+    for (ln = request_list->first->value->first ; ln ; ln = ln->next) {
 	buffer_add_head_str(ln->value, "SELECT count(*) FROM (");
 	buffer_add_str(ln->value, ") as foo");
         res = PQexec(o->pg, ln->value->buf);
@@ -357,9 +339,9 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
     PGresult *res;
     ows_bbox *outer_b;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(request_list != NULL);
+    assert(o);
+    assert(wr);
+    assert(request_list);
 
     ln = NULL;
     ln_typename = NULL;
@@ -368,7 +350,6 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
 
     /* display the first node and namespaces */
     wfs_gml_display_namespaces(o, wr);
-
     fprintf(o->output, ">\n");
 
     /* 
@@ -377,22 +358,19 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
      */
     if (o->wfs_display_bbox) {
         /* print the outerboundaries of the requests */
-        outer_b = ows_bbox_boundaries(o, request_list->first->next->value, request_list->last->value);
-        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin, outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
+        outer_b = ows_bbox_boundaries(o, request_list->first->next->value,
+                                         request_list->last->value);
+        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin,
+                                  outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
         ows_bbox_free(outer_b);
     }
 
     /* initialize the nodes to run through requests */
-    if (wr->typename != NULL)
-        ln_typename = wr->typename->first;
+    if (wr->typename)     ln_typename = wr->typename->first;
+    if (wr->featureid)    mln_fid = wr->featureid->first;
+    if (wr->propertyname) mln_property = wr->propertyname->first;
 
-    if (wr->featureid != NULL)
-        mln_fid = wr->featureid->first;
-
-    if (wr->propertyname != NULL)
-        mln_property = wr->propertyname->first;
-
-    for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
+    for (ln = request_list->first->value->first ; ln ; ln = ln->next) {
         /* execute the sql request */
         res = PQexec(o->pg, ln->value->buf);
 
@@ -400,14 +378,9 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
             PQclear(res);
 
             /*increments the nodes */
-            if (wr->featureid != NULL)
-                mln_fid = mln_fid->next;
-
-            if (wr->propertyname != NULL)
-                mln_property = mln_property->next;
-
-            if (wr->typename != NULL)
-                ln_typename = ln_typename->next;
+            if (wr->typename)     ln_typename = ln_typename->next;
+            if (wr->featureid)    mln_fid = mln_fid->next;
+            if (wr->propertyname) mln_property = mln_property->next;
 
             break;
         }
@@ -415,8 +388,7 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
         /* define a layer_name which match typename or featureid */
         layer_name = buffer_init();
 
-        if (wr->typename != NULL)
-            buffer_copy(layer_name, ln_typename->value);
+        if (wr->typename) buffer_copy(layer_name, ln_typename->value);
         else {
             fe = list_explode('.', mln_fid->value->first->value);
             buffer_copy(layer_name, fe->first->value);
@@ -424,23 +396,22 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
         }
 
         /* display each feature member */
-        if (wr->propertyname != NULL)
+        if (wr->propertyname)
             wfs_gml_feature_member(o, wr, layer_name, mln_property->value, res);
         else
             /* Use NULL if propertynames not defined */
-            wfs_gml_feature_member(o, wr, layer_name, NULL, res);
+            wfs_gml_feature_member(
+o, 
+wr, 
+layer_name, NULL, 
+res);
 
         PQclear(res);
 
         /*increments the nodes */
-        if (wr->featureid != NULL)
-            mln_fid = mln_fid->next;
-
-        if (wr->propertyname != NULL)
-            mln_property = mln_property->next;
-
-        if (wr->typename != NULL)
-            ln_typename = ln_typename->next;
+        if (wr->featureid)    mln_fid = mln_fid->next;
+        if (wr->propertyname) mln_property = mln_property->next;
+        if (wr->typename)     ln_typename = ln_typename->next;
     }
 
     fprintf(o->output, "</wfs:FeatureCollection>\n");
@@ -450,22 +421,21 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
 /*
  * Transform part of GetFeature request into SELECT statement of a SQL request
  */
-static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
-        buffer * layer_name)
+static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer * layer_name)
 {
     buffer *select;
     array *prop_table;
     array_node *an;
 
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     select = buffer_init();
     buffer_add_str(select, "SELECT ");
 
     prop_table = ows_psql_describe_table(o, layer_name);
 
-    for (an = prop_table->first; an != NULL; an = an->next) {
+    for (an = prop_table->first ; an ; an = an->next) {
         /* geometry columns must be returned in GML */
         if (ows_psql_is_geometry_column(o, layer_name, an->key)) {
 
@@ -473,7 +443,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                 buffer_add_str(select, "ST_AsGml(2, ");
 
                 /* Geometry Reprojection on the fly step if asked */
-                if (wr->srs != NULL) {
+                if (wr->srs) {
                     buffer_add_str(select, "ST_Transform(");
                     buffer_add(select, '"');
                     buffer_copy(select, an->key);
@@ -486,8 +456,8 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs != NULL && !wr->srs->is_degree) || 
-                        (wr->srs == NULL && ows_srs_meter_units(o, layer_name)))
+                if ((wr->srs && !wr->srs->is_degree) || 
+                   (!wr->srs && ows_srs_meter_units(o, layer_name)))
                     buffer_add_int(select, o->meter_precision); 
                 else 
                     buffer_add_int(select, o->degree_precision);
@@ -501,7 +471,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                 buffer_add_str(select, "ST_AsGml(3, ");
 
                 /* Geometry Reprojection on the fly step if asked */
-                if (wr->srs != NULL) {
+                if (wr->srs) {
                     buffer_add_str(select, "ST_Transform(");
                     buffer_add(select, '"');
                     buffer_copy(select, an->key);
@@ -514,8 +484,8 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs != NULL && !wr->srs->is_degree) || 
-                        (wr->srs == NULL && ows_srs_meter_units(o, layer_name))) {
+                if ((wr->srs && !wr->srs->is_degree) || 
+                   (!wr->srs && ows_srs_meter_units(o, layer_name))) {
                     buffer_add_int(select, o->meter_precision);
                     buffer_add_str(select, ", 3) AS \"");
                 } else {
@@ -530,7 +500,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                 buffer_add_str(select, "ST_AsGeoJSON(");
 
                 /* Geometry Reprojection on the fly step if asked */
-                if (wr->srs != NULL) {
+                if (wr->srs) {
                     buffer_add_str(select, "ST_Transform(");
                     buffer_add(select, '"');
                     buffer_copy(select, an->key);
@@ -543,8 +513,8 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs != NULL && !wr->srs->is_degree) || 
-                        (wr->srs == NULL && ows_srs_meter_units(o, layer_name)))
+                if ((wr->srs && !wr->srs->is_degree) || 
+                   (!wr->srs && ows_srs_meter_units(o, layer_name)))
                     buffer_add_int(select, o->meter_precision); 
                 else 
                     buffer_add_int(select, o->degree_precision);
@@ -566,8 +536,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr,
             buffer_add_str(select, "\"");
         }
 
-        if (an->next != NULL)
-            buffer_add_str(select, ",");
+        if (an->next) buffer_add_str(select, ",");
     }
 
     return select;
@@ -588,8 +557,8 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     filter_encoding *fe;
     ows_bbox *bbox;
 
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     mln_fid = NULL;
     ln_filter = NULL;
@@ -600,15 +569,15 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     nb = 0;
 
     /* initialize the nodes to run through typename and fid */
-    if (wr->typename != NULL) {
+    if (wr->typename) {
         size = wr->typename->size;
         ln_typename = wr->typename->first;
     }
 
-    if (wr->filter != NULL)
+    if (wr->filter)
         ln_filter = wr->filter->first;
 
-    if (wr->featureid != NULL) {
+    if (wr->featureid) {
         size = wr->featureid->size;
         mln_fid = wr->featureid->first;
     }
@@ -625,7 +594,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         layer_name = buffer_init();
 
         /* defines a layer_name which match typename or featureid */
-        if (wr->typename != NULL)
+        if (wr->typename)
             buffer_copy(layer_name, ln_typename->value);
         else {
             fid = list_explode('.', mln_fid->value->first->value);
@@ -640,13 +609,13 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         buffer_add_str(sql, " FROM ");
         buffer_copy(sql, ows_psql_schema_name(o, layer_name));
         buffer_add_str(sql, ".\"");
-        buffer_copy(sql, layer_name);
+        buffer_copy(sql, ows_psql_table_name(o, layer_name));
         buffer_add_str(sql, "\"");
 
         /* WHERE : match featureid, bbox or filter */
 
         /* FeatureId */
-        if (wr->featureid != NULL) {
+        if (wr->featureid) {
             where = fe_kvp_featureid(o, wr, layer_name, mln_fid->value);
 
             if (where->use == 0) {
@@ -663,10 +632,9 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
             }
         }
         /* BBOX */
-        else if (wr->bbox != NULL)
-            where = fe_kvp_bbox(o, wr, layer_name, wr->bbox);
+        else if (wr->bbox) where = fe_kvp_bbox(o, wr, layer_name, wr->bbox);
         /* Filter */
-        else if (wr->filter != NULL) {
+        else if (wr->filter) {
             if (ln_filter->value->use != 0) {
                 where = buffer_init();
                 buffer_add_str(where, " WHERE ");
@@ -691,13 +659,13 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         } else
             where = buffer_init();
 
-        if (o->max_geobbox != NULL && where->use != 0)
+        if (o->max_geobbox && where->use != 0)
             buffer_add_str(where, " AND ");
-        else if (o->max_geobbox != NULL && where->use == 0)
+        else if (o->max_geobbox && where->use == 0)
             buffer_add_str(where, " WHERE ");
 
         /* geobbox's limits of ows */
-        if (o->max_geobbox != NULL) {
+        if (o->max_geobbox) {
 
             bbox = ows_bbox_init();
 	    ows_bbox_set_from_geobbox(o, bbox, o->max_geobbox);
@@ -715,7 +683,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         }
 
         /* sortby parameter */
-        if (wr->sortby != NULL) {
+        if (wr->sortby) {
             buffer_add_str(where, " ORDER BY ");
             buffer_copy(where, wr->sortby);
         }
@@ -738,18 +706,12 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         list_add(from_list, layer_name);
 
         /* incrementation of the nodes */
-        if (wr->featureid != NULL)
-            mln_fid = mln_fid->next;
-
-        if (wr->typename != NULL)
-            ln_typename = ln_typename->next;
-
-        if (wr->filter != NULL)
-            ln_filter = ln_filter->next;
+        if (wr->featureid) mln_fid = mln_fid->next;
+        if (wr->typename)  ln_typename = ln_typename->next;
+        if (wr->filter)    ln_filter = ln_filter->next;
     }
 
-    /* requests multiple list contains three lists : sql requests, from
-       list and where list */
+    /* requests multiple list contains three lists : sql requests, from list and where list */
     requests = mlist_init();
     mlist_add(requests, sql_req);
     mlist_add(requests, from_list);
@@ -773,9 +735,9 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     int i,j;
     int geoms;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(request_list != NULL);
+    assert(o);
+    assert(wr);
+    assert(request_list);
 
     ln = ll= NULL;
 
@@ -787,10 +749,9 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     fprintf(o->output, "Content-Type: application/json\n\n");
     fprintf(o->output, "{\"type\": \"FeatureCollection\", \"features\": [");
 
-    for (ln = request_list->first->value->first; ln != NULL; ln = ln->next) {
+    for (ln = request_list->first->value->first ; ln ; ln = ln->next) {
         /* execute the sql request */
         res = PQexec(o->pg, ln->value->buf);
-
 
         if (PQresultStatus(res) != PGRES_TUPLES_OK) {
             PQclear(res);
@@ -805,7 +766,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
             first = true;
             geoms = 0;
 
-            for (an = prop_table->first, j=0 ; an != NULL ; an = an->next, j++) {
+            for (an = prop_table->first, j=0 ; an ; an = an->next, j++) {
 
                 if (ows_psql_is_geometry_column(o, ll->value, an->key)) {
                     buffer_add_str(geom, PQgetvalue(res, i, j));
@@ -826,10 +787,10 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
                 }
             }
 
-            if (geoms == 0) {
-                     fprintf(o->output,
-                            "{\"type\":\"Feature\", \"properties\":{\"%s}}\n",
-                            prop->buf);
+                   if (geoms == 0) {
+                fprintf(o->output,
+                        "{\"type\":\"Feature\", \"properties\":{\"%s}}\n",
+                        prop->buf);
             } else if (geoms == 1) {
                 fprintf(o->output,
                         "{\"type\":\"Feature\", \"properties\":{\"%s}, \"geometry\":%s}\n",
@@ -837,7 +798,8 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
             } else if (geoms > 1) {
                 fprintf(o->output,
                         "{\"type\":\"Feature\", \"properties\":{\"%s}, \"geometry\":%s%s]}}\n",
-                        prop->buf, "{ \"type\": \"GeometryCollection\", \"geometries\": [", geom->buf);
+                        prop->buf, "{ \"type\": \"GeometryCollection\", \"geometries\": [",
+			geom->buf);
             } 
 	    if (j) fprintf(o->output, ",");
 
@@ -865,8 +827,8 @@ void wfs_get_feature(ows * o, wfs_request * wr)
 {
     mlist *request_list;
 
-    assert(o != NULL);
-    assert(wr != NULL);
+    assert(o);
+    assert(wr);
 
     /* retrieve a list of SQL requests from the GetFeature parameters */
     request_list = wfs_retrieve_sql_request_list(o, wr);
@@ -879,9 +841,8 @@ void wfs_get_feature(ows * o, wfs_request * wr)
         else
             wfs_gml_display_results(o, wr, request_list);
 
-    } else if (wr->format == WFS_GEOJSON) {
-                wfs_geojson_display_results(o, wr, request_list);
-    }
+    } else if (wr->format == WFS_GEOJSON)
+	wfs_geojson_display_results(o, wr, request_list);
 
     /* add here other functions to display GetFeature response in
            other formats */

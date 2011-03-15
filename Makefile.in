@@ -22,16 +22,18 @@ PREFIX=@prefix@
 SRC = $(wildcard src/*/*.c)
 
 all:
-	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(FCGIFLAGS) $(SRC) -o tinyows
+	lex -i -o src/mapfile/mapfile.c src/mapfile/mapfile.l
+	$(CC) $(CFLAGS) $(PGFLAGS) $(XMLFLAGS) $(FCGIFLAGS) $(SRC) -o tinyows -L/usr/lib -lfl
 	@rm -rf tinyows.dSYM
 
 svn-clean: clean doc-clean astyle
-	@find . -name '*~' -exec rm {} \;
+	@find . -name '*~' -exec rm {} \;	
 	@rm -f configure
 
 clean: 
 	@rm -f tinyows Makefile src/ows_define.h
 	@rm -rf tinyows.dSYM
+	@rm -f src/mapfile/mapfile.c
 	@rm -f demo/config.xml demo/install.sh
 	@rm -f test/config.xml test/install.sh
 
@@ -69,19 +71,13 @@ test-valgrind:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 1
 
 test-output:
-	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 3
-
-test-http:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 4
 
-test-exception:
+test-http:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 5
 
-test-stderr:
+test-exception:
 	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 6
 
-
-
-astyle:
-	@(astyle -A4 -S -M -m -f -p -U -o -c $(SRC)) \
-	|| echo "astyle seems not installed"
+test-stderr:
+	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 7

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -44,10 +44,7 @@ bool cgi_method_get()
     char *method;
 
     method = getenv("REQUEST_METHOD");
-
-    if (method != NULL && strcmp(method, "GET") == 0)
-        return true;
-
+    if (method && !strcmp(method, "GET")) return true;
     return false;
 }
 
@@ -60,10 +57,7 @@ bool cgi_method_post()
     char *method;
 
     method = getenv("REQUEST_METHOD");
-
-    if (method != NULL && strcmp(method, "POST") == 0)
-        return true;
-
+    if (method && !strcmp(method, "POST")) return true;
     return false;
 }
 
@@ -77,24 +71,21 @@ char *cgi_getback_query(ows * o)
     int query_size = 0;
     size_t result;
 
-    if (cgi_method_get())
-        query = getenv("QUERY_STRING");
+    if (cgi_method_get()) query = getenv("QUERY_STRING");
     else if (cgi_method_post()) {
         query_size = atoi(getenv("CONTENT_LENGTH"));
 
         query = malloc(sizeof(char) * query_size + 1);
-        assert(query != NULL);
+        assert(query); /* FIXME Really ? */
         result = fread(query, query_size, 1, stdin);
         if (ferror(stdin)) {
-            ows_error(o, OWS_ERROR_REQUEST_HTTP, "Error on QUERY input",
-                      "request");
+            ows_error(o, OWS_ERROR_REQUEST_HTTP, "Error on QUERY input", "request");
             return NULL;
 	}
         query[query_size] = '\0';
     }
     /* local tests */
-    else
-        query = getenv("QUERY_STRING");
+    else query = getenv("QUERY_STRING");
 
     return query;
 }
@@ -108,11 +99,9 @@ static char cgi_hexatochar(char *what)
 {
     char digit;
 
-    digit =
-        (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
+    digit = (what[0] >= 'A' ? ((what[0] & 0xdf) - 'A') + 10 : (what[0] - '0'));
     digit *= 16;
-    digit +=
-        (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
+    digit += (what[1] >= 'A' ? ((what[1] & 0xdf) - 'A') + 10 : (what[1] - '0'));
     return (digit);
 }
 
@@ -172,8 +161,8 @@ array *cgi_parse_kvp(ows * o, char *query)
     array *arr;
     char string[2];
 
-    assert(o != NULL);
-    assert(query != NULL);
+    assert(o);
+    assert(query);
 
     key = buffer_init();
     val = buffer_init();
@@ -184,7 +173,7 @@ array *cgi_parse_kvp(ows * o, char *query)
     cgi_remove_crlf(query);
     cgi_plustospace(query);
 
-    for (i = 0; i < CGI_QUERY_MAX && query[i] != '\0'; i++) {
+    for (i = 0; i < CGI_QUERY_MAX && query[i] ; i++) {
 
         if (query[i] == '&') {
 
@@ -200,8 +189,7 @@ array *cgi_parse_kvp(ows * o, char *query)
                     || buffer_case_cmp(key, "outputformat") == false)
                     && buffer_cmp(val, "") == true)
                 in_key = false;
-            else
-                buffer_add(val, query[i]);
+            else buffer_add(val, query[i]);
         }
         /* Check characters'CGI request */
         else {
@@ -265,8 +253,8 @@ static array *cgi_add_node(array * arr, xmlNodePtr n)
     buffer *key, *val;
     xmlChar *content;
 
-    assert(arr != NULL);
-    assert(n != NULL);
+    assert(arr);
+    assert(n);
 
     key = buffer_init();
     val = buffer_init();
@@ -290,8 +278,8 @@ static array *cgi_add_att(array * arr, xmlAttr * att)
     buffer *key, *val;
     xmlChar *content;
 
-    assert(arr != NULL);
-    assert(att != NULL);
+    assert(arr);
+    assert(att);
 
     key = buffer_init();
     val = buffer_init();
@@ -316,8 +304,8 @@ static array *cgi_add_sortby(array * arr, xmlNodePtr n)
     xmlNodePtr elemt, node;
     xmlChar *content;
 
-    assert(arr != NULL);
-    assert(n != NULL);
+    assert(arr);
+    assert(n);
 
     content = NULL;
     key = buffer_init();
@@ -326,16 +314,13 @@ static array *cgi_add_sortby(array * arr, xmlNodePtr n)
 
     elemt = n->children;
 
-    if (elemt->type != XML_ELEMENT_NODE)
-        elemt = elemt->next;
+    if (elemt->type != XML_ELEMENT_NODE) elemt = elemt->next;
 
     /* parse the properties to sort */
-    for (; elemt != NULL; elemt = elemt->next) {
+    for ( /* empty */ ; elemt ; elemt = elemt->next) {
         if (elemt->type == XML_ELEMENT_NODE) {
             node = elemt->children;
-
-            if (node->type != XML_ELEMENT_NODE)
-                node = node->next;
+            if (node->type != XML_ELEMENT_NODE) node = node->next;
 
             /* add the property name */
             content = xmlNodeGetContent(node);
@@ -345,9 +330,7 @@ static array *cgi_add_sortby(array * arr, xmlNodePtr n)
             buffer_add_str(val, " ");
 
             node = node->next;
-
-            if (node->type != XML_ELEMENT_NODE)
-                node = node->next;
+            if (node->type != XML_ELEMENT_NODE) node = node->next;
 
             /* add the order */
             content = xmlNodeGetContent(node);
@@ -356,10 +339,8 @@ static array *cgi_add_sortby(array * arr, xmlNodePtr n)
 
         }
 
-        if (elemt->next != NULL) {
-            if (elemt->next->type == XML_ELEMENT_NODE)
-                buffer_add_str(val, ",");
-        }
+        if (elemt->next && elemt->next->type == XML_ELEMENT_NODE)
+		buffer_add_str(val, ",");
     }
 
     array_add(arr, key, val);
@@ -375,9 +356,9 @@ static array *cgi_add_buffer(array * arr, buffer * b, char *name)
 {
     buffer *key, *val;
 
-    assert(arr != NULL);
-    assert(b != NULL);
-    assert(name != NULL);
+    assert(arr);
+    assert(b);
+    assert(name);
 
     key = buffer_init();
     buffer_add_str(key, name);
@@ -400,16 +381,14 @@ static array *cgi_add_buffer(array * arr, buffer * b, char *name)
 /*
  * Add element into the buffer
  */
-static buffer *cgi_add_into_buffer(buffer * b, xmlNodePtr n,
-                                   bool need_comma)
+static buffer *cgi_add_into_buffer(buffer * b, xmlNodePtr n, bool need_comma)
 {
     xmlChar *content;
 
-    assert(b != NULL);
-    assert(n != NULL);
+    assert(b);
+    assert(n);
 
-    if (need_comma)
-        buffer_add_str(b, ",");
+    if (need_comma) buffer_add_str(b, ",");
 
     content = xmlNodeGetContent(n);
     buffer_add_str(b, (char *) content);
@@ -428,12 +407,12 @@ buffer *cgi_add_xml_into_buffer(buffer * element, xmlNodePtr n)
     xmlNsPtr * ns;
     int i;
 
-    assert(element != NULL);
-    assert(n != NULL);
+    assert(element);
+    assert(n);
 
     ns = xmlGetNsList(n->doc, n);
 
-    for (i = 0 ; ns[i] != NULL ; i++)
+    for (i = 0 ; ns[i] ; i++)
         xmlNewNs(n, ns[i]->href, ns[i]->prefix);
 
     buf = xmlBufferCreate();
@@ -460,8 +439,8 @@ array *cgi_parse_xml(ows * o, char *query)
     xmlNodePtr n, node;
     xmlAttr *att;
 
-    assert(o != NULL);
-    assert(query != NULL);
+    assert(o);
+    assert(query);
 
     prop_need_comma = false;
     typ_need_comma = false;
@@ -469,10 +448,9 @@ array *cgi_parse_xml(ows * o, char *query)
 
     xmldoc = xmlParseMemory(query, strlen(query));
 
-    if (!xmldoc || (n = xmlDocGetRootElement(xmldoc)) == NULL) {
+    if (!xmldoc || !(n = xmlDocGetRootElement(xmldoc))) {
         xmlFreeDoc(xmldoc);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "xml isn't valid",
-                  "request");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "xml isn't valid", "request");
         return NULL;
     }
 
@@ -491,17 +469,16 @@ array *cgi_parse_xml(ows * o, char *query)
     array_add(arr, key, val);
 
     /* retrieve the namespace linked to the first node */
-    if (n->ns != NULL)
-        if (n->ns->href != NULL) {
-            key = buffer_init();
-            val = buffer_init();
-            buffer_add_str(key, "xmlns");
-            buffer_add_str(val, (char *) n->ns->href);
-            array_add(arr, key, val);
-        }
+    if (n->ns && n->ns->href) {
+        key = buffer_init();
+        val = buffer_init();
+        buffer_add_str(key, "xmlns");
+        buffer_add_str(val, (char *) n->ns->href);
+        array_add(arr, key, val);
+    }
 
     /* name element is put in key, and content element in value */
-    for (att = n->properties; att != NULL; att = att->next)
+    for (att = n->properties ; att ; att = att->next)
         arr = cgi_add_att(arr, att);
 
     for (n = n->children; n; n = n->next) {
@@ -510,35 +487,33 @@ array *cgi_parse_xml(ows * o, char *query)
             continue;
 
         /* parse the element's attributes */
-        for (att = n->properties; att != NULL; att = att->next) {
-            if (strcmp((char *) att->name, "typeName") == 0) {
-                /* add typename to the matching global buffer */
-                typename =
-                    cgi_add_into_buffer(typename, att->children,
-                                        typ_need_comma);
+        for (att = n->properties ; att ; att = att->next) {
+
+            /* add typename to the matching global buffer */
+            if (!strcmp((char *) att->name, "typeName")) {
+                typename = cgi_add_into_buffer(typename, att->children, typ_need_comma);
                 typ_need_comma = true;
-            } else
-                /* add name and content element to the array */
-                arr = cgi_add_att(arr, att);
+
+            /* add name and content element to the array */
+            } else arr = cgi_add_att(arr, att);
         }
 
-        if (strcmp((char *) n->name, "TypeName") == 0) {
+        if (!strcmp((char *) n->name, "TypeName")) {
             /* add typename to the matching global buffer */
             typename = cgi_add_into_buffer(typename, n, typ_need_comma);
             typ_need_comma = true;
         }
         /*if n name is an operation, keep the xml to analyse it later */
-        else if (strcmp((char *) n->name, "Insert") == 0
-                 || strcmp((char *) n->name, "Delete") == 0
-                 || strcmp((char *) n->name, "Update") == 0) {
-            if (operations->use == 0)
-                buffer_add_str(operations, "<operations>");
+        else if (!strcmp((char *) n->name, "Insert")
+                 || !strcmp((char *) n->name, "Delete")
+                 || !strcmp((char *) n->name, "Update")) {
+            if (operations->use) buffer_add_str(operations, "<operations>");
 
             /* add the whole xml operation to the matching global buffer */
             operations = cgi_add_xml_into_buffer(operations, n);
         }
         /* if node name match 'Query', parse the children elements */
-        else if (strcmp((char *) n->name, "Query") == 0) {
+        else if (!strcmp((char *) n->name, "Query")) {
             /* each query's propertynames and filter must be in brackets */
             buffer_add_str(prop, "(");
             buffer_add_str(filter, "(");
@@ -547,14 +522,14 @@ array *cgi_parse_xml(ows * o, char *query)
                 /*execute the process only if n is an element and not spaces for instance */
                 if (node->type != XML_ELEMENT_NODE) continue;
 
-                if (strcmp((char *) node->name, "PropertyName") == 0) {
+                if (!strcmp((char *) node->name, "PropertyName")) {
                     /* add propertyname to the matching global buffer */
                     prop = cgi_add_into_buffer(prop, node, prop_need_comma);
                     prop_need_comma = true;
-                } else if (strcmp((char *) node->name, "Filter") == 0) {
+                } else if (!strcmp((char *) node->name, "Filter")) {
                     /* add the whole xml filter to the matching global buffer */
                     filter = cgi_add_xml_into_buffer(filter, node);
-                } else if (strcmp((char *) node->name, "SortBy") == 0) {
+                } else if (!strcmp((char *) node->name, "SortBy")) {
                     /* add sortby element to the array */
                     arr = cgi_add_sortby(arr, node);
                 } else {
@@ -563,28 +538,28 @@ array *cgi_parse_xml(ows * o, char *query)
                 }
             }
 
-            /* when there aren't any propertynames, an '*' must be included into the buffer to be sur that propertyname's size and typename's size are similar */
-            if (prop_need_comma == false)
-                buffer_add_str(prop, "*");
+            /* when there aren't any propertynames, an '*' must be included into 
+               the buffer to be sur that propertyname's size and typename's size are similar */
+            if (prop_need_comma == false) buffer_add_str(prop, "*");
 
             buffer_add_str(prop, ")");
             prop_need_comma = false;
-            /* when there is no filter, an empty element must be included into the list to be sur that filter's size and typename's size are similar */
+            /* when there is no filter, an empty element must be included into
+	       the list to be sur that filter's size and typename's size are similar */
             buffer_add_str(filter, ")");
 
-        } else
             /* add element to the array */
-            arr = cgi_add_node(arr, n);
+        } else arr = cgi_add_node(arr, n);
     }
 
     /* operations */
-    if (operations->use != 0) {
+    if (operations->use) {
         buffer_add_str(operations, "</operations>");
         arr = cgi_add_buffer(arr, operations, "operations");
     }
 
     /* propertyname */
-    if (prop->use != 0) {
+    if (prop->use) {
         /* if buffer just contains a series of (*), propertyname not useful */
         if (!check_regexp(prop->buf, "^[\\(\\)\\*]+$")) {
             arr = cgi_add_buffer(arr, prop, "propertyname");
@@ -592,7 +567,7 @@ array *cgi_parse_xml(ows * o, char *query)
     }
 
     /* filter */
-    if (filter->use != 0) {
+    if (filter->use) {
         /* if buffer just contains a series of (), filter not useful */
         if (!check_regexp(filter->buf, "^[\\(\\)]+$")) {
             arr = cgi_add_buffer(arr, filter, "filter");
@@ -600,8 +575,7 @@ array *cgi_parse_xml(ows * o, char *query)
     }
 
     /* typename */
-    if (typename->use != 0)
-        arr = cgi_add_buffer(arr, typename, "typename");
+    if (typename->use) arr = cgi_add_buffer(arr, typename, "typename");
 
     buffer_free(prop);
     buffer_free(operations);

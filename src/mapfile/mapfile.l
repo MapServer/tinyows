@@ -21,11 +21,13 @@ enum map_md_state {
     MAP_MD_MAXFEATURES,
     MAP_MD_NAMESPACE_PREFIX,
     MAP_MD_NAMESPACE_URI,
-    MAP_MD_ONLINERESOURCE,
+    MAP_MD_SERVICE_ONLINERESOURCE,
     MAP_MD_TITLE,
     MAP_MD_SRS,
     MAP_MD_FEATURE_COLLECTION,
-    MAP_MD_SCHEMA_DIR,
+    MAP_MD_TOWS_ONLINERESOURCE,
+    MAP_MD_TOWS_SCHEMA_DIR,
+    MAP_MD_TOWS_DB_ENCODING,
     MAP_MD_SKIP
 };
 
@@ -99,18 +101,20 @@ static void metadata_key(char * yytext)
 		map_md_state = MAP_MD_NAMESPACE_PREFIX;
 	else if(!strncmp("wfs_namespace_uri", yytext, 17))
 		map_md_state = MAP_MD_NAMESPACE_URI;
-	/* wfs_onlineresource and wfs_service_onlineresource 
-           are not used (not the same binary...) */
-	else if(!strncmp("tinyows_online_resource", yytext, 23))
-		map_md_state = MAP_MD_ONLINERESOURCE;
+	else if(!strncmp("wfs_service_onlineresource", yytext, 31))
+		map_md_state = MAP_MD_SERVICE_ONLINERESOURCE;
 	else if(!strncmp("wfs_title", yytext, 9))
 		map_md_state = MAP_MD_TITLE;
 	else if(!strncmp("wfs_srs", yytext, 7))
 		map_md_state = MAP_MD_SRS;
 	else if(!strncmp("wfs_feature_collection", yytext, 22))
 		map_md_state = MAP_MD_FEATURE_COLLECTION;
+	else if(!strncmp("tinyows_onlineresource", yytext, 22))
+		map_md_state = MAP_MD_TOWS_ONLINERESOURCE;
+	else if(!strncmp("tinyows_db_encoding", yytext, 19))
+		map_md_state = MAP_MD_TOWS_DB_ENCODING;
 	else if(!strncmp("tinyows_schema_dir", yytext, 18))
-		map_md_state = MAP_MD_SCHEMA_DIR;
+		map_md_state = MAP_MD_TOWS_SCHEMA_DIR;
 	else map_md_state = MAP_MD_SKIP;
 }
 
@@ -119,9 +123,10 @@ static void metadata_value(char * yytext)
 	switch(map_md_state)
 	{
 		case MAP_MD_SKIP: return;
-		case MAP_MD_UPDATESEQUENCE: 	return; /* TODO */
-		case MAP_MD_SCHEMAS_LOCATION:	return; /* TODO */
-		case MAP_MD_FEATURE_COLLECTION: return; /* TODO */
+		case MAP_MD_UPDATESEQUENCE: 		return; /* TODO */
+		case MAP_MD_SCHEMAS_LOCATION:		return; /* TODO */
+		case MAP_MD_FEATURE_COLLECTION:		return; /* TODO */
+		case MAP_MD_SERVICE_ONLINERESOURCE:	return; /* TODO */
 		case MAP_MD_ABSTRACT:	
 			map_o->metadata->abstract = buffer_init();
         		buffer_add_str(map_o->metadata->abstract, yytext);
@@ -151,9 +156,6 @@ static void metadata_value(char * yytext)
 			map_ns_uri = buffer_init();
 			buffer_add_str(map_ns_uri, yytext);
 			return;
-		case MAP_MD_ONLINERESOURCE:
-		        buffer_add_str(map_o->online_resource, yytext);
-			return;
 		case MAP_MD_TITLE:
 		    	map_o->metadata->title = buffer_init();
         		buffer_add_str(map_o->metadata->title, yytext);
@@ -161,8 +163,14 @@ static void metadata_value(char * yytext)
 		case MAP_MD_SRS:
 			map_srid = list_explode_str(',', yytext);
 			return;
-		case MAP_MD_SCHEMA_DIR:
+		case MAP_MD_TOWS_SCHEMA_DIR:
         		buffer_add_str(map_o->schema_dir, yytext);
+			return;
+		case MAP_MD_TOWS_ONLINERESOURCE:
+		        buffer_add_str(map_o->online_resource, yytext);
+			return;
+		case MAP_MD_TOWS_DB_ENCODING:
+			buffer_add_str(map_o->db_encoding, yytext);
 			return;
 	}
 }
@@ -352,7 +360,7 @@ static void end_layer()
 %%
 
 <INITIAL,MAP,LAYER,METADATA,LAYER_METADATA># { char c ; for (c=input() ; c && c != '\n' ; c=input()); }
-
+INCLUDE	{ yyterminate(); ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file");} 
 <INITIAL>MAP			{BEGIN MAP;}
 <MAP>END			{BEGIN INITIAL;}
 <MAP>METADATA 			{BEGIN METADATA;}
@@ -434,7 +442,8 @@ void ows_parse_config_mapfile(ows * o, const char *filename)
 	assert(filename);
 
 	if (!(yyin = fopen(filename, "r"))) {
-		ows_error(o, OWS_ERROR_CONFIG_FILE, "Unable to open MapFile !", "parse_config_file");
+		ows_error(o, OWS_ERROR_CONFIG_FILE, "Unable to open MapFile !", 
+				"parse_config_file");
 		return;
 	}
 
@@ -444,10 +453,11 @@ void ows_parse_config_mapfile(ows * o, const char *filename)
 
  	while( yylex() ) ;
 
-	if (!map_o->db_encoding) {
-		map_o->db_encoding = buffer_init();
+	if (!map_o->encoding->use)
+		buffer_add_str(map_o->encoding, OWS_DEFAULT_XML_ENCODING);
+
+	if (!map_o->db_encoding->use)
 		buffer_add_str(map_o->db_encoding, OWS_DEFAULT_DB_ENCODING);
-	}
 	
 	if (map_srid) {
 		for (ln = o->layers->first ; ln ; ln = ln->next)
@@ -468,6 +478,6 @@ void ows_parse_config_mapfile(ows * o, const char *filename)
 				buffer_copy(ln->layer->ns_prefix, map_ns_prefix); 
 		buffer_free(map_ns_prefix);
 	}
-		
+
 	fclose(yyin);
 }

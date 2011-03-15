@@ -373,9 +373,6 @@ static void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
     assert(o);
     assert(r);
 
-    o->db_encoding = buffer_init(); 
-    buffer_add_str(o->db_encoding, OWS_DEFAULT_DB_ENCODING);
-
     if (xmlTextReaderMoveToFirstAttribute(r) != 1) return;
     do {
         a = xmlTextReaderName(r);
@@ -393,7 +390,6 @@ static void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
             xmlFree(v);
         } else if (!strcmp((char *) a, "encoding")) { 
             v = xmlTextReaderValue(r); 
-            buffer_empty(o->db_encoding); 
             buffer_add_str(o->db_encoding, (char *) v); 
             xmlFree(v); 
         }
@@ -401,7 +397,8 @@ static void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     } while (xmlTextReaderMoveToNextAttribute(r) == 1);
 
-
+    if (!o->db_encoding->use)
+        buffer_add_str(o->db_encoding, OWS_DEFAULT_DB_ENCODING);
 }
 
 
@@ -569,13 +566,13 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
  */
 static void ows_config_check(ows * o)
 {
-    if (!o->online_resource->buf) {
+    if (!o->online_resource->use) {
         ows_error(o, OWS_ERROR_CONFIG_FILE, "No 'online_resource' property in tinyows element",
                   "parse_config_file");
         return;
     }
 
-    if (!o->schema_dir->buf) {
+    if (!o->schema_dir->use) {
         ows_error(o, OWS_ERROR_CONFIG_FILE, "No 'schema_dir' property in tinyows element",
                   "parse_config_file");
         return;
@@ -598,7 +595,7 @@ static void ows_config_check(ows * o)
         return;
     }
 
-    if (!o->pg_dsn->buf) { ows_error(o, OWS_ERROR_CONFIG_FILE, "No 'pg' element",
+    if (!o->pg_dsn->use) { ows_error(o, OWS_ERROR_CONFIG_FILE, "No 'pg' element",
                   "parse_config_file");
         return;
     }
@@ -673,7 +670,6 @@ void ows_parse_config(ows * o, const char *filename)
 
     if (o->mapfile) ows_parse_config_mapfile(o, filename);
     else	    ows_parse_config_xml(o, filename);
-
     if (!o->exit) ows_config_check(o);
 }
 

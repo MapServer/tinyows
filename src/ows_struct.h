@@ -109,7 +109,6 @@ typedef struct Ows_layer_storage {
     int pkey_column_number;
     bool is_degree;
     array * attributes;
-    buffer * encoding;
 } ows_layer_storage;
 
 typedef struct Ows_srs {

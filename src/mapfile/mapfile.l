@@ -36,6 +36,7 @@ enum map_md_state {
     MAP_MD_TOWS_CHECK_SCHEMA,
     MAP_MD_TOWS_CHECK_VALID_GEOM,
     MAP_MD_TOWS_EXPOSE_PK,
+    MAP_MD_TOWS_GEOBBOX,
     MAP_MD_SKIP
 };
 
@@ -139,12 +140,15 @@ static void metadata_key(char * yytext)
 		map_md_state = MAP_MD_TOWS_CHECK_VALID_GEOM;
 	else if(!strncmp("tinyows_expose_pk", yytext, 17))
 		map_md_state = MAP_MD_TOWS_EXPOSE_PK;
+	else if(!strncmp("tinyows_geobbox", yytext, 15))
+		map_md_state = MAP_MD_TOWS_GEOBBOX;
 	else map_md_state = MAP_MD_SKIP;
 }
 
 static void metadata_value(char * yytext)
 {
 	int p;
+	ows_geobbox *g;
 
 	switch(map_md_state)
 	{
@@ -222,6 +226,11 @@ static void metadata_value(char * yytext)
 			return;
 		case MAP_MD_TOWS_EXPOSE_PK:
 			if (atoi(yytext)) map_o->check_valid_geom = true;
+			return;
+		case MAP_MD_TOWS_GEOBBOX:
+			g = ows_geobbox_init();
+        		if (ows_geobbox_set_from_str(map_o, g, yytext)) map_o->max_geobbox = g;
+        		else ows_geobbox_free(g);
 			return;
 	}
 }

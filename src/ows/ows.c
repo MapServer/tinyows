@@ -36,17 +36,16 @@
  */
 static void ows_pg(ows * o, char *con_str)
 {
-    assert(o != NULL);
-    assert(con_str != NULL);
+    assert(o);
+    assert(con_str);
 
     o->pg = PQconnectdb(con_str);
 
     if (PQstatus(o->pg) != CONNECTION_OK)
-        ows_error(o, OWS_ERROR_CONNECTION_FAILED,
-                  "connection to database failed", "init_OWS");
+        ows_error(o, OWS_ERROR_CONNECTION_FAILED, "Connection to database failed", "init_OWS");
+
     else if (PQsetClientEncoding(o->pg, o->db_encoding->buf))
-        ows_error(o, OWS_ERROR_CONNECTION_FAILED,
-                  "Wrong databse encoding", "init_OWS");
+        ows_error(o, OWS_ERROR_CONNECTION_FAILED, "Wrong database encoding", "init_OWS");
 }
 
 
@@ -58,7 +57,7 @@ static ows *ows_init()
     ows *o;
 
     o = malloc(sizeof(ows));
-    assert(o != NULL);
+    assert(o);
 
     o->init = true;
     o->exit = false;
@@ -332,9 +331,9 @@ int main(int argc, char *argv[])
     o->config_file = buffer_init();
 
     /* Config Files */
-    if (getenv("TINYOWS_CONFIG_FILE") != NULL)
+    if (getenv("TINYOWS_CONFIG_FILE"))
         buffer_add_str(o->config_file, getenv("TINYOWS_CONFIG_FILE"));
-    else if (getenv("TINYOWS_MAPFILE") != NULL) {
+    else if (getenv("TINYOWS_MAPFILE")) {
         buffer_add_str(o->config_file, getenv("TINYOWS_MAPFILE"));
         o->mapfile = true;
     } else

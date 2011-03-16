@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -43,15 +43,15 @@
  */
 static void buffer_realloc(buffer * buf)
 {
-    assert(buf != NULL);
+    assert(buf);
 
     buf->buf = realloc(buf->buf, buf->realloc * sizeof(char));
-    assert(buf->buf != NULL);
+    assert(buf->buf);
 
     buf->size = buf->realloc;
     buf->realloc *= 4;
 
-    if (buf->realloc >= SIZE_MAX) assert(true);
+    if (buf->realloc >= SIZE_MAX) assert(false);
 }
 
 
@@ -63,10 +63,10 @@ buffer *buffer_init()
     buffer *buf;
 
     buf = malloc(sizeof(buffer));
-    assert(buf != NULL);
+    assert(buf);
 
     buf->buf = malloc(BUFFER_SIZE_INIT * sizeof(char));
-    assert(buf->buf != NULL);
+    assert(buf->buf);
 
     buf->size = BUFFER_SIZE_INIT;
     buf->realloc = BUFFER_SIZE_INIT * 2;
@@ -82,8 +82,8 @@ buffer *buffer_init()
  */
 void buffer_free(buffer * buf)
 {
-    assert(buf != NULL);
-    assert(buf->buf != NULL);
+    assert(buf);
+    assert(buf->buf);
 
     free(buf->buf);
     buf->buf = NULL;
@@ -99,11 +99,8 @@ void buffer_free(buffer * buf)
  */
 void buffer_empty(buffer * buf)
 {
-    assert(buf != NULL);
-
-    if (buf->use > 0)
-        buf->buf[0] = '\0';
-
+    assert(buf);
+    if (buf->use > 0) buf->buf[0] = '\0';
     buf->use = 0;
 }
 
@@ -114,9 +111,8 @@ void buffer_empty(buffer * buf)
  */
 void buffer_flush(buffer * buf, FILE * output)
 {
-    assert(buf != NULL);
-    assert(output != NULL);
-
+    assert(buf);
+    assert(output);
     fprintf(output, "%s", buf->buf);
 }
 
@@ -126,10 +122,9 @@ void buffer_flush(buffer * buf, FILE * output)
  */
 void buffer_add(buffer * buf, char c)
 {
-    assert(buf != NULL);
+    assert(buf);
 
-    if ((buf->use + 2) >= buf->size)
-        buffer_realloc(buf);
+    if ((buf->use + 2) >= buf->size) buffer_realloc(buf);
 
     buf->buf[buf->use] = c;
     buf->buf[buf->use + 1] = '\0';
@@ -161,7 +156,7 @@ void buffer_add_double(buffer * buf, double f)
 {
     buffer *b;
 
-    assert(buf != NULL);
+    assert(buf);
 
     b = buffer_ftoa(f);
     buffer_copy(buf, b);
@@ -176,7 +171,7 @@ void buffer_add_int(buffer * buf, int i)
 {
     buffer *b;
 
-    assert(buf != NULL);
+    assert(buf);
 
     b = buffer_itoa(i);
     buffer_copy(buf, b);
@@ -201,6 +196,18 @@ buffer *buffer_itoa(int i)
 }
 
 
+buffer *buffer_from_str(const char *str)
+{
+    buffer *b;
+
+    assert(str);
+    b = buffer_init();
+
+    buffer_add_str(b, str);
+    return b;
+}
+
+
 /*
  * Add a char to the top of a buffer
  */
@@ -208,7 +215,7 @@ void buffer_add_head(buffer * buf, char c)
 {
     size_t i;
 
-    assert(buf != NULL);
+    assert(buf);
 
     if ((buf->use + 2) >= buf->size)
         buffer_realloc(buf);
@@ -230,8 +237,8 @@ void buffer_add_head_str(buffer * buf, char *str)
 {
     int i;
 
-    assert(buf != NULL);
-    assert(str != NULL);
+    assert(buf);
+    assert(str);
 
     for (i = strlen(str); i != 0; i--)
         buffer_add_head(buf, str[i - 1]);
@@ -243,8 +250,8 @@ void buffer_add_head_str(buffer * buf, char *str)
  */
 void buffer_add_str(buffer * buf, const char *str)
 {
-    assert(buf != NULL);
-    assert(str != NULL);
+    assert(buf);
+    assert(str);
 
     while (*str++ != '\0')
         buffer_add(buf, *(str - 1));
@@ -258,11 +265,10 @@ bool buffer_cmp(const buffer * buf, const char *str)
 {
     size_t i;
 
-    assert(buf != NULL);
-    assert(str != NULL);
+    assert(buf);
+    assert(str);
 
-    if (buf->use != strlen(str))
-        return false;
+    if (buf->use != strlen(str)) return false;
 
     for (i = 0; i < buf->use; i++)
         if (buf->buf[i] != str[i])
@@ -279,8 +285,8 @@ bool buffer_ncmp(const buffer * buf, const char *str, size_t n)
 {
     size_t i;
 
-    assert(buf != NULL);
-    assert(str != NULL);
+    assert(buf);
+    assert(str);
 
     if (buf->use < n) return false;
 
@@ -299,11 +305,10 @@ bool buffer_case_cmp(const buffer * buf, const char *str)
 {
     size_t i;
 
-    assert(buf != NULL);
-    assert(str != NULL);
+    assert(buf);
+    assert(str);
 
-    if (buf->use != strlen(str))
-        return false;
+    if (buf->use != strlen(str)) return false;
 
     for (i = 0; i < buf->use; i++)
         if (toupper(buf->buf[i]) != toupper(str[i]))
@@ -320,8 +325,8 @@ void buffer_copy(buffer * dest, const buffer * src)
 {
     size_t i;
 
-    assert(dest != NULL);
-    assert(src != NULL);
+    assert(dest);
+    assert(src);
 
     for (i = 0; i < src->use; i++)
         buffer_add(dest, src->buf[i]);
@@ -333,7 +338,7 @@ void buffer_copy(buffer * dest, const buffer * src)
  */
 void buffer_pop(buffer * buf, size_t len)
 {
-    assert(buf != NULL);
+    assert(buf);
     assert(len <= buf->use);
 
     buf->use -= len;
@@ -348,7 +353,7 @@ void buffer_shift(buffer * buf, size_t len)
 {
     size_t i;
 
-    assert(buf != NULL);
+    assert(buf);
     assert(len <= buf->use);
 
     for (i = len; i < buf->use; i++)
@@ -369,9 +374,9 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
     buffer *new_buf, *rest;
     int length;
 
-    assert(buf != NULL);
-    assert(before != NULL);
-    assert(after != NULL);
+    assert(buf);
+    assert(before);
+    assert(after);
 
     new_buf = buffer_init();
     buffer_copy(new_buf, buf);
@@ -379,7 +384,7 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
     /* look for first occurence */
     pos = strstr(new_buf->buf, before);
 
-    while (pos != NULL) {
+    while (pos) {
         length = strlen(pos);
 
         /* copy the first party of the string without occurence */
@@ -423,7 +428,7 @@ buffer *buffer_encode_xml_entities(const buffer * buf)
     buffer *new_buf;
     int i;
 
-    assert(buf != NULL);
+    assert(buf);
     new_buf = buffer_init();
 
     for(i=0 ; i < buf->use ; i++) {
@@ -469,7 +474,7 @@ buffer *buffer_encode_json(const buffer * buf)
     buffer *new_buf;
     int i;
 
-    assert(buf != NULL);
+    assert(buf);
     new_buf = buffer_init();
 
     for(i=0 ; i < buf->use ; i++) {

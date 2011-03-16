@@ -16,6 +16,7 @@ void buffer_add_head (buffer * buf, char c);
 void buffer_add_head_str (buffer * buf, char *str);
 void buffer_add_int (buffer * buf, int i);
 void buffer_add_str (buffer * buf, const char *str);
+buffer *buffer_from_str(const char *str);
 bool buffer_cmp (const buffer * buf, const char *str);
 bool buffer_ncmp(const buffer * buf, const char *str, size_t n);
 bool buffer_case_cmp (const buffer * buf, const char *str);

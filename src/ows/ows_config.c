@@ -324,12 +324,8 @@ static void ows_parse_config_limits(ows * o, xmlTextReaderPtr r)
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "geobbox");
     if (a) {
         geo = ows_geobbox_init();
-
-        if (ows_geobbox_set_from_str(o, geo, (char *) a))
-            o->max_geobbox = geo;
-        else
-            ows_geobbox_free(geo);
-
+        if (ows_geobbox_set_from_str(o, geo, (char *) a)) o->max_geobbox = geo;
+        else ows_geobbox_free(geo);
         xmlFree(a);
     }
 }

@@ -21,10 +21,18 @@ enum map_md_state {
     MAP_MD_MAXFEATURES,
     MAP_MD_NAMESPACE_PREFIX,
     MAP_MD_NAMESPACE_URI,
-    MAP_MD_SERVICE_ONLINERESOURCE,
     MAP_MD_TITLE,
     MAP_MD_SRS,
     MAP_MD_FEATURE_COLLECTION,
+    MAP_MD_CONTACT_NAME,
+    MAP_MD_CONTACT_EMAIL,
+    MAP_MD_CONTACT_INDIVIDUAL,
+    MAP_MD_CONTACT_POSITION,
+    MAP_MD_CONTACT_PHONE,
+    MAP_MD_CONTACT_FAX,
+    MAP_MD_CONTACT_ADDRESS,
+    MAP_MD_CONTACT_CITY,
+    MAP_MD_CONTACT_COUNTRY,
     MAP_MD_TOWS_ONLINERESOURCE,
     MAP_MD_TOWS_SCHEMA_DIR,
     MAP_MD_TOWS_DB_ENCODING,
@@ -111,15 +119,31 @@ static void metadata_key(char * yytext)
 		map_md_state = MAP_MD_NAMESPACE_PREFIX;
 	else if(!strncmp("wfs_namespace_uri", yytext, 17))
 		map_md_state = MAP_MD_NAMESPACE_URI;
-	else if(!strncmp("wfs_service_onlineresource", yytext, 31))
-		map_md_state = MAP_MD_SERVICE_ONLINERESOURCE;
 	else if(!strncmp("wfs_title", yytext, 9))
 		map_md_state = MAP_MD_TITLE;
 	else if(!strncmp("wfs_srs", yytext, 7))
 		map_md_state = MAP_MD_SRS;
 	else if(!strncmp("wfs_feature_collection", yytext, 22))
 		map_md_state = MAP_MD_FEATURE_COLLECTION;
-	else if(!strncmp("tinyows_onlineresource", yytext, 22))
+	else if(!strncmp("ows_contactorganization", yytext, 23))
+		map_md_state = MAP_MD_CONTACT_NAME;
+	else if(!strncmp("ows_contactelectronicmailaddress", yytext, 32))
+		map_md_state = MAP_MD_CONTACT_EMAIL;
+	else if(!strncmp("ows_contactperson", yytext, 17))
+		map_md_state = MAP_MD_CONTACT_INDIVIDUAL;
+	else if(!strncmp("ows_contactposition", yytext, 19))
+		map_md_state = MAP_MD_CONTACT_POSITION;
+	else if(!strncmp("ows_contactphone", yytext, 16))
+		map_md_state = MAP_MD_CONTACT_PHONE;
+	else if(!strncmp("ows_address", yytext, 11))
+		map_md_state = MAP_MD_CONTACT_ADDRESS;
+	else if(!strncmp("ows_city", yytext, 8))
+		map_md_state = MAP_MD_CONTACT_CITY;
+	else if(!strncmp("ows_country", yytext, 11))
+		map_md_state = MAP_MD_CONTACT_COUNTRY;
+	else if(!strncmp("ows_contactfacsimiletelephone", yytext, 29))
+		map_md_state = MAP_MD_CONTACT_FAX;
+	else if(!strncmp("tinyows_onlineresource", yytext, 21))
 		map_md_state = MAP_MD_TOWS_ONLINERESOURCE;
 	else if(!strncmp("tinyows_db_encoding", yytext, 19))
 		map_md_state = MAP_MD_TOWS_DB_ENCODING;
@@ -157,7 +181,6 @@ static void metadata_value(char * yytext)
 		case MAP_MD_UPDATESEQUENCE: 		return; /* TODO */
 		case MAP_MD_SCHEMAS_LOCATION:		return; /* TODO */
 		case MAP_MD_FEATURE_COLLECTION:		return; /* TODO */
-		case MAP_MD_SERVICE_ONLINERESOURCE:	return; /* TODO */
 		case MAP_MD_ABSTRACT:	
 			map_o->metadata->abstract = buffer_init();
         		buffer_add_str(map_o->metadata->abstract, yytext);
@@ -193,6 +216,42 @@ static void metadata_value(char * yytext)
 			return;
 		case MAP_MD_SRS:
 			map_srid = list_explode_str(',', yytext);
+			return;
+		case MAP_MD_CONTACT_NAME:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->name = buffer_from_str(yytext);
+			return;
+		case MAP_MD_CONTACT_EMAIL:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->email = buffer_from_str(yytext);
+			return;
+		case MAP_MD_CONTACT_INDIVIDUAL:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->indiv_name = buffer_from_str(yytext);
+			return;
+		case MAP_MD_CONTACT_POSITION:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->position = buffer_from_str(yytext);
+			return;
+		case MAP_MD_CONTACT_PHONE:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->phone = buffer_from_str(yytext);
+			return;
+		case MAP_MD_CONTACT_FAX:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->fax = buffer_from_str(yytext);
+			return;
+		case MAP_MD_CONTACT_ADDRESS:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->address = buffer_from_str(yytext);
+			return;
+		case MAP_MD_CONTACT_CITY:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->city = buffer_from_str(yytext);
+			return;
+		case MAP_MD_CONTACT_COUNTRY:
+			if (!map_o->contact) map_o->contact=ows_contact_init();
+			map_o->contact->country = buffer_from_str(yytext);
 			return;
 		case MAP_MD_TOWS_SCHEMA_DIR:
         		buffer_add_str(map_o->schema_dir, yytext);
@@ -437,9 +496,9 @@ static void end_layer()
 <INITIAL>MAP			{BEGIN MAP;}
 <MAP>END			{BEGIN INITIAL;}
 <MAP>WEB			{BEGIN WEB;}
-<WEB>END			{BEGIN MAP;}
 <WEB>METADATA 			{BEGIN METADATA;}
 <METADATA>END 			{BEGIN WEB;}
+<WEB>END			{BEGIN MAP;}
 <MAP>LAYER 			{BEGIN LAYER; map_l = ows_layer_init();}
 <MAP>NAME			{BEGIN PROPERTIES; map_prop_state = MAP_NAME;}
 <LAYER>NAME			{BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME;}

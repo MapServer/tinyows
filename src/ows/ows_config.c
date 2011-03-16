@@ -315,24 +315,6 @@ static void ows_parse_config_limits(ows * o, xmlTextReaderPtr r)
     assert(o);
     assert(r);
 
-    a = xmlTextReaderGetAttribute(r, (xmlChar *) "width");
-    if (a) {
-        o->max_width = atoi((char *) a);
-        xmlFree(a);
-    }
-
-    a = xmlTextReaderGetAttribute(r, (xmlChar *) "height");
-    if (a) {
-        o->max_height = atoi((char *) a);
-        xmlFree(a);
-    }
-
-    a = xmlTextReaderGetAttribute(r, (xmlChar *) "layers");
-    if (a) {
-        o->max_layers = atoi((char *) a);
-        xmlFree(a);
-    }
-
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "features");
     if (a) {
         o->max_features = atoi((char *) a);

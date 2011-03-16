@@ -350,15 +350,12 @@ typedef struct Ows {
     ows_meta * metadata;
     ows_contact * contact;
 
-    int max_width;
-    int max_height;
-    int max_layers;
-    int max_features;
-
     int degree_precision;
     int meter_precision;
 
+    int max_features;
     ows_geobbox * max_geobbox;
+
     bool display_bbox;
     bool expose_pk;
     bool estimated_extent;

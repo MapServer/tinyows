@@ -76,9 +76,6 @@ static ows *ows_init()
     o->db_encoding = buffer_init();
     o->log = NULL;
     o->layers = NULL;
-    o->max_width = 0;
-    o->max_height = 0;
-    o->max_layers = 0;
     o->max_features = 0;
     o->degree_precision = 6;
     o->meter_precision = 0;

@@ -60,6 +60,7 @@ static ows *ows_init()
     o = malloc(sizeof(ows));
     assert(o != NULL);
 
+    o->init = true;
     o->exit = false;
     o->request = NULL;
     o->cgi = NULL;
@@ -223,6 +224,7 @@ void ows_free(ows * o)
     if (o->metadata)		ows_metadata_free(o->metadata);
     if (o->contact)		ows_contact_free(o->contact);
     if (o->encoding)		buffer_free(o->encoding);
+    if (o->db_encoding)		buffer_free(o->db_encoding);
 
     free(o);
     o = NULL;
@@ -256,27 +258,27 @@ void ows_log(ows *o, int log_level, const char *log)
 
 void ows_usage(ows * o)
 {
-    fprintf(stderr, "TinyOWS version:   %s\n", TINYOWS_VERSION);
+    fprintf(stdout, "TinyOWS version:   %s\n", TINYOWS_VERSION);
 #if TINYOWS_FCGI
-    fprintf(stderr, "FCGI support:      Yes\n");
+    fprintf(stdout, "FCGI support:      Yes\n");
 #else
-    fprintf(stderr, "FCGI support:      No\n");
+    fprintf(stdout, "FCGI support:      No\n");
 #endif
     if (o->mapfile)
-    fprintf(stderr, "Config File Path:  %s (Mapfile)\n", o->config_file->buf);
+    fprintf(stdout, "Config File Path:  %s (Mapfile)\n", o->config_file->buf);
     else 
-    fprintf(stderr, "Config File Path:  %s (TinyOWS XML)\n", o->config_file->buf);
+    fprintf(stdout, "Config File Path:  %s (TinyOWS XML)\n", o->config_file->buf);
 
-    fprintf(stderr, "PostGIS dsn:       %s\n", o->pg_dsn->buf);
-    fprintf(stderr, "Output Encoding:   %s\n", o->encoding->buf);
-    fprintf(stderr, "Database Encoding: %s\n", o->db_encoding->buf);
-    fprintf(stderr, "Schema dir:        %s\n", o->schema_dir->buf);
+    fprintf(stdout, "PostGIS dsn:       %s\n", o->pg_dsn->buf);
+    fprintf(stdout, "Output Encoding:   %s\n", o->encoding->buf);
+    fprintf(stdout, "Database Encoding: %s\n", o->db_encoding->buf);
+    fprintf(stdout, "Schema dir:        %s\n", o->schema_dir->buf);
 
     if (o->log_file)
-    fprintf(stderr, "Log file:          %s\n", o->log_file->buf);
+    fprintf(stdout, "Log file:          %s\n", o->log_file->buf);
 
-    fprintf(stderr, "Available layers:\n");
-    ows_layers_storage_flush(o, stderr);
+    fprintf(stdout, "Available layers:\n");
+    ows_layers_storage_flush(o, stdout);
 }
 
 
@@ -349,6 +351,7 @@ int main(int argc, char *argv[])
     if (!o->exit) ows_layers_storage_fill(o);
     if (!o->exit) ows_log(o, 2, "== Filling Storage ==");
 
+    o->init = false;
 
 #if TINYOWS_FCGI
    if (!o->exit) ows_log(o, 2, "== FCGI START ==");
@@ -374,7 +377,7 @@ int main(int argc, char *argv[])
 
         	else if (    !strncmp(argv[1], "--version", 9) 
 			  || !strncmp(argv[1], "-v", 2))
-			printf("%s\n", TINYOWS_VERSION);
+			fprintf(stdout, "%s\n", TINYOWS_VERSION);
 
         	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                              "Service Unknown", "service");
@@ -434,6 +437,7 @@ int main(int argc, char *argv[])
     if (cgi_method_post() && query) free(query);
 
 #if TINYOWS_FCGI
+    fflush(stdout);
     o->exit = false;
     }
     ows_log(o, 2, "== FCGI SHUTDOWN ==");

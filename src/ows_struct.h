@@ -332,6 +332,7 @@ typedef struct Ows_request {
 #define OWS_DEFAULT_DB_ENCODING "UTF8" 
 
 typedef struct Ows {
+    bool init;
     bool exit;
     PGconn * pg;
     bool mapfile;

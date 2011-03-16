@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -70,15 +70,18 @@ static char *ows_error_code_string(enum ows_error_code code)
  */
 void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
 {
-    assert(o != NULL);
-    assert(message != NULL);
-    assert(locator != NULL);
+    assert(o);
+    assert(message);
+    assert(locator);
 
     assert(!o->exit);
     o->exit = true;
 
     ows_log(o, 1, message);
 
+#if TINYOWS_FCGI
+if (o->init && FCGI_Accept() >= 0) {
+#endif
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
     fprintf(o->output, "<ows:ExceptionReport\n");
@@ -93,6 +96,11 @@ void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
     fprintf(o->output, "  <ows:ExceptionText>%s</ows:ExceptionText>\n", message);
     fprintf(o->output, " </ows:Exception>\n");
     fprintf(o->output, "</ows:ExceptionReport>\n");
+
+#if TINYOWS_FCGI
+    fflush(o->output);
+}
+#endif
 }
 
 /*

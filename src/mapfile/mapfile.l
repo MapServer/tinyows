@@ -404,6 +404,7 @@ static void end_layer()
 %option never-interactive
 
 %s MAP
+%s WEB
 %s METADATA
 %s PROPERTIES
 %s LAYER_PROPERTIES
@@ -435,8 +436,10 @@ static void end_layer()
 <INITIAL,MAP,METADATA,LAYER,LAYER_METADATA>INCLUDE { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file");} 
 <INITIAL>MAP			{BEGIN MAP;}
 <MAP>END			{BEGIN INITIAL;}
-<MAP>METADATA 			{BEGIN METADATA;}
-<METADATA>END 			{BEGIN MAP;}
+<MAP>WEB			{BEGIN WEB;}
+<WEB>END			{BEGIN MAP;}
+<WEB>METADATA 			{BEGIN METADATA;}
+<METADATA>END 			{BEGIN WEB;}
 <MAP>LAYER 			{BEGIN LAYER; map_l = ows_layer_init();}
 <MAP>NAME			{BEGIN PROPERTIES; map_prop_state = MAP_NAME;}
 <LAYER>NAME			{BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME;}

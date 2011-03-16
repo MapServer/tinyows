@@ -101,6 +101,7 @@ ows_geobbox *ows_geobbox_compute (ows * o, buffer * layer_name);
 void ows_geobbox_flush (const ows_geobbox * g, FILE * output);
 void ows_geobbox_free (ows_geobbox * g);
 ows_geobbox *ows_geobbox_init ();
+ows_geobbox *ows_geobbox_copy(ows_geobbox *g);
 bool ows_geobbox_set (ows * o, ows_geobbox * g, double west, double east, double south, double north);
 bool ows_geobbox_set_from_bbox (ows * o, ows_geobbox * g, ows_bbox * bb);
 ows_geobbox *ows_geobbox_set_from_str (ows * o, ows_geobbox * g, char *str);

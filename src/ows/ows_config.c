@@ -456,8 +456,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     if (a && atoi((char *) a) == 1) {
         layer->retrievable = true;
         xmlFree(a);
-    } else if (a == NULL && layer->parent != NULL
-               && layer->parent->retrievable == true)
+    } else if (a && layer->parent && layer->parent->retrievable)
         layer->retrievable = true;
     else
         xmlFree(a);
@@ -467,11 +466,9 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     if (a && atoi((char *) a) == 1) {
         layer->writable = true;
         xmlFree(a);
-    } else if (a == NULL && layer->parent != NULL
-               && layer->parent->writable == true)
+    } else if (a && layer->parent && layer->parent->writable)
         layer->writable = true;
-    else
-        xmlFree(a);
+    else xmlFree(a);
 
     /* inherits from layer parent and adds specified value */
     if (layer->parent && layer->parent->srid) {
@@ -497,11 +494,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         ows_geobbox_set_from_str(o, layer->geobbox, (char *) a);
         xmlFree(a);
     } else if (!a && layer->parent && layer->parent->geobbox) {
-        layer->geobbox = ows_geobbox_init();
-        layer->geobbox->east = layer->parent->geobbox->east;
-        layer->geobbox->west = layer->parent->geobbox->west;
-        layer->geobbox->south = layer->parent->geobbox->south;
-        layer->geobbox->north = layer->parent->geobbox->north;
+        layer->geobbox = ows_geobbox_copy(layer->parent->geobbox);
     } else xmlFree(a);
 
     /* inherits from layer parent and replaces with specified value

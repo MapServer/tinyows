@@ -55,9 +55,10 @@ enum map_lmd_state {
     MAP_LMD_NAMESPACE_URI,
     MAP_LMD_SRS,
     MAP_LMD_TITLE,
-    MAP_LMD_TABLE,
-    MAP_LMD_SCHEMA,
-    MAP_LMD_WRITABLE,
+    MAP_LMD_TOWS_TABLE,
+    MAP_LMD_TOWS_SCHEMA,
+    MAP_LMD_TOWS_WRITABLE,
+    MAP_LMD_TOWS_GEOBBOX,
     MAP_LMD_SKIP
 };
 
@@ -262,14 +263,10 @@ static void metadata_layer_key(char * yytext)
 		map_lmd_state = MAP_LMD_EXTENT;
 	else if(!strncmp("wfs_keywordlist", yytext, 15))
 		map_lmd_state = MAP_LMD_KEYWORDLIST;
-
-	/* Not sure wfs_namespace_prefix and 
-	            wfs_namespace_uri are supported on LAYER METADATA in Mapfile */
 	else if(!strncmp("wfs_namespace_prefix", yytext, 20))
 		map_lmd_state = MAP_LMD_NAMESPACE_PREFIX;
 	else if(!strncmp("wfs_namespace_uri", yytext, 17))
 		map_lmd_state = MAP_LMD_NAMESPACE_URI;
-
 	else if(!strncmp("wfs_metadataurl_format", yytext, 22))
 		map_lmd_state = MAP_LMD_METADATAURL_FORMAT;
 	else if(!strncmp("wfs_metadataurl_href", yytext, 20))
@@ -281,14 +278,20 @@ static void metadata_layer_key(char * yytext)
 	else if(!strncmp("wfs_title", yytext, 9))
 		map_lmd_state = MAP_LMD_TITLE;
 	else if(!strncmp("tinyows_table", yytext, 13))
-		map_lmd_state = MAP_LMD_TABLE;
+		map_lmd_state = MAP_LMD_TOWS_TABLE;
+	else if(!strncmp("tinyows_schema", yytext, 14))
+		map_lmd_state = MAP_LMD_TOWS_SCHEMA;
 	else if(!strncmp("tinyows_writable", yytext, 16))
-		map_lmd_state = MAP_LMD_WRITABLE;
+		map_lmd_state = MAP_LMD_TOWS_WRITABLE;
+	else if(!strncmp("tinyows_geobbox", yytext, 15))
+		map_md_state = MAP_LMD_TOWS_GEOBBOX;
 	else map_lmd_state = MAP_LMD_SKIP;
 }
 
 static void metadata_layer_value(char * yytext)
 {
+	ows_geobbox *g;
+
 	switch(map_lmd_state)
 	{
 	case MAP_LMD_SKIP: return;
@@ -322,14 +325,19 @@ static void metadata_layer_value(char * yytext)
 		map_l->title = buffer_init();
        		buffer_add_str(map_l->title, yytext);
 		return;
-	case MAP_LMD_SCHEMA:
+	case MAP_LMD_TOWS_SCHEMA:
        		buffer_add_str(map_l->storage->schema, yytext);
 		return;
-	case MAP_LMD_TABLE:
+	case MAP_LMD_TOWS_TABLE:
        		buffer_add_str(map_l->storage->table, yytext);
 		return;
-	case MAP_LMD_WRITABLE:
+	case MAP_LMD_TOWS_WRITABLE:
 		map_l->writable=atoi(yytext)?1:0;
+		return;
+	case MAP_LMD_TOWS_GEOBBOX:
+		g = ows_geobbox_init();
+       		if (ows_geobbox_set_from_str(map_o, g, yytext)) map_l->geobbox = g;
+       		else ows_geobbox_free(g);
 		return;
 	}
 }

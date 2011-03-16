@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <float.h>
 #include <math.h>
+#include <string.h>
 
 #include "ows.h"
 
@@ -50,12 +51,24 @@ ows_geobbox *ows_geobbox_init()
 
 
 /*
+ * Clone a geobbox
+ */
+ows_geobbox *ows_geobbox_copy(ows_geobbox *g)
+{
+    ows_geobbox *c;
+
+    assert(g);
+    c = malloc(sizeof(g));
+    return memcpy(c, g, sizeof(g));
+}
+
+
+/*
  * Free a geobbox structure
  */
-void ows_geobbox_free(ows_geobbox * g)
+void ows_geobbox_free(ows_geobbox *g)
 {
-    assert(g != NULL);
-
+    assert(g);
     free(g);
     g = NULL;
 }
@@ -64,12 +77,11 @@ void ows_geobbox_free(ows_geobbox * g)
 /*
  * Set a given geobbox with null area and earth limits tests
  */
-bool ows_geobbox_set(ows * o, ows_geobbox * g, double west, double east,
-                     double south, double north)
+bool ows_geobbox_set(ows * o, ows_geobbox * g, double west, double east, double south, double north)
 {
     double geom_tolerance = 0.01;
 
-    assert(g != NULL);
+    assert(g);
 
     if (south + geom_tolerance < -90.0 || south - geom_tolerance > 90.0 || 
         north + geom_tolerance < -90.0 || north - geom_tolerance > 90.0 ||
@@ -97,8 +109,8 @@ bool ows_geobbox_set_from_bbox(ows * o, ows_geobbox * g, ows_bbox * bb)
 {
     double west, east, south, north;
 
-    assert(g != NULL);
-    assert(bb != NULL);
+    assert(g);
+    assert(bb);
 
     if (bb->xmin < 0.0 && bb->xmax < 0.0) {
         west = bb->xmin;
@@ -127,8 +139,8 @@ ows_geobbox *ows_geobbox_set_from_str(ows * o, ows_geobbox * g, char *str)
 {
     ows_bbox *bb;
 
-    assert(g != NULL);
-    assert(str != NULL);
+    assert(g);
+    assert(str);
 
     bb = ows_bbox_init();
     ows_bbox_set_from_str(o, bb, str, 4326);
@@ -153,18 +165,18 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
     list_node *ln;
     bool first = true;
 
-    assert(o != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(layer_name);
 
     sql = buffer_init();
 
     geom = ows_psql_geometry_column(o, layer_name);
-    assert(geom != NULL);
+    assert(geom);
 
     g = ows_geobbox_init();
     xmin = ymin = xmax = ymax = 0.0;
 
-    for (ln = geom->first; ln != NULL; ln = ln->next)
+    for (ln = geom->first; ln ; ln = ln->next)
     {
     	buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM ");
 	if (o->estimated_extent) 
@@ -207,14 +219,10 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
         	return g;
     	}
 
-	if (first || atof(PQgetvalue(res, 0, 0)) < xmin)
-		xmin = atof(PQgetvalue(res, 0, 0));
-	if (first || atof(PQgetvalue(res, 0, 1)) < ymin)
-		ymin = atof(PQgetvalue(res, 0, 1));
-	if (first || atof(PQgetvalue(res, 0, 2)) > xmax)
-		xmax = atof(PQgetvalue(res, 0, 2));
-	if (first || atof(PQgetvalue(res, 0, 3)) > ymax)
-		ymax = atof(PQgetvalue(res, 0, 3));
+	if (first || atof(PQgetvalue(res, 0, 0)) < xmin) xmin = atof(PQgetvalue(res, 0, 0));
+	if (first || atof(PQgetvalue(res, 0, 1)) < ymin) ymin = atof(PQgetvalue(res, 0, 1));
+	if (first || atof(PQgetvalue(res, 0, 2)) > xmax) xmax = atof(PQgetvalue(res, 0, 2));
+	if (first || atof(PQgetvalue(res, 0, 3)) > ymax) ymax = atof(PQgetvalue(res, 0, 3));
 
 	first = false;
 	PQclear(res);
@@ -237,8 +245,8 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
  */
 void ows_geobbox_flush(const ows_geobbox * g, FILE * output)
 {
-    assert(g != NULL);
-    assert(output != NULL);
+    assert(g);
+    assert(output);
 
     fprintf(output, "[W:%f,E:%f,S:%f,N:%f]\n", g->west, g->east, g->south, g->north);
 }

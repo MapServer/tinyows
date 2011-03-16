@@ -259,6 +259,9 @@ void ows_log(ows *o, int log_level, const char *log)
 void ows_usage(ows * o)
 {
     fprintf(stdout, "TinyOWS version:   %s\n", TINYOWS_VERSION);
+#ifdef TINYOWS_SVN_REV
+    fprintf(stdout, "TinyOWS revision:  %s\n", TINYOWS_SVN_REV);
+#endif
 #if TINYOWS_FCGI
     fprintf(stdout, "FCGI support:      Yes\n");
 #else

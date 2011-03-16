@@ -52,6 +52,16 @@ AC_SUBST(TINYOWS_DEBUG)
 
 
 dnl ---------------------------------------------------------------------------
+dnl svnversion
+dnl ---------------------------------------------------------------------------
+AC_CHECK_PROG(svnversion, svnversion, yes)
+if test "$svnversion" = "yes"; then
+	SVN_FLAGS='"-D TINYOWS_SVN_REV=\"$(shell svnversion -n .)\""'
+	AC_SUBST(SVN_FLAGS)
+fi
+
+
+dnl ---------------------------------------------------------------------------
 dnl PostgreSQL / PostGIS support
 dnl ---------------------------------------------------------------------------
 

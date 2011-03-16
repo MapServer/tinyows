@@ -304,7 +304,11 @@ static void layer_properties(char * yytext)
 		return;
 	case MAP_LAYER_CONNECTION:
 		/* TODO: Having a Layer connection notion in TinyOWS */
-       		buffer_add_str(map_o->pg_dsn, yytext);
+		if (map_o->pg_dsn->use && strcmp(map_o->pg_dsn->buf, yytext))
+			ows_error(map_o, OWS_ERROR_CONFIG_FILE,
+				"MapFile have more than one single PostGIS db connection.",
+				"parse_config_file");
+		else if (!map_o->pg_dsn->use) buffer_add_str(map_o->pg_dsn, yytext);
 		return;
 	}
 }
@@ -360,7 +364,7 @@ static void end_layer()
 %%
 
 <INITIAL,MAP,LAYER,METADATA,LAYER_METADATA># { char c ; for (c=input() ; c && c != '\n' ; c=input()); }
-INCLUDE	{ yyterminate(); ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file");} 
+<INITIAL,MAP,METADATA,LAYER,LAYER_METADATA>INCLUDE { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file");} 
 <INITIAL>MAP			{BEGIN MAP;}
 <MAP>END			{BEGIN INITIAL;}
 <MAP>METADATA 			{BEGIN METADATA;}
@@ -430,7 +434,7 @@ INCLUDE	{ yyterminate(); ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUD
 [ \t\n'"_-] {}
 
 <INITIAL><<EOF>> { yyterminate(); }
-<<EOF>> { yyterminate(); ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile parse error", "parse_config_file"); }
+<<EOF>> { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile parse error", "parse_config_file"); }
 
 %%
 

@@ -75,35 +75,27 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     }
 
-    a = xmlTextReaderGetAttribute(r, (xmlChar *) "wfs_display_bbox");
-    o->wfs_display_bbox = true;
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "display_bbox");
     if (a) {
-        if (atoi((char *) a)) o->wfs_display_bbox = true;
-        else                  o->wfs_display_bbox = false;
+        if (!atoi((char *) a)) o->display_bbox = false;
         xmlFree(a);
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "estimated_extent");
-    o->wfs_display_bbox = true;
     if (a) {
         if (atoi((char *) a)) o->estimated_extent = true;
-        else                  o->estimated_extent = false;
         xmlFree(a);
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "check_schema");
-    o->check_schema = true;
     if (a) {
-        if (atoi((char *) a)) o->check_schema = true;
-        else                  o->check_schema = false;
+        if (!atoi((char *) a)) o->check_schema = false;
         xmlFree(a);
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "check_valid_geom");
-    o->check_valid_geom = true;
     if (a) {
-        if (atoi((char *) a)) o->check_valid_geom = true;
-        else                  o->check_valid_geom = false;
+        if (!atoi((char *) a)) o->check_valid_geom = false;
         xmlFree(a);
     }
     
@@ -114,10 +106,8 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
     } else buffer_add_str(o->encoding, OWS_DEFAULT_XML_ENCODING);
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "expose_pk");
-    o->expose_pk = false;
     if (a) {
         if (atoi((char *) a)) o->expose_pk = true;
-        else                  o->expose_pk = false;
         xmlFree(a);
     }
 }

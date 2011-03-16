@@ -83,9 +83,11 @@ static ows *ows_init()
     o->degree_precision = 6;
     o->meter_precision = 0;
     o->max_geobbox = NULL;
-    o->wfs_display_bbox = false;
-    o->estimated_extent = true;
+    o->display_bbox = true;
+    o->estimated_extent = false;
     o->expose_pk = false;
+    o->check_schema = true;
+    o->check_valid_geom = true;
 
     o->metadata = NULL;
     o->contact = NULL;
@@ -196,8 +198,10 @@ void ows_flush(ows * o, FILE * output)
         ows_geobbox_flush(o->max_geobbox, output);
         fprintf(output, "\n");
     }
-    fprintf(output, "wfs_display_bbox: %d\n", o->wfs_display_bbox?1:0);
+    fprintf(output, "display_bbox: %d\n", o->display_bbox?1:0);
     fprintf(output, "estimated_extent: %d\n", o->estimated_extent?1:0);
+    fprintf(output, "check_schema: %d\n", o->check_schema?1:0);
+    fprintf(output, "check_valid_geom: %d\n", o->check_valid_geom?1:0);
 }
 #endif
 

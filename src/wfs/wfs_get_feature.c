@@ -355,7 +355,7 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
      * Display only if we really asked the bbox of the features retrieved
      * Overhead could be signifiant !!!
      */
-    if (o->wfs_display_bbox) {
+    if (o->display_bbox) {
         /* print the outerboundaries of the requests */
         outer_b = ows_bbox_boundaries(o, request_list->first->next->value,
                                          request_list->last->value);

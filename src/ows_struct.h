@@ -359,7 +359,7 @@ typedef struct Ows {
     int meter_precision;
 
     ows_geobbox * max_geobbox;
-    bool wfs_display_bbox;
+    bool display_bbox;
     bool expose_pk;
     bool estimated_extent;
 

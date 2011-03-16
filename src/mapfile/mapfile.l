@@ -28,6 +28,14 @@ enum map_md_state {
     MAP_MD_TOWS_ONLINERESOURCE,
     MAP_MD_TOWS_SCHEMA_DIR,
     MAP_MD_TOWS_DB_ENCODING,
+    MAP_MD_TOWS_LOG,
+    MAP_MD_TOWS_METER_PRECISION,
+    MAP_MD_TOWS_DEGREE_PRECISION,
+    MAP_MD_TOWS_DISPLAY_BBOX,
+    MAP_MD_TOWS_ESTIMATED_EXTENT,
+    MAP_MD_TOWS_CHECK_SCHEMA,
+    MAP_MD_TOWS_CHECK_VALID_GEOM,
+    MAP_MD_TOWS_EXPOSE_PK,
     MAP_MD_SKIP
 };
 
@@ -115,11 +123,29 @@ static void metadata_key(char * yytext)
 		map_md_state = MAP_MD_TOWS_DB_ENCODING;
 	else if(!strncmp("tinyows_schema_dir", yytext, 18))
 		map_md_state = MAP_MD_TOWS_SCHEMA_DIR;
+	else if(!strncmp("tinyows_log", yytext, 11))
+		map_md_state = MAP_MD_TOWS_LOG;
+	else if(!strncmp("tinyows_degree_precision", yytext, 24))
+		map_md_state = MAP_MD_TOWS_DEGREE_PRECISION;
+	else if(!strncmp("tinyows_meter_precision", yytext, 23))
+		map_md_state = MAP_MD_TOWS_METER_PRECISION;
+	else if(!strncmp("tinyows_display_bbox", yytext, 20))
+		map_md_state = MAP_MD_TOWS_DISPLAY_BBOX;
+	else if(!strncmp("tinyows_estimated_extent", yytext, 24))
+		map_md_state = MAP_MD_TOWS_ESTIMATED_EXTENT;
+	else if(!strncmp("tinyows_check_schema", yytext, 20))
+		map_md_state = MAP_MD_TOWS_CHECK_SCHEMA;
+	else if(!strncmp("tinyows_check_valid_geom", yytext, 24))
+		map_md_state = MAP_MD_TOWS_CHECK_VALID_GEOM;
+	else if(!strncmp("tinyows_expose_pk", yytext, 17))
+		map_md_state = MAP_MD_TOWS_EXPOSE_PK;
 	else map_md_state = MAP_MD_SKIP;
 }
 
 static void metadata_value(char * yytext)
 {
+	int p;
+
 	switch(map_md_state)
 	{
 		case MAP_MD_SKIP: return;
@@ -171,6 +197,31 @@ static void metadata_value(char * yytext)
 			return;
 		case MAP_MD_TOWS_DB_ENCODING:
 			buffer_add_str(map_o->db_encoding, yytext);
+		case MAP_MD_TOWS_LOG:
+			map_o->log_file = buffer_init();
+			buffer_add_str(map_o->log_file, yytext);
+		case MAP_MD_TOWS_DEGREE_PRECISION:
+			p = atoi(yytext);
+			if (p > 0 && p < 12) map_o->degree_precision = p;
+			return;
+		case MAP_MD_TOWS_METER_PRECISION:
+			p = atoi(yytext);
+			if (p > 0 && p < 12) map_o->meter_precision = p;
+			return;
+		case MAP_MD_TOWS_DISPLAY_BBOX:
+			if (!atoi(yytext)) map_o->display_bbox = false;
+			return;
+		case MAP_MD_TOWS_ESTIMATED_EXTENT:
+			if (atoi(yytext)) map_o->estimated_extent = true;
+			return;
+		case MAP_MD_TOWS_CHECK_SCHEMA:
+			if (!atoi(yytext)) map_o->check_schema = false;
+			return;
+		case MAP_MD_TOWS_CHECK_VALID_GEOM:
+			if (!atoi(yytext)) map_o->check_valid_geom = false;
+			return;
+		case MAP_MD_TOWS_EXPOSE_PK:
+			if (atoi(yytext)) map_o->check_valid_geom = true;
 			return;
 	}
 }

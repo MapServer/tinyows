@@ -97,8 +97,15 @@ enum map_layer_prop_state map_layer_prop_state;
 
 
 
-static void metadata_key(char * yytext)
+static void metadata_key(char *yytext, bool quotes)
 {
+	char *p;
+
+	/* remove surrounding quotes */
+	if (quotes) {
+		 for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+	}
+
 	if     (!strncmp("ows_updatesequence", yytext, 18))
 		map_md_state = MAP_MD_UPDATESEQUENCE;
 	else if(!strncmp("ows_schemas_location", yytext, 20))
@@ -170,10 +177,16 @@ static void metadata_key(char * yytext)
 	else map_md_state = MAP_MD_SKIP;
 }
 
-static void metadata_value(char * yytext)
+static void metadata_value(char *yytext, bool quotes)
 {
-	int p;
+	int i;
+	char *p;
 	ows_geobbox *g;
+ 
+	/* remove surrounding quotes */
+	if (quotes) {
+		 for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+	}
 
 	switch(map_md_state)
 	{
@@ -265,12 +278,12 @@ static void metadata_value(char * yytext)
 			map_o->log_file = buffer_init();
 			buffer_add_str(map_o->log_file, yytext);
 		case MAP_MD_TOWS_DEGREE_PRECISION:
-			p = atoi(yytext);
-			if (p > 0 && p < 12) map_o->degree_precision = p;
+			i = atoi(yytext);
+			if (i > 0 && i < 12) map_o->degree_precision = i;
 			return;
 		case MAP_MD_TOWS_METER_PRECISION:
-			p = atoi(yytext);
-			if (p > 0 && p < 12) map_o->meter_precision = p;
+			i = atoi(yytext);
+			if (i > 0 && i < 12) map_o->meter_precision = i;
 			return;
 		case MAP_MD_TOWS_DISPLAY_BBOX:
 			if (!atoi(yytext)) map_o->display_bbox = false;
@@ -295,8 +308,15 @@ static void metadata_value(char * yytext)
 	}
 }
 
-static void metadata_layer_key(char * yytext)
+static void metadata_layer_key(char *yytext, bool quotes)
 {
+	char *p;
+
+	/* remove surrounding quotes */
+	if (quotes) {
+		 for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+	}
+
 	     if(!strncmp("gml_exclude_items", yytext, 17))
 		map_lmd_state = MAP_LMD_EXCLUDE_ITEMS;
 	else if(!strncmp("gml_featureid", yytext, 13) ||
@@ -347,9 +367,15 @@ static void metadata_layer_key(char * yytext)
 	else map_lmd_state = MAP_LMD_SKIP;
 }
 
-static void metadata_layer_value(char * yytext)
+static void metadata_layer_value(char *yytext, bool quotes)
 {
 	ows_geobbox *g;
+	char *p;
+
+	/* remove surrounding quotes */
+	if (quotes) {
+		 for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+	}
 
 	switch(map_lmd_state)
 	{
@@ -469,9 +495,11 @@ static void end_layer()
 %s MAP
 %s WEB
 %s METADATA
+%s METADATA_VALUE
 %s PROPERTIES
 %s LAYER_PROPERTIES
 %s LAYER_METADATA
+%s LAYER_METADATA_VALUE
 %s LAYER_CONNECTIONTYPE
 %s LAYER_DUMP
 %s LAYER
@@ -482,16 +510,14 @@ static void end_layer()
 %s STYLE
 %s LABEL
 %s PROJECTION
-%s KEY_DOUBLE
-%s KEY_SINGLE
-%s METADATA_MIDDLE
-%s LAYER_METADATA_MIDDLE
-%s VALUE_DOUBLE
-%s VALUE_SINGLE
-%s LAYER_KEY_DOUBLE
-%s LAYER_KEY_SINGLE
-%s LAYER_VALUE_DOUBLE
-%s LAYER_VALUE_SINGLE
+%s QUERYMAP
+%s SCALEBAR
+%s LEGEND
+%s REFERENCE
+%s OUTPUTFORMAT
+%s LAYER_PROJECTION
+%s SCALEBAR_LABEL
+
 
 %%
 
@@ -500,6 +526,18 @@ static void end_layer()
 <INITIAL>MAP			{BEGIN MAP;}
 <MAP>END			{BEGIN INITIAL;}
 <MAP>WEB			{BEGIN WEB;}
+<MAP>QUERYMAP			{BEGIN QUERYMAP;}
+<QUERYMAP>END			{BEGIN MAP;}
+<MAP>SCALEBAR			{BEGIN SCALEBAR;}
+<SCALEBAR>LABEL			{BEGIN SCALEBAR_LABEL;}
+<SCALEBAR_LABEL>END		{BEGIN SCALEBAR;}
+<SCALEBAR>END			{BEGIN MAP;}
+<MAP>LEGEND			{BEGIN LEGEND;}
+<LEGEND>END			{BEGIN MAP;}
+<MAP>REFERENCE			{BEGIN REFERENCE;}
+<REFERENCE>END			{BEGIN MAP;}
+<MAP>OUTPUTFORMAT		{BEGIN OUTPUTFORMAT;}
+<OUTPUTFORMAT>END		{BEGIN MAP;}
 <WEB>METADATA 			{BEGIN METADATA;}
 <METADATA>END 			{BEGIN WEB;}
 <WEB>END			{BEGIN MAP;}
@@ -517,8 +555,8 @@ static void end_layer()
 <FEATURE>END 			{BEGIN LAYER;}
 <LAYER>GRID 			{BEGIN GRID;}
 <GRID>END 			{BEGIN LAYER;}
-<LAYER>PROJECTION 		{BEGIN PROJECTION;}
-<PROJECTION>END 		{BEGIN LAYER;}
+<LAYER>PROJECTION 		{BEGIN LAYER_PROJECTION;}
+<LAYER_PROJECTION>END 		{BEGIN LAYER;}
 <LAYER>JOIN 			{BEGIN JOIN;}
 <JOIN>END 			{BEGIN LAYER;}
 <LAYER>METADATA 		{BEGIN LAYER_METADATA;}
@@ -531,41 +569,17 @@ static void end_layer()
 <LABEL>END 			{BEGIN CLASS;}
 <LAYER>END 			{BEGIN MAP; end_layer();}
 
-<LAYER_METADATA,METADATA,METADATA_MIDDLE,LAYER_METADATA_MIDDLE,LAYER_PROPERTIES>[ \t\n] {}
+<LAYER_METADATA,METADATA,METADATA_VALUE,LAYER_METADATA_VALUE,LAYER_PROPERTIES>[ \t\n] {}
 
-<METADATA>["]			{BEGIN KEY_DOUBLE;}
-<METADATA>[']			{BEGIN KEY_SINGLE;}
-<KEY_DOUBLE>["]			{BEGIN METADATA_MIDDLE;}
-<KEY_SINGLE>[']			{BEGIN METADATA_MIDDLE;}
-<METADATA_MIDDLE>["]		{BEGIN VALUE_DOUBLE;}
-<METADATA_MIDDLE>[']		{BEGIN VALUE_SINGLE;}
-<VALUE_SINGLE>[']		{BEGIN METADATA;}
-<VALUE_DOUBLE>["]		{BEGIN METADATA;}
+<METADATA>\"[^\"]*\"|\'[^\']*\' 		{metadata_key(yytext, true); BEGIN METADATA_VALUE;}
+<METADATA_VALUE>\"[^\"]*\"|\'[^\']*\'		{metadata_value(yytext, true); BEGIN METADATA;}
+<LAYER_METADATA>\"[^\"]*\"|\'[^\']*\' 		{metadata_layer_key(yytext, true); BEGIN LAYER_METADATA_VALUE;}
+<LAYER_METADATA_VALUE>\"[^\"]*\"|\'[^\']*\'	{metadata_layer_value(yytext, true); BEGIN LAYER_METADATA;}
 
-<LAYER_METADATA>["]		{BEGIN LAYER_KEY_DOUBLE;}
-<LAYER_METADATA>[']		{BEGIN LAYER_KEY_SINGLE;}
-<LAYER_KEY_DOUBLE>["]		{BEGIN LAYER_METADATA_MIDDLE;}
-<LAYER_KEY_SINGLE>[']		{BEGIN LAYER_METADATA_MIDDLE;}
-<LAYER_METADATA_MIDDLE>["]	{BEGIN LAYER_VALUE_DOUBLE;}
-<LAYER_METADATA_MIDDLE>[']	{BEGIN LAYER_VALUE_SINGLE;}
-<LAYER_VALUE_SINGLE>[']		{BEGIN LAYER_METADATA;}
-<LAYER_VALUE_DOUBLE>["]		{BEGIN LAYER_METADATA;}
-
-<PROPERTIES>['][^']*[']		{properties(yytext, true); BEGIN MAP;}
-<PROPERTIES>["][^"]*["]		{properties(yytext, true); BEGIN MAP;}		
-<PROPERTIES>[^ 	\n]*		{properties(yytext, false); BEGIN MAP;}		
-<LAYER_PROPERTIES>['][^']*[']	{layer_properties(yytext, true); BEGIN LAYER;}
-<LAYER_PROPERTIES>["][^"]*["]	{layer_properties(yytext, true); BEGIN LAYER;}		
-<LAYER_PROPERTIES>[^ 	\n]*	{layer_properties(yytext, false); BEGIN LAYER;}		
-<KEY_SINGLE>[^']+		{metadata_key(yytext);}
-<KEY_DOUBLE>[^"]+		{metadata_key(yytext);}
-<LAYER_KEY_SINGLE>[^']+		{metadata_layer_key(yytext);}
-<LAYER_KEY_DOUBLE>[^"]+		{metadata_layer_key(yytext);}
-
-<VALUE_DOUBLE>[a-zA-Z0-9.:/ '_-]+		{metadata_value(yytext);}
-<VALUE_SINGLE>[a-zA-Z0-9.:/ "_-]+		{metadata_value(yytext);}
-<LAYER_VALUE_DOUBLE>[a-zA-Z0-9.:/ '_-]+		{metadata_layer_value(yytext);}
-<LAYER_VALUE_SINGLE>[a-zA-Z0-9.:/ "_-]+		{metadata_layer_value(yytext);}
+<PROPERTIES>\"[^\"]*\"|\'[^\']*\'		{properties(yytext, true); BEGIN MAP;}
+<PROPERTIES>[^ 	\n]*				{properties(yytext, false); BEGIN MAP;}		
+<LAYER_PROPERTIES>\"[^\"]*\"|\'[^\']*\'		{layer_properties(yytext, true); BEGIN LAYER;}
+<LAYER_PROPERTIES>[^ 	\n]*			{layer_properties(yytext, false); BEGIN LAYER;}		
 . {}
 [ \t\n'"_-] {}
 

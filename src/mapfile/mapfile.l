@@ -401,12 +401,14 @@ static void metadata_layer_value(char * yytext)
 	}
 }
 
-static void properties(char * yytext)
+static void properties(char *yytext, bool quotes)
 {
 	char *p;
 
 	/* remove surrounding quotes */
-	for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+	if (quotes) {
+		 for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+	}
 
 	switch(map_prop_state) {
 	case MAP_NAME:
@@ -417,12 +419,14 @@ static void properties(char * yytext)
 	
 }
 
-static void layer_properties(char * yytext)
+static void layer_properties(char * yytext, bool quotes)
 {
 	char *p;
 
 	/* remove surrounding quotes */
-	for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+	if (quotes) {
+		for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+	}
 
 	switch(map_layer_prop_state) {
 	case MAP_LAYER_NAME:
@@ -492,7 +496,7 @@ static void end_layer()
 %%
 
 <INITIAL,MAP,LAYER,METADATA,LAYER_METADATA># { char c ; for (c=input() ; c && c != '\n' ; c=input()); }
-<INITIAL,MAP,METADATA,LAYER,LAYER_METADATA>INCLUDE { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file");} 
+<INITIAL,MAP,METADATA,LAYER,LAYER_METADATA>INCLUDE { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file"); yyterminate();} 
 <INITIAL>MAP			{BEGIN MAP;}
 <MAP>END			{BEGIN INITIAL;}
 <MAP>WEB			{BEGIN WEB;}
@@ -547,10 +551,12 @@ static void end_layer()
 <LAYER_VALUE_SINGLE>[']		{BEGIN LAYER_METADATA;}
 <LAYER_VALUE_DOUBLE>["]		{BEGIN LAYER_METADATA;}
 
-<PROPERTIES>['][^']*[']		{properties(yytext); BEGIN MAP;}
-<PROPERTIES>["][^"]*["]		{properties(yytext); BEGIN MAP;}		
-<LAYER_PROPERTIES>['][^']*[']	{layer_properties(yytext); BEGIN LAYER;}
-<LAYER_PROPERTIES>["][^"]*["]	{layer_properties(yytext); BEGIN LAYER;}		
+<PROPERTIES>['][^']*[']		{properties(yytext, true); BEGIN MAP;}
+<PROPERTIES>["][^"]*["]		{properties(yytext, true); BEGIN MAP;}		
+<PROPERTIES>[^ 	\n]*		{properties(yytext, false); BEGIN MAP;}		
+<LAYER_PROPERTIES>['][^']*[']	{layer_properties(yytext, true); BEGIN LAYER;}
+<LAYER_PROPERTIES>["][^"]*["]	{layer_properties(yytext, true); BEGIN LAYER;}		
+<LAYER_PROPERTIES>[^ 	\n]*	{layer_properties(yytext, false); BEGIN LAYER;}		
 <KEY_SINGLE>[^']+		{metadata_key(yytext);}
 <KEY_DOUBLE>[^"]+		{metadata_key(yytext);}
 <LAYER_KEY_SINGLE>[^']+		{metadata_layer_key(yytext);}
@@ -564,7 +570,7 @@ static void end_layer()
 [ \t\n'"_-] {}
 
 <INITIAL><<EOF>> { yyterminate(); }
-<<EOF>> { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile parse error", "parse_config_file"); }
+<<EOF>> { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile parse error", "parse_config_file"); yyterminate(); }
 
 %%
 

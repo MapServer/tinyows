@@ -10,6 +10,13 @@
 #include "../ows_struct.h"
 #include "../ows_api.h"
 
+#define OWS_MAP_EATLINE char c ; for (c=input() ; c && c != '\n' ; c=input());
+
+#if 0
+#define OWS_MAP_DBG fprintf(stderr, "State: {%i} %i \n", yy_top_state(), YY_START);
+#else
+#define OWS_MAP_DBG 
+#endif
 
 enum map_md_state {
     MAP_MD_UPDATESEQUENCE,
@@ -523,31 +530,43 @@ static void end_layer()
 
 %%
 
-
 <INITIAL,MAP,LAYER,METADATA,LAYER_METADATA># { char c ; for (c=input() ; c && c != '\n' ; c=input()); }
 <INITIAL,MAP,METADATA,LAYER,LAYER_METADATA>INCLUDE { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file"); yyterminate();} 
-END 				{ yy_pop_state(); if (yy_top_state() == LAYER) end_layer();}
 
-<INITIAL>MAP			{ yy_push_state(MAP);}
-<MAP>WEB			{ yy_push_state(WEB);}
-<MAP>QUERYMAP			{ yy_push_state(QUERYMAP);}
-<MAP>SYMBOL			{ yy_push_state(SYMBOL);}
-<MAP>SCALEBAR			{ yy_push_state(SCALEBAR);}
-<MAP>REFERENCE			{ yy_push_state(REFERENCE);}
-<MAP>OUTPUTFORMAT		{ yy_push_state(OUTPUTFORMAT);}
-<WEB>METADATA 			{ yy_push_state(METADATA);}
-<LAYER>GRID 			{ yy_push_state(GRID);}
-<LAYER>JOIN 			{ yy_push_state(JOIN);}
-<LAYER>METADATA 		{ yy_push_state(LAYER_METADATA);}
-<LAYER>CLASS 			{ yy_push_state(CLASS);}
-<CLASS>STYLE 			{ yy_push_state(STYLE);}
-<CLASS>LABEL 			{ yy_push_state(LABEL);}
-<MAP,LAYER>PROJECTION		{ yy_push_state(PROJECTION);}
-<SYMBOL,STYLE>PATTERN		{ yy_push_state(PATTERN);}
-<SYMBOL>POINT			{ yy_push_state(POINT);}
-<SCALEBAR,LEGEND>LABEL		{ yy_push_state(LABEL);}
-<MAP>LAYER 			{ yy_push_state(LAYER); map_l = ows_layer_init();}
-<LAYER>FEATURE 			{ yy_push_state(FEATURE);}
+<MAP>LEGEND			{ /*LEGEND rule must appears before END... */
+				  yy_push_state(LEGEND); OWS_MAP_DBG }
+
+END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) { 
+					ows_error(map_o, OWS_ERROR_CONFIG_FILE,
+					"MapFile Parse Error", "parse_config_file");
+					yyterminate();}
+
+				  if (YY_START == LAYER) { end_layer(); }
+				  yy_pop_state();
+				  OWS_MAP_DBG
+				}
+
+<INITIAL>MAP			{ yy_push_state(MAP); OWS_MAP_DBG}
+<MAP>WEB			{ yy_push_state(WEB); OWS_MAP_DBG}
+<MAP>QUERYMAP			{ yy_push_state(QUERYMAP); OWS_MAP_DBG}
+<MAP>SYMBOLSET			{ eat_line }
+<MAP>SYMBOL			{ yy_push_state(SYMBOL); OWS_MAP_DBG}
+<MAP>SCALEBAR			{ yy_push_state(SCALEBAR); OWS_MAP_DBG}
+<MAP>REFERENCE			{ yy_push_state(REFERENCE); OWS_MAP_DBG}
+<MAP>OUTPUTFORMAT		{ yy_push_state(OUTPUTFORMAT); OWS_MAP_DBG}
+<WEB>METADATA 			{ yy_push_state(METADATA); OWS_MAP_DBG}
+<LAYER>GRID 			{ yy_push_state(GRID); OWS_MAP_DBG}
+<LAYER>JOIN 			{ yy_push_state(JOIN); OWS_MAP_DBG}
+<LAYER>METADATA 		{ yy_push_state(LAYER_METADATA); OWS_MAP_DBG}
+<LAYER>CLASS 			{ yy_push_state(CLASS); OWS_MAP_DBG}
+<CLASS>STYLE 			{ yy_push_state(STYLE); OWS_MAP_DBG}
+<CLASS>LABEL 			{ yy_push_state(LABEL); OWS_MAP_DBG}
+<MAP,LAYER>PROJECTION		{ yy_push_state(PROJECTION); OWS_MAP_DBG}
+<SYMBOL,STYLE>PATTERN		{ yy_push_state(PATTERN); OWS_MAP_DBG}
+<SYMBOL>POINT			{ yy_push_state(POINT); OWS_MAP_DBG}
+<SCALEBAR,LEGEND>LABEL		{ yy_push_state(LABEL); OWS_MAP_DBG}
+<MAP>LAYER 			{ yy_push_state(LAYER); map_l = ows_layer_init(); OWS_MAP_DBG}
+<LAYER>FEATURE 			{ yy_push_state(FEATURE); OWS_MAP_DBG}
 <MAP>NAME			{ BEGIN PROPERTIES; map_prop_state = MAP_NAME;}
 <LAYER>NAME			{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME;}
 <LAYER>CONNECTION		{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_CONNECTION;}
@@ -569,8 +588,9 @@ END 				{ yy_pop_state(); if (yy_top_state() == LAYER) end_layer();}
 <PROPERTIES>[^ 	\n]*				{properties(yytext, false);  BEGIN MAP;}		
 <LAYER_PROPERTIES>\"[^\"]*\"|\'[^\']*\'		{layer_properties(yytext, true);  BEGIN LAYER;}
 <LAYER_PROPERTIES>[^ 	\n]*			{layer_properties(yytext, false);  BEGIN LAYER;}		
+\"[^\"]*\"|\'[^\']*\' {}
 . {}
-[ \t\n'"_-] {}
+[ \t\n_-] {}
 
 <INITIAL><<EOF>> { yyterminate(); }
 <<EOF>> { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile parse error", "parse_config_file"); yyterminate(); }

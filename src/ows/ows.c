@@ -183,9 +183,6 @@ void ows_flush(ows * o, FILE * output)
         fprintf(output, "\n");
     }
 
-    fprintf(output, "max_width: %d\n", o->max_width);
-    fprintf(output, "max_height: %d\n", o->max_height);
-    fprintf(output, "max_layers: %d\n", o->max_layers);
     fprintf(output, "max_features: %d\n", o->max_features);
     fprintf(output, "degree_precision: %d\n", o->degree_precision);
     fprintf(output, "meter_precision: %d\n", o->meter_precision);

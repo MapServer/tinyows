@@ -73,6 +73,7 @@ enum map_lmd_state {
     MAP_LMD_TITLE,
     MAP_LMD_TOWS_TABLE,
     MAP_LMD_TOWS_SCHEMA,
+    MAP_LMD_TOWS_RETRIEVABLE,
     MAP_LMD_TOWS_WRITABLE,
     MAP_LMD_TOWS_GEOBBOX,
     MAP_LMD_SKIP
@@ -97,6 +98,7 @@ list * map_srid = NULL;
 buffer *map_ns_prefix = NULL;
 buffer *map_ns_uri = NULL;
 bool map_is_postgis = false;
+bool map_is_dump = false;
 enum map_md_state map_md_state;
 enum map_lmd_state map_lmd_state;
 enum map_prop_state map_prop_state;
@@ -336,12 +338,6 @@ static void metadata_layer_key(char *yytext, bool quotes)
 	/* TODO TYPE handle */
 	else if(!strncmp("gml_xml_items", yytext, 13))
 		map_lmd_state = MAP_LMD_XML_ITEMS;
-
-	/* Not support gml_geometries 
-                       gml_*_type
-                       gml_*_occurances
-           as i'm not sure it really make sense here... */
-
 	else if(!strncmp("wfs_abstract", yytext, 12))
 		map_lmd_state = MAP_LMD_ABSTRACT;
 	else if(!strncmp("wfs_extent", yytext, 10))
@@ -366,6 +362,8 @@ static void metadata_layer_key(char *yytext, bool quotes)
 		map_lmd_state = MAP_LMD_TOWS_TABLE;
 	else if(!strncmp("tinyows_schema", yytext, 14))
 		map_lmd_state = MAP_LMD_TOWS_SCHEMA;
+	else if(!strncmp("tinyows_retrievable", yytext, 19))
+		map_lmd_state = MAP_LMD_TOWS_RETRIEVABLE;
 	else if(!strncmp("tinyows_writable", yytext, 16))
 		map_lmd_state = MAP_LMD_TOWS_WRITABLE;
 	else if(!strncmp("tinyows_geobbox", yytext, 15))
@@ -424,6 +422,9 @@ static void metadata_layer_value(char *yytext, bool quotes)
 		return;
 	case MAP_LMD_TOWS_WRITABLE:
 		map_l->writable=atoi(yytext)?1:0;
+		return;
+	case MAP_LMD_TOWS_RETRIEVABLE:
+		map_l->retrievable=atoi(yytext)?1:0;
 		return;
 	case MAP_LMD_TOWS_GEOBBOX:
 		g = ows_geobbox_init();
@@ -485,10 +486,12 @@ static void end_layer()
 			buffer_copy(map_l->storage->table, map_l->name);
 		if (!map_l->storage->schema->use)
 			buffer_add_str(map_l->storage->schema, "public");
+		if (!map_is_dump) map_l->retrievable=map_l->writable = false;
 		ows_layer_list_add(map_o->layers, map_l);
 	}
+
 		
-	map_is_postgis = false;
+	map_is_dump = map_is_postgis = false;
 }
 
 
@@ -546,10 +549,10 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 				  OWS_MAP_DBG
 				}
 
-<INITIAL>MAP			{ yy_push_state(MAP); OWS_MAP_DBG}
-<MAP>WEB			{ yy_push_state(WEB); OWS_MAP_DBG}
-<MAP>QUERYMAP			{ yy_push_state(QUERYMAP); OWS_MAP_DBG}
-<MAP>SYMBOLSET			{ OWS_MAP_EATLINE /* must be before SYMBOL */}
+<INITIAL>MAP			{ yy_push_state(MAP); OWS_MAP_DBG }
+<MAP>WEB			{ yy_push_state(WEB); OWS_MAP_DBG }
+<MAP>QUERYMAP			{ yy_push_state(QUERYMAP); OWS_MAP_DBG }
+<MAP>SYMBOLSET			{ OWS_MAP_EATLINE /* must be before SYMBOL */ }
 <MAP>CONFIG			{ OWS_MAP_EATLINE }
 <MAP>DATAPATTERN		{ OWS_MAP_EATLINE }
 <MAP>TEMPLATEPATTERN		{ OWS_MAP_EATLINE }
@@ -630,12 +633,12 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 <MAP>NAME			{ BEGIN PROPERTIES; map_prop_state = MAP_NAME;}
 <LAYER>NAME			{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME;}
 <LAYER>CONNECTION		{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_CONNECTION;}
-<LAYER>CONNECTIONTYPE		{ BEGIN LAYER_CONNECTIONTYPE;}
-<LAYER_CONNECTIONTYPE>POSTGIS	{ BEGIN LAYER; map_is_postgis=true;}
-<LAYER_CONNECTIONTYPE>[A-Za-z]+	{ BEGIN LAYER; map_is_postgis=false;}
-<LAYER>DUMP			{ BEGIN LAYER_DUMP;}
-<LAYER_DUMP>TRUE		{ BEGIN LAYER; map_l->retrievable=true;}
-<LAYER_DUMP>[A-Za-z]+		{ BEGIN LAYER; map_l->retrievable=false;}
+<LAYER>CONNECTIONTYPE		{ BEGIN LAYER_CONNECTIONTYPE; }
+<LAYER_CONNECTIONTYPE>POSTGIS	{ BEGIN LAYER; map_is_postgis=true; }
+<LAYER_CONNECTIONTYPE>[A-Za-z]+	{ BEGIN LAYER; map_is_postgis=false; }
+<LAYER>DUMP			{ BEGIN LAYER_DUMP; }
+<LAYER_DUMP>TRUE		{ BEGIN LAYER; map_is_dump=true; }
+<LAYER_DUMP>[A-Za-z]+		{ BEGIN LAYER; map_is_dump=false; }
 
 <LAYER_METADATA,METADATA,METADATA_VALUE,LAYER_METADATA_VALUE,LAYER_PROPERTIES>[ \t\n] {}
 

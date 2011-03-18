@@ -10,6 +10,7 @@
 #include "../ows_struct.h"
 #include "../ows_api.h"
 
+
 enum map_md_state {
     MAP_MD_UPDATESEQUENCE,
     MAP_MD_SCHEMAS_LOCATION,
@@ -93,8 +94,6 @@ enum map_md_state map_md_state;
 enum map_lmd_state map_lmd_state;
 enum map_prop_state map_prop_state;
 enum map_layer_prop_state map_layer_prop_state;
-
-
 
 
 static void metadata_key(char *yytext, bool quotes)
@@ -488,6 +487,7 @@ static void end_layer()
 
 %}
 
+%option stack
 %option noyywrap
 %option nounput
 %option never-interactive
@@ -516,75 +516,47 @@ static void end_layer()
 %s LEGEND
 %s REFERENCE
 %s OUTPUTFORMAT
-%s LAYER_PROJECTION
-%s SCALEBAR_LABEL
-%s LEGEND_LABEL
 %s SYMBOL
-%s SYMBOL_PATTERN
-%s SYMBOL_POINT
+%s PATTERN
+%s POINT
 
 
 %%
 
+
 <INITIAL,MAP,LAYER,METADATA,LAYER_METADATA># { char c ; for (c=input() ; c && c != '\n' ; c=input()); }
 <INITIAL,MAP,METADATA,LAYER,LAYER_METADATA>INCLUDE { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file"); yyterminate();} 
-<INITIAL>MAP			{BEGIN MAP;}
-<MAP>END			{BEGIN INITIAL;}
-<MAP>WEB			{BEGIN WEB;}
-<MAP>QUERYMAP			{BEGIN QUERYMAP;}
-<QUERYMAP>END			{BEGIN MAP;}
-<MAP>SYMBOL			{BEGIN SYMBOL;}
-<SYMBOL>PATTERN			{BEGIN SYMBOL_PATTERN;}
-<SYMBOL_PATTERN>END		{BEGIN SYMBOL;}
-<SYMBOL>POINT			{BEGIN SYMBOL_POINT;}
-<SYMBOL_POINT>END		{BEGIN SYMBOL;}
-<SYMBOL>END			{BEGIN MAP;}
-<MAP>PROJECTION			{BEGIN PROJECTION;}
-<PROJECTION>END			{BEGIN MAP;}
-<MAP>SCALEBAR			{BEGIN SCALEBAR;}
-<SCALEBAR>LABEL			{BEGIN SCALEBAR_LABEL;}
-<SCALEBAR_LABEL>END		{BEGIN SCALEBAR;}
-<SCALEBAR>END			{BEGIN MAP;}
-<MAP>LEGEND			{BEGIN LEGEND;}
-<LEGEND>LABEL			{BEGIN LEGEND_LABEL;}
-<LEGEND_LABEL>END		{BEGIN LEGEND;}
-<LEGEND>END			{BEGIN MAP;}
-<MAP>REFERENCE			{BEGIN REFERENCE;}
-<REFERENCE>END			{BEGIN MAP;}
-<MAP>OUTPUTFORMAT		{BEGIN OUTPUTFORMAT;}
-<OUTPUTFORMAT>END		{BEGIN MAP;}
-<WEB>METADATA 			{BEGIN METADATA;}
-<METADATA>END 			{BEGIN WEB;}
-<WEB>END			{BEGIN MAP;}
-<MAP>LAYER 			{BEGIN LAYER; map_l = ows_layer_init();}
-<MAP>NAME			{BEGIN PROPERTIES; map_prop_state = MAP_NAME;}
-<LAYER>NAME			{BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME;}
-<LAYER>CONNECTION		{BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_CONNECTION;}
-<LAYER>CONNECTIONTYPE		{BEGIN LAYER_CONNECTIONTYPE;}
-<LAYER_CONNECTIONTYPE>POSTGIS	{BEGIN LAYER; map_is_postgis=true;}
-<LAYER_CONNECTIONTYPE>[A-Za-z]+	{BEGIN LAYER; map_is_postgis=false;}
-<LAYER>DUMP			{BEGIN LAYER_DUMP;}
-<LAYER_DUMP>TRUE		{BEGIN LAYER; map_l->retrievable=true;}
-<LAYER_DUMP>[A-Za-z]+		{BEGIN LAYER; map_l->retrievable=false;}
-<LAYER>FEATURE 			{BEGIN FEATURE;}
-<FEATURE>END 			{BEGIN LAYER;}
-<LAYER>GRID 			{BEGIN GRID;}
-<GRID>END 			{BEGIN LAYER;}
-<LAYER>PROJECTION 		{BEGIN LAYER_PROJECTION;}
-<LAYER_PROJECTION>END 		{BEGIN LAYER;}
-<LAYER>JOIN 			{BEGIN JOIN;}
-<JOIN>END 			{BEGIN LAYER;}
-<LAYER>METADATA 		{BEGIN LAYER_METADATA;}
-<LAYER_METADATA>END 		{BEGIN LAYER;}
-<LAYER>CLASS 			{BEGIN CLASS;}
-<CLASS>STYLE 			{BEGIN STYLE;}
-<STYLE>STYLE_PATTERN 		{BEGIN STYLE_PATTERN;}
-<STYLE_PATTERN>END		{BEGIN STYLE;}
-<CLASS>LABEL 			{BEGIN LABEL;}
-<CLASS>END 			{BEGIN LAYER;}
-<STYLE>END 			{BEGIN CLASS;}
-<LABEL>END 			{BEGIN CLASS;}
-<LAYER>END 			{BEGIN MAP; end_layer();}
+END 				{ yy_pop_state(); if (yy_top_state() == LAYER) end_layer();}
+
+<INITIAL>MAP			{ yy_push_state(MAP);}
+<MAP>WEB			{ yy_push_state(WEB);}
+<MAP>QUERYMAP			{ yy_push_state(QUERYMAP);}
+<MAP>SYMBOL			{ yy_push_state(SYMBOL);}
+<MAP>SCALEBAR			{ yy_push_state(SCALEBAR);}
+<MAP>REFERENCE			{ yy_push_state(REFERENCE);}
+<MAP>OUTPUTFORMAT		{ yy_push_state(OUTPUTFORMAT);}
+<WEB>METADATA 			{ yy_push_state(METADATA);}
+<LAYER>GRID 			{ yy_push_state(GRID);}
+<LAYER>JOIN 			{ yy_push_state(JOIN);}
+<LAYER>METADATA 		{ yy_push_state(LAYER_METADATA);}
+<LAYER>CLASS 			{ yy_push_state(CLASS);}
+<CLASS>STYLE 			{ yy_push_state(STYLE);}
+<CLASS>LABEL 			{ yy_push_state(LABEL);}
+<MAP,LAYER>PROJECTION		{ yy_push_state(PROJECTION);}
+<SYMBOL,STYLE>PATTERN		{ yy_push_state(PATTERN);}
+<SYMBOL>POINT			{ yy_push_state(POINT);}
+<SCALEBAR,LEGEND>LABEL		{ yy_push_state(LABEL);}
+<MAP>LAYER 			{ yy_push_state(LAYER); map_l = ows_layer_init();}
+<LAYER>FEATURE 			{ yy_push_state(FEATURE);}
+<MAP>NAME			{ BEGIN PROPERTIES; map_prop_state = MAP_NAME;}
+<LAYER>NAME			{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME;}
+<LAYER>CONNECTION		{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_CONNECTION;}
+<LAYER>CONNECTIONTYPE		{ BEGIN LAYER_CONNECTIONTYPE;}
+<LAYER_CONNECTIONTYPE>POSTGIS	{ BEGIN LAYER; map_is_postgis=true;}
+<LAYER_CONNECTIONTYPE>[A-Za-z]+	{ BEGIN LAYER; map_is_postgis=false;}
+<LAYER>DUMP			{ BEGIN LAYER_DUMP;}
+<LAYER_DUMP>TRUE		{ BEGIN LAYER; map_l->retrievable=true;}
+<LAYER_DUMP>[A-Za-z]+		{ BEGIN LAYER; map_l->retrievable=false;}
 
 <LAYER_METADATA,METADATA,METADATA_VALUE,LAYER_METADATA_VALUE,LAYER_PROPERTIES>[ \t\n] {}
 
@@ -593,10 +565,10 @@ static void end_layer()
 <LAYER_METADATA>\"[^\"]*\"|\'[^\']*\' 		{metadata_layer_key(yytext, true); BEGIN LAYER_METADATA_VALUE;}
 <LAYER_METADATA_VALUE>\"[^\"]*\"|\'[^\']*\'	{metadata_layer_value(yytext, true); BEGIN LAYER_METADATA;}
 
-<PROPERTIES>\"[^\"]*\"|\'[^\']*\'		{properties(yytext, true); BEGIN MAP;}
-<PROPERTIES>[^ 	\n]*				{properties(yytext, false); BEGIN MAP;}		
-<LAYER_PROPERTIES>\"[^\"]*\"|\'[^\']*\'		{layer_properties(yytext, true); BEGIN LAYER;}
-<LAYER_PROPERTIES>[^ 	\n]*			{layer_properties(yytext, false); BEGIN LAYER;}		
+<PROPERTIES>\"[^\"]*\"|\'[^\']*\'		{properties(yytext, true);  BEGIN MAP;}
+<PROPERTIES>[^ 	\n]*				{properties(yytext, false);  BEGIN MAP;}		
+<LAYER_PROPERTIES>\"[^\"]*\"|\'[^\']*\'		{layer_properties(yytext, true);  BEGIN LAYER;}
+<LAYER_PROPERTIES>[^ 	\n]*			{layer_properties(yytext, false);  BEGIN LAYER;}		
 . {}
 [ \t\n'"_-] {}
 

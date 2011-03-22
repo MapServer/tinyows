@@ -318,7 +318,36 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
         b = buffer_init();
         t = buffer_init();
         buffer_add_str(b, PQgetvalue(res, i, 0));
-        buffer_add_str(t, PQgetvalue(res, i, 1));
+	buffer_add_str(t, PQgetvalue(res, i, 1));
+
+	/* If the column is a geometry, get its real geometry type */
+	if (buffer_cmp(t, "geometry"))
+	{
+	  PGresult *geom_res;
+	  buffer *geom_sql = buffer_init();
+	  buffer_add_str(geom_sql, "SELECT type from geometry_columns where f_table_schema='");
+	  buffer_copy(geom_sql, l->storage->schema);
+	  buffer_add_str(geom_sql,"' and f_table_name='");
+	  buffer_copy(geom_sql, l->storage->table);
+	  buffer_add_str(geom_sql,"' and f_geometry_column='");
+	  buffer_copy(geom_sql, b);
+	  buffer_add_str(geom_sql,"';");
+	  
+	  geom_res = PQexec(o->pg, geom_sql->buf);
+	  buffer_free(geom_sql);
+	  
+	  if (PQresultStatus(geom_res) != PGRES_TUPLES_OK) {
+	    PQclear(res);
+	    PQclear(geom_res);
+	    ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
+		      "Unable to access geometry_columns table.", "fill_attributes");
+	    return;
+	  }
+	  
+	  t = buffer_init();
+	  buffer_add_str(t, PQgetvalue(geom_res, 0, 0));
+	}
+	
         array_add(l->storage->attributes, b, t);
     }
 

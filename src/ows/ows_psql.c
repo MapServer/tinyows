@@ -268,7 +268,7 @@ char *ows_psql_to_xsd(buffer * type)
 {
     assert(type);
 
-    if (buffer_cmp(type, "geometry"))
+    if (buffer_case_cmp(type, "geometry"))
         return "gml:GeometryPropertyType";
     if (buffer_cmp(type, "geography"))
         return "gml:GeometryPropertyType";
@@ -292,6 +292,20 @@ char *ows_psql_to_xsd(buffer * type)
         return "time";
     else if (buffer_cmp(type, "timestamptz"))
         return "dateTime";
+    else if (buffer_cmp(type, "LINESTRING"))
+        return "gml:LineStringPropertyType";
+    else if (buffer_cmp(type, "POLYGON"))
+        return "gml:PolygonPropertyType";
+    else if (buffer_cmp(type, "POINT"))
+        return "gml:PointPropertyType";
+    else if (buffer_cmp(type, "MULTIPOINT"))
+        return "gml:MultiPointPropertyType";
+    else if (buffer_cmp(type, "MULTILINESTRING"))
+        return "gml:MultiLineStringPropertyType";
+    else if (buffer_cmp(type, "MULTIPOLYGON"))
+        return "gml:MultiPolygonPropertyType";
+    else if (buffer_cmp(type, "GEOMETRYCOLLECTION"))
+        return "gml:MultiGeometryPropertyType";
     else
         return "string";
 }

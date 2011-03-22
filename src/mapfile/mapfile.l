@@ -11,6 +11,7 @@
 #include "../ows_api.h"
 
 #define OWS_MAP_EATLINE char c ; for (c=input() ; c && c != '\n' ; c=input());
+#define OWS_MAP_MAX_INCLUDE_DEPTH 5
 
 #if 0
 #define OWS_MAP_DBG fprintf(stderr, "State: {%i} %i \n", yy_top_state(), YY_START);
@@ -99,6 +100,8 @@ buffer *map_ns_prefix = NULL;
 buffer *map_ns_uri = NULL;
 bool map_is_postgis = false;
 bool map_is_dump = false;
+YY_BUFFER_STATE map_include_stack[OWS_MAP_MAX_INCLUDE_DEPTH];
+int map_include_stack_ptr = 0;
 enum map_md_state map_md_state;
 enum map_lmd_state map_lmd_state;
 enum map_prop_state map_prop_state;
@@ -529,12 +532,14 @@ static void end_layer()
 %s SYMBOL
 %s PATTERN
 %s POINT
+%s INCLUDE
 
 
 %%
 
 <INITIAL,MAP,LAYER,METADATA,LAYER_METADATA># { char c ; for (c=input() ; c && c != '\n' ; c=input()); }
-<INITIAL,MAP,METADATA,LAYER,LAYER_METADATA>INCLUDE { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile INCLUDE not yet supported", "parse_config_file"); yyterminate();} 
+<INITIAL,MAP,METADATA,LAYER,LAYER_METADATA>INCLUDE { yy_push_state(INCLUDE); OWS_MAP_DBG }
+
 
 <MAP>LEGEND			{ /*LEGEND rule must appears before END... */
 				  yy_push_state(LEGEND); OWS_MAP_DBG }
@@ -545,8 +550,7 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 					yyterminate();}
 
 				  if (YY_START == LAYER) { end_layer(); }
-				  yy_pop_state();
-				  OWS_MAP_DBG
+				  yy_pop_state(); OWS_MAP_DBG
 				}
 
 <INITIAL>MAP			{ yy_push_state(MAP); OWS_MAP_DBG }
@@ -646,6 +650,33 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 <METADATA_VALUE>\"[^\"]*\"|\'[^\']*\'		{metadata_value(yytext, true); BEGIN METADATA;}
 <LAYER_METADATA>\"[^\"]*\"|\'[^\']*\' 		{metadata_layer_key(yytext, true); BEGIN LAYER_METADATA_VALUE;}
 <LAYER_METADATA_VALUE>\"[^\"]*\"|\'[^\']*\'	{metadata_layer_value(yytext, true); BEGIN LAYER_METADATA;}
+<INCLUDE>\"[^\"]*\"|\'[^\']*\'			{
+
+	 char *p; 
+
+	 yy_pop_state(); OWS_MAP_DBG
+
+	 if(map_include_stack_ptr >= OWS_MAP_MAX_INCLUDE_DEPTH) {
+		ows_error(map_o, OWS_ERROR_CONFIG_FILE,
+		"MapFile: include nested too deeply", "parse_config_file");
+		yyterminate();
+         }
+
+	 map_include_stack[map_include_stack_ptr] = YY_CURRENT_BUFFER;
+         map_include_stack_ptr++;
+
+	 for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
+         yyin = fopen(yytext, "r");
+
+         if (!yyin) {
+		ows_error(map_o, OWS_ERROR_CONFIG_FILE,
+		"MapFile: include unable to open file", "parse_config_file");
+		yyterminate();
+	}
+
+         yy_switch_to_buffer(yy_create_buffer(yyin, YY_BUF_SIZE));
+}
+
 
 <PROPERTIES>\"[^\"]*\"|\'[^\']*\'		{properties(yytext, true);  BEGIN MAP;}
 <PROPERTIES>[^ 	\n]*				{properties(yytext, false);  BEGIN MAP;}		
@@ -655,8 +686,20 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 . {}
 [ \t\n_-] {}
 
-<INITIAL><<EOF>> { yyterminate(); }
-<<EOF>> { ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile parse error", "parse_config_file"); yyterminate(); }
+<<EOF>> { 
+	/* End of main file */
+	if (map_include_stack_ptr == 0 && YY_START == 0) yyterminate(); 
+	
+	else if (map_include_stack_ptr) {
+		fclose(YY_CURRENT_BUFFER->yy_input_file);
+                yy_delete_buffer( YY_CURRENT_BUFFER );
+                yy_switch_to_buffer(map_include_stack[--map_include_stack_ptr]);
+	} else {
+		ows_error(map_o, OWS_ERROR_CONFIG_FILE, "MapFile parse error",
+			"parse_config_file"); 
+		yyterminate();
+	}
+}
 
 %%
 

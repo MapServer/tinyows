@@ -504,10 +504,10 @@ array *cgi_parse_xml(ows * o, char *query)
             typ_need_comma = true;
         }
         /*if n name is an operation, keep the xml to analyse it later */
-        else if (!strcmp((char *) n->name, "Insert")
+        else if (   !strcmp((char *) n->name, "Insert")
                  || !strcmp((char *) n->name, "Delete")
                  || !strcmp((char *) n->name, "Update")) {
-            if (operations->use) buffer_add_str(operations, "<operations>");
+            if (!operations->use) buffer_add_str(operations, "<operations>");
 
             /* add the whole xml operation to the matching global buffer */
             operations = cgi_add_xml_into_buffer(operations, n);

@@ -304,7 +304,7 @@ list *ows_srs_get_from_srid(ows * o, list * l)
 
     if (l->size == 0) return srs;
 
-    for (ln = l->firs t; ln ; ln = ln->next) {
+    for (ln = l->first; ln ; ln = ln->next) {
         b = ows_srs_get_from_a_srid(o, atoi(ln->value->buf));
         list_add(srs, b);
     }

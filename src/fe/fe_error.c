@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +33,8 @@
  */
 void fe_error(ows * o, filter_encoding * fe)
 {
-    assert(o != NULL);
-    assert(fe != NULL);
+    assert(o);
+    assert(fe);
 
     if (fe->error_code == FE_ERROR_FEATUREID) {
         filter_encoding_free(fe);
@@ -87,8 +87,8 @@ buffer *fill_fe_error(ows * o, filter_encoding * fe)
 {
     buffer *result;
 
-    assert(o != NULL);
-    assert(fe != NULL);
+    assert(o);
+    assert(fe);
 
     result = buffer_init();
 

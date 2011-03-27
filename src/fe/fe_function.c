@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -32,22 +32,19 @@
 /*
  * Generic function for filter encoding functions with one argument
  */
-static buffer *fe_functions(ows * o, buffer * typename,
-                            filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_functions(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(n);
+    assert(sql);
 
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     sql = fe_expression(o, typename, fe, sql, n);
-
     buffer_add_str(sql, ")");
 
     return sql;
@@ -57,20 +54,18 @@ static buffer *fe_functions(ows * o, buffer * typename,
 /*
  * Generic function for aggregate filter encoding functions
  */
-static buffer *fe_aggregate_functions(ows * o, buffer * typename,
-                                      filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_aggregate_functions(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     sql = fe_expression(o, typename, fe, sql, n);
 
@@ -85,17 +80,15 @@ static buffer *fe_aggregate_functions(ows * o, buffer * typename,
 /*
  * Calculate the absolute value of the argument
  */
-static buffer *fe_fct_abs(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_abs(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "abs(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -105,17 +98,15 @@ static buffer *fe_fct_abs(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Calculate the arc cosine of the argument
  */
-static buffer *fe_fct_acos(ows * o, buffer * typename,
-                           filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_acos(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "acos(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -125,17 +116,15 @@ static buffer *fe_fct_acos(ows * o, buffer * typename,
 /*
  * Calculate the arc sine of the argument
  */
-static buffer *fe_fct_asin(ows * o, buffer * typename,
-                           filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_asin(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "asin(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -145,17 +134,15 @@ static buffer *fe_fct_asin(ows * o, buffer * typename,
 /*
  * Calculate the arc tangent of the argument
  */
-static buffer *fe_fct_atan(ows * o, buffer * typename,
-                           filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_atan(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "atan(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -165,17 +152,15 @@ static buffer *fe_fct_atan(ows * o, buffer * typename,
 /*
  * Return the average value for any number of fields
  */
-static buffer *fe_fct_avg(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_avg(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "(SELECT avg(");
-
     sql = fe_aggregate_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -185,17 +170,15 @@ static buffer *fe_fct_avg(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Return the cube root of the argument
  */
-static buffer *fe_fct_cbrt(ows * o, buffer * typename,
-                           filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_cbrt(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "cbrt(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -205,16 +188,14 @@ static buffer *fe_fct_cbrt(ows * o, buffer * typename,
 /*
  * Return the smallest integer not less than argument
  */
-static buffer *fe_fct_ceil(ows * o, buffer * typename,
-                           filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_ceil(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
 
     buffer_add_str(sql, "ceil(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -224,17 +205,15 @@ static buffer *fe_fct_ceil(ows * o, buffer * typename,
 /*
  * Calculate the cosine of the argument
  */
-static buffer *fe_fct_cos(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_cos(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "cos(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -244,17 +223,15 @@ static buffer *fe_fct_cos(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Calculate the cotangent of the argument
  */
-static buffer *fe_fct_cot(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_cot(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "cot(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -264,17 +241,15 @@ static buffer *fe_fct_cot(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Return the number of rows
  */
-static buffer *fe_fct_count(ows * o, buffer * typename,
-                            filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_count(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "(SELECT count(");
-
     sql = fe_aggregate_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -284,17 +259,15 @@ static buffer *fe_fct_count(ows * o, buffer * typename,
 /*
  * Transform the argument from radians to degrees
  */
-static buffer *fe_fct_degrees(ows * o, buffer * typename,
-                              filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_degrees(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "degrees(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -304,17 +277,15 @@ static buffer *fe_fct_degrees(ows * o, buffer * typename,
 /*
  * Calculate the exponantial of the argument
  */
-static buffer *fe_fct_exp(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_exp(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "exp(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -324,17 +295,15 @@ static buffer *fe_fct_exp(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Return the largest integer not greater than argument
  */
-static buffer *fe_fct_floor(ows * o, buffer * typename,
-                            filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_floor(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "floor(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -344,17 +313,15 @@ static buffer *fe_fct_floor(ows * o, buffer * typename,
 /*
  * Return the length of the argument
  */
-static buffer *fe_fct_length(ows * o, buffer * typename,
-                             filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_length(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "length(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -364,17 +331,15 @@ static buffer *fe_fct_length(ows * o, buffer * typename,
 /*
  * Calculate the natural logarithm of the argument
  */
-static buffer *fe_fct_ln(ows * o, buffer * typename, filter_encoding * fe,
-                         buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_ln(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "ln(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -384,17 +349,15 @@ static buffer *fe_fct_ln(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Calculate the base 10 logarithm of the argument
  */
-static buffer *fe_fct_log(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_log(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "log(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -404,17 +367,15 @@ static buffer *fe_fct_log(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Return the minimum of a set of rows
  */
-static buffer *fe_fct_min(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_min(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "(SELECT Min(");
-
     sql = fe_aggregate_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -424,17 +385,15 @@ static buffer *fe_fct_min(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Return the maximum of a set of rows
  */
-static buffer *fe_fct_max(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_max(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "(SELECT Max(");
-
     sql = fe_aggregate_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -444,17 +403,15 @@ static buffer *fe_fct_max(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Transform the argument from degrees to radians
  */
-static buffer *fe_fct_radians(ows * o, buffer * typename,
-                              filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_radians(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "radians(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -463,17 +420,15 @@ static buffer *fe_fct_radians(ows * o, buffer * typename,
 /*
  * Return the round to nearest integer of the argument
  */
-static buffer *fe_fct_round(ows * o, buffer * typename,
-                            filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_round(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "round(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -483,17 +438,15 @@ static buffer *fe_fct_round(ows * o, buffer * typename,
 /*
  * Calculate the sine of the argument
  */
-static buffer *fe_fct_sin(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_sin(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "sin(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -503,17 +456,15 @@ static buffer *fe_fct_sin(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Calculate the square root of the argument
  */
-static buffer *fe_fct_sqrt(ows * o, buffer * typename,
-                           filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_sqrt(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "sqrt(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -523,17 +474,15 @@ static buffer *fe_fct_sqrt(ows * o, buffer * typename,
 /*
  * Calculate the tangent of the argument
  */
-static buffer *fe_fct_tan(ows * o, buffer * typename, filter_encoding * fe,
-                          buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_tan(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "tan(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -543,17 +492,15 @@ static buffer *fe_fct_tan(ows * o, buffer * typename, filter_encoding * fe,
 /*
  * Truncate the argument toward zero
  */
-static buffer *fe_fct_trunc(ows * o, buffer * typename,
-                            filter_encoding * fe, buffer * sql, xmlNodePtr n)
+static buffer *fe_fct_trunc(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     buffer_add_str(sql, "trunc(");
-
     sql = fe_functions(o, typename, fe, sql, n);
 
     return sql;
@@ -563,70 +510,69 @@ static buffer *fe_fct_trunc(ows * o, buffer * typename,
 /*
  * Call the right function
  */
-buffer *fe_function(ows * o, buffer * typename, filter_encoding * fe,
-                    buffer * sql, xmlNodePtr n)
+buffer *fe_function(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
     xmlChar *fct_name;
 
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
+    assert(sql);
 
     fct_name = xmlGetProp(n, (xmlChar *) "name");
 
-    assert(fct_name != NULL);
+    assert(fct_name);
 
-    if (strcmp((char *) fct_name, "abs") == 0)
+    if      (!strcmp((char *) fct_name, "abs"))
         sql = fe_fct_abs(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "acos") == 0)
+    else if (!strcmp((char *) fct_name, "acos"))
         sql = fe_fct_acos(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "asin") == 0)
+    else if (!strcmp((char *) fct_name, "asin"))
         sql = fe_fct_asin(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "atan") == 0)
+    else if (!strcmp((char *) fct_name, "atan"))
         sql = fe_fct_atan(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "avg") == 0)
+    else if (!strcmp((char *) fct_name, "avg"))
         sql = fe_fct_avg(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "cbrt") == 0)
+    else if (!strcmp((char *) fct_name, "cbrt"))
         sql = fe_fct_cbrt(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "ceil") == 0)
+    else if (!strcmp((char *) fct_name, "ceil"))
         sql = fe_fct_ceil(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "ceiling") == 0)
+    else if (!strcmp((char *) fct_name, "ceiling"))
         sql = fe_fct_ceil(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "cos") == 0)
+    else if (!strcmp((char *) fct_name, "cos"))
         sql = fe_fct_cos(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "cot") == 0)
+    else if (!strcmp((char *) fct_name, "cot"))
         sql = fe_fct_cot(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "count") == 0)
+    else if (!strcmp((char *) fct_name, "count"))
         sql = fe_fct_count(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "degrees") == 0)
+    else if (!strcmp((char *) fct_name, "degrees"))
         sql = fe_fct_degrees(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "exp") == 0)
+    else if (!strcmp((char *) fct_name, "exp"))
         sql = fe_fct_exp(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "floor") == 0)
+    else if (!strcmp((char *) fct_name, "floor"))
         sql = fe_fct_floor(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "length") == 0)
+    else if (!strcmp((char *) fct_name, "length"))
         sql = fe_fct_length(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "ln") == 0)
+    else if (!strcmp((char *) fct_name, "ln"))
         sql = fe_fct_ln(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "log") == 0)
+    else if (!strcmp((char *) fct_name, "log"))
         sql = fe_fct_log(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "min") == 0)
+    else if (!strcmp((char *) fct_name, "min"))
         sql = fe_fct_min(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "max") == 0)
+    else if (!strcmp((char *) fct_name, "max"))
         sql = fe_fct_max(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "radians") == 0)
+    else if (!strcmp((char *) fct_name, "radians"))
         sql = fe_fct_radians(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "round") == 0)
+    else if (!strcmp((char *) fct_name, "round"))
         sql = fe_fct_round(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "sin") == 0)
+    else if (!strcmp((char *) fct_name, "sin"))
         sql = fe_fct_sin(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "sqrt") == 0)
+    else if (!strcmp((char *) fct_name, "sqrt"))
         sql = fe_fct_sqrt(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "tan") == 0)
+    else if (!strcmp((char *) fct_name, "tan"))
         sql = fe_fct_tan(o, typename, fe, sql, n);
-    else if (strcmp((char *) fct_name, "trunc") == 0)
+    else if (!strcmp((char *) fct_name, "trunc"))
         sql = fe_fct_trunc(o, typename, fe, sql, n);
     else fe->error_code = FE_ERROR_FUNCTION;
 

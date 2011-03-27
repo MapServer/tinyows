@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -39,15 +39,13 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
 {
     buffer *tmp, *type, *name;
     xmlChar *matchcase;
-    bool bool_type, sensitive_case;
+    bool bool_type = true;
+    bool sensitive_case = false;
 
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
-
-    bool_type = false;
-    sensitive_case = true;
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
 
     tmp = buffer_init();
     name = buffer_init();
@@ -57,8 +55,8 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
     /* by default, comparison is case sensitive */
     matchcase = xmlGetProp(n, (xmlChar *) "matchCase");
 
-    if (matchcase != NULL) {
-        if (strcmp((char *) matchcase, "false") == 0)
+    if (matchcase) {
+        if (!strcmp((char *) matchcase, "false"))
             sensitive_case = false;
     }
 
@@ -165,16 +163,15 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
  * String comparison operator with pattern matching
  * FIXME : remains a problem when escaping \* -> \%
  */
-static buffer *fe_property_is_like(ows * o, buffer * typename,
-                                   filter_encoding * fe, xmlNodePtr n)
+static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
     xmlChar *content, *wildcard, *singlechar, *escape;
     buffer *pg_string;
 
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
 
     wildcard = xmlGetProp(n, (xmlChar *) "wildCard");
     singlechar = xmlGetProp(n, (xmlChar *) "singleChar");
@@ -207,8 +204,7 @@ static buffer *fe_property_is_like(ows * o, buffer * typename,
     buffer_add_str(pg_string, (char *) content);
 
     /* replace the wildcard,singlechar and escapechar by Postgrefe->sql's */
-    if ((char *) wildcard != NULL && (char *) singlechar != NULL
-            && (char *) escape != NULL) {
+    if ((char *) wildcard && (char *) singlechar && (char *) escape) {
         pg_string = buffer_replace(pg_string, (char *) escape, "\\\\");
         pg_string = buffer_replace(pg_string, (char *) wildcard, "%");
         pg_string = buffer_replace(pg_string, (char *) singlechar, "_");
@@ -233,19 +229,17 @@ static buffer *fe_property_is_like(ows * o, buffer * typename,
 /*
  * Check if the value of a property is null
  */
-static buffer *fe_property_is_null(ows * o, buffer * typename,
-                                   filter_encoding * fe, xmlNodePtr n)
+static buffer *fe_property_is_null(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
 
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false);
 
@@ -258,23 +252,21 @@ static buffer *fe_property_is_null(ows * o, buffer * typename,
 /*
  * Check if property is between two boundary values
  */
-static buffer *fe_property_is_between(ows * o, buffer * typename,
-                                      filter_encoding * fe, xmlNodePtr n)
+static buffer *fe_property_is_between(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
     buffer *tmp;
 
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
 
     tmp = buffer_init();
 
     n = n->children;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     tmp = fe_expression(o, typename, fe, tmp, n);
 
@@ -286,8 +278,7 @@ static buffer *fe_property_is_between(ows * o, buffer * typename,
     n = n->next;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     tmp = fe_expression(o, typename, fe, tmp, n->children);
 
@@ -299,8 +290,7 @@ static buffer *fe_property_is_between(ows * o, buffer * typename,
     n = n->next;
 
     /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE)
-        n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     tmp = fe_expression(o, typename, fe, tmp, n->children);
 
@@ -316,19 +306,19 @@ static buffer *fe_property_is_between(ows * o, buffer * typename,
  */
 bool fe_is_comparison_op(char *name)
 {
-    assert(name != NULL);
+    assert(name);
 
     /* case sensitive comparison because the gml standard specifies
        strictly the name of the operator */
-    if (strcmp(name, "PropertyIsEqualTo") == 0
-            || strcmp(name, "PropertyIsNotEqualTo") == 0
-            || strcmp(name, "PropertyIsLessThan") == 0
-            || strcmp(name, "PropertyIsGreaterThan") == 0
-            || strcmp(name, "PropertyIsLessThanOrEqualTo") == 0
-            || strcmp(name, "PropertyIsGreaterThanOrEqualTo") == 0
-            || strcmp(name, "PropertyIsLike") == 0
-            || strcmp(name, "PropertyIsNull") == 0
-            || strcmp(name, "PropertyIsBetween") == 0)
+    if (       !strcmp(name, "PropertyIsEqualTo")
+            || !strcmp(name, "PropertyIsNotEqualTo")
+            || !strcmp(name, "PropertyIsLessThan")
+            || !strcmp(name, "PropertyIsGreaterThan")
+            || !strcmp(name, "PropertyIsLessThanOrEqualTo")
+            || !strcmp(name, "PropertyIsGreaterThanOrEqualTo")
+            || !strcmp(name, "PropertyIsLike")
+            || !strcmp(name, "PropertyIsNull")
+            || !strcmp(name, "PropertyIsBetween"))
         return true;
 
     return false;
@@ -340,28 +330,27 @@ bool fe_is_comparison_op(char *name)
  * Warning : before calling this function,
  * Check if n->name is a comparison operator with fe_is_comparison_op()
  */
-buffer *fe_comparison_op(ows * o, buffer * typename, filter_encoding * fe,
-                         xmlNodePtr n)
+buffer *fe_comparison_op(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(n != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(n);
 
     /* case sensitive comparison because the gml standard specifies
        strictly the name of the operator */
-    if (strcmp((char *) n->name, "PropertyIsEqualTo") == 0
-            || strcmp((char *) n->name, "PropertyIsNotEqualTo") == 0
-            || strcmp((char *) n->name, "PropertyIsLessThan") == 0
-            || strcmp((char *) n->name, "PropertyIsGreaterThan") == 0
-            || strcmp((char *) n->name, "PropertyIsLessThanOrEqualTo") == 0
-            || strcmp((char *) n->name, "PropertyIsGreaterThanOrEqualTo") == 0)
+    if (    !strcmp((char *) n->name, "PropertyIsEqualTo")
+         || !strcmp((char *) n->name, "PropertyIsNotEqualTo")
+         || !strcmp((char *) n->name, "PropertyIsLessThan")
+         || !strcmp((char *) n->name, "PropertyIsGreaterThan")
+         || !strcmp((char *) n->name, "PropertyIsLessThanOrEqualTo")
+         || !strcmp((char *) n->name, "PropertyIsGreaterThanOrEqualTo"))
         fe->sql = fe_binary_comparison_op(o, typename, fe, n);
-    else if (strcmp((char *) n->name, "PropertyIsLike") == 0)
+    else if (!strcmp((char *) n->name, "PropertyIsLike"))
         fe->sql = fe_property_is_like(o, typename, fe, n);
-    else if (strcmp((char *) n->name, "PropertyIsNull") == 0)
+    else if (!strcmp((char *) n->name, "PropertyIsNull"))
         fe->sql = fe_property_is_null(o, typename, fe, n);
-    else if (strcmp((char *) n->name, "PropertyIsBetween") == 0)
+    else if (!strcmp((char *) n->name, "PropertyIsBetween"))
         fe->sql = fe_property_is_between(o, typename, fe, n);
     else
         fe->error_code = FE_ERROR_FILTER;

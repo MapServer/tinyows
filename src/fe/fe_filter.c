@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -37,7 +37,7 @@ filter_encoding *filter_encoding_init()
     filter_encoding *fe;
 
     fe = malloc(sizeof(filter_encoding));
-    assert(fe != NULL);
+    assert(fe);
 
     fe->sql = buffer_init();
     fe->error_code = FE_NO_ERROR;
@@ -51,10 +51,9 @@ filter_encoding *filter_encoding_init()
  */
 void filter_encoding_free(filter_encoding * fe)
 {
-    assert(fe != NULL);
+    assert(fe);
 
-    if (fe->sql != NULL)
-        buffer_free(fe->sql);
+    if (fe->sql) buffer_free(fe->sql);
     
     free(fe);
     fe = NULL;
@@ -67,12 +66,12 @@ void filter_encoding_free(filter_encoding * fe)
  */
 void filter_encoding_flush(ows * o, filter_encoding * fe, FILE * output)
 {
-    assert(fe != NULL);
-    assert(output != NULL);
+    assert(fe);
+    assert(output);
 
     fprintf(output, "[\n");
 
-    if (fe->sql != NULL) {
+    if (fe->sql) {
         fprintf(output, "sql -> ");
         buffer_flush(fe->sql, output);
         fprintf(o->output, "\n");
@@ -91,8 +90,8 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
     xmlAttr *att;
     xmlChar *content;
 
-    assert(node != NULL);
-    assert(output != NULL);
+    assert(node);
+    assert(output);
 
     content = NULL;
 
@@ -115,8 +114,8 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
         }
     }
     /* print the node content */
-    else if ((node->type == XML_CDATA_SECTION_NODE)
-             || (node->type == XML_TEXT_NODE)) {
+    else if (    (node->type == XML_CDATA_SECTION_NODE)
+              || (node->type == XML_TEXT_NODE)) {
         content = xmlNodeGetContent(node);
 
         fprintf(output, "%s\n", content);
@@ -136,25 +135,24 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
     xmlChar *content;
     int isstring = 0;
 
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(fe != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(fe);
+    assert(sql);
 
     if (n == NULL) return sql;
 
-    if (strcmp((char *) n->name, "Function") == 0) {
+    if (!strcmp((char *) n->name, "Function"))
         return fe_function(o, typename, fe, sql, n);
-    }
 
     /* open a bracket when there are grandchildren elements */
-    if (n->children != NULL) {
+    if (n->children) {
         if (n->children->type == XML_ELEMENT_NODE) {
-            if (n->children->children != NULL)
+            if (n->children->children)
                 buffer_add_str(sql, "(");
         } else {
-            if (n->children->next != NULL)
-                if (n->children->next->children != NULL)
+            if (n->children->next)
+                if (n->children->next->children)
                     buffer_add_str(sql, "(");
         }
     }
@@ -200,7 +198,7 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
     xmlFree(content);
 
     /* eval the right part of the expression */
-    if (n->children != NULL && n->children->next != NULL) {
+    if (n->children && n->children->next) {
         if (n->children->type == XML_ELEMENT_NODE &&
                 n->children->next->type == XML_ELEMENT_NODE)
             sql = fe_expression(o, typename, fe, sql, n->children->next);
@@ -225,14 +223,13 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
 /*
  * Transform an Xpath expression into a string propertyname
  */
-buffer *fe_xpath_property_name(ows * o, buffer * typename,
-                               buffer * property)
+buffer *fe_xpath_property_name(ows * o, buffer * typename, buffer * property)
 {
     buffer *prop_name;
 
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(property != NULL);
+    assert(o);
+    assert(typename);
+    assert(property);
 
     if (check_regexp(property->buf, "\\*\\[position"))
         /*delete the first characters '*[position()=' */
@@ -265,11 +262,11 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
     array *prop_table;
     buffer *tmp;
 
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(n != NULL);
-    assert(fe != NULL);
-    assert(sql != NULL);
+    assert(o);
+    assert(typename);
+    assert(n);
+    assert(fe);
+    assert(sql);
 
     tmp = buffer_init();
 
@@ -278,7 +275,7 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
 
     prop_table = ows_psql_describe_table(o, typename);
 
-    assert(prop_table != NULL);
+    assert(prop_table);
 
     content = xmlNodeGetContent(n);
     buffer_add_str(tmp, (char *) content);
@@ -319,10 +316,10 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
     list *fe_list;
     bool feature_id, gid;
 
-    assert(o != NULL);
-    assert(typename != NULL);
-    assert(n != NULL);
-    assert(fe != NULL);
+    assert(o);
+    assert(typename);
+    assert(n);
+    assert(fe);
 
     fid = NULL;
     id_name = NULL;
@@ -365,9 +362,8 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             fe_list = list_explode('.', buf_fid);
 
             /* check if the layer_name match the typename queried */
-            if (fe_list->first->next != NULL) {
-                if (buffer_cmp(fe_list->first->value,
-                               typename->buf) == false) {
+            if (fe_list->first->next) {
+                if (!buffer_cmp(fe_list->first->value, typename->buf)) {
                     fe->error_code = FE_ERROR_FEATUREID;
                     list_free(fe_list);
                     buffer_free(buf_fid);
@@ -379,7 +375,7 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             id_name = ows_psql_id_column(o, typename);
 
             /* if there is no id column, raise an error */
-            if (!id_name || id_name->use == 0) {
+            if (!id_name || !id_name->use) {
                 fe->error_code = FE_ERROR_FEATUREID;
                 list_free(fe_list);
                 buffer_free(buf_fid);
@@ -396,9 +392,8 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             xmlFree(fid);
         }
 
-        if (n->next != NULL)
-            if (n->next->type == XML_ELEMENT_NODE)
-                buffer_add_str(fe->sql, " OR ");
+        if (n->next && n->next->type == XML_ELEMENT_NODE)
+            buffer_add_str(fe->sql, " OR ");
     }
 
     return fe->sql;
@@ -410,17 +405,16 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
  * containing a where condition of a SQL request usable into PostGis
  * and an error code if an error occured
  */
-filter_encoding *fe_filter(ows * o, filter_encoding * fe,
-                           buffer * typename, buffer * xmlchar)
+filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buffer * xmlchar)
 {
     buffer * schema_path;
     xmlDocPtr xmldoc;
     xmlNodePtr n;
 
-    assert(o != NULL);
-    assert(fe != NULL);
-    assert(typename != NULL);
-    assert(xmlchar != NULL);
+    assert(o);
+    assert(fe);
+    assert(typename);
+    assert(xmlchar);
 
     /* No validation if Filter came from KVP method */
     if (o->request->method == OWS_METHOD_XML) {
@@ -482,24 +476,23 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe,
 /*
  * Transform bbox parameter into WHERE statement of a FE->SQL request
  */
-buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name,
-                    ows_bbox * bbox)
+buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name, ows_bbox * bbox)
 {
     buffer *where;
     list *geom;
     list_node *ln;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(layer_name != NULL);
-    assert(bbox != NULL);
+    assert(o);
+    assert(wr);
+    assert(layer_name);
+    assert(bbox);
 
     where = buffer_init();
     geom = ows_psql_geometry_column(o, layer_name);
 
     buffer_add_str(where, " WHERE");
 
-    for (ln = geom->first; ln != NULL; ln = ln->next) {
+    for (ln = geom->first ; ln ; ln = ln->next) {
 
 	/* We use intersects and &&
            rather than st_intersects
@@ -514,8 +507,7 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name,
         buffer_add_str(where, " && ");
         ows_bbox_to_query(o, wr->bbox, where);
 
-        if (ln->next != NULL)
-            buffer_add_str(where, " AND ");
+        if (ln->next) buffer_add_str(where, " AND ");
     }
 
 
@@ -526,17 +518,16 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name,
 /*
  * Transform featureid parameter into WHERE statement of a FE->SQL request
  */
-buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name,
-                         list * fid)
+buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name, list * fid)
 {
     buffer *id_name, *where;
     list *fe;
     list_node *ln;
 
-    assert(o != NULL);
-    assert(wr != NULL);
-    assert(layer_name != NULL);
-    assert(fid != NULL);
+    assert(o);
+    assert(wr);
+    assert(layer_name);
+    assert(fid);
 
     where = buffer_init();
 
@@ -545,7 +536,7 @@ buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name,
 
     buffer_add_str(where, " WHERE ");
 
-    for (ln = fid->first; ln != NULL; ln = ln->next) {
+    for (ln = fid->first ; ln ; ln = ln->next) {
         fe = list_explode('.', ln->value);
         buffer_copy(where, id_name);
         buffer_add_str(where, " = '");
@@ -553,8 +544,7 @@ buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name,
         buffer_add_str(where, "'");
         list_free(fe);
 
-        if (ln->next != NULL)
-            buffer_add_str(where, " OR ");
+        if (ln->next) buffer_add_str(where, " OR ");
     }
 
     return where;

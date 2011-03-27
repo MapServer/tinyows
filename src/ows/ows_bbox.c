@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ ows_bbox *ows_bbox_init()
     ows_bbox *b;
 
     b = malloc(sizeof(ows_bbox));
-    assert(b != NULL);
+    assert(b);
 
     b->xmin = -DBL_MAX + 1;
     b->ymin = -DBL_MAX + 1;
@@ -56,10 +56,9 @@ ows_bbox *ows_bbox_init()
  */
 void ows_bbox_free(ows_bbox * b)
 {
-    assert(b != NULL);
+    assert(b);
 
     ows_srs_free(b->srs);
-
     free(b);
     b = NULL;
 }
@@ -68,11 +67,10 @@ void ows_bbox_free(ows_bbox * b)
 /*
  * Set a given bbox with null area test
  */
-bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin,
-                  double xmax, double ymax, int srid)
+bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin, double xmax, double ymax, int srid)
 {
-    assert(o != NULL);
-    assert(b != NULL);
+    assert(o);
+    assert(b);
 
     if (xmin >= xmax || ymin >= ymax) return false;
 
@@ -93,16 +91,15 @@ bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin,
 /*
  * Set a given bbox from a string like 'xmin,ymin,xmax,ymax'
  */
-bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str,
-                           int srid)
+bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
 {
     buffer *b;
     list *l;
     double xmin, ymin, xmax, ymax;
 
-    assert(o != NULL);
-    assert(bb != NULL);
-    assert(str != NULL);
+    assert(o);
+    assert(bb);
+    assert(str);
 
     b = buffer_init();
     buffer_add_str(b, str);
@@ -141,15 +138,14 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
     int srid;
     PGresult *res;
 
-    assert(o != NULL);
-    assert(from != NULL);
-    assert(where != NULL);
+    assert(o);
+    assert(from);
+    assert(where);
 
     bb = ows_bbox_init();
 
     /* checks if from list and where list have the same size */
-    if (from->size != where->size)
-        return bb;
+    if (from->size != where->size) return bb;
 
     sql = buffer_init();
     /* put into a buffer the SQL request calculating an extent */
@@ -218,8 +214,8 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
     buffer *sql;
     PGresult *res;
 
-    assert(o != NULL);
-    assert(bb != NULL);
+    assert(o);
+    assert(bb);
 
     sql = buffer_init();
     buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM ");
@@ -250,8 +246,8 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
  */
 bool ows_bbox_set_from_geobbox(ows * o, ows_bbox * bb, ows_geobbox * geo)
 {
-    assert(bb != NULL);
-    assert(geo != NULL);
+    assert(bb);
+    assert(geo);
 
     if (geo->west < geo->east) {
         bb->xmin = geo->west;
@@ -317,7 +313,7 @@ void ows_bbox_to_query(ows * o, ows_bbox *bbox, buffer *query)
  */
 void ows_bbox_flush(const ows_bbox * b, FILE * output)
 {
-    assert(b != NULL);
+    assert(b);
 
     fprintf(output, "[%f,%f,%f,%f]\n", b->xmin, b->ymin, b->xmax, b->ymax);
 }

@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +35,7 @@ ows_version *ows_version_init()
     ows_version *v;
 
     v = malloc(sizeof(ows_version));
-    assert(v != NULL);
+    assert(v);
 
     v->major = 0;
     v->minor = 0;
@@ -50,7 +50,7 @@ ows_version *ows_version_init()
  */
 void ows_version_set(ows_version * v, int major, int minor, int release)
 {
-    assert(v != NULL);
+    assert(v);
 
     v->major = major;
     v->minor = minor;
@@ -63,7 +63,7 @@ void ows_version_set(ows_version * v, int major, int minor, int release)
  */
 void ows_version_free(ows_version * v)
 {
-    assert(v != NULL);
+    assert(v);
 
     free(v);
     v = NULL;
@@ -75,7 +75,7 @@ void ows_version_free(ows_version * v)
  */
 int ows_version_get(ows_version * v)
 {
-    assert(v != NULL);
+    assert(v);
 
     return v->major * 100 + v->minor * 10 + v->release;
 }
@@ -84,11 +84,10 @@ int ows_version_get(ows_version * v)
 #ifdef OWS_DEBUG
 void ows_version_flush(ows_version * v, FILE * output)
 {
-    assert(v != NULL);
-    assert(output != NULL);
+    assert(v);
+    assert(output);
 
-    fprintf(output, "version: [%i,%i,%i]\n", v->major, v->minor,
-            v->release);
+    fprintf(output, "version: [%i,%i,%i]\n", v->major, v->minor, v->release);
 }
 #endif
 

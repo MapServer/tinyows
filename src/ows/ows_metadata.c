@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +36,7 @@ ows_contact *ows_contact_init()
     ows_contact *contact;
     contact = malloc(sizeof(ows_contact));
 
-    assert(contact != NULL);
+    assert(contact);
 
     contact->name = NULL;
     contact->site = NULL;
@@ -63,52 +63,23 @@ ows_contact *ows_contact_init()
  */
 void ows_contact_free(ows_contact * contact)
 {
-    assert(contact != NULL);
+    assert(contact);
 
-    if (contact->name != NULL)
-        buffer_free(contact->name);
-
-    if (contact->site != NULL)
-        buffer_free(contact->site);
-
-    if (contact->indiv_name != NULL)
-        buffer_free(contact->indiv_name);
-
-    if (contact->position != NULL)
-        buffer_free(contact->position);
-
-    if (contact->phone != NULL)
-        buffer_free(contact->phone);
-
-    if (contact->fax != NULL)
-        buffer_free(contact->fax);
-
-    if (contact->online_resource != NULL)
-        buffer_free(contact->online_resource);
-
-    if (contact->address != NULL)
-        buffer_free(contact->address);
-
-    if (contact->postcode != NULL)
-        buffer_free(contact->postcode);
-
-    if (contact->city != NULL)
-        buffer_free(contact->city);
-
-    if (contact->state != NULL)
-        buffer_free(contact->state);
-
-    if (contact->country != NULL)
-        buffer_free(contact->country);
-
-    if (contact->email != NULL)
-        buffer_free(contact->email);
-
-    if (contact->hours != NULL)
-        buffer_free(contact->hours);
-
-    if (contact->instructions != NULL)
-        buffer_free(contact->instructions);
+    if (contact->name)            buffer_free(contact->name);
+    if (contact->site)            buffer_free(contact->site);
+    if (contact->indiv_name)      buffer_free(contact->indiv_name);
+    if (contact->position)        buffer_free(contact->position);
+    if (contact->phone)           buffer_free(contact->phone);
+    if (contact->fax)             buffer_free(contact->fax);
+    if (contact->online_resource) buffer_free(contact->online_resource);
+    if (contact->address)         buffer_free(contact->address);
+    if (contact->postcode)        buffer_free(contact->postcode);
+    if (contact->city)            buffer_free(contact->city);
+    if (contact->state)           buffer_free(contact->state);
+    if (contact->country)         buffer_free(contact->country);
+    if (contact->email)           buffer_free(contact->email);
+    if (contact->hours)           buffer_free(contact->hours);
+    if (contact->instructions)    buffer_free(contact->instructions);
 
     free(contact);
     contact = NULL;
@@ -123,7 +94,7 @@ ows_meta *ows_metadata_init()
     ows_meta *metadata;
 
     metadata = malloc(sizeof(ows_meta));
-    assert(metadata != NULL);
+    assert(metadata);
 
     metadata->name = NULL;
     metadata->type = NULL;
@@ -143,31 +114,16 @@ ows_meta *ows_metadata_init()
  */
 void ows_metadata_free(ows_meta * metadata)
 {
-    assert(metadata != NULL);
+    assert(metadata);
 
-    if (metadata->name != NULL)
-        buffer_free(metadata->name);
-
-    if (metadata->type != NULL)
-        buffer_free(metadata->type);
-
-    if (metadata->versions != NULL)
-        list_free(metadata->versions);
-
-    if (metadata->title != NULL)
-        buffer_free(metadata->title);
-
-    if (metadata->abstract != NULL)
-        buffer_free(metadata->abstract);
-
-    if (metadata->keywords != NULL)
-        list_free(metadata->keywords);
-
-    if (metadata->fees != NULL)
-        buffer_free(metadata->fees);
-
-    if (metadata->access_constraints != NULL)
-        buffer_free(metadata->access_constraints);
+    if (metadata->name)               buffer_free(metadata->name);
+    if (metadata->type)               buffer_free(metadata->type);
+    if (metadata->versions)           list_free(metadata->versions);
+    if (metadata->title)              buffer_free(metadata->title);
+    if (metadata->abstract)           buffer_free(metadata->abstract);
+    if (metadata->keywords)           list_free(metadata->keywords);
+    if (metadata->fees)               buffer_free(metadata->fees);
+    if (metadata->access_constraints) buffer_free(metadata->access_constraints);
 
     free(metadata);
     metadata = NULL;
@@ -181,9 +137,9 @@ void ows_metadata_fill(ows * o, array * cgi)
 {
     buffer *b;
 
-    assert(o != NULL);
-    assert(o->metadata != NULL);
-    assert(cgi != NULL);
+    assert(o);
+    assert(o->metadata);
+    assert(cgi);
 
     /* retrieve the requested service from request */
     if (array_is_key(cgi, "xmlns")) {
@@ -206,7 +162,7 @@ void ows_metadata_fill(ows * o, array * cgi)
     }
 
     /* initialize supported versions from service type */
-    if (o->metadata->type != NULL) {
+    if (o->metadata->type) {
         if (buffer_case_cmp(o->metadata->type, "WFS")) {
             o->metadata->versions = list_init();
             list_add_str(o->metadata->versions, "1.0.0");
@@ -227,94 +183,94 @@ void ows_metadata_fill(ows * o, array * cgi)
 #ifdef OWS_DEBUG
 void ows_contact_flush(ows_contact * contact, FILE * output)
 {
-    assert(contact != NULL);
-    assert(output != NULL);
+    assert(contact);
+    assert(output);
 
-    if (contact->name != NULL) {
+    if (contact->name) {
         fprintf(output, "name: ");
         buffer_flush(contact->name, output);
         fprintf(output, "\n");
     }
 
-    if (contact->site != NULL) {
+    if (contact->site) {
         fprintf(output, "site: ");
         buffer_flush(contact->site, output);
         fprintf(output, "\n");
     }
 
-    if (contact->indiv_name != NULL) {
+    if (contact->indiv_name) {
         fprintf(output, "individual name: ");
         buffer_flush(contact->indiv_name, output);
         fprintf(output, "\n");
     }
 
-    if (contact->position != NULL) {
+    if (contact->position) {
         fprintf(output, "position: ");
         buffer_flush(contact->position, output);
         fprintf(output, "\n");
     }
 
-    if (contact->phone != NULL) {
+    if (contact->phone) {
         fprintf(output, "phone: ");
         buffer_flush(contact->phone, output);
         fprintf(output, "\n");
     }
 
-    if (contact->fax != NULL) {
+    if (contact->fax) {
         fprintf(output, "fax: ");
         buffer_flush(contact->fax, output);
         fprintf(output, "\n");
     }
 
-    if (contact->online_resource != NULL) {
+    if (contact->online_resource) {
         fprintf(output, "online_resource: ");
         buffer_flush(contact->online_resource, output);
         fprintf(output, "\n");
     }
 
-    if (contact->address != NULL) {
+    if (contact->address) {
         fprintf(output, "address: ");
         buffer_flush(contact->address, output);
         fprintf(output, "\n");
     }
 
-    if (contact->postcode != NULL) {
+    if (contact->postcode) {
         fprintf(output, "postcode: ");
         buffer_flush(contact->postcode, output);
         fprintf(output, "\n");
     }
 
-    if (contact->city != NULL) {
+    if (contact->city) {
         fprintf(output, "city: ");
         buffer_flush(contact->city, output);
         fprintf(output, "\n");
     }
 
-    if (contact->state != NULL) {
+    if (contact->state) {
         fprintf(output, "administrative_area: ");
         buffer_flush(contact->city, output);
         fprintf(output, "\n");
     }
 
-    if (contact->country != NULL) {
+    if (contact->country) {
         fprintf(output, "country: ");
         buffer_flush(contact->country, output);
         fprintf(output, "\n");
     }
 
-    if (contact->email != NULL) {
+    if (contact->email) {
         fprintf(output, "email: ");
         buffer_flush(contact->email, output);
         fprintf(output, "\n");
     }
 
-    if (contact->hours != NULL) {
+    if (contact->hours) {
         fprintf(output, "hours_of_service: ");
         buffer_flush(contact->hours, output);
         fprintf(output, "\n");
     }
 
-    if (contact->instructions != NULL) {
+    if (contact->instructions) {
         fprintf(output, "contact_instructions: ");
         buffer_flush(contact->instructions, output);
         fprintf(output, "\n");
@@ -331,52 +287,52 @@ void ows_contact_flush(ows_contact * contact, FILE * output)
 #ifdef OWS_DEBUG
 void ows_metadata_flush(ows_meta * metadata, FILE * output)
 {
-    assert(metadata != NULL);
-    assert(output != NULL);
+    assert(metadata);
+    assert(output);
 
-    if (metadata->name != NULL) {
+    if (metadata->name) {
         fprintf(output, "name: ");
         buffer_flush(metadata->name, output);
         fprintf(output, "\n");
     }
 
-    if (metadata->type != NULL) {
+    if (metadata->type) {
         fprintf(output, "type: ");
         buffer_flush(metadata->type, output);
         fprintf(output, "\n");
     }
 
-    if (metadata->versions != NULL) {
+    if (metadata->versions) {
         fprintf(output, "version: ");
         list_flush(metadata->versions, output);
         fprintf(output, "\n");
     }
 
-    if (metadata->title != NULL) {
+    if (metadata->title) {
         fprintf(output, "title: ");
         buffer_flush(metadata->title, output);
         fprintf(output, "\n");
     }
 
-    if (metadata->abstract != NULL) {
+    if (metadata->abstract) {
         fprintf(output, "abstract: ");
         buffer_flush(metadata->abstract, output);
         fprintf(output, "\n");
     }
 
-    if (metadata->keywords != NULL) {
+    if (metadata->keywords) {
         fprintf(output, "keywords: ");
         list_flush(metadata->keywords, output);
         fprintf(output, "\n");
     }
 
-    if (metadata->fees != NULL) {
+    if (metadata->fees) {
         fprintf(output, "fees: ");
         buffer_flush(metadata->fees, output);
         fprintf(output, "\n");
     }
 
-    if (metadata->access_constraints != NULL) {
+    if (metadata->access_constraints) {
         fprintf(output, "access_constraints: ");
         buffer_flush(metadata->access_constraints, output);
         fprintf(output, "\n");

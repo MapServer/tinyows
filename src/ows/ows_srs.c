@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ ows_srs *ows_srs_init()
     ows_srs *c;
 
     c = malloc(sizeof(ows_srs));
-    assert(c != NULL);
+    assert(c);
 
     c->srid = -1;
     c->auth_name = buffer_init();
@@ -55,10 +55,9 @@ ows_srs *ows_srs_init()
  */
 void ows_srs_free(ows_srs * c)
 {
-    assert(c != NULL);
+    assert(c);
 
     buffer_free(c->auth_name);
-
     free(c);
     c = NULL;
 }
@@ -71,18 +70,16 @@ void ows_srs_free(ows_srs * c)
  */
 void ows_srs_flush(ows_srs * c, FILE * output)
 {
-    assert(c != NULL);
-    assert(output != NULL);
+    assert(c);
+    assert(output);
 
     fprintf(output, "[\n");
     fprintf(output, " srid: %i\n", c->srid);
     fprintf(output, " auth_name: %s\n", c->auth_name->buf);
     fprintf(output, " auth_srid: %i\n", c->auth_srid);
 
-    if (c->is_degree)
-        fprintf(output, " is_degree: true\n]\n");
-    else
-        fprintf(output, " is_degree: false\n]\n");
+    if (c->is_degree) fprintf(output, " is_degree: true\n]\n");
+    else              fprintf(output, " is_degree: false\n]\n");
 
     if (c->is_reverse_axis)
         fprintf(output, " is_reverse_axis: true\n]\n");
@@ -100,10 +97,10 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
     PGresult *res;
     buffer *sql;
 
-    assert(o != NULL);
-    assert(o->pg != NULL);
-    assert(c != NULL);
-    assert(auth_name != NULL);
+    assert(o);
+    assert(o->pg);
+    assert(c);
+    assert(auth_name);
 
     sql = buffer_init();
     buffer_add_str(sql, "SELECT srid, position('+units=m ' in proj4text) ");
@@ -148,8 +145,8 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
     PGresult *res;
     buffer *sql;
 
-    assert(o != NULL);
-    assert(s != NULL);
+    assert(o);
+    assert(s);
 
     if (srid == -1) {
         s->srid = -1;
@@ -201,9 +198,9 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
     list * tokens = NULL;
     char sep;
 
-    assert(o != NULL);
-    assert(s != NULL);
-    assert(srsname != NULL);
+    assert(o);
+    assert(s);
+    assert(srsname);
 
     /* Severals srsName formats are available...
      *  cf WFS 1.1.0 -> 9.2 (p36)
@@ -261,16 +258,12 @@ bool ows_srs_meter_units(ows * o, buffer * layer_name)
 {
     ows_layer_node * ln;
 
-    assert(o != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(layer_name);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next) {
-        if (ln->layer->name != NULL && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0) {
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage && !strcmp(ln->layer->name->buf, layer_name->buf))
             return !ln->layer->storage->is_degree;
-        }
-    }
 
     assert(0); /* Should not happen */
     return false;
@@ -284,14 +277,11 @@ int ows_srs_get_srid_from_layer(ows * o, buffer * layer_name)
 {
     ows_layer_node * ln;
 
-    assert(o != NULL);
-    assert(layer_name != NULL);
+    assert(o);
+    assert(layer_name);
 
-    for (ln = o->layers->first; ln != NULL; ln = ln->next)
-        if (ln->layer->name != NULL
-                && ln->layer->storage != NULL
-                && ln->layer->name->use == layer_name->use
-                && strcmp(ln->layer->name->buf, layer_name->buf) == 0)
+    for (ln = o->layers->first ; ln ; ln = ln->next)
+        if (ln->layer->name && ln->layer->storage && !strcmp(ln->layer->name->buf, layer_name->buf))
             return ln->layer->storage->srid;
 
     return -1;
@@ -307,14 +297,14 @@ list *ows_srs_get_from_srid(ows * o, list * l)
     buffer *b;
     list *srs;
 
-    assert(o != NULL);
-    assert(l != NULL);
+    assert(o);
+    assert(l);
 
     srs = list_init();
 
     if (l->size == 0) return srs;
 
-    for (ln = l->first; ln != NULL; ln = ln->next) {
+    for (ln = l->firs t; ln ; ln = ln->next) {
         b = ows_srs_get_from_a_srid(o, atoi(ln->value->buf));
         list_add(srs, b);
     }
@@ -332,7 +322,7 @@ buffer *ows_srs_get_from_a_srid(ows * o, int srid)
     buffer *sql;
     PGresult *res;
 
-    assert(o != NULL);
+    assert(o);
 
     sql = buffer_init();
     buffer_add_str(sql, "SELECT auth_name||':'||auth_srid AS srs ");

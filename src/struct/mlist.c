@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ mlist *mlist_init()
     mlist *ml = NULL;
 
     ml = malloc(sizeof(mlist));
-    assert(ml != NULL);
+    assert(ml);
 
     ml->first = NULL;
     ml->last = NULL;
@@ -53,13 +53,11 @@ mlist *mlist_init()
  */
 void mlist_free(mlist * ml)
 {
-    assert(ml != NULL);
+    assert(ml);
 
-    while (ml->first != NULL)
-        mlist_node_free(ml, ml->first);
+    while (ml->first) mlist_node_free(ml, ml->first);
 
     ml->last = NULL;
-
     free(ml);
     ml = NULL;
 }
@@ -74,15 +72,15 @@ void mlist_add(mlist * ml, list * value)
 {
     mlist_node *mln;
 
-    assert(ml != NULL);
-    assert(value != NULL);
+    assert(ml);
+    assert(value);
     assert(ml->size < UINT_MAX);
 
     mln = mlist_node_init();
 
     mln->value = value;
 
-    if (ml->first == NULL) {
+    if (!ml->first) {
         mln->prev = NULL;
         ml->first = mln;
     } else {
@@ -104,7 +102,7 @@ mlist_node *mlist_node_init()
     mlist_node *mln;
 
     mln = malloc(sizeof(mlist_node));
-    assert(mln != NULL);
+    assert(mln);
 
     mln->value = NULL;
     mln->prev = NULL;
@@ -119,20 +117,19 @@ mlist_node *mlist_node_init()
  */
 void mlist_node_free(mlist * ml, mlist_node * mln)
 {
-    assert(mln != NULL);
-    assert(ml != NULL);
+    assert(mln);
+    assert(ml);
 
-    if (mln->prev != NULL)
+    if (mln->prev)
         mln->prev = NULL;
 
-    if (mln->next != NULL) {
+    if (mln->next) {
         ml->first = mln->next;
         mln->next = NULL;
     } else
         ml->first = NULL;
 
-    if (mln->value != NULL)
-        list_free(mln->value);
+    if (mln->value) list_free(mln->value);
 
     free(mln);
     mln = NULL;
@@ -144,15 +141,14 @@ void mlist_node_free(mlist * ml, mlist_node * mln)
  * Inside multiple list, each element is separated by a comma
  * Careful returned multiple list must then be free with mlist_free()
  */
-mlist *mlist_explode(char separator_start, char separator_end,
-                     buffer * value)
+mlist *mlist_explode(char separator_start, char separator_end, buffer * value)
 {
     size_t i;
     mlist *ml;
     list *l;
     buffer *buf;
 
-    assert(value != NULL);
+    assert(value);
 
     ml = mlist_init();
 
@@ -194,10 +190,10 @@ void mlist_flush(const mlist * ml, FILE * output)
 {
     mlist_node *mln;
 
-    assert(ml != NULL);
-    assert(output != NULL);
+    assert(ml);
+    assert(output);
 
-    for (mln = ml->first; mln != NULL; mln = mln->next) {
+    for (mln = ml->first ; mln ; mln = mln->next) {
         fprintf(output, "(\n");
         list_flush(mln->value, output);
         fprintf(output, ")\n");

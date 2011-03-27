@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ array *array_init()
     array *arr = NULL;
 
     arr = malloc(sizeof(array));
-    assert(arr != NULL);
+    assert(arr);
 
     arr->first = NULL;
     arr->last = NULL;
@@ -55,9 +55,9 @@ void array_free(array * a)
     array_node *an = NULL;
     array_node *an_to_free = NULL;
 
-    assert(a != NULL);
+    assert(a);
 
-    for (an = a->first; an != NULL; /* empty */) {
+    for (an = a->first ; an ; /* empty */) {
         an_to_free = an;
         an = an->next;
 
@@ -81,20 +81,18 @@ void array_add(array * a, buffer * key, buffer * value)
 {
     array_node *an;
 
-    assert(a != NULL);
-    assert(key != NULL);
-    assert(value != NULL);
+    assert(a);
+    assert(key);
+    assert(value);
 
     an = malloc(sizeof(array_node));
-    assert(an != NULL);
+    assert(an);
 
     an->key = key;
     an->value = value;
 
-    if (a->first == NULL)
-        a->first = an;
-    else
-        a->last->next = an;
+    if (!a->first) a->first = an;
+    else           a->last->next = an;
 
     a->last = an;
     a->last->next = NULL;
@@ -109,10 +107,10 @@ bool array_is_key(const array * a, const char *key)
     array_node *an;
     size_t ks;
 
-    assert(a != NULL);
-    assert(key != NULL);
+    assert(a);
+    assert(key);
 
-    for (ks = strlen(key), an = a->first; an != NULL; an = an->next)
+    for (ks = strlen(key), an = a->first ; an ; an = an->next)
         if (ks == an->key->use)
             if (buffer_case_cmp(an->key, key))
                 return true;
@@ -131,16 +129,16 @@ buffer *array_get(const array * a, const char *key)
     array_node *an;
     size_t ks;
 
-    assert(a != NULL);
-    assert(key != NULL);
+    assert(a);
+    assert(key);
 
-    for (ks = strlen(key), an = a->first; an != NULL; an = an->next) {
+    for (ks = strlen(key), an = a->first ; an ; an = an->next) {
         if (ks == an->key->use)
             if (buffer_case_cmp(an->key, key))
                 break;
     }
 
-    assert(an != NULL);
+    assert(an);
 
     return an->value;
 }
@@ -155,10 +153,10 @@ void array_flush(const array * a, FILE * output)
 {
     array_node *an;
 
-    assert(a != NULL);
-    assert(output != NULL);
+    assert(a);
+    assert(output);
 
-    for (an = a->first; an != NULL; an = an->next) {
+    for (an = a->first ; an ; an = an->next) {
         fprintf(output, "[");
         buffer_flush(an->key, output);
         fprintf(output, "] -> ");

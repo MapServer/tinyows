@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -39,8 +39,8 @@ bool check_regexp(const char *str_request, const char *str_regex)
     int match;
     regex_t preg;
 
-    assert(str_request != NULL);
-    assert(str_regex != NULL);
+    assert(str_request);
+    assert(str_regex);
 
     err = regcomp(&preg, str_regex, REG_NOSUB | REG_EXTENDED);
 

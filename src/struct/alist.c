@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ alist *alist_init()
     alist *al = NULL;
 
     al = malloc(sizeof(alist));
-    assert(al != NULL);
+    assert(al);
 
     al->first = NULL;
     al->last = NULL;
@@ -58,9 +58,9 @@ void alist_free(alist * al)
     alist_node *an = NULL;
     alist_node *an_to_free = NULL;
 
-    assert(al != NULL);
+    assert(al);
 
-    for (an = al->first; an != NULL; /* empty */) {
+    for (an = al->first ; an ; /* empty */) {
         an_to_free = an;
         an = an->next;
 
@@ -84,26 +84,24 @@ void alist_add(alist * al, buffer * key, buffer * value)
 {
     alist_node *an;
 
-    assert(al != NULL);
-    assert(key != NULL);
-    assert(value != NULL);
+    assert(al);
+    assert(key);
+    assert(value);
 
     if (!alist_is_key(al, key->buf)) {
         an = malloc(sizeof(alist_node));
-        assert(an != NULL);
+        assert(an);
 
         an->key = key;
         an->value = list_init();
 
-        if (al->first == NULL)
-            al->first = an;
-        else
-            al->last->next = an;
+        if (!al->first) al->first = an;
+        else            al->last->next = an;
 
         al->last = an;
         al->last->next = NULL;
     } else {
-        for (an = al->first; an != NULL; an = an->next)
+        for (an = al->first ; an ; an = an->next)
             if (buffer_case_cmp(an->key, key->buf))
                 break;
     }
@@ -120,10 +118,10 @@ bool alist_is_key(const alist * al, const char *key)
     alist_node *an;
     size_t ks;
 
-    assert(al != NULL);
-    assert(key != NULL);
+    assert(al);
+    assert(key);
 
-    for (ks = strlen(key), an = al->first; an != NULL; an = an->next)
+    for (ks = strlen(key), an = al->first ; an ; an = an->next)
         if (ks == an->key->use)
             if (buffer_case_cmp(an->key, key))
                 return true;
@@ -142,16 +140,16 @@ list *alist_get(const alist * al, const char *key)
     alist_node *an;
     size_t ks;
 
-    assert(al != NULL);
-    assert(key != NULL);
+    assert(al);
+    assert(key);
 
-    for (ks = strlen(key), an = al->first; an != NULL; an = an->next) {
+    for (ks = strlen(key), an = al->first ; an ; an = an->next) {
         if (ks == an->key->use)
             if (buffer_case_cmp(an->key, key))
                 break;
     }
 
-    assert(an != NULL);
+    assert(an);
 
     return an->value;
 }
@@ -166,10 +164,10 @@ void alist_flush(const alist * al, FILE * output)
 {
     alist_node *an;
 
-    assert(al != NULL);
-    assert(output != NULL);
+    assert(al);
+    assert(output);
 
-    for (an = al->first; an != NULL; an = an->next) {
+    for (an = al->first ; an ; an = an->next) {
         fprintf(output, "[");
         buffer_flush(an->key, output);
         fprintf(output, "] -> ");

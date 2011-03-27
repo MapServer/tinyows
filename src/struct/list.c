@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,7 @@ list *list_init()
     list *l = NULL;
 
     l = malloc(sizeof(list));
-    assert(l != NULL);
+    assert(l);
 
     l->first = NULL;
     l->last = NULL;
@@ -53,13 +53,11 @@ list *list_init()
  */
 void list_free(list * l)
 {
-    assert(l != NULL);
+    assert(l);
 
-    while (l->first != NULL)
-        list_node_free(l, l->first);
+    while (l->first != NULL) list_node_free(l, l->first);
 
     l->last = NULL;
-
     free(l);
     l = NULL;
 }
@@ -74,15 +72,15 @@ void list_add(list * l, buffer * value)
 {
     list_node *ln;
 
-    assert(l != NULL);
-    assert(value != NULL);
+    assert(l);
+    assert(value);
     assert(l->size < UINT_MAX);
 
     ln = list_node_init();
 
     ln->value = value;
 
-    if (l->first == NULL) {
+    if (!l->first) {
         ln->prev = NULL;
         l->first = ln;
     } else {
@@ -105,8 +103,8 @@ void list_add_str(list * l, char *value)
 {
     list_node *ln;
 
-    assert(l != NULL);
-    assert(value != NULL);
+    assert(l);
+    assert(value);
     assert(l->size < UINT_MAX);
 
     ln = list_node_init();
@@ -114,7 +112,7 @@ void list_add_str(list * l, char *value)
     ln->value = buffer_init();
     buffer_add_str(ln->value, value);
 
-    if (l->first == NULL) {
+    if (!l->first) {
         ln->prev = NULL;
         l->first = ln;
     } else {
@@ -137,18 +135,17 @@ void list_add_list(list * l, list * l_to_add)
 {
     list_node *ln, *ln_parse;
 
-    assert(l != NULL);
-    assert(l_to_add != NULL);
+    assert(l);
+    assert(l_to_add);
 
-    for (ln_parse = l_to_add->first; ln_parse != NULL;
-            ln_parse = ln_parse->next) {
+    for (ln_parse = l_to_add->first ; ln_parse ; ln_parse = ln_parse->next) {
         if (!in_list(l, ln_parse->value)) {
             ln = list_node_init();
 
             ln->value = buffer_init();
             buffer_copy(ln->value, ln_parse->value);
 
-            if (l->first == NULL) {
+            if (!l->first) {
                 ln->prev = NULL;
                 l->first = ln;
             } else {
@@ -174,8 +171,8 @@ void list_add_by_copy(list * l, buffer * value)
     list_node *ln;
     buffer *tmp;
 
-    assert(l != NULL);
-    assert(value != NULL);
+    assert(l);
+    assert(value);
     assert(l->size < UINT_MAX);
 
     ln = list_node_init();
@@ -184,7 +181,7 @@ void list_add_by_copy(list * l, buffer * value)
     buffer_copy(tmp, value);
     ln->value = tmp;
 
-    if (l->first == NULL) {
+    if (!l->first) {
         ln->prev = NULL;
         l->first = ln;
     } else {
@@ -206,7 +203,7 @@ list_node *list_node_init()
     list_node *ln;
 
     ln = malloc(sizeof(list_node));
-    assert(ln != NULL);
+    assert(ln);
 
     ln->value = NULL;
     ln->prev = NULL;
@@ -221,23 +218,17 @@ list_node *list_node_init()
  */
 void list_node_free(list * l, list_node * ln)
 {
-    assert(ln != NULL);
+    assert(ln);
 
-    if (ln->prev != NULL)
-        ln->prev = NULL;
-
-    if (ln->next != NULL) {
-        if (l != NULL)
-            l->first = ln->next;
-
+    if (ln->prev) ln->prev = NULL;
+    if (ln->next) {
+        if (l) l->first = ln->next;
         ln->next = NULL;
     } else {
-        if (l != NULL)
-            l->first = NULL;
+        if (l) l->first = NULL;
     }
 
-    if (ln->value != NULL)
-        buffer_free(ln->value);
+    if (ln->value) buffer_free(ln->value);
 
     free(ln);
     ln = NULL;
@@ -251,10 +242,10 @@ bool in_list(const list * l, const buffer * value)
 {
     list_node *ln;
 
-    assert(l != NULL);
-    assert(value != NULL);
+    assert(l);
+    assert(value);
 
-    for (ln = l->first; ln != NULL; ln = ln->next)
+    for (ln = l->first ; ln ; ln = ln->next)
         if (value->use == ln->value->use)
             if (buffer_case_cmp(value, ln->value->buf))
                 return true;
@@ -273,7 +264,7 @@ list *list_explode(char separator, const buffer * value)
     list *l;
     buffer *buf;
 
-    assert(value != NULL);
+    assert(value);
 
     l = list_init();
     buf = buffer_init();
@@ -296,15 +287,14 @@ list *list_explode(char separator, const buffer * value)
  * Trunk an initial buffer into several pieces upon two separators
  * Careful returned list must then be free with list_free()
  */
-list *list_explode_start_end(char separator_start, char separator_end,
-                             buffer * value)
+list *list_explode_start_end(char separator_start, char separator_end, buffer * value)
 {
     size_t i;
 
     list *l;
     buffer *buf;
 
-    assert(value != NULL);
+    assert(value);
 
     l = list_init();
 
@@ -338,7 +328,7 @@ list *list_explode_str(char separator, const char *value)
     list *l;
     buffer *buf;
 
-    assert(value != NULL);
+    assert(value);
 
     l = list_init();
     buf = buffer_init();
@@ -366,10 +356,10 @@ void list_flush(const list * l, FILE * output)
 {
     list_node *ln;
 
-    assert(l != NULL);
-    assert(output != NULL);
+    assert(l);
+    assert(output);
 
-    for (ln = l->first; ln != NULL; ln = ln->next) {
+    for (ln = l->first ; ln ; ln = ln->next) {
         fprintf(output, "[");
         buffer_flush(ln->value, output);
         fprintf(output, "]\n");

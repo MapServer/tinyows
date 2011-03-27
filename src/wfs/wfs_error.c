@@ -1,5 +1,5 @@
 /*
-  Copyright (c) <2007-2009> <Barbara Philippot - Olivier Courtin>
+  Copyright (c) <2007-2011> <Barbara Philippot - Olivier Courtin>
 
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
@@ -59,13 +59,12 @@ static char *wfs_error_code_string(enum wfs_error_code code)
 /*
  * Return a ServiceExceptionReport as specified in WFS 1.0.0 specification
  */
-static void wfs_error_100(ows * o, wfs_request * wf,
-                          enum wfs_error_code code, char *message, char *locator)
+static void wfs_error_100(ows * o, wfs_request * wf, enum wfs_error_code code, char *message, char *locator)
 {
-    assert(o != NULL);
-    assert(wf != NULL);
-    assert(message != NULL);
-    assert(locator != NULL);
+    assert(o);
+    assert(wf);
+    assert(message);
+    assert(locator);
 
     assert(!o->exit);
     o->exit = true;
@@ -89,13 +88,12 @@ static void wfs_error_100(ows * o, wfs_request * wf,
 /*
  * Return an ExceptionReport as specified in WFS 1.1.0 specification
  */
-static void wfs_error_110(ows * o, wfs_request * wf,
-                          enum wfs_error_code code, char *message, char *locator)
+static void wfs_error_110(ows * o, wfs_request * wf, enum wfs_error_code code, char *message, char *locator)
 {
-    assert(o != NULL);
-    assert(wf != NULL);
-    assert(message != NULL);
-    assert(locator != NULL);
+    assert(o);
+    assert(wf);
+    assert(message);
+    assert(locator);
 
     assert(!o->exit);
     o->exit = true;
@@ -109,8 +107,7 @@ static void wfs_error_110(ows * o, wfs_request * wf,
     fprintf(o->output, " xsi:schemaLocation='http://www.opengis.net/ows");
     fprintf(o->output, " http://schemas.opengis.net/ows/1.0.0/owsExceptionReport.xsd'\n");
     fprintf(o->output, " version='1.0.0' language='en'>\n");
-    fprintf(o->output, " <Exception exceptionCode='%s' locator='%s'>\n",
-            wfs_error_code_string(code), locator);
+    fprintf(o->output, " <Exception exceptionCode='%s' locator='%s'>\n", wfs_error_code_string(code), locator);
     fprintf(o->output, "  <ExceptionText>%s</ExceptionText>\n", message);
     fprintf(o->output, " </Exception>\n");
     fprintf(o->output, "</ExceptionReport>\n");
@@ -120,15 +117,14 @@ static void wfs_error_110(ows * o, wfs_request * wf,
 /*
  * Call the right function according to version
  */
-void wfs_error(ows * o, wfs_request * wf, enum wfs_error_code code,
-               char *message, char *locator)
+void wfs_error(ows * o, wfs_request * wf, enum wfs_error_code code, char *message, char *locator)
 {
     int version;
 
-    assert(o != NULL);
-    assert(wf != NULL);
-    assert(message != NULL);
-    assert(locator != NULL);
+    assert(o);
+    assert(wf);
+    assert(message);
+    assert(locator);
 
     version = ows_version_get(o->request->version);
     fprintf(o->output, "Content-Type: application/xml\n\n");

@@ -19,6 +19,29 @@
 #define OWS_MAP_DBG 
 #endif
 
+
+static buffer * mapfile_build_path(ows * o, char * fpath)
+{
+	buffer * path;
+	
+	assert(fpath);
+
+	/* Path is absolute */
+	if ((fpath[0] == '/') || (fpath[0] == '\\') || (strlen(fpath) && (fpath[1] == ':')))
+		return buffer_from_str(fpath);
+
+	/* Path is relative */
+	path = buffer_init();
+	buffer_copy(path, o->config_file);
+	
+ 	for ( /* empty */ ; path->use ; path->use--) 
+		if ((path->buf[path->use] == '/') || (path->buf[path->use] == '\\')) break;	
+	
+	buffer_add_str(path, fpath);
+
+	return path;
+}
+
 enum map_md_state {
     MAP_MD_UPDATESEQUENCE,
     MAP_MD_SCHEMAS_LOCATION,
@@ -653,6 +676,7 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 <INCLUDE>\"[^\"]*\"|\'[^\']*\'			{
 
 	 char *p; 
+         buffer *path;
 
 	 yy_pop_state(); OWS_MAP_DBG
 
@@ -666,7 +690,9 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
          map_include_stack_ptr++;
 
 	 for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
-         yyin = fopen(yytext, "r");
+         path = mapfile_build_path(map_o, yytext);
+         yyin = fopen(path->buf, "r");
+         buffer_free(path);
 
          if (!yyin) {
 		ows_error(map_o, OWS_ERROR_CONFIG_FILE,

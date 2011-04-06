@@ -410,6 +410,7 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buf
     buffer * schema_path;
     xmlDocPtr xmldoc;
     xmlNodePtr n;
+    int ret=-1;
 
     assert(o);
     assert(fe);
@@ -421,11 +422,15 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buf
         schema_path = buffer_init();
         buffer_copy(schema_path, o->schema_dir);
 
-        if (ows_version_get(o->request->version) == 100)
+        if (ows_version_get(o->request->version) == 100) {
             buffer_add_str(schema_path, FE_SCHEMA_100);
-        else buffer_add_str(schema_path, FE_SCHEMA_110);
+	    ret = ows_schema_validation(o, schema_path, xmlchar, true, FE_SCHEMA_TYPE_100);
+	} else { 
+	    buffer_add_str(schema_path, FE_SCHEMA_110);
+	    ret = ows_schema_validation(o, schema_path, xmlchar, true, FE_SCHEMA_TYPE_110);
+	}
 
-        if (ows_schema_validation(o, schema_path, xmlchar, true)) {
+        if (ret != 0) {
             buffer_free(schema_path);
             fe->error_code = FE_ERROR_FILTER;
             return fe;

@@ -41,11 +41,13 @@ static void ows_pg(ows * o, char *con_str)
 
     o->pg = PQconnectdb(con_str);
 
-    if (PQstatus(o->pg) != CONNECTION_OK)
+    if (PQstatus(o->pg) != CONNECTION_OK) {
+	ows_log(o, 1, PQerrorMessage(o->pg));
         ows_error(o, OWS_ERROR_CONNECTION_FAILED, "Connection to database failed", "init_OWS");
-
-    else if (PQsetClientEncoding(o->pg, o->db_encoding->buf))
+    } else if (PQsetClientEncoding(o->pg, o->db_encoding->buf)) {
+	ows_log(o, 1, PQerrorMessage(o->pg));
         ows_error(o, OWS_ERROR_CONNECTION_FAILED, "Wrong database encoding", "init_OWS");
+    }
 }
 
 
@@ -72,6 +74,7 @@ static ows *ows_init()
     o->online_resource = buffer_init();
     o->schema_dir = buffer_init();
     o->log_file = NULL;
+    o->log = NULL;
     o->encoding = buffer_init();
     o->db_encoding = buffer_init();
     o->log = NULL;
@@ -85,9 +88,14 @@ static ows *ows_init()
     o->expose_pk = false;
     o->check_schema = true;
     o->check_valid_geom = true;
-
     o->metadata = NULL;
     o->contact = NULL;
+    o->schema_wfs_100_basic = NULL;
+    o->schema_wfs_100_trans = NULL;
+    o->schema_wfs_110_basic = NULL;
+    o->schema_wfs_110_trans = NULL;
+    o->schema_fe_100 = NULL;
+    o->schema_fe_110 = NULL;
 
     return o;
 }
@@ -105,49 +113,15 @@ void ows_flush(ows * o, FILE * output)
 
     fprintf(output, "exit : %d\n", o->exit?1:0);
 
-    if (o->config_file) {
-        fprintf(output, "config_file: ");
-        buffer_flush(o->config_file, output);
-	fprintf(output, "\nmapfile: %d\n", o->mapfile?1:0);
-    }
+    if (o->config_file)     fprintf(output, "config_file: %s\nmapfile %d\n", (char *) o->config_file->buf, o->mapfile?1:0);
+    if (o->schema_dir)      fprintf(output, "schema_dir: %s\n", (char *) o->schema_dir->buf);
+    if (o->online_resource) fprintf(output, "online_resource: %s\n", (char *) o->online_resource->buf);
+    if (o->pg_dsn)          fprintf(output, "pg: %s\n", (char *) o->pg_dsn->buf);
+    if (o->log_file)        fprintf(output, "log file: %s\n", (char *) o->log_file->buf);
+    if (o->encoding)        fprintf(output, "encoding: %s\n", (char *) o->encoding->buf);
+    if (o->db_encoding)     fprintf(output, "db_encoding: %s\n", (char *) o->db_encoding->buf);
 
-    if (o->schema_dir) {
-        fprintf(output, "schema_dir: ");
-        buffer_flush(o->schema_dir, output);
-        fprintf(output, "\n");
-    }
-
-    if (o->online_resource) {
-        fprintf(output, "online_resource: ");
-        buffer_flush(o->online_resource, output);
-        fprintf(output, "\n");
-    }
-
-    if (o->pg_dsn) {
-        fprintf(output, "pg: ");
-        buffer_flush(o->pg_dsn, output);
-        fprintf(output, "\n");
-    }
-
-    if (o->log_file) {
-        fprintf(output, "log file: ");
-        buffer_flush(o->log_file, output);
-        fprintf(output, "\n");
-    }
-    
-    if (o->encoding) {
-        fprintf(output, "encoding: ");
-        buffer_flush(o->encoding, output);
-        fprintf(output, "\n");
-    }
-
-    if (o->db_encoding) {
-        fprintf(output, "db_encoding: ");
-        buffer_flush(o->db_encoding, output);
-        fprintf(output, "\n");
-    }
-
-    if (o->metadata) {
+    if (o->metadata)
         fprintf(output, "metadata: ");
         ows_metadata_flush(o->metadata, output);
         fprintf(output, "\n");
@@ -196,6 +170,13 @@ void ows_flush(ows * o, FILE * output)
     fprintf(output, "estimated_extent: %d\n", o->estimated_extent?1:0);
     fprintf(output, "check_schema: %d\n", o->check_schema?1:0);
     fprintf(output, "check_valid_geom: %d\n", o->check_valid_geom?1:0);
+
+    fprintf(output, "schema WFS 1.0 Basic: %d\n", o->schema_wfs_100_basic?1:0);
+    fprintf(output, "schema WFS 1.0 Trans: %d\n", o->schema_wfs_100_trans?1:0);
+    fprintf(output, "schema WFS 1.1 Basic: %d\n", o->schema_wfs_110_basic?1:0);
+    fprintf(output, "schema WFS 1.1 Trans: %d\n", o->schema_wfs_110_trans?1:0);
+    fprintf(output, "schema FE 1.0: %d\n", o->schema_fe_100?1:0);
+    fprintf(output, "schema FE 1.1: %d\n", o->schema_fe_110?1:0);
 }
 #endif
 
@@ -207,21 +188,28 @@ void ows_free(ows * o)
 {
     assert(o);
 
-    if (o->config_file) 	buffer_free(o->config_file);
-    if (o->schema_dir) 		buffer_free(o->schema_dir);
-    if (o->online_resource) 	buffer_free(o->online_resource);
-    if (o->pg)			PQfinish(o->pg);
-    if (o->log_file)		buffer_free(o->log_file);
-    if (o->pg_dsn)		buffer_free(o->pg_dsn);
-    if (o->cgi)			array_free(o->cgi);
-    if (o->psql_requests)	list_free(o->psql_requests);
-    if (o->layers)		ows_layer_list_free(o->layers);
-    if (o->request)		ows_request_free(o->request);
-    if (o->max_geobbox)		ows_geobbox_free(o->max_geobbox);
-    if (o->metadata)		ows_metadata_free(o->metadata);
-    if (o->contact)		ows_contact_free(o->contact);
-    if (o->encoding)		buffer_free(o->encoding);
-    if (o->db_encoding)		buffer_free(o->db_encoding);
+    if (o->config_file) 	 buffer_free(o->config_file);
+    if (o->schema_dir) 		 buffer_free(o->schema_dir);
+    if (o->online_resource) 	 buffer_free(o->online_resource);
+    if (o->pg)			 PQfinish(o->pg);
+    if (o->log_file)		 buffer_free(o->log_file);
+    if (o->log)	                 fclose(o->log);
+    if (o->pg_dsn)		 buffer_free(o->pg_dsn);
+    if (o->cgi)			 array_free(o->cgi);
+    if (o->psql_requests)	 list_free(o->psql_requests);
+    if (o->layers)		 ows_layer_list_free(o->layers);
+    if (o->request)		 ows_request_free(o->request);
+    if (o->max_geobbox)		 ows_geobbox_free(o->max_geobbox);
+    if (o->metadata)		 ows_metadata_free(o->metadata);
+    if (o->contact)	   	 ows_contact_free(o->contact);
+    if (o->encoding)	   	 buffer_free(o->encoding);
+    if (o->db_encoding)		 buffer_free(o->db_encoding);
+    if (o->schema_wfs_100_basic) xmlSchemaFree(o->schema_wfs_100_basic);
+    if (o->schema_wfs_100_trans) xmlSchemaFree(o->schema_wfs_100_trans);
+    if (o->schema_wfs_110_basic) xmlSchemaFree(o->schema_wfs_110_basic);
+    if (o->schema_wfs_110_trans) xmlSchemaFree(o->schema_wfs_110_trans);
+    if (o->schema_fe_100)        xmlSchemaFree(o->schema_fe_100);
+    if (o->schema_fe_110)        xmlSchemaFree(o->schema_fe_110);
 
     free(o);
     o = NULL;
@@ -233,7 +221,7 @@ void ows_log(ows *o, int log_level, const char *log)
     char *t, *p;
     time_t ts;
 
-    if (o->log_file) o->log = fopen(o->log_file->buf, "a");
+    if (o->log_file && !o->log) o->log = fopen(o->log_file->buf, "a");
     if (!o->log) return;
 
     ts = time(NULL);
@@ -248,8 +236,7 @@ void ows_log(ows *o, int log_level, const char *log)
     else if (log_level == 3) fprintf(o->log, "[%s] [QUERY] %s\n", t, log);
     else if (log_level == 4) fprintf(o->log, "[%s] [DEBUG] %s\n", t, log);
 
-
-    fclose(o->log);
+    fflush(o->log);
 }
 
 
@@ -338,6 +325,7 @@ int main(int argc, char *argv[])
         buffer_add_str(o->config_file, OWS_CONFIG_FILE_PATH);
 
     LIBXML_TEST_VERSION
+    xmlInitParser();
 
     /* Parse the configuration file and initialize ows struct */
     if (!o->exit) ows_parse_config(o, o->config_file->buf);

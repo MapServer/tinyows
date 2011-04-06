@@ -270,6 +270,15 @@ enum wfs_insert_idgen {
 	WFS_REPLACE_DUPLICATE
 };
 
+enum ows_schema_type {
+	WFS_SCHEMA_TYPE_100_BASIC,
+	WFS_SCHEMA_TYPE_100_TRANS,
+	WFS_SCHEMA_TYPE_110_BASIC,
+	WFS_SCHEMA_TYPE_110_TRANS,
+	FE_SCHEMA_TYPE_100,
+	FE_SCHEMA_TYPE_110
+};
+
 typedef struct Wfs_request {
     enum wfs_request request;
     enum wfs_format format;
@@ -366,11 +375,14 @@ typedef struct Ows {
     list * psql_requests;
     ows_layer_list * layers;
     ows_request * request;
-  
-    buffer * sld_path;
-    bool sld_writable;               
-} ows;
 
+    xmlSchemaPtr  schema_wfs_100_basic;
+    xmlSchemaPtr  schema_wfs_100_trans;
+    xmlSchemaPtr  schema_wfs_110_basic;
+    xmlSchemaPtr  schema_wfs_110_trans;
+    xmlSchemaPtr  schema_fe_100;
+    xmlSchemaPtr  schema_fe_110;
+} ows;
 
 #endif /* OWS_STRUCT_H */
 

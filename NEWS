@@ -1,10 +1,11 @@
 0.10.0
- - Configuration change iwith boken backward compatibility:
+ - Configuration change with broken backward compatibility:
     * rename server and prefix to ns_uri ans ns_prefix
     * rename wfs_display_bbox to display_bbox
  - Encoding support Carlos Ruiz: cruizch@gmail.com
  - Estimated_bbox option for GetCapabilities response (default is false)
- - Improve drasticaly GetCapabilities performance on huge layer (Thanks to Nicklas Aven)
+ - Schema cache for fast-cgi mode (huge performance improvement on transaction operations)
+ - Improve drasticaly GetCapabilities performance on huge layer (Thanks to Nicklas Aven for report)
  - Add ability to use different names for layer and storage table (table property)
  - Mapfile config file (TINYOWS_MAPFILE var)
  - Debug option available from configure step (--enable-debug) 

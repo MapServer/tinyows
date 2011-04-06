@@ -178,7 +178,7 @@ void ows_request_check (ows * o, ows_request * or, const array * cgi, const char
 void ows_request_flush (ows_request * or, FILE * output);
 void ows_request_free (ows_request * or);
 ows_request *ows_request_init ();
-int ows_schema_validation (const ows * o, buffer * xml_schema, buffer * xml, bool schema_is_file);
+int ows_schema_validation (ows * o, buffer * xml_schema, buffer * xml, bool schema_is_file, enum ows_schema_type schema_type);
 void ows_service_identification (const ows * o);
 void ows_service_metadata (const ows * o);
 void ows_service_provider (const ows * o);
@@ -201,7 +201,7 @@ void ows_version_set (ows_version * v, int major, int minor, int release);
 void wfs (ows * o, wfs_request * wf);
 void wfs_delete (ows * o, wfs_request * wr);
 void wfs_describe_feature_type (ows * o, wfs_request * wr);
-buffer * wfs_generate_schema(ows * o);
+buffer * wfs_generate_schema(ows * o, ows_version * version);
 void wfs_error (ows * o, wfs_request * wf, enum wfs_error_code code, char *message, char *locator);
 void wfs_get_capabilities (ows * o, wfs_request * wr);
 void wfs_get_feature (ows * o, wfs_request * wr);

@@ -191,18 +191,19 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
  * This is needed by WFS Insert operation validation as libxml2 only handle
  * a single schema validation at a time
  */
-buffer * wfs_generate_schema(ows * o)
+buffer * wfs_generate_schema(ows * o, ows_version * version)
 {
-    int wfs_version;
     list_node *elemt, *t;
     list *ns_prefix, *typename;
     buffer *namespace;
     buffer *schema;
     list * layers;
+    int wfs_version;
 
     assert(o);
+    assert(version);
 
-    wfs_version = ows_version_get(o->request->version);
+    wfs_version = ows_version_get(version);
     schema = buffer_init();
     layers = ows_layer_list_having_storage(o->layers);
 
@@ -217,8 +218,9 @@ buffer * wfs_generate_schema(ows * o)
     buffer_add_str(schema, "<xs:import namespace='http://www.opengis.net/wfs' ");
     buffer_add_str(schema, "schemaLocation='");
     buffer_copy(schema, o->schema_dir);
+
     if (wfs_version == 100) buffer_add_str(schema, WFS_SCHEMA_100_TRANS);
-    else buffer_add_str(schema, WFS_SCHEMA_110);
+    else                    buffer_add_str(schema, WFS_SCHEMA_110);
 
     buffer_add_str(schema, "'/>\n");
 

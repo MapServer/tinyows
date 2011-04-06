@@ -116,32 +116,22 @@ static void libxml2_callback  (void * ctx, const char * msg, ...) {
 }
 
 
-/*
- * Valid an xml string against an XML schema
- */
-int ows_schema_validation(const ows *o, buffer * xml_schema, buffer * xml, bool schema_is_file)
+static xmlSchemaPtr ows_generate_schema(const ows *o, buffer * xml_schema, bool schema_is_file)
 {
-    xmlSchemaPtr schema;
     xmlSchemaParserCtxtPtr ctxt;
-    xmlSchemaValidCtxtPtr validctxt;
-    int ret;
-    xmlDocPtr doc;
+    xmlSchemaPtr schema = NULL;
 
+    assert(o);
     assert(xml_schema);
-    assert(xml);
-
-    xmlInitParser();
-    schema = NULL;
-    ret = -1;
 
     /* Open XML Schema File */
     if (schema_is_file) ctxt = xmlSchemaNewParserCtxt(xml_schema->buf);
-    else ctxt = xmlSchemaNewMemParserCtxt(xml_schema->buf, xml_schema->use);
+    else                ctxt = xmlSchemaNewMemParserCtxt(xml_schema->buf, xml_schema->use);
 
     xmlSchemaSetParserErrors(ctxt,
                              (xmlSchemaValidityErrorFunc) libxml2_callback,
-                             (xmlSchemaValidityWarningFunc) libxml2_callback, (void *) o);
-
+                             (xmlSchemaValidityWarningFunc) libxml2_callback,
+                             (void *) o);
 
     schema = xmlSchemaParse(ctxt);
     xmlSchemaFreeParserCtxt(ctxt);
@@ -149,23 +139,115 @@ int ows_schema_validation(const ows *o, buffer * xml_schema, buffer * xml, bool 
     /* If XML Schema hasn't been rightly loaded */
     if (!schema) {
         xmlSchemaCleanupTypes();
-        return ret;
+	return NULL;
     }
+
+    return schema;
+}
+
+
+#if 0
+/*
+ * TODO
+ */
+void ows_schema_generation(ows *o)
+{
+    buffer *schema = buffer_init();
+    ows_version *version = ows_version_init();
+
+    assert(o);
+
+    ows_version_set(version, 1, 0 ,0);
+    schema = wfs_generate_schema(o, version);
+    o->schema_wfs_100_trans = ows_generate_schema(o, schema, false);
+    buffer_empty(schema);
+
+    ows_version_set(version, 1, 1 ,0);
+    schema = wfs_generate_schema(o, version);
+    o->schema_wfs_110_trans = ows_generate_schema(o, schema, false);
+    buffer_empty(schema);
+
+    buffer_copy(schema, o->schema_dir);
+    buffer_add_str(schema, WFS_SCHEMA_100_BASIC);
+    o->schema_wfs_100_basic = ows_generate_schema(o, schema, true);
+    buffer_empty(schema);
+
+    buffer_copy(schema, o->schema_dir);
+    buffer_add_str(schema, WFS_SCHEMA_110);
+    o->schema_wfs_110_basic = ows_generate_schema(o, schema, true);
+    buffer_empty(schema);
+
+    buffer_copy(schema, o->schema_dir);
+    buffer_add_str(schema, FE_SCHEMA_100);
+    o->schema_fe_100 = ows_generate_schema(o, schema, true);
+    buffer_empty(schema);
+
+    buffer_copy(schema, o->schema_dir);
+    buffer_add_str(schema, FE_SCHEMA_110);
+    o->schema_fe_110 = ows_generate_schema(o, schema, true);
+
+    buffer_free(schema);   
+    ows_version_free(version);
+}
+#endif
+
+/*
+ * Valid an xml string against an XML schema
+ */
+int ows_schema_validation(ows *o, buffer *xml_schema, buffer *xml, bool schema_is_file, enum ows_schema_type schema_type)
+{
+    xmlSchemaPtr schema;
+    xmlSchemaValidCtxtPtr schema_ctx;
+    xmlDocPtr doc;
+    int ret = -1;
+    bool schema_generate = true;
+
+    assert(o);
+    assert(xml_schema);
+    assert(xml);
 
     doc = xmlParseMemory(xml->buf, xml->use);
+    if (!doc) return ret;
 
-    if (doc) {
-        /* Loading XML Schema content */
-        validctxt = xmlSchemaNewValidCtxt(schema);
-        xmlSchemaSetValidErrors(validctxt,
-                                (xmlSchemaValidityErrorFunc) libxml2_callback,
-                                (xmlSchemaValidityWarningFunc) libxml2_callback, (void *) o);
-        /* validation */
-        ret = xmlSchemaValidateDoc(validctxt, doc);
-        xmlSchemaFreeValidCtxt(validctxt);
+    if (schema_type == WFS_SCHEMA_TYPE_100_BASIC && o->schema_wfs_100_basic) {
+	schema_generate = false;
+	schema = o->schema_wfs_100_basic;
+    } else if (schema_type == WFS_SCHEMA_TYPE_100_TRANS && o->schema_wfs_100_trans) {
+	schema_generate = false;
+	schema = o->schema_wfs_100_trans;
+    } else if (schema_type == WFS_SCHEMA_TYPE_110_BASIC && o->schema_wfs_110_basic) {
+	schema_generate = false;
+	schema = o->schema_wfs_110_basic;
+    } else if (schema_type == WFS_SCHEMA_TYPE_110_TRANS && o->schema_wfs_110_trans) {
+	schema_generate = false;
+	schema = o->schema_wfs_110_trans;
+    } else if (schema_type == FE_SCHEMA_TYPE_100 && o->schema_fe_100) {
+	schema_generate = false;
+	schema = o->schema_fe_100;
+    } else if (schema_type == FE_SCHEMA_TYPE_110 && o->schema_fe_110) {
+	schema_generate = false;
+	schema = o->schema_fe_110;
     }
 
-    xmlSchemaFree(schema);
+    if (schema_generate) schema = ows_generate_schema(o, xml_schema, schema_is_file);
+
+    schema_ctx = xmlSchemaNewValidCtxt(schema);
+    xmlSchemaSetValidErrors(schema_ctx,
+                            (xmlSchemaValidityErrorFunc) libxml2_callback,
+                            (xmlSchemaValidityWarningFunc) libxml2_callback, (void *) o);
+
+    if (schema_ctx) ret = xmlSchemaValidateDoc(schema_ctx, doc); /* validation */
+
+    if (schema_generate) {
+      	     if (schema_type == WFS_SCHEMA_TYPE_100_BASIC) o->schema_wfs_100_basic = schema;
+    	else if (schema_type == WFS_SCHEMA_TYPE_100_TRANS) o->schema_wfs_100_trans = schema;
+        else if (schema_type == WFS_SCHEMA_TYPE_110_BASIC) o->schema_wfs_110_basic = schema;
+        else if (schema_type == WFS_SCHEMA_TYPE_110_TRANS) o->schema_wfs_110_trans = schema;
+        else if (schema_type == FE_SCHEMA_TYPE_100) o->schema_fe_100 = schema;
+        else if (schema_type == FE_SCHEMA_TYPE_110) o->schema_fe_110 = schema;
+    } 
+
+    xmlSchemaFreeValidCtxt(schema_ctx);
     xmlFreeDoc(doc);
 
     return ret;
@@ -175,8 +257,7 @@ int ows_schema_validation(const ows *o, buffer * xml_schema, buffer * xml, bool 
 /*
  * Check and fill version
  */
-static ows_version *ows_request_check_version(ows * o, ows_request * or,
-        const array * cgi)
+static ows_version *ows_request_check_version(ows * o, ows_request * or, const array * cgi)
 {
     buffer *b;
     ows_version *v;
@@ -366,34 +447,32 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
     }
 
     /* check XML Validity */
-    if ((cgi_method_post() && 
-	!strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded"))
-        || (!cgi_method_post() && !cgi_method_get() && query[0] == '<')) {
+    if ( (cgi_method_post() && !strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded"))
+          ||
+	 (!cgi_method_post() && !cgi_method_get() && query[0] == '<') ) {
 
         if (or->service == WFS && o->check_schema) {
-
-            xmlstring = buffer_init();
-            buffer_add_str(xmlstring, query);
+            xmlstring = buffer_from_str(query);
 
             if (ows_version_get(or->version) == 100) {
                 if (buffer_cmp(b, "Transaction")) {
-                    schema = wfs_generate_schema(o);
-                    valid = ows_schema_validation(o, schema, xmlstring, false);
+                    schema = wfs_generate_schema(o, or->version);
+                    valid = ows_schema_validation(o, schema, xmlstring, false, WFS_SCHEMA_TYPE_100_TRANS);
                 } else {
                     schema = buffer_init();
                     buffer_copy(schema, o->schema_dir);
                     buffer_add_str(schema, WFS_SCHEMA_100_BASIC);
-                    valid = ows_schema_validation(o, schema, xmlstring, true);
+                    valid = ows_schema_validation(o, schema, xmlstring, true, WFS_SCHEMA_TYPE_100_BASIC);
                 }
             } else {
                 if (buffer_cmp(b, "Transaction")) {
-                   schema = wfs_generate_schema(o);
-                   valid = ows_schema_validation(o, schema, xmlstring, false);
+                   schema = wfs_generate_schema(o, or->version);
+                   valid = ows_schema_validation(o, schema, xmlstring, false, WFS_SCHEMA_TYPE_110_TRANS);
                 } else {
                    schema = buffer_init();
                    buffer_copy(schema, o->schema_dir);
                    buffer_add_str(schema, WFS_SCHEMA_110);
-                   valid = ows_schema_validation(o, schema, xmlstring, true);
+                   valid = ows_schema_validation(o, schema, xmlstring, true, WFS_SCHEMA_TYPE_110_BASIC);
                 }
             }
 
@@ -401,8 +480,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
             buffer_free(xmlstring);
             
             if (valid != 0) {
-                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                      "xml isn't valid", "request");
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "xml isn't valid", "request");
                 return;
             }
         }

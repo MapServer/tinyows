@@ -80,7 +80,7 @@ void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
     ows_log(o, 1, message);
 
 #if TINYOWS_FCGI
-if (o->init && FCGI_Accept() >= 0) {
+if ((o->init && FCGI_Accept() >= 0) || !o->init) {
 #endif
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");

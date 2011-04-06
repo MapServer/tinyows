@@ -432,8 +432,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
            res = PQexec(o->pg, dup_sql->buf);
            buffer_free(dup_sql);
-           if (PQresultStatus(res) != PGRES_TUPLES_OK ||
-                   atoi((char *) PQgetvalue(res, 0, 0)) != 0)
+           if (PQresultStatus(res) != PGRES_TUPLES_OK || atoi((char *) PQgetvalue(res, 0, 0)) != 0)
                idgen = WFS_GENERATE_NEW;
            else
                idgen = WFS_USE_EXISTING;
@@ -544,7 +543,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
         buffer_free(values);
         buffer_free(layer_name);
-        buffer_free(layer_ns_prefix);
         buffer_free(id);
     }
 

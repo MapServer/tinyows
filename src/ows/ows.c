@@ -402,6 +402,7 @@ int main(int argc, char *argv[])
     /* Process service request */
     if (!o->exit) ows_request_check(o, o->request, o->cgi, query);
 
+
     /* Run the right OWS service */
     if (!o->exit) {
         switch (o->request->service) {
@@ -431,9 +432,10 @@ int main(int argc, char *argv[])
     ows_log(o, 2, "== FCGI SHUTDOWN ==");
     OS_LibShutdown();
 #endif
-    xmlCleanupParser();
     ows_log(o, 2, "== TINYOWS SHUTDOWN ==");
     ows_free(o);
+
+    xmlCleanupParser();
 
     return EXIT_SUCCESS;
 }

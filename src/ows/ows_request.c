@@ -146,51 +146,6 @@ static xmlSchemaPtr ows_generate_schema(const ows *o, buffer * xml_schema, bool 
 }
 
 
-#if 0
-/*
- * TODO
- */
-void ows_schema_generation(ows *o)
-{
-    buffer *schema = buffer_init();
-    ows_version *version = ows_version_init();
-
-    assert(o);
-
-    ows_version_set(version, 1, 0 ,0);
-    schema = wfs_generate_schema(o, version);
-    o->schema_wfs_100_trans = ows_generate_schema(o, schema, false);
-    buffer_empty(schema);
-
-    ows_version_set(version, 1, 1 ,0);
-    schema = wfs_generate_schema(o, version);
-    o->schema_wfs_110_trans = ows_generate_schema(o, schema, false);
-    buffer_empty(schema);
-
-    buffer_copy(schema, o->schema_dir);
-    buffer_add_str(schema, WFS_SCHEMA_100_BASIC);
-    o->schema_wfs_100_basic = ows_generate_schema(o, schema, true);
-    buffer_empty(schema);
-
-    buffer_copy(schema, o->schema_dir);
-    buffer_add_str(schema, WFS_SCHEMA_110);
-    o->schema_wfs_110_basic = ows_generate_schema(o, schema, true);
-    buffer_empty(schema);
-
-    buffer_copy(schema, o->schema_dir);
-    buffer_add_str(schema, FE_SCHEMA_100);
-    o->schema_fe_100 = ows_generate_schema(o, schema, true);
-    buffer_empty(schema);
-
-    buffer_copy(schema, o->schema_dir);
-    buffer_add_str(schema, FE_SCHEMA_110);
-    o->schema_fe_110 = ows_generate_schema(o, schema, true);
-
-    buffer_free(schema);   
-    ows_version_free(version);
-}
-#endif
-
 /*
  * Valid an xml string against an XML schema
  */
@@ -238,6 +193,9 @@ int ows_schema_validation(ows *o, buffer *xml_schema, buffer *xml, bool schema_i
 
     if (schema_ctx) ret = xmlSchemaValidateDoc(schema_ctx, doc); /* validation */
 
+    xmlSchemaFreeValidCtxt(schema_ctx);
+    xmlFreeDoc(doc);
+
     if (schema_generate) {
       	     if (schema_type == WFS_SCHEMA_TYPE_100_BASIC) o->schema_wfs_100_basic = schema;
     	else if (schema_type == WFS_SCHEMA_TYPE_100_TRANS) o->schema_wfs_100_trans = schema;
@@ -245,10 +203,8 @@ int ows_schema_validation(ows *o, buffer *xml_schema, buffer *xml, bool schema_i
         else if (schema_type == WFS_SCHEMA_TYPE_110_TRANS) o->schema_wfs_110_trans = schema;
         else if (schema_type == FE_SCHEMA_TYPE_100) o->schema_fe_100 = schema;
         else if (schema_type == FE_SCHEMA_TYPE_110) o->schema_fe_110 = schema;
-    } 
 
-    xmlSchemaFreeValidCtxt(schema_ctx);
-    xmlFreeDoc(doc);
+    } 
 
     return ret;
 }

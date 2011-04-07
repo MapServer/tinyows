@@ -344,14 +344,15 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
 	    return;
 	  }
 	  
-	  t = buffer_init();
+	  buffer_empty(t);
 	  buffer_add_str(t, PQgetvalue(geom_res, 0, 0));
+          PQclear(geom_res);
 	}
 	
         array_add(l->storage->attributes, b, t);
     }
-
     PQclear(res);
+
 }
 
 

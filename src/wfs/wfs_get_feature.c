@@ -80,9 +80,8 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
 /*
  * Display the properties of one feature
  */
-void wfs_gml_display_feature(ows * o, wfs_request * wr,
-                             buffer * layer_name, buffer * prefix, buffer * prop_name,
-                             buffer * prop_type, buffer * value)
+void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buffer * prefix,
+                             char * prop_name, buffer * prop_type, char * value)
 {
     buffer *time, *pkey, *value_encoded;
     bool gml_ns = false;
@@ -98,58 +97,57 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr,
     pkey = ows_psql_id_column(o, layer_name); /* pkey could be NULL !!! */
 
     /* No Pkey display in GML (default behaviour) */
-    if (pkey && pkey->buf && buffer_cmp(prop_name, pkey->buf) && !o->expose_pk) return;
+    if (pkey && pkey->buf && !strcmp(prop_name, pkey->buf) && !o->expose_pk) return;
 
 #if 0
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
-    if (buffer_cmp(prop_name, "boundedBy")) return;
+    if (!strcmp(prop_name, "boundedBy")) return;
 #endif
 
     /* name and description fields if exists belong to GML namespace */
-    if (buffer_cmp(prop_name, "name") || buffer_cmp(prop_name, "description"))
-        gml_ns = true;
+    if (!strcmp(prop_name, "name") || !strcmp(prop_name, "description")) gml_ns = true;
 
 #if 0
     /* Used in CITE 1.0 Unit test as geometry column name 
        TODO: what about a more generic way to handle that ? */
     if (wr->format == WFS_GML2
-            && (buffer_cmp(prop_name, "pointProperty")
-            || buffer_cmp(prop_name, "multiPointProperty")
-            || buffer_cmp(prop_name, "lineStringProperty")
-            || buffer_cmp(prop_name, "multiLineStringProperty")
-            || buffer_cmp(prop_name, "polygonProperty")
-            || buffer_cmp(prop_name, "multiPolygonProperty")))
+            && (!strcmp(prop_name, "pointProperty")
+            || !strcmp(prop_name, "multiPointProperty")
+            || !strcmp(prop_name, "lineStringProperty")
+            || !strcmp(prop_name, "multiLineStringProperty")
+            || !strcmp(prop_name, "polygonProperty")
+            || !strcmp(prop_name, "multiPolygonProperty")))
         gml_ns = true;
 #endif
 
-    if (gml_ns == true) fprintf(o->output, "   <gml:%s>", prop_name->buf);
-    else                fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name->buf);
+    if (gml_ns == true) fprintf(o->output, "   <gml:%s>", prop_name);
+    else                fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name);
 
     /* PSQL date must be transformed into GML format */
     if (buffer_cmp(prop_type, "timestamptz")
             || buffer_cmp(prop_type, "timestamp")
             || buffer_cmp(prop_type, "datetime")
             || buffer_cmp(prop_type, "date")) {
-        time = ows_psql_timestamp_to_xml_time(value->buf);
+        time = ows_psql_timestamp_to_xml_time(value);
         fprintf(o->output, "%s", time->buf);
         buffer_free(time);
 
     /* PSQL boolean must be transformed into GML format */
     } else if (buffer_cmp(prop_type, "bool")) {
-        if (buffer_cmp(value, "t")) fprintf(o->output, "true");
-        if (buffer_cmp(value, "f")) fprintf(o->output, "false");
+        if (!strcmp(value, "t")) fprintf(o->output, "true");
+        if (!strcmp(value, "f")) fprintf(o->output, "false");
 
     } else if (buffer_cmp(prop_type, "text")
             || buffer_ncmp(prop_type, "char", 4)
             || buffer_ncmp(prop_type, "varchar", 7)) {
-	    value_encoded = buffer_encode_xml_entities(value);
-        fprintf(o->output, "%s", value_encoded->buf);
-        buffer_free(value_encoded);
+	    value_encoded = buffer_encode_xml_entities_str(value);
+            fprintf(o->output, "%s", value_encoded->buf);
+            buffer_free(value_encoded);
 
-    } else fprintf(o->output, "%s", value->buf);
+    } else fprintf(o->output, "%s", value);
     
-    if (gml_ns) fprintf(o->output, "</gml:%s>\n", prop_name->buf);
-    else        fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name->buf);
+    if (gml_ns) fprintf(o->output, "</gml:%s>\n", prop_name);
+    else        fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name);
 }
 
 
@@ -160,7 +158,7 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
                             list * properties, PGresult * res)
 {
     int i, j, number, end, nb_fields;
-    buffer *id_name, *ns_prefix, *prop_name, *prop_type, *value;
+    buffer *id_name, *ns_prefix, *prop_type;
     array * describe;
     list *mandatory_prop;
 
@@ -198,17 +196,9 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
 
         /* print properties */
         for (j = 0, nb_fields = PQnfields(res) ; j < nb_fields ; j++) {
-            prop_name = buffer_init();
-            value = buffer_init();
 
-            buffer_add_str(prop_name, PQfname(res, j));
-            buffer_add_str(value, PQgetvalue(res, i, j));
-            prop_type = array_get(describe, prop_name->buf);
-
-            wfs_gml_display_feature(o, wr, layer_name, ns_prefix, prop_name, prop_type, value);
-
-            buffer_free(value);
-            buffer_free(prop_name);
+            prop_type = array_get(describe, PQfname(res, j));
+            wfs_gml_display_feature(o, wr, layer_name, ns_prefix, PQfname(res,j), prop_type, PQgetvalue(res, i ,j));
         }
 
         fprintf(o->output, "   </%s:%s>\n", ns_prefix->buf, layer_name->buf);
@@ -729,7 +719,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     list_node *ln, *ll;
     array *prop_table;
     array_node *an;
-    buffer *prop, *value, *value_enc, *geom;
+    buffer *prop, *value_enc, *geom;
     bool first;
     int i,j;
     int geoms;
@@ -743,7 +733,6 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     ll = request_list->first->next->value->first;
     geom = buffer_init();
     prop = buffer_init();
-    value = buffer_init();
 
     fprintf(o->output, "Content-Type: application/json\n\n");
     fprintf(o->output, "{\"type\": \"FeatureCollection\", \"features\": [");
@@ -777,11 +766,9 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
                     buffer_copy(prop, an->key); 
                     buffer_add_str(prop, "\": \"");
-                    buffer_add_str(value, PQgetvalue(res, i, j));
-                    value_enc = buffer_encode_json(value);
+                    value_enc = buffer_encode_json_str(PQgetvalue(res, i, j));
                     buffer_copy(prop, value_enc);
                     buffer_free(value_enc);
-                    buffer_empty(value);
                     buffer_add(prop, '"');
                 }
             }
@@ -814,7 +801,6 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
     buffer_free(geom);
     buffer_free(prop);
-    buffer_free(value);
 }
 
 

@@ -423,42 +423,41 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
  *  <	-> &lt;
  *  >	-> &gt;
  */
-buffer *buffer_encode_xml_entities(const buffer * buf)
+buffer *buffer_encode_xml_entities_str(const char * str)
 {
-    buffer *new_buf;
-    int i;
+    buffer *buf;
 
-    assert(buf);
-    new_buf = buffer_init();
+    assert(str);
+    buf = buffer_init();
 
-    for(i=0 ; i < buf->use ; i++) {
-    	switch(buf->buf[i]) {
+    for( /* empty */ ; *str ; str++) {
+    	switch(*str) {
 	        case '&':
- 	            buffer_add_str(new_buf, "&amp;");
+ 	        buffer_add_str(buf, "&amp;");
        	        break;
 
             case '<':
-                buffer_add_str(new_buf, "&lt;");
+                buffer_add_str(buf, "&lt;");
                 break;
 
             case '>':
-                buffer_add_str(new_buf, "&gt;");
+                buffer_add_str(buf, "&gt;");
                 break;
 
             case '"':
-                buffer_add_str(new_buf, "&quot;");
+                buffer_add_str(buf, "&quot;");
                 break;
 
             case '\'':
-                buffer_add_str(new_buf, "&#39;");
+                buffer_add_str(buf, "&#39;");
                 break;
 
             default:
-		        buffer_add(new_buf, buf->buf[i]);
+		buffer_add(buf, *str);
 	    }
     }
 
-    return new_buf;
+    return buf;
 }
 
 
@@ -469,26 +468,25 @@ buffer *buffer_encode_xml_entities(const buffer * buf)
  * The replacements performed are:
  *  " -> \"
  */
-buffer *buffer_encode_json(const buffer * buf)
+buffer *buffer_encode_json_str(const char * str)
 {
-    buffer *new_buf;
-    int i;
+    buffer *buf;
 
-    assert(buf);
-    new_buf = buffer_init();
+    assert(str);
+    buf = buffer_init();
 
-    for(i=0 ; i < buf->use ; i++) {
-    	switch(buf->buf[i]) {
-    	    case '"':
- 	            buffer_add_str(new_buf, "\\\"");
-       	        break;
+    for( /* empty */ ; *str ; str++) {
+        switch(*str) {
+            case '"':
+                    buffer_add_str(buf, "\\\"");
+                break;
 
             default:
-		        buffer_add(new_buf, buf->buf[i]);
-	    }
+                    buffer_add(buf, *str);
+            }
     }
 
-    return new_buf;
+    return buf;
 }
 
 

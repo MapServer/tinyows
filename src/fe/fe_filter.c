@@ -64,7 +64,7 @@ void filter_encoding_free(filter_encoding * fe)
 /*
  * Print filter_encoding structure
  */
-void filter_encoding_flush(ows * o, filter_encoding * fe, FILE * output)
+void filter_encoding_flush(filter_encoding * fe, FILE * output)
 {
     assert(fe);
     assert(output);
@@ -74,7 +74,7 @@ void filter_encoding_flush(ows * o, filter_encoding * fe, FILE * output)
     if (fe->sql) {
         fprintf(output, "sql -> ");
         buffer_flush(fe->sql, output);
-        fprintf(o->output, "\n");
+        fprintf(output, "\n");
     }
 
     fprintf(output, " error code -> %d\n]\n", fe->error_code);

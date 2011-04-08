@@ -82,7 +82,7 @@ buffer *fe_property_name (ows * o, buffer * typename, filter_encoding * fe, buff
 buffer *fe_spatial_op (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
 buffer *fe_xpath_property_name (ows * o, buffer * typename, buffer * property);
 buffer *fill_fe_error (ows * o, filter_encoding * fe);
-void filter_encoding_flush (ows * o, filter_encoding * fe, FILE * output);
+void filter_encoding_flush (filter_encoding * fe, FILE * output);
 void filter_encoding_free (filter_encoding * fe);
 filter_encoding *filter_encoding_init ();
 bool in_list (const list * l, const buffer * value);

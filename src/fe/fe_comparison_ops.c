@@ -39,7 +39,7 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
 {
     buffer *tmp, *type, *name;
     xmlChar *matchcase;
-    bool bool_type = true;
+    bool bool_type = false;
     bool sensitive_case = false;
 
     assert(o);
@@ -55,10 +55,8 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
     /* by default, comparison is case sensitive */
     matchcase = xmlGetProp(n, (xmlChar *) "matchCase");
 
-    if (matchcase) {
-        if (!strcmp((char *) matchcase, "false"))
-            sensitive_case = false;
-    }
+    if (matchcase && !strcmp((char *) matchcase, "false"))
+         sensitive_case = false;
 
     xmlFree(matchcase);
 
@@ -68,8 +66,7 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     /* if comparison isn't case sensitive, strings are passed in lower case */
-    if (!sensitive_case)
-        buffer_add_str(fe->sql, "lower(");
+    if (!sensitive_case) buffer_add_str(fe->sql, "lower(");
 
     tmp = fe_expression(o, typename, fe, tmp, n);
     if (fe->error_code) {
@@ -82,14 +79,15 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
 
     /* if property is a boolean, xml content( 1 or 0) must be transformed
        into FE->SQL syntax (true or false) */
-    if (buffer_cmp(name, "PropertyIsEqualTo")
-            || buffer_cmp(name, "PropertyIsNotEqualTo")) {
+    if (buffer_cmp(name, "PropertyIsEqualTo") || buffer_cmp(name, "PropertyIsNotEqualTo")) {
         /* remove brackets (if any) and quotation marks */
         if (tmp->buf[0] == '(') {
+/* FIXME assert in User input ! */
             assert(tmp->use > 3);
             buffer_pop(tmp, 2);
             buffer_shift(tmp, 2);
         } else {
+/* FIXME assert in User input ! */
             assert(tmp->use > 1);
             buffer_pop(tmp, 1);
             buffer_shift(tmp, 1);
@@ -97,12 +95,10 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
 
         type = ows_psql_type(o, typename, tmp);
 
-        if (buffer_cmp(type, "bool"))
-            bool_type = true;
+        if (buffer_cmp(type, "bool")) bool_type = true;
     }
 
-    if (!sensitive_case)
-        buffer_add_str(fe->sql, ")");
+    if (!sensitive_case) buffer_add_str(fe->sql, ")");
 
     if (buffer_cmp(name, "PropertyIsEqualTo"))
         buffer_add_str(fe->sql, " = ");
@@ -128,8 +124,7 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
 
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    if (!sensitive_case)
-        buffer_add_str(fe->sql, "lower(");
+    if (!sensitive_case) buffer_add_str(fe->sql, "lower(");
 
     tmp = fe_expression(o, typename, fe, tmp, n);
     if (fe->error_code) {
@@ -141,16 +136,11 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
     /* if property is a boolean, xml content( 1 or 0) must be transformed
        into fe->sql (true or false) */
     if (bool_type) {
-        if (buffer_cmp(tmp, "1"))
-            buffer_add_str(fe->sql, "'t'");
+        if (buffer_cmp(tmp, "1")) buffer_add_str(fe->sql, "'t'");
+        if (buffer_cmp(tmp, "0")) buffer_add_str(fe->sql, "'f'");
+    } else buffer_copy(fe->sql, tmp);
 
-        if (buffer_cmp(tmp, "0"))
-            buffer_add_str(fe->sql, "'f'");
-    } else
-        buffer_copy(fe->sql, tmp);
-
-    if (!sensitive_case)
-        buffer_add_str(fe->sql, ")");
+    if (!sensitive_case) buffer_add_str(fe->sql, ")");
 
     buffer_free(tmp);
     buffer_free(name);

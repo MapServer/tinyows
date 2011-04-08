@@ -121,7 +121,7 @@ void ows_flush(ows * o, FILE * output)
     if (o->encoding)        fprintf(output, "encoding: %s\n", (char *) o->encoding->buf);
     if (o->db_encoding)     fprintf(output, "db_encoding: %s\n", (char *) o->db_encoding->buf);
 
-    if (o->metadata)
+    if (o->metadata) {
         fprintf(output, "metadata: ");
         ows_metadata_flush(o->metadata, output);
         fprintf(output, "\n");

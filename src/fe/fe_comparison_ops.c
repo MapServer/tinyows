@@ -40,7 +40,7 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
     buffer *tmp, *type, *name;
     xmlChar *matchcase;
     bool bool_type = false;
-    bool sensitive_case = false;
+    bool sensitive_case = true;
 
     assert(o);
     assert(typename);

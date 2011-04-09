@@ -337,6 +337,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         attr =  xmlGetProp(n, (xmlChar *) "handle");
         buffer_add_str(handle, (char *) attr);
         xmlFree(attr);
+        attr = NULL;
     /* handle is optional in WFS Schema */
     } else buffer_add_str(handle, "TinyOWS-WFS-default-handle");
 
@@ -351,6 +352,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         else if (!strcmp((char *) attr, "UseExisting"))
 		handle_idgen = WFS_USE_EXISTING;
         xmlFree(attr);
+        attr = NULL;
     }
 
     n = n->children;

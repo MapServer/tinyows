@@ -566,9 +566,9 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n)
 
         res = PQexec(o->pg, sql->buf);
 
-        if (   PQresultStatus(res) != PGRES_TUPLES_OK
-            || PQntuples(res) != 1
-            || (char) PQgetvalue(res, 0, 0)[0] !=  't') {
+        if (    PQresultStatus(res) != PGRES_TUPLES_OK
+             || PQntuples(res) != 1
+             || (char) PQgetvalue(res, 0, 0)[0] !=  't') {
             buffer_free(sql);
             buffer_free(result);
             PQclear(res);

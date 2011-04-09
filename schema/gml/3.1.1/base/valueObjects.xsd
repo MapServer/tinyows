@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schema targetNamespace="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:gml="http://www.opengis.net/gml" xmlns:sch="http://www.ascc.net/xml/schematron" xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
-        attributeFormDefault="unqualified" version="3.1.1">
+        attributeFormDefault="unqualified" version="3.1.1 2010-01-28">
 	<annotation>
 		<appinfo source="urn:opengis:specification:gml:schema-xsd:valueObjects:3.1.1">valueObjects.xsd</appinfo>
 		<documentation>GML conformant schema for Values in which the  
 		    * scalar Value types and lists have their values recorded in simpleContent elements 
 		    * complex Value types are built recursively
-    Copyright (c) 2002-2005 OGC, All Rights Reserved.
-	For conditions, see OGC Software Notice http://www.opengeospatial.org/about/?page=ipr</documentation>
+		    
+		    GML is an OGC Standard.
+		    Copyright (c) 2001,2005,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+		    To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+		</documentation>
 	</annotation>
 	<!-- ====================================================================== -->
 	<!-- geometry and temporal included so that _Geometry and _TimeObject can be added to Value choice group -->
@@ -196,19 +199,19 @@
 	<!-- ====================== Typed ValueExtents ============================ -->
 	<group name="ValueExtent">
 		<choice>
-		<!--	<element ref="gml:CategoryExtent"/>
-			<element ref="gml:QuantityExtent"/> -->
+			<element ref="gml:CategoryExtent"/>
+			<element ref="gml:QuantityExtent"/>
 			<element ref="gml:CountExtent"/>
 		</choice>
 	</group>
 	<!-- ======================================================================
 	<element name="QuantityExtent" type="gml:QuantityExtentType" substitutionGroup="gml:_Value"> -->
-<!--	<element name="QuantityExtent" type="gml:QuantityExtentType">
+	<element name="QuantityExtent" type="gml:QuantityExtentType">
 		<annotation>
 			<documentation>Utility element to store a 2-point range of numeric values. If one member is a null, then this is a single ended interval.</documentation>
 		</annotation>
 	</element>
-
+	<!-- -->
 	<complexType name="QuantityExtentType">
 		<annotation>
 			<documentation>Restriction of list type to store a 2-point range of numeric values. If one member is a null, then this is a single ended interval.</documentation>
@@ -218,15 +221,15 @@
 				<length value="2"/>
 			</restriction>
 		</simpleContent>
-	</complexType> -->
+	</complexType>
 	<!-- ======================================================================
 	<element name="CategoryExtent" type="gml:CategoryExtentType" substitutionGroup="gml:_Value"> -->
-<!--	<element name="CategoryExtent" type="gml:CategoryExtentType">
+	<element name="CategoryExtent" type="gml:CategoryExtentType">
 		<annotation>
 			<documentation>Utility element to store a 2-point range of ordinal values. If one member is a null, then this is a single ended interval.</documentation>
 		</annotation>
 	</element>
-
+	<!-- -->
 	<complexType name="CategoryExtentType">
 		<annotation>
 			<documentation>Restriction of list type to store a 2-point range of ordinal values. If one member is a null, then this is a single ended interval.</documentation>
@@ -236,7 +239,7 @@
 				<length value="2"/>
 			</restriction>
 		</simpleContent>
-	</complexType> -->
+	</complexType>
 	<!-- ======================================================================
 	<element name="CountExtent" type="gml:CountExtentType" substitutionGroup="gml:_Value"> -->
 	<element name="CountExtent" type="gml:CountExtentType">

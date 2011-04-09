@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema targetNamespace="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sch="http://www.ascc.net/xml/schematron" xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="3.1.1">
+<schema targetNamespace="http://www.opengis.net/gml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sch="http://www.ascc.net/xml/schematron" xmlns="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="3.1.1 2010-01-28">
 	<annotation>
 		<appinfo source="urn:opengis:specification:gml:schema-xsd:gmlBase:3.1.1">
 			<sch:title>Schematron validation</sch:title>
@@ -13,9 +13,13 @@
 			</sch:pattern>
 		</appinfo>
 		<documentation>GML base schema for GML 3
-		Components to support the GML encoding model.  
-		The abstract Schematron rules can be used by any schema that includes gmlBase.  
-		Copyright (c) 2001-2005 OGC, All Rights Reserved. For conditions, see OGC Software Notice http://www.opengeospatial.org/about/?page=ipr</documentation>
+			Components to support the GML encoding model.
+			The abstract Schematron rules can be used by any schema that includes gmlBase.
+			
+			GML is an OGC Standard.
+			Copyright (c) 2001,2005,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+			To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+		</documentation>
 	</annotation>
 	<!-- ==============================================================
        includes and imports

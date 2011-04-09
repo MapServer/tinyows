@@ -1,7 +1,7 @@
 -- PostGIS setup script for wfs 1.1 sf0 cite dataset
 -- 
--- Copyright: GeoServer Project
--- <https://svn.codehaus.org/geoserver/trunk/data/citewfs-1.1/>
+-- From OGC CITE: http://cite.opengeospatial.org/te2/wfs-1.1.0-r0/data/data-wfs-1.1.0.zip
+-- With few modifications
 --
 --SET client_encoding = 'UTF8';
 
@@ -16,12 +16,11 @@ select addgeometrycolumn( 'public', 'PrimitiveGeoFeature', 'surfaceProperty', 43
 select addgeometrycolumn( 'public', 'PrimitiveGeoFeature', 'pointProperty', 4326, 'POINT', 2 );
 select addgeometrycolumn( 'public', 'PrimitiveGeoFeature', 'curveProperty', 4326, 'LINESTRING', 2 );
 
-alter table "PrimitiveGeoFeature" add  "intProperty" int not null;
+alter table "PrimitiveGeoFeature" add  "intProperty" int8 not null;
 alter table "PrimitiveGeoFeature" add  "uriProperty" varchar;
 alter table "PrimitiveGeoFeature" add measurand float not null;
 alter table "PrimitiveGeoFeature" add "dateTimeProperty" timestamp with time zone;
 alter table "PrimitiveGeoFeature" add "dateProperty" date;
---alter table "PrimitiveGeoFeature" add "dateProperty" timestamp with time zone;
 alter table "PrimitiveGeoFeature" add "decimalProperty" float not null;
 alter table "PrimitiveGeoFeature" add id varchar; 
 alter table "PrimitiveGeoFeature" add primary key ( id );

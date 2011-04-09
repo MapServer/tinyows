@@ -1,7 +1,9 @@
 -- This file inserts all the appropriate cite data into postgis to run with
 -- WFS 1.0.0 Cite Unit test
 
--- This file is heavily inspired from GeoServer distribution one
+-- From OGC CITE: http://cite.opengeospatial.org/te2/wfs-1.0.0-r0/data/data-wfs-1.0.0.zip
+-- With few modifications
+
 
 drop table "Nulls";
 drop table "Points";

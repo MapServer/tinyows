@@ -166,12 +166,9 @@ void ows_service_provider(const ows * o)
     fprintf(o->output, " <ows:ServiceProvider>\n");
 
     if (o->contact->name)
-    	fprintf(o->output, "  <ows:ProviderName>%s</ows:ProviderName>\n",
-		o->contact->name->buf);
-
+	fprintf(o->output, "  <ows:ProviderName>%s</ows:ProviderName>\n", o->contact->name->buf);
     if (o->contact->site)
-        fprintf(o->output, "  <ows:ProviderSite xlink:href=\"%s\" />\n",
-                o->contact->site->buf);
+	fprintf(o->output, "  <ows:ProviderSite xlink:href=\"%s\" />\n", o->contact->site->buf);
 
     fprintf(o->output, "  <ows:ServiceContact>\n");
 

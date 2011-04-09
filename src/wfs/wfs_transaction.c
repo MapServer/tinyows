@@ -117,8 +117,7 @@ static void wfs_transaction_insert_result(ows * o, wfs_request * wr, buffer * re
     ln = NULL;
 
     /* check if there were Insert operations and if the command succeeded */
-    if ((!cgi_method_get()) && (buffer_cmp(result, "PGRES_COMMAND_OK")
-            && (wr->insert_results))) {
+    if ((!cgi_method_get()) && (buffer_cmp(result, "PGRES_COMMAND_OK") && (wr->insert_results))) {
 
         if (ows_version_get(o->request->version) == 110)
             fprintf(o->output, "<wfs:InsertResults>\n");
@@ -372,7 +371,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
         if (!layer_name || !ows_layer_writable(o->layers, layer_name)) {
              buffer_free(sql);
-             buffer_free(handle);
              buffer_free(values);
 	     if (layer_name) buffer_free(layer_name);
              result = buffer_init();

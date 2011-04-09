@@ -220,7 +220,7 @@ array *ows_layer_list_namespaces(ows_layer_list * ll)
     assert(ll);
 
     for (ln = ll->first; ln ; ln = ln->next) {
-        if (ln->layer->ns_prefix) {
+        if (ln->layer->ns_prefix && ln->layer->ns_prefix->use) {
             if (!array_is_key(namespaces, ln->layer->ns_prefix->buf)) {
                 ns_prefix = buffer_init();
                 ns_uri = buffer_init();

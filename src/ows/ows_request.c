@@ -403,9 +403,11 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
     }
 
     /* check XML Validity */
-    if ( (cgi_method_post() && !strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded"))
-          ||
-	 (!cgi_method_post() && !cgi_method_get() && query[0] == '<') ) {
+    if ( (cgi_method_post() && (   !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8")
+                                || !strcmp(getenv("CONTENT_TYPE"), "application/xml")
+                                || !strcmp(getenv("CONTENT_TYPE"), "text/xml")
+                                || !strcmp(getenv("CONTENT_TYPE"), "text/plain")
+          )) || (!cgi_method_post() && !cgi_method_get() && query[0] == '<') ) {
 
         if (or->service == WFS && o->check_schema) {
             xmlstring = buffer_from_str(query);

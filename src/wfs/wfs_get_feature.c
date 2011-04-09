@@ -99,7 +99,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
     /* No Pkey display in GML (default behaviour) */
     if (pkey && pkey->buf && !strcmp(prop_name, pkey->buf) && !o->expose_pk) return;
 
-    if (!strlen(value)) return;
+    if (strlen(value) == 0) return;
 #if 0
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
     if (!strcmp(prop_name, "boundedBy")) return;
@@ -186,19 +186,22 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
         if (id_name && id_name->use) {
             if (wr->format == WFS_GML3)
                 fprintf(o->output,  "   <%s:%s gml:id=\"%s.%s\">\n",
-                        ns_prefix->buf, layer_name->buf, layer_name->buf,
-                        PQgetvalue(res, i, number));
+                        ns_prefix->buf, layer_name->buf, layer_name->buf, PQgetvalue(res, i, number));
             else fprintf(o->output, "   <%s:%s fid=\"%s.%s\">\n",
-                        ns_prefix->buf, layer_name->buf, layer_name->buf,
-                        PQgetvalue(res, i, number));
-        } else fprintf(o->output,   "   <%s:%s>\n",
-			ns_prefix->buf, layer_name->buf);
+                        ns_prefix->buf, layer_name->buf, layer_name->buf, PQgetvalue(res, i, number));
+        } else fprintf(o->output,   "   <%s:%s>\n", ns_prefix->buf, layer_name->buf);
 
         /* print properties */
         for (j = 0, nb_fields = PQnfields(res) ; j < nb_fields ; j++) {
 
-            prop_type = array_get(describe, PQfname(res, j));
-            wfs_gml_display_feature(o, wr, layer_name, ns_prefix, PQfname(res,j), prop_type, PQgetvalue(res, i ,j));
+	    if (    !properties
+                 || in_list_str(properties, PQfname(res, j))
+                 || buffer_cmp(properties->first->value, "*")
+                 || !strcmp("name", PQfname(res, j))
+                 || !strcmp("description", PQfname(res, j))) {
+               prop_type = array_get(describe, PQfname(res, j));
+               wfs_gml_display_feature(o, wr, layer_name, ns_prefix, PQfname(res,j), prop_type, PQgetvalue(res, i ,j));
+	    }
         }
 
         fprintf(o->output, "   </%s:%s>\n", ns_prefix->buf, layer_name->buf);

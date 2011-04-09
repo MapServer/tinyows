@@ -86,6 +86,7 @@ void filter_encoding_flush (filter_encoding * fe, FILE * output);
 void filter_encoding_free (filter_encoding * fe);
 filter_encoding *filter_encoding_init ();
 bool in_list (const list * l, const buffer * value);
+bool in_list_str (const list * l, const char * value);
 void list_add (list * l, buffer * value);
 void list_add_by_copy (list * l, buffer * value);
 void list_add_list (list * l, list * l_to_add);

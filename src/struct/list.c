@@ -247,8 +247,25 @@ bool in_list(const list * l, const buffer * value)
 
     for (ln = l->first ; ln ; ln = ln->next)
         if (value->use == ln->value->use)
-            if (buffer_case_cmp(value, ln->value->buf))
+            if (buffer_cmp(value, ln->value->buf))
                 return true;
+
+    return false;
+}
+
+
+/*
+ * Check if a given buffer value is or not in the list
+ */
+bool in_list_str(const list * l, const char * value)
+{
+    list_node *ln;
+
+    assert(l);
+    assert(value);
+
+    for (ln = l->first ; ln ; ln = ln->next)
+        if (!strcmp(value, ln->value->buf)) return true;
 
     return false;
 }

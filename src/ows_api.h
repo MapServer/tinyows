@@ -168,7 +168,7 @@ bool ows_psql_is_geometry_column (ows * o, buffer * layer_name, buffer * column)
 bool ows_psql_is_geometry_valid(ows * o, buffer * geom);
 list *ows_psql_not_null_properties (ows * o, buffer * layer_name);
 buffer *ows_psql_timestamp_to_xml_time (char *timestamp);
-char *ows_psql_to_xsd (buffer * type);
+char *ows_psql_to_xsd (buffer * type, ows_version *version);
 buffer *ows_psql_type (ows * o, buffer * layer_name, buffer * property);
 buffer *ows_psql_generate_id (ows * o, buffer * layer_name);
 int ows_psql_number_features(ows * o, list * from, list * where);

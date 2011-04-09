@@ -264,50 +264,40 @@ array *ows_psql_describe_table(ows * o, buffer * layer_name)
  * Convert a PostgreSql type to a valid
  * OGC XMLSchema's type
  */
-char *ows_psql_to_xsd(buffer * type)
+char *ows_psql_to_xsd(buffer * type, ows_version *version)
 {
-    assert(type);
+    int wfs_version;
 
-    if (buffer_case_cmp(type, "geometry"))
-        return "gml:GeometryPropertyType";
-    if (buffer_cmp(type, "geography"))
-        return "gml:GeometryPropertyType";
-    else if (buffer_cmp(type, "int2"))
-        return "short";
-    else if (buffer_cmp(type, "int4"))
-        return "int";
-    else if (buffer_cmp(type, "int8"))
-        return "long";
-    else if (buffer_cmp(type, "float4"))
-        return "float";
-    else if (buffer_cmp(type, "float8"))
-        return "double";
-    else if (buffer_cmp(type, "bool"))
-        return "boolean";
-    else if (buffer_cmp(type, "bytea"))
-        return "byte";
-    else if (buffer_cmp(type, "date"))
-        return "date";
-    else if (buffer_cmp(type, "time"))
-        return "time";
-    else if (buffer_cmp(type, "timestamptz"))
-        return "dateTime";
-    else if (buffer_cmp(type, "LINESTRING"))
-        return "gml:LineStringPropertyType";
-    else if (buffer_cmp(type, "POLYGON"))
-        return "gml:PolygonPropertyType";
-    else if (buffer_cmp(type, "POINT"))
-        return "gml:PointPropertyType";
-    else if (buffer_cmp(type, "MULTIPOINT"))
-        return "gml:MultiPointPropertyType";
-    else if (buffer_cmp(type, "MULTILINESTRING"))
-        return "gml:MultiLineStringPropertyType";
-    else if (buffer_cmp(type, "MULTIPOLYGON"))
-        return "gml:MultiPolygonPropertyType";
-    else if (buffer_cmp(type, "GEOMETRYCOLLECTION"))
-        return "gml:MultiGeometryPropertyType";
-    else
-        return "string";
+    assert(type);
+    assert(version);
+
+    wfs_version = ows_version_get(version); 
+ 
+    if (buffer_case_cmp(type, "geometry")) return "gml:GeometryPropertyType";
+    if (buffer_cmp(type, "geography")) return "gml:GeometryPropertyType";
+    if (buffer_cmp(type, "int2")) return "short";
+    if (buffer_cmp(type, "int4")) return "int";
+    if (buffer_cmp(type, "int8")) return "long";
+    if (buffer_cmp(type, "float4")) return "float";
+    if (buffer_cmp(type, "float8")) return "double";
+    if (buffer_cmp(type, "bool")) return "boolean";
+    if (buffer_cmp(type, "bytea")) return "byte";
+    if (buffer_cmp(type, "date")) return "date";
+    if (buffer_cmp(type, "time")) return "time";
+    if (buffer_cmp(type, "timestamptz")) return "dateTime";
+    if (buffer_cmp(type, "POINT")) return "gml:PointPropertyType";
+    if (buffer_cmp(type, "LINESTRING") && wfs_version == 100) return "gml:LineStringPropertyType";
+    if (buffer_cmp(type, "LINESTRING") && wfs_version == 110) return "gml:CurvePropertyType";
+    if (buffer_cmp(type, "POLYGON") && wfs_version == 100) return "gml:PolygonPropertyType";
+    if (buffer_cmp(type, "POLYGON") && wfs_version == 110) return "gml:SurfacePropertyType";
+    if (buffer_cmp(type, "MULTIPOINT")) return "gml:MultiPointPropertyType";
+    if (buffer_cmp(type, "MULTILINESTRING") && wfs_version == 100) return "gml:MultiLineStringPropertyType";
+    if (buffer_cmp(type, "MULTILINESTRING") && wfs_version == 110) return "gml:MultiCurvePropertyType";
+    if (buffer_cmp(type, "MULTIPOLYGON") && wfs_version == 100) return "gml:MultiPolygonPropertyType";
+    if (buffer_cmp(type, "MULTIPOLYGON") && wfs_version == 110) return "gml:MultiSurfacePropertyType";
+    if (buffer_cmp(type, "GEOMETRYCOLLECTION")) return "gml:MultiGeometryPropertyType";
+
+    return "string";
 }
 
 
@@ -322,6 +312,7 @@ buffer *ows_psql_timestamp_to_xml_time(char *timestamp)
 
     time = buffer_init();
     buffer_add_str(time, timestamp);
+    if (!time->use) return time;
 
     buffer_replace(time, " ", "T");
 

@@ -260,9 +260,13 @@ void ows_usage(ows * o)
     fprintf(stdout, "Output Encoding:   %s\n", o->encoding->buf);
     fprintf(stdout, "Database Encoding: %s\n", o->db_encoding->buf);
     fprintf(stdout, "Schema dir:        %s\n", o->schema_dir->buf);
-
     if (o->log_file)
     fprintf(stdout, "Log file:          %s\n", o->log_file->buf);
+
+    fprintf(stdout, "Display bbox:      %s\n", o->display_bbox?"Yes":"No");
+    fprintf(stdout, "Estimated extent:  %s\n", o->estimated_extent?"Yes":"No");
+    fprintf(stdout, "Check schema:      %s\n", o->check_schema?"Yes":"No");
+    fprintf(stdout, "Check valid geoms: %s\n", o->check_valid_geom?"Yes":"No");
 
     fprintf(stdout, "Available layers:\n");
     ows_layers_storage_flush(o, stdout);

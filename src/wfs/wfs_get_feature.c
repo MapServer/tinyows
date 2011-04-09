@@ -99,6 +99,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
     /* No Pkey display in GML (default behaviour) */
     if (pkey && pkey->buf && !strcmp(prop_name, pkey->buf) && !o->expose_pk) return;
 
+    if (!strlen(value)) return;
 #if 0
     /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
     if (!strcmp(prop_name, "boundedBy")) return;
@@ -154,8 +155,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
 /*
  * Display in GML all feature members returned by the request
  */
-void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name,
-                            list * properties, PGresult * res)
+void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list * properties, PGresult * res)
 {
     int i, j, number, end, nb_fields;
     buffer *id_name, *ns_prefix, *prop_type;
@@ -389,11 +389,7 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
             wfs_gml_feature_member(o, wr, layer_name, mln_property->value, res);
         else
             /* Use NULL if propertynames not defined */
-            wfs_gml_feature_member(
-o, 
-wr, 
-layer_name, NULL, 
-res);
+            wfs_gml_feature_member(o, wr, layer_name, NULL, res);
 
         PQclear(res);
 

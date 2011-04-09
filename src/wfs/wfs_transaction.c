@@ -470,8 +470,10 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         /* fill fields and values at the same time */
         for (; node; node = node->next) {
             if (node->type == XML_ELEMENT_NODE && 
-                buffer_cmp(ows_layer_ns_uri(o->layers, layer_ns_prefix),
-			   (char *) node->ns->href)) {
+                 ( buffer_cmp(ows_layer_ns_uri(o->layers, layer_ns_prefix), (char *) node->ns->href)
+                   || !strcmp("http://www.opengis.net/gml", (char *) node->ns->href)
+                   || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href))) {
+
                 buffer_add(sql, ',');
                 buffer_add(values, ',');
 
@@ -520,9 +522,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                         }
                    }
 
-                } else {
-                    values = wfs_retrieve_value(o, wr, values, xmldoc, node);
-                }
+                } else values = wfs_retrieve_value(o, wr, values, xmldoc, node);
 
                 buffer_free(column);
             }

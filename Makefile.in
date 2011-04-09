@@ -44,6 +44,7 @@ install:
 	@echo "-----"
 	@echo "TinyOWS Schema install dir in $(PREFIX)/tinyows/schema"
 	mkdir -p $(PREFIX)/tinyows
+	rm -rf $(PREFIX)/tinyows/schema
 	cp -rf schema $(PREFIX)/tinyows/
 	@echo "-----"
 	@echo "Now:"

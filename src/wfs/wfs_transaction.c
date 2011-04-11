@@ -117,7 +117,7 @@ static void wfs_transaction_insert_result(ows * o, wfs_request * wr, buffer * re
     ln = NULL;
 
     /* check if there were Insert operations and if the command succeeded */
-    if ((!cgi_method_get()) && (buffer_cmp(result, "PGRES_COMMAND_OK") && (wr->insert_results))) {
+    if ((!cgi_method_get()) && (buffer_cmp(result, "PGRES_COMMAND_OK") && (wr->insert_results->first))) {
 
         if (ows_version_get(o->request->version) == 110)
             fprintf(o->output, "<wfs:InsertResults>\n");
@@ -177,7 +177,7 @@ static void wfs_transaction_result(ows * o, wfs_request * wr, buffer * result, b
         if (!buffer_cmp(result, "PGRES_COMMAND_OK")) {
             if (ows_version_get(o->request->version) == 100)
                  fprintf(o->output, "<wfs:Locator>%s</wfs:Locator>\n", locator->buf);
-            else fprintf(o->output, "<wfs:Action locator=%s>\n", locator->buf);
+            else fprintf(o->output, "<wfs:Action locator=\"%s\">\n", locator->buf);
         }
 
         /* error message if the transaction failed */

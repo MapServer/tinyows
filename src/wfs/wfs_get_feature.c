@@ -35,24 +35,24 @@
 /*
  * Return the boundaries of the features returned by the request
  */
-void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
-                        float xmax, float ymax, int srid)
+void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin, float xmax, float ymax, int srid)
 {
     assert(o);
     assert(wr);
 
-    fprintf(o->output, "<gml:boundedBy>\n");
 
-    if (fabs(xmin) + DBL_MIN <= 1 + DBL_EPSILON &&
-	fabs(ymin) + DBL_MIN <= 1 + DBL_EPSILON) {
+    if (fabs(xmin) + DBL_MIN <= 1 + DBL_EPSILON && fabs(ymin) + DBL_MIN <= 1 + DBL_EPSILON) {
         if (ows_version_get(o->request->version) == 100)
-            fprintf(o->output, "<gml:null>missing</gml:null>\n");
+            fprintf(o->output, "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>\n");
+#if 0
         else
-            fprintf(o->output, "<gml:Null>missing</gml:Null>\n");
+            fprintf(o->output, "<gml:boundedBy><gml:Null>missing</gml:Null></gml:boundedBy>\n");
+#endif
     } else {
+        fprintf(o->output, "<gml:boundedBy>\n");
 
         if (wr->format == WFS_GML2) {
-            fprintf(o->output, "<gml:Box srsName=\"EPSG:%d\">", srid);
+            fprintf(o->output, "  <gml:Box srsName=\"EPSG:%d\">", srid);
             fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">");
             fprintf(o->output, "%f,", xmin);
             fprintf(o->output, "%f ", ymin);
@@ -61,7 +61,7 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
             fprintf(o->output, "</gml:Box>\n");
 
         } else if (wr->format == WFS_GML3) {
-            fprintf(o->output, "<gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::%d\">", srid);
+            fprintf(o->output, "  <gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::%d\">", srid);
             fprintf(o->output, "<gml:lowerCorner>");
             fprintf(o->output, "%f ", xmin);
             fprintf(o->output, "%f", ymin);
@@ -71,9 +71,10 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin,
             fprintf(o->output, "%f</gml:upperCorner>", ymax);
             fprintf(o->output, "</gml:Envelope>\n");
         }
+    
+        fprintf(o->output, "</gml:boundedBy>\n");
     }
 
-    fprintf(o->output, "</gml:boundedBy>\n");
 }
 
 
@@ -197,8 +198,8 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
 	    if (    !properties
                  || in_list_str(properties, PQfname(res, j))
                  || buffer_cmp(properties->first->value, "*")
-                 || !strcmp("name", PQfname(res, j))
-                 || !strcmp("description", PQfname(res, j))) {
+                 || in_list_str(ows_psql_not_null_properties(o, layer_name), PQfname(res, j))
+               ) {
                prop_type = array_get(describe, PQfname(res, j));
                wfs_gml_display_feature(o, wr, layer_name, ns_prefix, PQfname(res,j), prop_type, PQgetvalue(res, i ,j));
 	    }
@@ -350,10 +351,8 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
      */
     if (o->display_bbox) {
         /* print the outerboundaries of the requests */
-        outer_b = ows_bbox_boundaries(o, request_list->first->next->value,
-                                         request_list->last->value);
-        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin,
-                                  outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
+        outer_b = ows_bbox_boundaries(o, request_list->first->next->value, request_list->last->value);
+        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin, outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
         ows_bbox_free(outer_b);
     }
 

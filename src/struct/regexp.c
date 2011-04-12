@@ -49,12 +49,9 @@ bool check_regexp(const char *str_request, const char *str_regex)
         match = regexec(&preg, str_request, 0, NULL, 0);
         regfree(&preg);
 
-        if (match == 0)
-            return true;
-        else if (match == REG_NOMATCH)
-            return false;
-        else
-            return false;
+        if (match == 0) return true;
+        else if (match == REG_NOMATCH) return false;
+        else return false;
     }
 
     return false;

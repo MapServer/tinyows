@@ -10,6 +10,8 @@
  - Mapfile config file (TINYOWS_MAPFILE var)
  - Debug option available from configure step (--enable-debug) 
  - Improve result from --check option 
+ - Add wfs_default_version
+ - Add log_level 
  - Lot of debug stuff
 
 

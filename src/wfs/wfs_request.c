@@ -190,17 +190,11 @@ static void wfs_request_check_version(ows * o, wfs_request * wr, const array * c
     assert(wr);
     assert(cgi);
 
-    if (!array_is_key(cgi, "version")) {
-        /* Tests WFS 1.1.0 require a default value for requests
-           encoded in XML if version is not set */
-        ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-           "VERSION parameter is missing", "DescribeFeatureType");
+    if (!array_is_key(cgi, "version")) memcpy(o->request->version, o->wfs_default_version, sizeof(ows_version));
 
-    } else if (ows_version_get(o->request->version) != 100
-               && ows_version_get(o->request->version) != 110)
-                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "VERSION parameter is not valid (use 1.0.0 or 1.1.0)",
-                  "version");
+    if (ows_version_get(o->request->version) != 100 && ows_version_get(o->request->version) != 110)
+           ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+              "VERSION parameter is not valid (use 1.0.0 or 1.1.0)", "version");
 }
 
 

@@ -75,6 +75,7 @@ static ows *ows_init()
     o->schema_dir = buffer_init();
     o->log_file = NULL;
     o->log = NULL;
+    o->log_level=0;
     o->encoding = buffer_init();
     o->db_encoding = buffer_init();
     o->log = NULL;
@@ -96,6 +97,8 @@ static ows *ows_init()
     o->schema_wfs_110_trans = NULL;
     o->schema_fe_100 = NULL;
     o->schema_fe_110 = NULL;
+    o->wfs_default_version = ows_version_init();
+    ows_version_set(o->wfs_default_version, 1, 1, 0);
 
     return o;
 }
@@ -204,6 +207,7 @@ void ows_free(ows * o)
     if (o->contact)	   	 ows_contact_free(o->contact);
     if (o->encoding)	   	 buffer_free(o->encoding);
     if (o->db_encoding)		 buffer_free(o->db_encoding);
+    if (o->wfs_default_version)  ows_version_free(o->wfs_default_version);
     if (o->schema_wfs_100_basic) xmlSchemaFree(o->schema_wfs_100_basic);
     if (o->schema_wfs_100_trans) xmlSchemaFree(o->schema_wfs_100_trans);
     if (o->schema_wfs_110_basic) xmlSchemaFree(o->schema_wfs_110_basic);
@@ -222,7 +226,7 @@ void ows_log(ows *o, int log_level, const char *log)
     time_t ts;
 
     if (o->log_file && !o->log) o->log = fopen(o->log_file->buf, "a");
-    if (!o->log) return;
+    if (!o->log || !(o->log_level & log_level)) return;
 
     ts = time(NULL);
     t = ctime(&ts);
@@ -231,10 +235,10 @@ void ows_log(ows *o, int log_level, const char *log)
     for (p = t; *p && *p != '\n'; p++);
     *p = '\0';
 
-    if      (log_level == 1) fprintf(o->log, "[%s] [ERROR] %s\n", t, log);
-    else if (log_level == 2) fprintf(o->log, "[%s] [EVENT] %s\n", t, log);
-    else if (log_level == 3) fprintf(o->log, "[%s] [QUERY] %s\n", t, log);
-    else if (log_level == 4) fprintf(o->log, "[%s] [DEBUG] %s\n", t, log);
+    if      (log_level & 1) fprintf(o->log, "[%s] [ERROR] %s\n", t, log);
+    else if (log_level & 2) fprintf(o->log, "[%s] [EVENT] %s\n", t, log);
+    else if (log_level & 4) fprintf(o->log, "[%s] [QUERY] %s\n", t, log);
+    else if (log_level & 8) fprintf(o->log, "[%s] [DEBUG] %s\n", t, log);
 
     fflush(o->log);
 }
@@ -355,7 +359,7 @@ int main(int argc, char *argv[])
     if (!o->exit) query = cgi_getback_query(o);
 
     /* Log input query if asked */
-    if (!o->exit) ows_log(o, 3, query);
+    if (!o->exit) ows_log(o, 4, query);
 
     if (!o->exit && (!query || !strlen(query)))
     {

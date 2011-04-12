@@ -196,6 +196,8 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname);
 void ows_usage (ows * o);
 void ows_version_flush (ows_version * v, FILE * output);
 void ows_version_free (ows_version * v);
+bool ows_version_check(ows_version *v);
+bool ows_version_set_str(ows_version * v, char *str);
 int ows_version_get (ows_version * v);
 ows_version *ows_version_init ();
 void ows_version_set (ows_version * v, int major, int minor, int release);

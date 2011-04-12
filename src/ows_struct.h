@@ -348,11 +348,13 @@ typedef struct Ows {
     buffer * schema_dir;
     buffer * online_resource;
     buffer * pg_dsn;
-    buffer * log_file;
     buffer * encoding;
     buffer * db_encoding;
 
     FILE* log;
+    int log_level;
+    buffer * log_file;
+
     FILE* output;
 
     ows_meta * metadata;
@@ -375,6 +377,7 @@ typedef struct Ows {
     list * psql_requests;
     ows_layer_list * layers;
     ows_request * request;
+    ows_version * wfs_default_version;
 
     xmlSchemaPtr  schema_wfs_100_basic;
     xmlSchemaPtr  schema_wfs_100_trans;

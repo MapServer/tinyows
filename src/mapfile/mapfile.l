@@ -69,6 +69,8 @@ enum map_md_state {
     MAP_MD_TOWS_SCHEMA_DIR,
     MAP_MD_TOWS_DB_ENCODING,
     MAP_MD_TOWS_LOG,
+    MAP_MD_TOWS_LOG_LEVEL,
+    MAP_MD_TOWS_WFS_DEFAULT_VERSION,
     MAP_MD_TOWS_METER_PRECISION,
     MAP_MD_TOWS_DEGREE_PRECISION,
     MAP_MD_TOWS_DISPLAY_BBOX,
@@ -192,6 +194,10 @@ static void metadata_key(char *yytext, bool quotes)
 		map_md_state = MAP_MD_TOWS_SCHEMA_DIR;
 	else if(!strncmp("tinyows_log", yytext, 11))
 		map_md_state = MAP_MD_TOWS_LOG;
+	else if(!strncmp("tinyows_log_level", yytext, 17))
+		map_md_state = MAP_MD_TOWS_LOG_LEVEL;
+	else if(!strncmp("tinyows_wfs_default_version", yytext, 77))
+		map_md_state = MAP_MD_TOWS_WFS_DEFAULT_VERSION;
 	else if(!strncmp("tinyows_degree_precision", yytext, 24))
 		map_md_state = MAP_MD_TOWS_DEGREE_PRECISION;
 	else if(!strncmp("tinyows_meter_precision", yytext, 23))
@@ -311,6 +317,13 @@ static void metadata_value(char *yytext, bool quotes)
 		case MAP_MD_TOWS_LOG:
 			map_o->log_file = buffer_init();
 			buffer_add_str(map_o->log_file, yytext);
+		case MAP_MD_TOWS_LOG_LEVEL:
+			i = atoi(yytext);
+			if (i > 0 && i < 16) map_o->log_level = i;
+			return;
+                case MAP_MD_TOWS_WFS_DEFAULT_VERSION:
+			ows_version_set_str(map_o->wfs_default_version, yytext);
+			return;
 		case MAP_MD_TOWS_DEGREE_PRECISION:
 			i = atoi(yytext);
 			if (i > 0 && i < 12) map_o->degree_precision = i;

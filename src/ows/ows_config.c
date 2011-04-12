@@ -35,7 +35,7 @@
 static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
 {
     xmlChar *a;
-    int precision;
+    int precision, log_level;
 
     assert(o);
     assert(r);
@@ -59,19 +59,24 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     }
 
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "log_level");
+    if (a) {
+        log_level = atoi((char *) a);
+        if (log_level > 0 && log_level < 16) o->log_level = log_level;
+        xmlFree(a);
+    }
+
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "degree_precision");
     if (a) {
         precision = atoi((char *) a);
-        if (precision > 0 && precision < 12)
-            o->degree_precision = precision;
+        if (precision > 0 && precision < 12) o->degree_precision = precision;
         xmlFree(a);
     }
 
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "meter_precision");
     if (a) {
         precision = atoi((char *) a);
-        if (precision > 0 && precision < 12)
-            o->meter_precision = precision;
+        if (precision > 0 && precision < 12) o->meter_precision = precision;
         xmlFree(a);
     }
 
@@ -108,6 +113,12 @@ static void ows_parse_config_tinyows(ows * o, xmlTextReaderPtr r)
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "expose_pk");
     if (a) {
         if (atoi((char *) a)) o->expose_pk = true;
+        xmlFree(a);
+    }
+
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "wfs_default_version");
+    if (a) {
+        ows_version_set_str(o->wfs_default_version, (char *) a);
         xmlFree(a);
     }
 }
@@ -530,6 +541,11 @@ static void ows_config_check(ows * o)
     if (!o->online_resource->use) {
         ows_error(o, OWS_ERROR_CONFIG_FILE, "No 'online_resource' property in tinyows element",
                   "parse_config_file");
+        return;
+    }
+
+    if (!ows_version_check(o->wfs_default_version)) {
+        ows_error(o, OWS_ERROR_CONFIG_FILE, "WFS Default version is not correct.", "parse_config_file");
         return;
     }
 

@@ -66,7 +66,6 @@ static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr, buffer
     }
 
     buffer_free(cmd_status);
-
     PQclear(res);
 
     return result;
@@ -199,8 +198,7 @@ static void wfs_transaction_result(ows * o, wfs_request * wr, buffer * result, b
 /*
  * Write the transaction response in XML
  */
-static void wfs_transaction_response(ows * o, wfs_request * wr,
-                                     buffer * result, buffer * locator)
+static void wfs_transaction_response(ows * o, wfs_request * wr, buffer * result, buffer * locator)
 {
     assert(o);
     assert(wr);
@@ -243,8 +241,7 @@ static void wfs_transaction_response(ows * o, wfs_request * wr,
 /*
  * Add a content node value to a buffer
  */
-static buffer *wfs_retrieve_value(ows * o, wfs_request * wr, buffer * value,
-						xmlDocPtr xmldoc, xmlNodePtr n)
+static buffer *wfs_retrieve_value(ows * o, wfs_request * wr, buffer * value, xmlDocPtr xmldoc, xmlNodePtr n)
 {
     xmlChar *content;
     char *content_escaped;
@@ -291,14 +288,17 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
     content = NULL;
 
     for (att = n->properties ; att ; att = att->next) {
-        if (strcmp((char *) att->name, "typeName") == 0) {
+
+        if (!strcmp((char *) att->name, "typeName")) {
             content = xmlNodeGetContent(att->children);
             buffer_add_str(typename, (char *) content);
-            wfs_request_remove_namespaces(o, typename);
+            wfs_request_remove_namespaces(o, typename);  /* FIXME need to be rewrite */
+
             if (!ows_layer_writable(o->layers, typename)) {
             	xmlFree(content);
     		return NULL;
 	    }
+
             xmlFree(content);
     	    return typename;
         }
@@ -386,10 +386,8 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
          * In both cases no other attribute allowed in this element
          * and in both cases (f)id is optionnal !
          */ 
-        if (xmlHasProp(n, (xmlChar *) "id"))
-            attr = xmlGetProp(n, (xmlChar *) "id");
-        else if (xmlHasProp(n, (xmlChar *) "fid"))
-            attr = xmlGetProp(n, (xmlChar *) "fid");
+             if (xmlHasProp(n, (xmlChar *) "id"))  attr = xmlGetProp(n, (xmlChar *) "id");
+        else if (xmlHasProp(n, (xmlChar *) "fid")) attr = xmlGetProp(n, (xmlChar *) "fid");
         
         if (attr) {
             id = buffer_init();
@@ -479,8 +477,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                 buffer_add(sql, ',');
                 buffer_add(values, ',');
 
-                column = buffer_init();
-                buffer_add_str(column, (char *) node->name);
+                column = buffer_from_str((char *) node->name);
 
                 buffer_add_str(sql, "\"");
                 buffer_copy(sql, column);
@@ -499,6 +496,17 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                         fe = filter_encoding_init();
                         fe->sql = buffer_init();
                         fe->sql = fe_envelope(o, layer_name, fe, elemt);
+			if (fe->error_code != FE_NO_ERROR) {
+				result = fill_fe_error(o, fe);
+             			buffer_free(sql);
+             		buffer_free(handle);
+            		 	buffer_free(values);
+                            	buffer_free(column);
+                            	buffer_free(id);
+             			buffer_free(layer_name);
+                        	filter_encoding_free(fe);
+				return result;
+			}
                         buffer_copy(values, fe->sql);
                         filter_encoding_free(fe);
 
@@ -518,8 +526,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                             buffer_free(column);
                             buffer_free(id);
 
-                            result = buffer_init();
-                            buffer_add_str(result, "Error invalid Geometry");
+                            result = buffer_from_str("Error invalid Geometry");
                             return result;
                         }
                    }
@@ -594,8 +601,7 @@ void wfs_delete(ows * o, wfs_request * wr)
         /* define a layer_name which match typename or featureid */
         layer_name = buffer_init();
 
-        if (wr->typename)
-            buffer_copy(layer_name, ln_typename->value);
+        if (wr->typename) buffer_copy(layer_name, ln_typename->value);
         else {
             fe = list_explode('.', mln_fid->value->first->value);
             buffer_copy(layer_name, fe->first->value);
@@ -627,14 +633,14 @@ void wfs_delete(ows * o, wfs_request * wr)
         }
         /* BBOX */
         else if (wr->bbox) where = fe_kvp_bbox(o, wr, layer_name, wr->bbox);
+
         /* Filter */
         else {
             if (ln_filter->value->use) {
                 where = buffer_init();
                 buffer_add_str(where, " WHERE ");
                 filter = filter_encoding_init();
-                filter =
-                    fe_filter(o, filter, layer_name, ln_filter->value);
+                filter = fe_filter(o, filter, layer_name, ln_filter->value);
 
                 if (filter->error_code != FE_NO_ERROR) {
                     buffer_free(where);
@@ -701,8 +707,7 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     if (!typename || !s || !t) {
         if (typename) buffer_free(typename);
         buffer_free(sql);
-        result = buffer_init();
-        buffer_add_str(result, "Typename provided is unknown or not writable");
+        result = buffer_from_str("Typename provided is unknown or not writable");
 
 	return result;
     }
@@ -781,8 +786,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     if (!typename || !s || !t) {
         if (typename) buffer_free(typename);
         buffer_free(sql);
-        result = buffer_init();
-        buffer_add_str(result, "Typename provided is unknown or not writable");
+        buffer_from_str("Typename provided is unknown or not writable");
     }
 
     buffer_copy(sql, s);
@@ -805,8 +809,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
             if (!strcmp((char *) n->name, "Property")) {
                 node = n->children;
 
-                while (node->type != XML_ELEMENT_NODE)
-                    node = node->next;
+                while (node->type != XML_ELEMENT_NODE) node = node->next;
 
                 property_name = buffer_init();
 
@@ -834,8 +837,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                         elemt = node->children;
 
                         /* jump to the next element if there are spaces */
-                        while (elemt->type != XML_ELEMENT_NODE)
-                            elemt = elemt->next;
+                        while (elemt->type != XML_ELEMENT_NODE) elemt = elemt->next;
 
                         if (!strcmp((char *) elemt->name, "Box") ||
 			    !strcmp((char *) elemt->name, "Envelope")) {
@@ -843,8 +845,19 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                             fe = filter_encoding_init();
                             fe->sql = buffer_init();
                             fe->sql = fe_envelope(o, typename, fe, elemt);
-                            buffer_copy(values, fe->sql);
+
+                	    if (fe->error_code != FE_NO_ERROR) {
+                    		result = fill_fe_error(o, fe);
+                   		buffer_free(values);
+                   		buffer_free(sql);
+                   		buffer_free(typename);
+                		buffer_free(property_name);
+                            	filter_encoding_free(fe);
+                    		return result;
+               		    }
+
                             filter_encoding_free(fe);
+                            buffer_copy(values, fe->sql);
 
                         } else if (!strcmp((char *) elemt->name, "Null")) {
                             buffer_add_str(values, "''");
@@ -855,9 +868,15 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                                 buffer_copy(values, gml);
                                 buffer_add_str(values, "'");
                                 buffer_free(gml);
-                            } /* TODO else case */
-                        }
-
+                            } else {
+                   		buffer_free(values);
+                   		buffer_free(typename);
+                		buffer_free(property_name);
+                   		buffer_free(sql);
+                    		result = buffer_from_str("Invalid GML Geometry");
+				return result;
+                            }
+			}
                     } else values = wfs_retrieve_value(o, wr, values, xmldoc, node);
 
                     buffer_copy(sql, values);
@@ -879,9 +898,10 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                     buffer_free(xmlstring);
                     filter_encoding_free(filter);
                     buffer_free(values);
-                    buffer_free(typename);
                     buffer_free(sql);
+                    buffer_free(typename);
                     return result;
+
                 } else {
                     buffer_copy(sql, filter->sql);
                     buffer_free(xmlstring);
@@ -890,10 +910,9 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
             }
         }
 
-        if (n->next && !strcmp((char *) n->next->name, "Property"))
-		buffer_add_str(sql, ",");
+        if (n->next && !strcmp((char *) n->next->name, "Property")) buffer_add_str(sql, ",");
 
-    buffer_free(values);
+        buffer_free(values);
     }
 
     buffer_add_str(sql, "; ");
@@ -940,7 +959,7 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
     n = xmldoc->children;
     while (n->type != XML_ELEMENT_NODE) n = n->next;
     n = n->children;
-    while (n->type != XML_ELEMENT_NODE) n = n->next; /*FIXME really ? */
+    while (n->type != XML_ELEMENT_NODE) n = n->next; /* FIXME really ? */
 
     /* initialize the transaction inside postgresql */
     buffer_add_str(sql, "BEGIN;");

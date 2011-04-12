@@ -250,12 +250,12 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     /* jump to the next element if there are spaces */
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    /* FIXME: add schema name */
     if (o->request->request.wfs->srs) {
         transform = true;
-        buffer_add_str(fe->sql, "st_transform(");
+        buffer_add_str(fe->sql, "ST_Transform(");
     }
 
+    /* display the property name (surrounded by quotes) */
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
     if (transform) {
@@ -279,7 +279,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
         if (sql) { 
             buffer_copy(fe->sql, sql);
             buffer_free(sql);
-        } /* TODO else case */
+        } else fe->error_code = FE_ERROR_GEOMETRY;
    	buffer_add_str(fe->sql, "'");
     }
 
@@ -328,7 +328,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     /* jump to the next element if there are spaces */
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    /* display the property name */
+    /* display the property name (surrounded by quotes) */
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
     buffer_add_str(fe->sql, "),ST_centroid('");
@@ -342,7 +342,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     if (sql) {
         buffer_copy(fe->sql, sql);
         buffer_free(sql);
-    } /* TODO else case */
+    } else fe->error_code = FE_ERROR_GEOMETRY;
 
     buffer_add_str(fe->sql, "'))");
 
@@ -386,18 +386,17 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
     assert(fe);
     assert(n);
 
-    buffer_add_str(fe->sql, "st_intersects(");
+    buffer_add_str(fe->sql, "ST_Intersects(");
 
     if (o->request->request.wfs->srs) {
         transform = true;
-        buffer_add_str(fe->sql, "st_transform(");
+        buffer_add_str(fe->sql, "ST_Transform(");
     }
 
     n = n->children;
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    /* FIXME add schema name ! */ 
-    /* display the property name */
+    /* display the property name (surrounded by quotes) */
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
 
     if (transform) {

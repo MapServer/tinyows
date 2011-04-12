@@ -291,7 +291,6 @@ static void ows_kvp_or_xml(ows *o, char *query)
         /* WFS 1.1.0 mandatory */
         if (     !strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded"))
             o->request->method = OWS_METHOD_KVP;
-
         else if (!strcmp(getenv("CONTENT_TYPE"), "text/xml"))
             o->request->method = OWS_METHOD_XML;
 

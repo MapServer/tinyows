@@ -105,9 +105,9 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
             return;
     }
 
-    if (wr->format == WFS_GML2)
+         if (wr->format == WFS_GML212)
     	fprintf(o->output, "Content-Type: text/xml; subtype=gml/2.1.2\n\n");
-    else
+    else if (wr->format == WFS_GML311)
     	fprintf(o->output, "Content-Type: text/xml; subtype=gml/3.1.1\n\n");
 
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);

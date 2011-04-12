@@ -51,24 +51,16 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin, float
     } else {
         fprintf(o->output, "<gml:boundedBy>\n");
 
-        if (wr->format == WFS_GML2) {
+        if (wr->format == WFS_GML212) {
             fprintf(o->output, "  <gml:Box srsName=\"EPSG:%d\">", srid);
-            fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">");
-            fprintf(o->output, "%f,", xmin);
-            fprintf(o->output, "%f ", ymin);
-            fprintf(o->output, "%f,", xmax);
-            fprintf(o->output, "%f</gml:coordinates>", ymax);
+            fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
+                               xmin, ymin, xmax, ymax);
             fprintf(o->output, "</gml:Box>\n");
 
-        } else if (wr->format == WFS_GML3) {
+        } else if (wr->format == WFS_GML311) {
             fprintf(o->output, "  <gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::%d\">", srid);
-            fprintf(o->output, "<gml:lowerCorner>");
-            fprintf(o->output, "%f ", xmin);
-            fprintf(o->output, "%f", ymin);
-            fprintf(o->output, "</gml:lowerCorner>");
-            fprintf(o->output, "<gml:upperCorner>");
-            fprintf(o->output, "%f ", xmax);
-            fprintf(o->output, "%f</gml:upperCorner>", ymax);
+            fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", xmin, ymin);
+            fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", xmax, ymax);
             fprintf(o->output, "</gml:Envelope>\n");
         }
     
@@ -109,27 +101,14 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
     /* name and description fields if exists belong to GML namespace */
     if (!strcmp(prop_name, "name") || !strcmp(prop_name, "description")) gml_ns = true;
 
-#if 0
-    /* Used in CITE 1.0 Unit test as geometry column name 
-       TODO: what about a more generic way to handle that ? */
-    if (wr->format == WFS_GML2
-            && (!strcmp(prop_name, "pointProperty")
-            || !strcmp(prop_name, "multiPointProperty")
-            || !strcmp(prop_name, "lineStringProperty")
-            || !strcmp(prop_name, "multiLineStringProperty")
-            || !strcmp(prop_name, "polygonProperty")
-            || !strcmp(prop_name, "multiPolygonProperty")))
-        gml_ns = true;
-#endif
-
     if (gml_ns == true) fprintf(o->output, "   <gml:%s>", prop_name);
     else                fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name);
 
     /* PSQL date must be transformed into GML format */
-    if (buffer_cmp(prop_type, "timestamptz")
-            || buffer_cmp(prop_type, "timestamp")
-            || buffer_cmp(prop_type, "datetime")
-            || buffer_cmp(prop_type, "date")) {
+    if (    buffer_cmp(prop_type, "timestamptz")
+         || buffer_cmp(prop_type, "timestamp")
+         || buffer_cmp(prop_type, "datetime")
+         || buffer_cmp(prop_type, "date")) {
         time = ows_psql_timestamp_to_xml_time(value);
         fprintf(o->output, "%s", time->buf);
         buffer_free(time);
@@ -139,9 +118,10 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
         if (!strcmp(value, "t")) fprintf(o->output, "true");
         if (!strcmp(value, "f")) fprintf(o->output, "false");
 
-    } else if (buffer_cmp(prop_type, "text")
-            || buffer_ncmp(prop_type, "char", 4)
-            || buffer_ncmp(prop_type, "varchar", 7)) {
+    } else if (    buffer_cmp(prop_type, "text")
+                || buffer_ncmp(prop_type, "char", 4)
+                || buffer_ncmp(prop_type, "varchar", 7)) {
+
 	    value_encoded = buffer_encode_xml_entities_str(value);
             fprintf(o->output, "%s", value_encoded->buf);
             buffer_free(value_encoded);
@@ -185,7 +165,7 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
 
         /* print layer's name and id according to GML version */
         if (id_name && id_name->use) {
-            if (wr->format == WFS_GML3)
+            if (wr->format == WFS_GML311)
                 fprintf(o->output,  "   <%s:%s gml:id=\"%s.%s\">\n",
                         ns_prefix->buf, layer_name->buf, layer_name->buf, PQgetvalue(res, i, number));
             else fprintf(o->output, "   <%s:%s fid=\"%s.%s\">\n",
@@ -229,7 +209,11 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     namespaces = ows_layer_list_namespaces(o->layers);
     assert(namespaces);
 
-    fprintf(o->output, "Content-Type: application/xml\n\n");
+         if (wr->format == WFS_GML212)
+         fprintf(o->output, "Content-Type: text/xml; subtype=gml/2.1.2\n\n");
+    else if (wr->format == WFS_GML311)
+         fprintf(o->output, "Content-Type: text/xml; subtype=gml/3.1.1\n\n");
+
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
     fprintf(o->output, "<wfs:FeatureCollection\n");
 
@@ -271,7 +255,7 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
         fprintf(o->output, "   http://schemas.opengis.net/wfs/1.1.0/wfs.xsd\n");
     }
 
-    if (wr->format == WFS_GML2) {
+    if (wr->format == WFS_GML212) {
         fprintf(o->output, "   http://www.opengis.net/gml\n");
         fprintf(o->output, "   http://schemas.opengis.net/gml/2.1.2/feature.xsd'\n");
     } else {
@@ -426,7 +410,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
         /* geometry columns must be returned in GML */
         if (ows_psql_is_geometry_column(o, layer_name, an->key)) {
 
-            if (wr->format == WFS_GML2) {
+            if (wr->format == WFS_GML212) {
                 buffer_add_str(select, "ST_AsGml(2, ");
 
                 /* Geometry Reprojection on the fly step if asked */
@@ -454,7 +438,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                 buffer_add_str(select, "\" ");
             }
             /* GML3 */
-            else if (wr->format == WFS_GML3) {
+            else if (wr->format == WFS_GML311) {
                 buffer_add_str(select, "ST_AsGml(3, ");
 
                 /* Geometry Reprojection on the fly step if asked */
@@ -817,7 +801,7 @@ void wfs_get_feature(ows * o, wfs_request * wr)
     request_list = wfs_retrieve_sql_request_list(o, wr);
     if (!request_list) return;
        
-    if (wr->format == WFS_GML2 || wr->format == WFS_GML3) {
+    if (wr->format == WFS_GML212 || wr->format == WFS_GML311) {
         /* display result of the GetFeature request in GML */
         if (buffer_cmp(wr->resulttype, "hits"))
             wfs_gml_display_hits(o, wr, request_list);

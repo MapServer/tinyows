@@ -493,19 +493,19 @@ static void wfs_request_check_output(ows * o, wfs_request * wr)
         /* put the default values according to WFS version and request name */
         if (ows_version_get(o->request->version) == 100) {
             if (wr->request == WFS_GET_FEATURE)
-                wr->format = WFS_GML2;
+                wr->format = WFS_GML212;
             /* DescribeFeatureType */
             else
                 wr->format = WFS_XML_SCHEMA;
         } else
-            wr->format = WFS_GML3;
+            wr->format = WFS_GML311;
     } else {
         if (buffer_cmp(array_get(o->cgi, "outputformat"), "GML2")
                 || buffer_cmp(array_get(o->cgi, "outputformat"), "text/xml; subtype=gml/2.1.2"))
-            wr->format = WFS_GML2;
+            wr->format = WFS_GML212;
         else if (buffer_cmp(array_get(o->cgi, "outputformat"), "GML3")
                  || buffer_cmp(array_get(o->cgi, "outputformat"), "text/xml; subtype=gml/3.1.1"))
-            wr->format = WFS_GML3;
+            wr->format = WFS_GML311;
         else if (buffer_cmp(array_get(o->cgi, "outputformat"), "JSON")
                 || buffer_cmp(array_get(o->cgi, "outputformat"), "application/json"))
             wr->format = WFS_GEOJSON;

@@ -491,6 +491,7 @@ static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n, xmlNodePtr
         /* GML SF Geometries Types */
         if (   !strcmp((char *) n->name, "Point")
             || !strcmp((char *) n->name, "LineString")
+            || !strcmp((char *) n->name, "LinearRing")
             || !strcmp((char *) n->name, "Curve")
             || !strcmp((char *) n->name, "Polygon")
             || !strcmp((char *) n->name, "Surface")

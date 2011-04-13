@@ -261,6 +261,7 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
     xmlChar *content;
     array *prop_table;
     buffer *tmp;
+    list *l;
 
     assert(o);
     assert(typename);
@@ -283,6 +284,16 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
     /* check if propertyname is an Xpath expression */
     if (check_regexp(tmp->buf, "\\*\\["))
         tmp = fe_xpath_property_name(o, typename, tmp);
+   
+    /* if propertyname have an Xpath suffix */
+    /* FIXME i just can't get these use case */
+    if (check_regexp(tmp->buf, ".*\\[[0-9]+\\]")) 
+    {
+	l = list_explode('[', tmp);
+	buffer_empty(tmp);
+	buffer_copy(tmp, l->first->value);
+	list_free(l);
+    }
 
     /* remove namespaces */
     tmp = wfs_request_remove_namespaces(o, tmp);

@@ -319,6 +319,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     filter_encoding *fe;
     xmlNodePtr node, elemt;
     PGresult *res;
+    array * table;
     buffer *id = NULL;
     xmlChar *attr = NULL;
     enum wfs_insert_idgen idgen = WFS_GENERATE_NEW;
@@ -474,6 +475,13 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                    || !strcmp("http://www.opengis.net/gml", (char *) node->ns->href)
                    || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href))) {
 
+		  /* We have to ignore if not present in database, 
+                     gml elements (name, description, boundedBy) */
+                  if (    !strcmp("http://www.opengis.net/gml", (char *) node->ns->href)
+                       || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href)) {
+		      table = ows_psql_describe_table(o, layer_name);
+		      if (!array_is_key(table, (char *) node->name)) continue;
+		  }
                 buffer_add(sql, ',');
                 buffer_add(values, ',');
 
@@ -766,6 +774,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     filter_encoding *filter, *fe;
     xmlNodePtr node, elemt;
     xmlChar *content;
+    array *table;
 
     assert(o);
     assert(wr);
@@ -810,6 +819,14 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                 node = n->children;
 
                 while (node->type != XML_ELEMENT_NODE) node = node->next;
+
+                /* We have to ignore if not present in database, 
+                   gml elements (name, description, boundedBy) */
+                if (    !strcmp("http://www.opengis.net/gml", (char *) node->ns->href)
+                     || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href)) {
+		      table = ows_psql_describe_table(o, typename);
+		      if (!array_is_key(table, (char *) node->name)) continue;
+		}
 
                 property_name = buffer_init();
 

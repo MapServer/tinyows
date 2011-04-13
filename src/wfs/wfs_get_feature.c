@@ -98,8 +98,10 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
     if (!strcmp(prop_name, "boundedBy")) return;
 #endif
 
-    /* name and description fields if exists belong to GML namespace */
-    if (!strcmp(prop_name, "name") || !strcmp(prop_name, "description")) gml_ns = true;
+    /* name, descriptionand boundedBy fields if exists belong to GML namespace */
+    if (    !strcmp(prop_name, "name")
+         || !strcmp(prop_name, "description")
+         || !strcmp(prop_name, "boundedBy")) gml_ns = true;
 
     if (gml_ns == true) fprintf(o->output, "   <gml:%s>", prop_name);
     else                fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name);

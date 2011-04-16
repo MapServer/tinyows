@@ -396,7 +396,8 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
 
             buffer_copy(fe->sql, id_name);
             buffer_add_str(fe->sql, " = \'");
-            buffer_copy(fe->sql, fe_list->last->value);
+            buffer_shift(buf_fid, strlen(typename->buf) + 1); /* +1 mean dot separator */
+            buffer_copy(fe->sql, buf_fid);
             buffer_add_str(fe->sql, "\'");
             list_free(fe_list);
             buffer_free(buf_fid);

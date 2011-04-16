@@ -48,6 +48,13 @@ static void ows_pg(ows * o, char *con_str)
 	ows_log(o, 1, PQerrorMessage(o->pg));
         ows_error(o, OWS_ERROR_CONNECTION_FAILED, "Wrong database encoding", "init_OWS");
     }
+
+    o->postgis_version = ows_psql_postgis_version(o);
+    if (!o->postgis_version)
+        ows_error(o, OWS_ERROR_CONNECTION_FAILED, "No PostGIS available in database", "init_OWS");
+
+    if (ows_version_get(o->postgis_version) < 150)
+        ows_error(o, OWS_ERROR_CONNECTION_FAILED, "PostGIS version must be at least 1.5.0", "init_OWS");
 }
 
 
@@ -91,6 +98,7 @@ static ows *ows_init()
     o->check_valid_geom = true;
     o->metadata = NULL;
     o->contact = NULL;
+    o->postgis_version = NULL;
     o->schema_wfs_100_basic = NULL;
     o->schema_wfs_100_trans = NULL;
     o->schema_wfs_110_basic = NULL;
@@ -123,6 +131,18 @@ void ows_flush(ows * o, FILE * output)
     if (o->log_file)        fprintf(output, "log file: %s\n", (char *) o->log_file->buf);
     if (o->encoding)        fprintf(output, "encoding: %s\n", (char *) o->encoding->buf);
     if (o->db_encoding)     fprintf(output, "db_encoding: %s\n", (char *) o->db_encoding->buf);
+
+    if (o->postgis_version) {
+        fprintf(output, "PostGIS version: %d.%d.%d\n", o->postgis_version->major,
+                                                       o->postgis_version->minor,
+                                                       o->postgis_version->release);
+    }
+
+    if (o->wfs_default_version) {
+        fprintf(output, "WFS default version: %d.%d.%d\n", o->wfs_default_version->major,
+                                                           o->wfs_default_version->minor,
+                                                           o->wfs_default_version->release);
+    }
 
     if (o->metadata) {
         fprintf(output, "metadata: ");
@@ -208,6 +228,7 @@ void ows_free(ows * o)
     if (o->encoding)	   	 buffer_free(o->encoding);
     if (o->db_encoding)		 buffer_free(o->db_encoding);
     if (o->wfs_default_version)  ows_version_free(o->wfs_default_version);
+    if (o->postgis_version)      ows_version_free(o->postgis_version);
     if (o->schema_wfs_100_basic) xmlSchemaFree(o->schema_wfs_100_basic);
     if (o->schema_wfs_100_trans) xmlSchemaFree(o->schema_wfs_100_trans);
     if (o->schema_wfs_110_basic) xmlSchemaFree(o->schema_wfs_110_basic);
@@ -271,6 +292,8 @@ void ows_usage(ows * o)
     fprintf(stdout, "Estimated extent:  %s\n", o->estimated_extent?"Yes":"No");
     fprintf(stdout, "Check schema:      %s\n", o->check_schema?"Yes":"No");
     fprintf(stdout, "Check valid geoms: %s\n", o->check_valid_geom?"Yes":"No");
+
+/* TODO PostGIS version */
 
     fprintf(stdout, "Available layers:\n");
     ows_layers_storage_flush(o, stdout);

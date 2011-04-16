@@ -81,7 +81,7 @@ static  buffer *fe_transform_coord_gml2_to_psql(buffer * coord)
 buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
     xmlChar *content, *srsname;
-    buffer *srid, *name, *tmp, *srsname_b;
+    buffer *srid, *name, *tmp;
     list *coord_min, *coord_max, *coord_pair;
     int srid_int;
     bool ret;
@@ -108,14 +108,11 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
 
 
     if (srsname) {
-        srsname_b = buffer_init();
-        buffer_add_str(srsname_b, (char *) srsname);
 	s = ows_srs_init();
 
-	if (!ows_srs_set_from_srsname(o, s, srsname_b)) {
+	if (!ows_srs_set_from_srsname(o, s, (char *) srsname)) {
             fe->error_code = FE_ERROR_SRS;
             xmlFree(srsname);
-            buffer_free(srsname_b);
             buffer_free(name);
             buffer_free(srid);
             ows_srs_free(s);
@@ -123,7 +120,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         }
 
         xmlFree(srsname);
-        buffer_free(srsname_b);
     }
 
 
@@ -275,7 +271,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
         fe->sql = fe_envelope(o, typename, fe, n);
     else  {
    	buffer_add_str(fe->sql, "'");
-        sql = ows_psql_gml_to_sql(o, n);
+        sql = ows_psql_gml_to_sql(o, n, 0);
         if (sql) { 
             buffer_copy(fe->sql, sql);
             buffer_free(sql);
@@ -313,6 +309,8 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     if (!strcmp((char *) n->name, "DWithin"))
         buffer_add_str(op, " < ");
 
+/* FIXME: as geography support available no need to keep this hack ! */
+
     /* parameters are passed with centroid function because
        Distance_sphere parameters must be points
        So to be able to calculate distance between lines or polygons
@@ -338,7 +336,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     /* display the geometry */
-    sql = ows_psql_gml_to_sql(o, n);
+    sql = ows_psql_gml_to_sql(o, n, 0);
     if (sql) {
         buffer_copy(fe->sql, sql);
         buffer_free(sql);

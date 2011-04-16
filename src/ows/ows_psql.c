@@ -260,6 +260,40 @@ array *ows_psql_describe_table(ows * o, buffer * layer_name)
 }
 
 
+/* 
+ * Retrieve an ows_version, related to current PostGIS version.
+ */
+ows_version * ows_psql_postgis_version(ows *o)
+{
+    list *l;
+    PGresult * res;
+    ows_version * v = NULL; 
+
+    res = PQexec(o->pg, "SELECT substr(postgis_full_version(), 10, 5)");
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+         PQclear(res);
+         return NULL;
+    }
+
+    l = list_explode_str('.', (char *) PQgetvalue(res, 0, 0));
+
+    if (    l->size == 3 
+         && check_regexp(l->first->value->buf,       "^[0-9]+$")
+         && check_regexp(l->first->next->value->buf, "^[0-9]+$")
+         && check_regexp(l->last->value->buf,        "^[0-9]+$") )
+        {
+	    v = ows_version_init();
+            v->major   = atoi(l->first->value->buf);
+            v->minor   = atoi(l->first->next->value->buf);
+            v->release = atoi(l->last->value->buf);
+        }
+ 
+    list_free(l);
+    PQclear(res);
+    return v;
+}
+
+
 /*
  * Convert a PostgreSql type to a valid
  * OGC XMLSchema's type
@@ -488,6 +522,10 @@ static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n, xmlNodePtr
 
         if (n->type != XML_ELEMENT_NODE) continue;
 
+        /* Check on namespace GML 3 and GML 3.2 */
+	if (    strcmp("http://www.opengis.net/gml",     (char *) n->ns->href)
+             && strcmp("http://www.opengis.net/gml/3.2", (char *) n->ns->href)) continue;
+
         /* GML SF Geometries Types */
         if (   !strcmp((char *) n->name, "Point")
             || !strcmp((char *) n->name, "LineString")
@@ -500,11 +538,7 @@ static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n, xmlNodePtr
             || !strcmp((char *) n->name, "MultiCurve")
             || !strcmp((char *) n->name, "MultiPolygon")
             || !strcmp((char *) n->name, "MultiSurface")
-            || !strcmp((char *) n->name, "MultiGeometry")) {
-
-            return n;
-        }
-        /* TODO Add check on namespace GML 3 and GML 3.2 */
+            || !strcmp((char *) n->name, "MultiGeometry")) return n;
 
         /* Recursive exploration */
         if (n->children)
@@ -521,7 +555,7 @@ static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n, xmlNodePtr
  * Transform a GML geometry to PostGIS EWKT
  * Return NULL on error
  */
-buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n)
+buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, int srid)
 {
     PGresult *res;
     xmlNodePtr g;
@@ -540,11 +574,18 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n)
     sql = buffer_init();
     buffer_add_str(sql, "SELECT ST_GeomFromGML('");
     buffer_add_str(sql, gml->buf);
-    buffer_add_str(sql, "')");
+
+    if (ows_version_get(o->postgis_version) >= 200) {
+       buffer_add_str(sql, "',");
+       buffer_add_int(sql, srid);
+       buffer_add_str(sql, ")");
+    } else { 
+       /* Means PostGIS 1.5 */
+       buffer_add_str(sql, "')");
+    }
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(gml);
-
 
     /* GML Parse errors cases */
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {

@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <ctype.h>
 #include <libpq-fe.h>
 #include <string.h>
 
@@ -103,9 +104,7 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
     assert(auth_name);
 
     sql = buffer_init();
-    buffer_add_str(sql, "SELECT srid, position('+units=m ' in proj4text) ");
-    buffer_add_str(sql, "FROM spatial_ref_sys ");
-    buffer_add_str(sql, "WHERE auth_name='");
+    buffer_add_str(sql, "SELECT srid, position('+units=m ' in proj4text) FROM spatial_ref_sys WHERE auth_name='");
     buffer_copy(sql, auth_name);
     buffer_add_str(sql, "' AND auth_srid=");
     buffer_add_int(sql, auth_srid);
@@ -113,8 +112,7 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
-    /* If query dont return exactly 1 result, it means projection is
-       not handled */
+    /* If query dont return exactly 1 result, it means projection is not handled */
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
         PQclear(res);
         return false;
@@ -192,11 +190,11 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
 /*
  * Set projection value into srs structure
  */
-bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
+bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const char *srsname)
 {
-    int srid = -1;
-    list * tokens = NULL;
     char sep;
+    int srid = -1;
+    const char *p = NULL;
 
     assert(o);
     assert(s);
@@ -219,35 +217,33 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const buffer * srsname)
                              http://www.epsg.org/6.11.2/4326
      */
 
-     if (!strncmp((char *) srsname->buf,        "EPSG:", 5)) {
+     if (!strncmp((char *) srsname,        "EPSG:", 5)) {
          sep = ':';
          s->is_reverse_axis = false;
 
-     } else if (!strncmp((char *) srsname->buf, "urn:ogc:def:crs:EPSG:", 21)
-             || !strncmp((char *) srsname->buf, "urn:x-ogc:def:crs:EPSG:", 23)
-             || !strncmp((char *) srsname->buf, "urn:EPSG:geographicCRS:", 23)) {
+     } else if (!strncmp((char *) srsname, "urn:ogc:def:crs:EPSG:", 21)
+             || !strncmp((char *) srsname, "urn:x-ogc:def:crs:EPSG:", 23)
+             || !strncmp((char *) srsname, "urn:EPSG:geographicCRS:", 23)) {
          sep = ':';
          s->is_reverse_axis = true;
 
-     } else if (!strncmp((char *) srsname->buf, "http://www.opengis.net/gml/srs/epsg.xml#", 40)) {
+     } else if (!strncmp((char *) srsname, "http://www.opengis.net/gml/srs/epsg.xml#", 40)) {
          sep = '#';
          s->is_reverse_axis = false;
 
-     } else if (!strncmp((char *) srsname->buf, "http://www.epsg.org/", 20)) {
+     } else if (!strncmp((char *) srsname, "http://www.epsg.org/", 20)) {
          sep = '/';
          s->is_reverse_axis = false;
 
      } else return false;
 
-     tokens = list_explode(sep, srsname);
+     /*  Retrieve from last separator to the end of srsName string */
+     for (p = srsname ; *p ; p++);
+     for (--p ; *p != sep ; p--)
+         if (!isdigit(*p)) return false;
+     srid = atoi(++p);
 
-    if (tokens->last->value && tokens->last->value->buf)
-        srid = atoi(tokens->last->value->buf);  /* TODO Add regexp isdigit test */
-    else return false;
-
-    list_free(tokens);
-
-    return ows_srs_set_from_srid(o, s, srid);
+     return ows_srs_set_from_srid(o, s, srid);
 }
 
 

@@ -316,10 +316,12 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 {
     buffer *values, *column, *layer_name, *layer_ns_prefix, *result, *sql, *gml;
     buffer *handle, *id_column, *fid_full_name, *dup_sql;
-    filter_encoding *fe;
     xmlNodePtr node, elemt;
+    filter_encoding *fe;
     PGresult *res;
     array * table;
+    ows_srs * srs_root;
+    int srid_root = 0;
     buffer *id = NULL;
     xmlChar *attr = NULL;
     enum wfs_insert_idgen idgen = WFS_GENERATE_NEW;
@@ -356,12 +358,33 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         attr = NULL;
     }
 
+    /*
+     * In WFS 1.1.0 default srsName could be define  
+     * TODO: what about for WFS 1.0.0 ?
+     */
+    if (xmlHasProp(n, (xmlChar *) "srsName")) {
+        attr =  xmlGetProp(n, (xmlChar *) "srsName");
+        srs_root = ows_srs_init();
+
+        if (!ows_srs_set_from_srsname(o, srs_root, (char *) attr)) {
+       	     ows_srs_free(srs_root);
+       	     xmlFree(attr);
+             result = buffer_from_str("Unkwnown or wrong CRS used");
+             return result;
+	}
+	
+        srid_root = srs_root->srid;
+        ows_srs_free(srs_root);
+        xmlFree(attr);
+        attr = NULL;
+    }
+
     n = n->children;
 
     /* jump to the next element if there are spaces */
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    /* insert elements layer by layer */
+    /* Create Insert SQL query for each Typename */
     for (; n; n = n->next) {
         if (n->type != XML_ELEMENT_NODE) continue;
 
@@ -465,10 +488,10 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
         node = n->children;
 
-        /* jump to the next element if there are spaces */
+        /* Jump to the next element if spaces */
         while (node->type != XML_ELEMENT_NODE) node = node->next;
 
-        /* fill fields and values at the same time */
+        /* Fill SQL fields and values at once */
         for (; node; node = node->next) {
             if (node->type == XML_ELEMENT_NODE && 
                  ( buffer_cmp(ows_layer_ns_uri(o->layers, layer_ns_prefix), (char *) node->ns->href)
@@ -491,11 +514,11 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                 buffer_copy(sql, column);
                 buffer_add_str(sql, "\"");
 
-                /*if column's type is geometry, transform the gml into WKT */
+                /* If column's type is a geometry, transform the GML into WKT */
                 if (ows_psql_is_geometry_column(o, layer_name, column)) {
                     elemt = node->children;
 
-                    /* jump to the next element if there are spaces */
+                    /* Jump to the next element if spaces */
                     while (elemt->type != XML_ELEMENT_NODE) elemt = elemt->next;
 
                     if (!strcmp((char *) elemt->name, "Box") ||
@@ -507,7 +530,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 			if (fe->error_code != FE_NO_ERROR) {
 				result = fill_fe_error(o, fe);
              			buffer_free(sql);
-             		buffer_free(handle);
+             		buffer_free(handle);   /* FIXME really ? */
             		 	buffer_free(values);
                             	buffer_free(column);
                             	buffer_free(id);
@@ -521,7 +544,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                     } else if (!strcmp((char *) elemt->name, "Null")) {
                         buffer_add_str(values, "''");
                     } else {
-                        gml = ows_psql_gml_to_sql(o, n);
+                        gml = ows_psql_gml_to_sql(o, elemt, srid_root);
                         if (gml) {
                             buffer_add_str(values, "'");
                             buffer_copy(values, gml);
@@ -545,13 +568,12 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
             }
         }
 
-        /* As id could be NULL in GML */
+        /* As 'id' could be NULL in GML */
         if (id->use) {  
             buffer_add_str(sql, ") VALUES ('");
             buffer_copy(sql, id);
             buffer_add_str(sql, "'");
-        } else 
-            buffer_add_str(sql, ") VALUES (null");
+        } else buffer_add_str(sql, ") VALUES (null");
 
         buffer_copy(sql, values);
         buffer_add_str(sql, "); ");
@@ -561,7 +583,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         buffer_free(id);
     }
 
-    /* run the request to insert all features at the same time */
+    /* Run the request to insert feature */
     result = wfs_execute_transaction_request(o, wr, sql);
     buffer_free(sql);
 
@@ -775,6 +797,9 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     xmlNodePtr node, elemt;
     xmlChar *content;
     array *table;
+    ows_srs *srs_root;
+    int srid_root = 0;
+    xmlChar *attr = NULL;
 
     assert(o);
     assert(wr);
@@ -783,8 +808,33 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
     sql = buffer_init();
     content = NULL;
-    s = t = NULL;
+    s = t = result = NULL;
 
+    /*
+     * In WFS 1.1.0 default srsName could be define  
+     * TODO: what about for WFS 1.0.0 ?
+     */
+    if (xmlHasProp(n, (xmlChar *) "srsName")) {
+        attr =  xmlGetProp(n, (xmlChar *) "srsName");
+        srs_root = ows_srs_init();
+
+        if (!ows_srs_set_from_srsname(o, srs_root, (char *) attr)) {
+       	     ows_srs_free(srs_root);
+       	     xmlFree(attr);
+             buffer_add_str(result, "Unkwnown or wrong CRS used");
+             return result;
+	}
+	
+        srid_root = srs_root->srid;
+        ows_srs_free(srs_root);
+        xmlFree(attr);
+        attr = NULL;
+    }
+
+    n = n->children;
+
+    /* jump to the next element if there are spaces */
+    while (n->type != XML_ELEMENT_NODE) n = n->next;
     buffer_add_str(sql, "UPDATE ");
 
     /*retrieve the name of the table in which features must be updated */
@@ -795,7 +845,8 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     if (!typename || !s || !t) {
         if (typename) buffer_free(typename);
         buffer_free(sql);
-        buffer_from_str("Typename provided is unknown or not writable");
+        result = buffer_from_str("Typename provided is unknown or not writable");
+	return result;
     }
 
     buffer_copy(sql, s);
@@ -879,7 +930,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                         } else if (!strcmp((char *) elemt->name, "Null")) {
                             buffer_add_str(values, "''");
                         } else {
-                            gml = ows_psql_gml_to_sql(o, n);
+                            gml = ows_psql_gml_to_sql(o, n, srid_root);
                             if (gml) {
                                 buffer_add_str(values, "'");
                                 buffer_copy(values, gml);

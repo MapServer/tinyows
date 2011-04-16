@@ -439,7 +439,7 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
 
     } else {
         b = array_get(o->cgi, "srsname");
-        if (!ows_srs_set_from_srsname(o, wr->srs, b)) {
+        if (!ows_srs_set_from_srsname(o, wr->srs, b->buf)) {
              list_free(layer_name);
              ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                         "srsName value use an unsupported value, for requested layer(s)",

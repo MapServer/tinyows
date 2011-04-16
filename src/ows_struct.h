@@ -379,6 +379,7 @@ typedef struct Ows {
     ows_layer_list * layers;
     ows_request * request;
     ows_version * wfs_default_version;
+    ows_version * postgis_version;
 
     xmlSchemaPtr  schema_wfs_100_basic;
     xmlSchemaPtr  schema_wfs_100_trans;

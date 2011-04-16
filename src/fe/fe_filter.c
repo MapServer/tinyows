@@ -429,7 +429,7 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buf
     assert(xmlchar);
 
     /* No validation if Filter came from KVP method */
-    if (o->request->method == OWS_METHOD_XML) {
+    if (o->check_schema && o->request->method == OWS_METHOD_XML) {
         schema_path = buffer_init();
         buffer_copy(schema_path, o->schema_dir);
 

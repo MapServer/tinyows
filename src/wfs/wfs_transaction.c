@@ -831,10 +831,6 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         attr = NULL;
     }
 
-    n = n->children;
-
-    /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE) n = n->next;
     buffer_add_str(sql, "UPDATE ");
 
     /*retrieve the name of the table in which features must be updated */
@@ -930,7 +926,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                         } else if (!strcmp((char *) elemt->name, "Null")) {
                             buffer_add_str(values, "''");
                         } else {
-                            gml = ows_psql_gml_to_sql(o, n, srid_root);
+                            gml = ows_psql_gml_to_sql(o, elemt, srid_root);
                             if (gml) {
                                 buffer_add_str(values, "'");
                                 buffer_copy(values, gml);

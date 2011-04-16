@@ -50,6 +50,8 @@ static char *wfs_error_code_string(enum wfs_error_code code)
             return "IncorrectSizeParameter";
         case WFS_ERROR_NO_MATCHING:
             return "NoMatching";
+        case WFS_ERROR_INVALID_PARAMETER:
+            return "InvalidParameterValue";
     }
 
     assert(0); /* Should not happen */

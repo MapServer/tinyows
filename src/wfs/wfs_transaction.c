@@ -151,6 +151,7 @@ static void wfs_transaction_result(ows * o, wfs_request * wr, buffer * result, b
     assert(o);
     assert(wr);
     assert(result);
+
     if (!buffer_cmp(result, "PGRES_COMMAND_OK")) assert(locator);
 
     /* only if version = 1.0.0 or if command failed */
@@ -172,18 +173,6 @@ static void wfs_transaction_result(ows * o, wfs_request * wr, buffer * result, b
             fprintf(o->output, "</wfs:Status>\n");
         }
 
-        /* place where the transaction failed */
-        if (!buffer_cmp(result, "PGRES_COMMAND_OK")) {
-            if (ows_version_get(o->request->version) == 100)
-                 fprintf(o->output, "<wfs:Locator>%s</wfs:Locator>\n", locator->buf);
-            else fprintf(o->output, "<wfs:Action locator=\"%s\">\n", locator->buf);
-        }
-
-        /* error message if the transaction failed */
-        if (!buffer_cmp(result, "PGRES_COMMAND_OK")) {
-            fprintf(o->output, " <wfs:Message>%s</wfs:Message>\n",
-                    result->buf);
-        }
 
         if (ows_version_get(o->request->version) == 100)
             fprintf(o->output, "</wfs:TransactionResult>\n");
@@ -203,6 +192,11 @@ static void wfs_transaction_response(ows * o, wfs_request * wr, buffer * result,
     assert(o);
     assert(wr);
     assert(result);
+
+    if (!buffer_cmp(result, "PGRES_COMMAND_OK")) {
+           wfs_error(o, wr, WFS_ERROR_INVALID_PARAMETER, result->buf, locator->buf);
+	   return;
+    }
 
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);

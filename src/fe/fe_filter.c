@@ -372,20 +372,17 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             buffer_add_str(buf_fid, (char *) fid);
             fe_list = list_explode('.', buf_fid);
 
-            /* check if the layer_name match the typename queried */
-            if (fe_list->first->next) {
-                if (!buffer_cmp(fe_list->first->value, typename->buf)) {
-                    fe->error_code = FE_ERROR_FEATUREID;
-                    list_free(fe_list);
-                    buffer_free(buf_fid);
-                    xmlFree(fid);
-                    return fe->sql;
-                }
+            /* Check if the layer_name match the typename queried */
+            if (fe_list->first && !buffer_cmp(fe_list->first->value, typename->buf)) {
+                fe->error_code = FE_ERROR_FEATUREID;
+                list_free(fe_list);
+                buffer_free(buf_fid);
+                xmlFree(fid);
+                return fe->sql;
             }
 
+            /* If there is no id column, raise an error */
             id_name = ows_psql_id_column(o, typename);
-
-            /* if there is no id column, raise an error */
             if (!id_name || !id_name->use) {
                 fe->error_code = FE_ERROR_FEATUREID;
                 list_free(fe_list);
@@ -396,8 +393,8 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
 
             buffer_copy(fe->sql, id_name);
             buffer_add_str(fe->sql, " = \'");
-            buffer_shift(buf_fid, strlen(typename->buf) + 1); /* +1 mean dot separator */
-            buffer_copy(fe->sql, buf_fid);
+	    if (fe_list->last) buffer_copy(fe->sql, fe_list->last->value);
+	    else               buffer_copy(fe->sql, buf_fid);
             buffer_add_str(fe->sql, "\'");
             list_free(fe_list);
             buffer_free(buf_fid);

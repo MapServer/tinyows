@@ -314,6 +314,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     filter_encoding *fe;
     PGresult *res;
     array * table;
+    list *l;
     ows_srs * srs_root;
     int srid_root = 0;
     buffer *id = NULL;
@@ -344,10 +345,8 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     */
     if (xmlHasProp(n, (xmlChar *) "idgen")) {
         attr =  xmlGetProp(n, (xmlChar *) "idgen");
-             if (!strcmp((char *) attr, "ReplaceDuplicate"))
-		handle_idgen = WFS_REPLACE_DUPLICATE;
-        else if (!strcmp((char *) attr, "UseExisting"))
-		handle_idgen = WFS_USE_EXISTING;
+             if (!strcmp((char *) attr, "ReplaceDuplicate")) handle_idgen = WFS_REPLACE_DUPLICATE;
+        else if (!strcmp((char *) attr, "UseExisting"))      handle_idgen = WFS_USE_EXISTING;
         xmlFree(attr);
         attr = NULL;
     }
@@ -412,8 +411,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
             buffer_add_str(id, (char *) attr);
             xmlFree(attr);
         } else idgen = WFS_GENERATE_NEW;
-        /* TODO should we end on error if UseExisting 
-           or Replace without id set ? */
+        /* FIXME should we end on error if UseExisting or Replace without id set ? */
 
         id_column = ows_psql_id_column(o, layer_name);
 	if (!id_column) {
@@ -425,7 +423,17 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
              result = buffer_init();
              buffer_add_str(result, "Error unknown Layer Name");
              return result;
-	}
+	} 
+
+        if (id) {
+            l = list_explode('.', id);
+	    if (l->last) {
+	       buffer_empty(id);
+               buffer_copy(id, l->last->value);
+            }
+            list_free(l);
+        }
+
         layer_ns_prefix = ows_layer_ns_prefix(o->layers, layer_name);
 
         /* ReplaceDuplicate look if an ID is already used
@@ -474,9 +482,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         buffer_copy(sql, ows_psql_schema_name(o, layer_name));
         buffer_add_str(sql, ".\"");
         buffer_copy(sql, ows_psql_table_name(o, layer_name));
-        buffer_add_str(sql, "\" (");
-
-        buffer_add_str(sql, "\"");
+        buffer_add_str(sql, "\" (\"");
         buffer_copy(sql, id_column);
         buffer_add_str(sql, "\"");
 
@@ -489,12 +495,12 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         for (; node; node = node->next) {
             if (node->type == XML_ELEMENT_NODE && 
                  ( buffer_cmp(ows_layer_ns_uri(o->layers, layer_ns_prefix), (char *) node->ns->href)
-                   || !strcmp("http://www.opengis.net/gml", (char *) node->ns->href)
+                   || !strcmp("http://www.opengis.net/gml",     (char *) node->ns->href)
                    || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href))) {
 
 		  /* We have to ignore if not present in database, 
                      gml elements (name, description, boundedBy) */
-                  if (    !strcmp("http://www.opengis.net/gml", (char *) node->ns->href)
+                  if (    !strcmp("http://www.opengis.net/gml",     (char *) node->ns->href)
                        || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href)) {
 		      table = ows_psql_describe_table(o, layer_name);
 		      if (!array_is_key(table, (char *) node->name)) continue;

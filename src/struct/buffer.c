@@ -253,8 +253,7 @@ void buffer_add_str(buffer * buf, const char *str)
     assert(buf);
     assert(str);
 
-    while (*str++ != '\0')
-        buffer_add(buf, *(str - 1));
+    while (*str++) buffer_add(buf, *(str - 1));
 }
 
 

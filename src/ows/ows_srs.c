@@ -214,7 +214,6 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const char *srsname)
                              urn:ogc:def:crs:EPSG:6.6:4326
                              urn:x-ogc:def:crs:EPSG:6.6:4326
                              http://www.opengis.net/gml/srs/epsg.xml#4326
-                             http://www.epsg.org/6.11.2/4326
      */
 
      if (!strncmp((char *) srsname,        "EPSG:", 5)) {
@@ -230,11 +229,6 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const char *srsname)
      } else if (!strncmp((char *) srsname, "http://www.opengis.net/gml/srs/epsg.xml#", 40)) {
          sep = '#';
          s->is_reverse_axis = false;
-
-     } else if (!strncmp((char *) srsname, "http://www.epsg.org/", 20)) {
-         sep = '/';
-         s->is_reverse_axis = false;
-
      } else return false;
 
      /*  Retrieve from last separator to the end of srsName string */

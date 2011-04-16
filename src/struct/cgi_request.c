@@ -185,9 +185,7 @@ array *cgi_parse_kvp(ows * o, char *query)
 
         } else if (query[i] == '=') {
             /* char '=' inside filter key mustn't be taken into account */
-            if ((buffer_case_cmp(key, "filter") == false
-                    || buffer_case_cmp(key, "outputformat") == false)
-                    && buffer_cmp(val, "") == true)
+            if ((!buffer_case_cmp(key, "filter") || !buffer_case_cmp(key, "outputformat")) && buffer_cmp(val, ""))
                 in_key = false;
             else buffer_add(val, query[i]);
         }
@@ -197,7 +195,7 @@ array *cgi_parse_kvp(ows * o, char *query)
             string[0] = query[i];
             string[1] = '\0';
 
-            if (in_key)
+            if (in_key) {
 
                 /* if word is key, only letters are allowed */
                 if (check_regexp(string, "[A-Za-zà-ÿ]"))
@@ -207,23 +205,20 @@ array *cgi_parse_kvp(ows * o, char *query)
                     buffer_free(val);
                     array_free(arr);
                     ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-                              "QUERY_STRING contains forbidden characters",
-                              "request");
+                              "QUERY_STRING contains forbidden characters", "request");
                     return NULL;
                 }
-            else {
-                if (check_regexp(string, "[A-Za-zà-ÿ0-9.\\=;,():/\\*_ \\-]")
-                        /* if word is filter key, more characters are allowed */
-                        || (buffer_cmp(key, "filter")
-                            && check_regexp(string, "[A-Za-zà-ÿ0-9.#\\,():/_<> \"\'=\\*!\\-]")))
+            } else {
+                /* if word is filter key, more characters are allowed */
+                if (                                 check_regexp(string, "[A-Za-zà-ÿ0-9.\\=;,():/\\*_ \\-]") 
+                    || (buffer_cmp(key, "filter") && check_regexp(string, "[A-Za-zà-ÿ0-9.#\\,():/_<> %\"\'=\\*!\\-]|\\[|\\]")))
                     buffer_add(val, query[i]);
                 else {
                     buffer_free(key);
                     buffer_free(val);
                     array_free(arr);
                     ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-                              "QUERY_STRING contains forbidden characters",
-                              "request");
+                              "QUERY_STRING contains forbidden characters", "request");
                     return NULL;
                 }
             }
@@ -234,8 +229,7 @@ array *cgi_parse_kvp(ows * o, char *query)
         buffer_free(key);
         buffer_free(val);
         array_free(arr);
-        ows_error(o, OWS_ERROR_REQUEST_HTTP, "QUERY_STRING too long",
-                  "request");
+        ows_error(o, OWS_ERROR_REQUEST_HTTP, "QUERY_STRING too long", "request");
         return NULL;
     }
 
@@ -364,8 +358,7 @@ static array *cgi_add_buffer(array * arr, buffer * b, char *name)
     buffer_add_str(key, name);
 
     /* if there is only one element in brackets, brackets are useless so delete them */
-    if (check_regexp(b->buf, "^\\([^\\)]*\\)$")
-            || check_regexp(b->buf, "^\\(.*position\\(\\).*\\)$")) {
+    if (check_regexp(b->buf, "^\\([^\\)]*\\)$") || check_regexp(b->buf, "^\\(.*position\\(\\).*\\)$")) {
         buffer_shift(b, 1);
         buffer_pop(b, 1);
     }

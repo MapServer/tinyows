@@ -41,7 +41,7 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin, float
     assert(wr);
 
 
-    if (fabs(xmin) + DBL_MIN <= 1 + DBL_EPSILON && fabs(ymin) + DBL_MIN <= 1 + DBL_EPSILON) {
+    if (!srid || srid == -1) {
         if (ows_version_get(o->request->version) == 100)
             fprintf(o->output, "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>\n");
 #if 0
@@ -547,8 +547,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         ln_typename = wr->typename->first;
     }
 
-    if (wr->filter)
-        ln_filter = wr->filter->first;
+    if (wr->filter) ln_filter = wr->filter->first;
 
     if (wr->featureid) {
         size = wr->featureid->size;
@@ -598,14 +597,13 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
                 list_free(from_list);
                 list_free(where_list);
                 buffer_free(layer_name);
-                wfs_error(o, wr, WFS_ERROR_NO_MATCHING,
-                          "error : an id_column is required to use featureid",
-                          "GetFeature");
+                wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "error : an id_column is required to use featureid", "GetFeature");
 		return NULL;
             }
         }
         /* BBOX */
         else if (wr->bbox) where = fe_kvp_bbox(o, wr, layer_name, wr->bbox);
+
         /* Filter */
         else if (wr->filter) {
             if (ln_filter->value->use != 0) {
@@ -629,13 +627,10 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
                 buffer_copy(where, fe->sql);
                 filter_encoding_free(fe);
             }
-        } else
-            where = buffer_init();
+        } else where = buffer_init();
 
-        if (o->max_geobbox && where->use != 0)
-            buffer_add_str(where, " AND ");
-        else if (o->max_geobbox && where->use == 0)
-            buffer_add_str(where, " WHERE ");
+             if (o->max_geobbox && where->use != 0) buffer_add_str(where, " AND ");
+        else if (o->max_geobbox && where->use == 0) buffer_add_str(where, " WHERE ");
 
         /* geobbox's limits of ows */
         if (o->max_geobbox) {
@@ -643,7 +638,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
             bbox = ows_bbox_init();
 	    ows_bbox_set_from_geobbox(o, bbox, o->max_geobbox);
 
-            buffer_add_str(where, "not(disjoint(");
+            buffer_add_str(where, "NOT (ST_Disjoint(");
             buffer_copy(where, geom);
             buffer_add_str(where, ",ST_Transform(");
             ows_bbox_to_query(o, bbox, where);
@@ -661,8 +656,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
             buffer_copy(where, wr->sortby);
         }
 
-        /* maxfeatures parameter, or max_features ows'limits, limits the
-           number of results */
+        /* maxfeatures parameter, or max_features ows limits, limits the number of results */
         if (wr->maxfeatures > 0) {
             buffer_add_str(where, " LIMIT ");
             nb = ows_psql_number_features(o, from_list, where_list);

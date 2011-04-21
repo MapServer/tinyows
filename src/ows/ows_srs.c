@@ -146,12 +146,12 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
     assert(o);
     assert(s);
 
-    if (srid == -1) {
+    if (srid == -1 || srid == 0) {
         s->srid = -1;
         buffer_empty(s->auth_name);
         s->auth_srid = 0;
         s->is_degree = true;
-	s->is_reverse_axis=false;
+	s->is_reverse_axis = false;
 
         return true;
     }

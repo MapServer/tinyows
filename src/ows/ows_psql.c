@@ -217,12 +217,9 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
     sql = buffer_init();
     column = buffer_init();
 
-    buffer_add_str(sql, "SELECT a.attname ");
-    buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t ");
-    buffer_add_str(sql, "WHERE c.relname ='");
+    buffer_add_str(sql, "SELECT a.attname FROM pg_class c, pg_attribute a, pg_type t WHERE c.relname ='");
     buffer_copy(sql, layer_name);
-    buffer_add_str(sql, "' AND a.attnum > 0 AND a.attrelid = c.oid ");
-    buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attnum = ");
+    buffer_add_str(sql, "' AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid AND a.attnum = ");
     buffer_add_int(sql, number);
 
     res = PQexec(o->pg, sql->buf);
@@ -318,7 +315,8 @@ char *ows_psql_to_xsd(buffer * type, ows_version *version)
     if (buffer_cmp(type, "bytea")) return "byte";
     if (buffer_cmp(type, "date")) return "date";
     if (buffer_cmp(type, "time")) return "time";
-    if (buffer_cmp(type, "timestamptz")) return "dateTime";
+    if (buffer_ncmp(type, "numeric", 7)) return "decimal";
+    if (buffer_ncmp(type, "timestamp", 9)) return "dateTime"; /* Could be also timestamptz */
     if (buffer_cmp(type, "POINT")) return "gml:PointPropertyType";
     if (buffer_cmp(type, "LINESTRING") && wfs_version == 100) return "gml:LineStringPropertyType";
     if (buffer_cmp(type, "LINESTRING") && wfs_version == 110) return "gml:CurvePropertyType";

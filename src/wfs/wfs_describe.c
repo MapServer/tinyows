@@ -59,9 +59,9 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 
     /* Output the description of the layer_name */
     for (an = table->first ; an ; an = an->next) {
-            if (!id_name ||
-		(id_name && !buffer_cmp(an->key, id_name->buf)) ||
-		(id_name && buffer_cmp(an->key, id_name->buf) && o->expose_pk)) 
+            if (    !id_name 
+                 || (id_name && !buffer_cmp(an->key, id_name->buf))
+		 || (id_name &&  buffer_cmp(an->key, id_name->buf) && o->expose_pk)) 
 		{
         		fprintf(o->output, "    <xs:element name ='");
          	   	buffer_flush(an->key, o->output);
@@ -105,7 +105,7 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
             return;
     }
 
-         if (wr->format == WFS_GML212)
+         if (wr->format == WFS_GML212 || wr->format == WFS_XML_SCHEMA)
     	fprintf(o->output, "Content-Type: text/xml; subtype=gml/2.1.2\n\n");
     else if (wr->format == WFS_GML311)
     	fprintf(o->output, "Content-Type: text/xml; subtype=gml/3.1.1\n\n");
@@ -212,14 +212,11 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
     ns_prefix = ows_layer_list_ns_prefix(o->layers, layers);
 
     buffer_add_str(schema, "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'");
-    buffer_add_str(schema, " xmlns='http://www.w3.org/2001/XMLSchema'");
-    buffer_add_str(schema, " elementFormDefault='qualified'>\n");
-
-    buffer_add_str(schema, "<xs:import namespace='http://www.opengis.net/wfs' ");
-    buffer_add_str(schema, "schemaLocation='");
+    buffer_add_str(schema, " xmlns='http://www.w3.org/2001/XMLSchema' elementFormDefault='qualified'>\n");
+    buffer_add_str(schema, "<xs:import namespace='http://www.opengis.net/wfs' schemaLocation='");
     buffer_copy(schema, o->schema_dir);
 
-    if (wfs_version == 100) buffer_add_str(schema, WFS_SCHEMA_100_TRANS);
+    if (wfs_version == 100) buffer_add_str(schema, WFS_SCHEMA_100);
     else                    buffer_add_str(schema, WFS_SCHEMA_110);
 
     buffer_add_str(schema, "'/>\n");

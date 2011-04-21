@@ -897,7 +897,6 @@ static void wfs_request_check_describe_feature_type(ows * o, wfs_request * wr, c
 static void wfs_request_check_get_feature(ows * o, wfs_request * wr, const array * cgi)
 {
     list *layer_name;
-    list_node *ln = NULL;
 
     assert(o);
     assert(wr);

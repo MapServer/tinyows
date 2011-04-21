@@ -74,10 +74,10 @@ bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin, double xmax, 
 
     if (xmin >= xmax || ymin >= ymax) return false;
 
-    if (       fabs(xmin - DBL_MAX) < DBL_EPSILON
-            || fabs(ymin - DBL_MAX) < DBL_EPSILON
-            || fabs(xmax - DBL_MAX) < DBL_EPSILON
-            || fabs(ymax - DBL_MAX) < DBL_EPSILON) return false;
+    if (    fabs(xmin - DBL_MAX) < DBL_EPSILON
+         || fabs(ymin - DBL_MAX) < DBL_EPSILON
+         || fabs(xmax - DBL_MAX) < DBL_EPSILON
+         || fabs(ymax - DBL_MAX) < DBL_EPSILON) return false;
 
     b->xmin = xmin;
     b->xmax = xmax;
@@ -144,26 +144,22 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 
     bb = ows_bbox_init();
 
-    /* checks if from list and where list have the same size */
     if (from->size != where->size) return bb;
 
     sql = buffer_init();
-    /* put into a buffer the SQL request calculating an extent */
+    /* Put into a buffer the SQL request calculating an extent */
     buffer_add_str(sql, "SELECT ST_xmin(g.extent), ST_ymin(g.extent),");
     buffer_add_str(sql, " ST_xmax(g.extent), ST_ymax(g.extent) FROM ");
     buffer_add_str(sql, "(SELECT ST_Extent(");
     buffer_add_str(sql, "foo.the_geom");
     buffer_add_str(sql, ") as extent FROM ( ");
 
-    /* for each layer name or each geometry column, make an union
-         * between retrieved features */
-    for (ln_from = from->first, ln_where = where->first;
-            ln_from != NULL;
-            ln_from = ln_from->next, ln_where = ln_where->next) {
+    /* For each layer name or each geometry column, make an union between retrieved features */
+    for (ln_from = from->first, ln_where = where->first; ln_from ; ln_from = ln_from->next, ln_where = ln_where->next) {
 
         geom = ows_psql_geometry_column(o, ln_from->value);
 
-        for (ln_geom = geom->first ; ln_geom != NULL ; ln_geom = ln_geom->next) {
+        for (ln_geom = geom->first ; ln_geom ; ln_geom = ln_geom->next) {
             buffer_add_str(sql, " (SELECT \"");
             buffer_copy(sql, ln_geom->value);
             buffer_add_str(sql, "\"::geometry AS \"the_geom\" FROM ");
@@ -174,12 +170,10 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
             buffer_copy(sql, ln_where->value);
             buffer_add_str(sql, ")");
 
-            if (ln_geom->next != NULL)
-                buffer_add_str(sql, " UNION ALL ");
+            if (ln_geom->next) buffer_add_str(sql, " UNION ALL ");
         }
 
-        if (ln_from->next != NULL)
-            buffer_add_str(sql, " UNION ALL ");
+        if (ln_from->next) buffer_add_str(sql, " UNION ALL ");
     }
 
     buffer_add_str(sql, " ) AS foo");
@@ -218,8 +212,7 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
     assert(bb);
 
     sql = buffer_init();
-    buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM ");
-    buffer_add_str(sql, "(SELECT transform(");
+    buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM (SELECT ST_Transform(");
     ows_bbox_to_query(o, bb, sql);
     buffer_add_str(sql, ")) AS g ) AS foo");
 
@@ -272,37 +265,50 @@ bool ows_bbox_set_from_geobbox(ows * o, ows_bbox * bb, ows_geobbox * geo)
 /*
  * Convert a bbox to PostGIS query Polygon
  */
-void ows_bbox_to_query(ows * o, ows_bbox *bbox, buffer *query)
+void ows_bbox_to_query(ows *o, ows_bbox *bbox, buffer *query)
 {
+    double x1, y1, x2, y2;
+
     assert(o);
     assert(bbox);
     assert(query);
 
+    if (bbox->srs->is_reverse_axis) {
+        x1 = bbox->ymin;
+        y1 = bbox->xmin;
+        x2 = bbox->ymax;
+        y2 = bbox->xmax;
+    } else {
+        x1 = bbox->xmin;
+        y1 = bbox->ymin;
+        x2 = bbox->xmax;
+        y2 = bbox->ymax;
+    }
+
    /* We use explicit POLYGON geometry rather than BBOX 
       related to precision handle (Float4 vs Double)    */
-
     buffer_add_str(query, "'SRID=");
     buffer_add_int(query, bbox->srs->srid);
     buffer_add_str(query, ";POLYGON((");
-    buffer_add_double(query, bbox->xmin);
+    buffer_add_double(query, x1);
     buffer_add_str(query, " ");
-    buffer_add_double(query, bbox->ymin);
+    buffer_add_double(query, y1);
     buffer_add_str(query, ",");
-    buffer_add_double(query, bbox->xmin);
+    buffer_add_double(query, x1);
     buffer_add_str(query, " ");
-    buffer_add_double(query, bbox->ymax);
+    buffer_add_double(query, y2);
     buffer_add_str(query, ",");
-    buffer_add_double(query, bbox->xmax);
+    buffer_add_double(query, x2);
     buffer_add_str(query, " ");
-    buffer_add_double(query, bbox->ymax);
+    buffer_add_double(query, y2);
     buffer_add_str(query, ",");
-    buffer_add_double(query, bbox->xmax);
+    buffer_add_double(query, x2);
     buffer_add_str(query, " ");
-    buffer_add_double(query, bbox->ymin);
+    buffer_add_double(query, y1);
     buffer_add_str(query, ",");
-    buffer_add_double(query, bbox->xmin);
+    buffer_add_double(query, x1);
     buffer_add_str(query, " ");
-    buffer_add_double(query, bbox->ymin);
+    buffer_add_double(query, y1);
     buffer_add_str(query, "))'::geometry");
 }
 
@@ -316,6 +322,7 @@ void ows_bbox_flush(const ows_bbox * b, FILE * output)
     assert(b);
 
     fprintf(output, "[%f,%f,%f,%f]\n", b->xmin, b->ymin, b->xmax, b->ymax);
+    ows_srs_flush(b->srs, output);
 }
 #endif
 

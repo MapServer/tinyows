@@ -190,7 +190,8 @@ static void wfs_request_check_version(ows * o, wfs_request * wr, const array * c
     assert(wr);
     assert(cgi);
 
-    if (!array_is_key(cgi, "version")) memcpy(o->request->version, o->wfs_default_version, sizeof(ows_version));
+    if (!array_is_key(cgi, "version"))
+        memcpy(o->request->version, o->wfs_default_version, sizeof(ows_version));
 
     if (ows_version_get(o->request->version) != 100 && ows_version_get(o->request->version) != 110)
            ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
@@ -199,7 +200,8 @@ static void wfs_request_check_version(ows * o, wfs_request * wr, const array * c
 
 
 /*
- * Remove namespaces of a buffer so that values can be used into PostGis
+ * Remove prefix namespace from a buffer 
+ * to expect return value could be used in SQL request
  */
 buffer *wfs_request_remove_namespaces(ows * o, buffer * b)
 {
@@ -208,6 +210,7 @@ buffer *wfs_request_remove_namespaces(ows * o, buffer * b)
     assert(o);
     assert(b);
 
+    /* TODO could be rewrite without using a list */
     prefix = list_explode(':', b);
 
     if (prefix->first->next) {
@@ -239,34 +242,31 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_
         wr->typename = list_explode(',', b);
 
         for (ln = wr->typename->first ; ln ; ln = ln->next) {
-            /* remove namespaces */
-            ln->value = wfs_request_remove_namespaces(o, ln->value);
+            
+            ln->value = wfs_request_remove_namespaces(o, ln->value); /* Remove prefix */
+            list_add_by_copy(layer_name, ln->value);                 /* Fill the global layer name list */
 
-            /* fill the global layer name list */
-            list_add_by_copy(layer_name, ln->value);
-
-            /* check if layer exists and have storage */
+            /* Check if layer exists and have storage */
             if (!ows_layer_match_table(o, ln->value)) {
                 list_free(layer_name);
-                wfs_error(o, wr, WFS_ERROR_LAYER_NOT_DEFINED, "unknown layer name", "typename");
+                wfs_error(o, wr, WFS_ERROR_LAYER_NOT_DEFINED, "Unknown layer name", "typename");
                 return NULL;
             }
 
-            /* check if layer is retrievable */
+            /* Check if layer is retrievable */
             if ((wr->request == WFS_GET_FEATURE || wr->request == WFS_DESCRIBE_FEATURE_TYPE) 
                  && !ows_layer_retrievable(o->layers, ln->value)) {
                 list_free(layer_name);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_RETRIEVABLE,
-                          "not-retrievable layer(s), Operation impossible, change configuration file",
-                          "typename");
+                          "Not retrievable layer(s), Forbidden operation.", "typename");
                 return NULL;
             }
 
-            /* check if layer is writable if request is a transaction operation */
+            /* Check if layer is writable, if request is a transaction operation */
             if (wr->operation && !ows_layer_writable(o->layers, ln->value)) {
                 list_free(layer_name);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_WRITABLE,
-                          "not-writable layer(s), Transaction Operation impossible, change configuration file",
+                          "Not writable layer(s), Forbidden Transaction Operation",
                           "typename");
                 return NULL;
             }
@@ -283,34 +283,31 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_
  */
 static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 {
-    buffer *b;
     list *fe;
-    list_node *ln, *ln_tpn;
-    mlist_node *mln;
     mlist *f;
+    buffer *b;
+    list_node *ln, *ln_tpn;
+    mlist_node *mln = NULL;
 
     assert(o);
     assert(wr);
     assert(layer_name);
 
-    ln = NULL;
-    ln_tpn = NULL;
-    mln = NULL;
+    ln = ln_tpn = NULL;
 
-    /* featureid is not a mandatory parameter */
+    /* Featureid is not a mandatory parameter */
     if (!array_is_key(o->cgi, "featureid")) return layer_name; 
 
     b = array_get(o->cgi, "featureid");
     f = mlist_explode('(', ')', b);
 
     if (wr->typename) {
-        /*check if typename and featureid size are similar */
+        /* Check if Typename and FeatureId size are similar */
         if (f->size != wr->typename->size) {
             list_free(layer_name);
             mlist_free(f);
             wfs_error(o, wr, WFS_ERROR_INCORRECT_SIZE_PARAMETER,
-                      "featureid list size and typename list size must be similar",
-                      "");
+                      "featureid list and typename lists must have the same size", "");
             return NULL;
         }
 
@@ -322,7 +319,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
             fe = list_explode('.', ln->value);
 
             if (wr->typename) {
-                /*check the mapping between fid and typename */
+                /* Check the mapping between fid and typename */
                 if (!buffer_cmp(fe->first->value, ln_tpn->value->buf)) {
                     list_free(layer_name);
                     list_free(fe);
@@ -332,7 +329,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
                 }
             }
 
-            /* check if featureid is well formed : layer.id */
+            /* Check if featureid is well formed : layer.id */
             if (!fe->first->next) {
                 list_free(layer_name);
                 list_free(fe);
@@ -341,7 +338,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
                 return NULL;
             }
 
-            /* if typename is null, fill the layer name list */
+            /* If typename is NULL, fill the layer name list */
             if (!wr->typename) {
                 fe->first->value = wfs_request_remove_namespaces(o, fe->first->value);
 
@@ -349,16 +346,16 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
                     list_add_by_copy(layer_name, fe->first->value);
             }
 
-            /* check if layer exists */
+            /* Check if layer exists */
             if (!ows_layer_in_list(o->layers, fe->first->value)) {
                 list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
-                wfs_error(o, wr, WFS_ERROR_LAYER_NOT_DEFINED, "unknown layer name", "GetFeature");
+                wfs_error(o, wr, WFS_ERROR_LAYER_NOT_DEFINED, "Unknown layer name", "GetFeature");
                 return NULL;
             }
 
-            /* check if layer is retrievable if request is getFeature */
+            /* Check if layer is retrievable if request is getFeature */
             if (wr->request == WFS_GET_FEATURE && !ows_layer_retrievable(o->layers, fe->first->value)) {
                 list_free(layer_name);
                 list_free(fe);
@@ -369,7 +366,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
                 return NULL;
             }
 
-            /* check if layer is writable if request is a transaction operation */
+            /* Check if layer is writable if request is a transaction operation */
             if (wr->operation && !ows_layer_writable(o->layers, fe->first->value)) {
                 list_free(layer_name);
                 list_free(fe);
@@ -422,8 +419,7 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
                 if (srid != srid_tmp) {
                     list_free(layer_name);
                     ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                              "layers in TYPENAME must have the same SRS",
-                              "GetFeature");
+                              "Layers in TYPENAME must have the same SRS", "GetFeature");
                     return;
                 }
             }
@@ -432,10 +428,11 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
         if(!ows_srs_set_from_srid(o, wr->srs, srid)) {
              list_free(layer_name);
              ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                        "srsName value use an unsupported value, for requested layer(s)",
-                        "GetFeature");
+                        "srsName value use an unsupported value, for requested layer(s)", "GetFeature");
              return;
         }
+
+        if (wr->srs->is_degree && ows_version_get(o->request->version) == 110) wr->srs->is_reverse_axis = true;
 
     } else {
         b = array_get(o->cgi, "srsname");
@@ -470,14 +467,11 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
 
     if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, wr->srs->srid)) {
         list_free(layer_name);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Bad parameters for Bbox, must be Xmin,Ymin,Xmax,Ymax",
-                  "NULL");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Bad parameters for Bbox, must be Xmin,Ymin,Xmax,Ymax", "NULL");
         return;
     }
 
-    /* FIXME add a check if Bbox is outside the SRS extent definition */
-    /* FIXME handle reversed coordinates when urn:x-ogc coordinates in GML 3 */
+    if (wr->srs->is_reverse_axis) wr->bbox->srs->is_reverse_axis = true;
 }
 
 
@@ -555,12 +549,10 @@ static void wfs_request_check_sortby(ows * o, wfs_request * wr)
 {
     buffer *b;
     list *l, *fe;
-    list_node *ln;
+    list_node *ln = NULL;
 
     assert(o);
     assert(wr);
-
-    ln = NULL;
 
     /* sortBy is not a mandatory parameter */
     if (!array_is_key(o->cgi, "sortby")) return;
@@ -610,8 +602,8 @@ static void wfs_request_check_sortby(ows * o, wfs_request * wr)
  */
 static void wfs_request_check_maxfeatures(ows * o, wfs_request * wr)
 {
-    buffer *b;
     int mf;
+    buffer *b;
 
     assert(o);
     assert(wr);
@@ -636,17 +628,15 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
     buffer *b;
     mlist *f;
     list *fe;
-    mlist_node *mln;
     list_node *ln, *ln_tpn;
     array *prop_table;
+    mlist_node *mln = NULL;
 
     assert(o);
     assert(wr);
     assert(layer_name);
 
-    mln = NULL;
-    ln = NULL;
-    ln_tpn = NULL;
+    ln = ln_tpn = NULL;
 
     /* propertyName is not a mandatory parameter */
     if (!array_is_key(o->cgi, "propertyname")) return;
@@ -749,19 +739,18 @@ static void wfs_request_check_operation(ows * o, wfs_request * wr)
     assert(o);
     assert(wr);
 
-    /* operation parameter is mandatory */
+    /* OPERATION parameter is mandatory */
     if (!array_is_key(o->cgi, "operation")) {
-        ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-                  "Operation (Delete) must be specified", "Operation");
+        ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE, "Operation (Delete) must be specified", "Operation");
         return;
     }
 
     wr->operation = buffer_init();
     buffer_copy(wr->operation, array_get(o->cgi, "operation"));
 
-    if (buffer_cmp(wr->operation, "Delete") == false) {
+    if (!buffer_cmp(wr->operation, "Delete")) {
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "only Delete operation is supported with GET method, use POST method for insert and update operations",
+                  "Only Delete operation is supported with GET method, use POST method for insert and update operations",
                   "Transaction");
         return;
     }
@@ -777,18 +766,16 @@ static void wfs_request_check_parameters(ows * o, wfs_request * wr)
     assert(wr);
 
     if (!array_is_key(o->cgi, "typename") && !array_is_key(o->cgi, "featureid")) {
-        ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-                  "Typename or FeatureId must be set", "request");
+        ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE, "TYPENAME or FEATUREID must be set", "request");
         return;
     }
 
-    /* test mutually exclusive parameters (filter,bbox and featureid) */
-    if (       (array_is_key(o->cgi, "filter") && array_is_key(o->cgi, "bbox"))
-            || (array_is_key(o->cgi, "filter") && array_is_key(o->cgi, "featureid"))
-            || (array_is_key(o->cgi, "bbox") && array_is_key(o->cgi, "featureid")))
+    /* Test mutually exclusive parameters (FILTER, BBOX and FEATUREID) */
+    if (    (array_is_key(o->cgi, "filter") && array_is_key(o->cgi, "bbox"))
+         || (array_is_key(o->cgi, "filter") && array_is_key(o->cgi, "featureid"))
+         || (array_is_key(o->cgi, "bbox")   && array_is_key(o->cgi, "featureid")))
         wfs_error(o, wr, WFS_ERROR_EXCLUSIVE_PARAMETERS,
-                  "filter, bbox and featureid are mutually exclusive, just use one of these parameters",
-                  "request");
+           "FILTER, BBOX and FEATUREID are mutually exclusive, just use one of these parameters", "request");
 }
 
 
@@ -799,25 +786,19 @@ static void wfs_request_check_get_capabilities(ows * o, wfs_request * wr, const 
 {
     buffer *b;
     list *l;
-    list_node *ln;
-    bool version;
+    list_node *ln = NULL;
+    bool version = false;
 
     assert(o);
     assert(wr);
     assert(cgi);
 
-    ln = NULL;
-    version = false;
-
-    /*if key version is not set, version = higher version */
+    /* If key version is not set, version = higher version */
     if (!array_is_key(cgi, "version")) {
             ows_version_set(o->request->version, 1, 1, 0);
     } else {
-        if (ows_version_get(o->request->version) < 110)
-            ows_version_set(o->request->version, 1, 0, 0);
-
-        if (ows_version_get(o->request->version) > 110)
-            ows_version_set(o->request->version, 1, 1, 0);
+             if (ows_version_get(o->request->version) < 110) ows_version_set(o->request->version, 1, 0, 0);
+        else if (ows_version_get(o->request->version) > 110) ows_version_set(o->request->version, 1, 1, 0);
     }
 
     /* 1.1.0 parameter : uses the first valid version */
@@ -845,16 +826,15 @@ static void wfs_request_check_get_capabilities(ows * o, wfs_request * wr, const 
                       "AcceptVersions");
             return;
         }
-
     }
 
-    /* updateSequence not implemented */
+    /* TODO updateSequence is not yet implemented */
     if (array_is_key(cgi, "updatesequence")) {
         b = array_get(cgi, "updatesequence");
 
         if (!buffer_cmp(b, "0")) {
             ows_error(o, OWS_ERROR_INVALID_UPDATE_SEQUENCE,
-                      "updateSequence's value must be 0, UpdateSequence not available",
+                      "UPDATESEQUENCE value must be omit or 0, function not (yet) implemented",
                       "updateSequence");
             return;
         }
@@ -871,14 +851,10 @@ static void wfs_request_check_get_capabilities(ows * o, wfs_request * wr, const 
     if (array_is_key(cgi, "acceptformats")) {
         b = array_get(cgi, "acceptformats");
 
-        if (buffer_cmp(b, "text/xml"))
-            wr->format = WFS_TEXT_XML;
-        else if (buffer_cmp(b, "application/xml"))
-            wr->format = WFS_APPLICATION_XML;
-        else
-            ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                      "not supported format : use text/xml or application/xml",
-                      "acceptFormats");
+             if (buffer_cmp(b, "text/xml"))        wr->format = WFS_TEXT_XML;
+        else if (buffer_cmp(b, "application/xml")) wr->format = WFS_APPLICATION_XML;
+        else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
+                      "Not supported format : use text/xml or application/xml", "acceptFormats");
     }
 }
 
@@ -889,25 +865,22 @@ static void wfs_request_check_get_capabilities(ows * o, wfs_request * wr, const 
 static void wfs_request_check_describe_feature_type(ows * o, wfs_request * wr, const array * cgi)
 {
     list *layer_name;
-    ows_layer_node *ln;
+    ows_layer_node *ln = NULL;
 
     assert(cgi);
     assert(o);
     assert(wr);
-
-    ln = NULL;
-
-    /* output format */
-    wfs_request_check_output(o, wr);
+    
+    wfs_request_check_output(o, wr); /* OutputFormat */
     if(o->exit) return;
 
-    /* typename */
+    /* Typename */
     layer_name = list_init();
     layer_name = wfs_request_check_typename(o, wr, layer_name);
     if(o->exit) return;
     list_free(layer_name);
 
-    /* if no typename parameter is given, retrieve all layers defined in configuration file */
+    /* if no Typename parameter is given, retrieve all layers defined in configuration file */
     if (!array_is_key(cgi, "typename")) {
         wr->typename = list_init();
 
@@ -924,50 +897,33 @@ static void wfs_request_check_describe_feature_type(ows * o, wfs_request * wr, c
 static void wfs_request_check_get_feature(ows * o, wfs_request * wr, const array * cgi)
 {
     list *layer_name;
-    list_node *ln;
+    list_node *ln = NULL;
 
     assert(o);
     assert(wr);
     assert(cgi);
 
-    ln = NULL;
-
-    /* check parameters validity */
+    /* Check parameters validity */
     wfs_request_check_parameters(o, wr);
 
     layer_name = list_init();
 
-    /* typename (requisite except if there is a featureid parameter */
+    /* TypeName (required except if there is a FeatureId parameter) */
     if (!o->exit) layer_name = wfs_request_check_typename(o, wr, layer_name);
 
-    /* Featureid, if no typename defined, list of layer_name must be extracted from featureid */
+    /* FeatureId, if no TypeName defined, list of layer_name must be extracted from FeatureId */
     if (!o->exit) layer_name = wfs_request_check_fid(o, wr, layer_name);
 
-    /* srsName */
-    if (!o->exit) wfs_request_check_srs(o, wr, layer_name);
+    if (!o->exit) wfs_request_check_srs(o, wr, layer_name);          /* srsName */
+    if (!o->exit) wfs_request_check_bbox(o, wr, layer_name);         /* BBOX=xmin,ymin,xmax,ymax */
+    if (!o->exit) wfs_request_check_propertyname(o, wr, layer_name); /* PropertyName */
+    if (!o->exit) wfs_request_check_output(o, wr);                   /* outputFormat */
+    if (!o->exit) wfs_request_check_resulttype(o, wr);               /* resultType */
+    if (!o->exit) wfs_request_check_sortby(o, wr);                   /* sortBy */
+    if (!o->exit) wfs_request_check_maxfeatures(o, wr);              /* maxFeatures */
+    if (!o->exit) wfs_request_check_filter(o, wr);                   /* Filter */
 
-    /* BBox : BBOX=xmin,ymin,xmax,ymax */
-    if (!o->exit)  wfs_request_check_bbox(o, wr, layer_name);
-
-    /* PropertyName */
-    if (!o->exit) wfs_request_check_propertyname(o, wr, layer_name);
-
-    if (!o->exit) list_free(layer_name);
-
-    /* outputFormat */
-    if (!o->exit) wfs_request_check_output(o, wr);
-
-    /* resultType */
-    if (!o->exit) wfs_request_check_resulttype(o, wr);
-
-    /* sortBy */
-    if (!o->exit) wfs_request_check_sortby(o, wr);
-
-    /* maxFeatures */
-    if (!o->exit) wfs_request_check_maxfeatures(o, wr);
-
-    /*Filter */
-    if (!o->exit) wfs_request_check_filter(o, wr);
+    if (layer_name) list_free(layer_name);
 }
 
 
@@ -982,23 +938,16 @@ static void wfs_request_check_transaction(ows * o, wfs_request * wr, const array
     assert(wr);
     assert(cgi);
 
-    /* general checks */
-    if (!o->exit) wfs_request_check_operation(o, wr);
-    if (!o->exit) wfs_request_check_parameters(o, wr);
-
     layer_name = list_init();
-    /* typename */
-    if (!o->exit) layer_name = wfs_request_check_typename(o, wr, layer_name);
 
-    /* featureid */
-    if (!o->exit) layer_name = wfs_request_check_fid(o, wr, layer_name);
+    if (!o->exit) wfs_request_check_operation(o, wr);                         /* Operation */
+    if (!o->exit) wfs_request_check_parameters(o, wr);                        /* General checks */
+    if (!o->exit) layer_name = wfs_request_check_typename(o, wr, layer_name); /* Typename */
+    if (!o->exit) layer_name = wfs_request_check_fid(o, wr, layer_name);      /* FeatureId */
+    if (!o->exit) wfs_request_check_bbox(o, wr, layer_name);                  /* Bbox */ 
+    if (!o->exit) wfs_request_check_filter(o, wr);                            /* Filter */
 
-    /* bbox */
-    if (!o->exit) wfs_request_check_bbox(o, wr, layer_name);
     list_free(layer_name);
-
-    /* filter */
-    if (!o->exit) wfs_request_check_filter(o, wr);
 }
 
 
@@ -1015,19 +964,20 @@ void wfs_request_check(ows * o, wfs_request * wr, const array * cgi)
 
     b = array_get(cgi, "request");
 
+    /* Service */
     if (o->request->service != WFS) {
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "bad service, should be WFS", "SERVICE");
         return;
     }
 
-    /* version */
+    /* Version */
     if (!buffer_case_cmp(b, "GetCapabilities")) {
         wfs_request_check_version(o, wr, cgi);
         if (o->exit) return;
     }
 
-    /* check if request parameter is correct */
-    if (buffer_case_cmp(b, "GetCapabilities")) {
+    /* Request */
+           if (buffer_case_cmp(b, "GetCapabilities")) {
         wr->request = WFS_GET_CAPABILITIES;
         wfs_request_check_get_capabilities(o, wr, cgi);
 
@@ -1042,13 +992,10 @@ void wfs_request_check(ows * o, wfs_request * wr, const array * cgi)
     } else if (buffer_case_cmp(b, "Transaction")) {
         wr->request = WFS_TRANSACTION;
 
-        if (cgi_method_get())
-            wfs_request_check_transaction(o, wr, cgi);
+        if (cgi_method_get()) wfs_request_check_transaction(o, wr, cgi);
 
-    } else
-        ows_error(o, OWS_ERROR_OPERATION_NOT_SUPPORTED,
+    } else ows_error(o, OWS_ERROR_OPERATION_NOT_SUPPORTED,
                   "REQUEST is not supported", "REQUEST");
-
 }
 
 
@@ -1062,17 +1009,20 @@ void wfs(ows * o, wfs_request * wf)
     assert(o);
     assert(wf);
 
-    /* run the request's execution */
+    /* Run the request's execution */
     switch (wf->request) {
         case WFS_GET_CAPABILITIES:
             wfs_get_capabilities(o, wf);
             break;
+
         case WFS_DESCRIBE_FEATURE_TYPE:
             wfs_describe_feature_type(o, wf);
             break;
+
         case WFS_GET_FEATURE:
             wfs_get_feature(o, wf);
             break;
+
         case WFS_TRANSACTION:
 
             if (cgi_method_get()) {
@@ -1080,7 +1030,7 @@ void wfs(ows * o, wfs_request * wf)
                     wfs_delete(o, wf);
                 else {
                     ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                              "only Delete operation is supported with GET method, use POST method for insert and update operations",
+                              "Only Delete Operation is supported with GET method, use POST instead for Insert and Update.",
                               "Transaction");
                     return;
                 }
@@ -1090,15 +1040,15 @@ void wfs(ows * o, wfs_request * wf)
                     op = array_get(o->cgi, "operations");
                     wfs_parse_operation(o, wf, op);
                 } else {
-                    ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                              "Operation parameter must be set", "Transaction");
+                    ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Operation parameter must be set", "Transaction");
                     return;
                 }
             }
 
             break;
+
         default:
-            assert(0);              /* should not happen */
+            assert(0);              /* Should not happen */
     }
 }
 

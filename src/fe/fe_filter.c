@@ -54,7 +54,6 @@ void filter_encoding_free(filter_encoding * fe)
     assert(fe);
 
     if (fe->sql) buffer_free(fe->sql);
-    
     free(fe);
     fe = NULL;
 }
@@ -88,38 +87,23 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
 {
     xmlNodePtr n;
     xmlAttr *att;
-    xmlChar *content;
+    xmlChar *content=NULL;
 
     assert(node);
     assert(output);
 
-    content = NULL;
-
-    /* parse the node */
     if (node->type == XML_ELEMENT_NODE) {
         for (n = node; n; n = n->next) {
-            /* print the node name */
             fprintf(output, "name:%s\n", n->name);
 
-            /* print the node properties */
-            for (att = n->properties; att != NULL; att = att->next) {
+            for (att = n->properties; att ; att = att->next)
+                fprintf(output, "%s=%s\n", att->name, (char *) xmlNodeGetContent(att->children));
 
-                fprintf(output, "%s=%s\n", att->name,
-                        (char *) xmlNodeGetContent(att->children));
-            }
-
-            if (n->children) {
-                fe_node_flush(n->children, output);
-            }
+            if (n->children) fe_node_flush(n->children, output);
         }
-    }
-    /* print the node content */
-    else if (    (node->type == XML_CDATA_SECTION_NODE)
-              || (node->type == XML_TEXT_NODE)) {
+    } else if ((node->type == XML_CDATA_SECTION_NODE) || (node->type == XML_TEXT_NODE)) {
         content = xmlNodeGetContent(node);
-
         fprintf(output, "%s\n", content);
-
         xmlFree(content);
     }
 }
@@ -133,55 +117,40 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
 buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
     xmlChar *content;
-    int isstring = 0;
+    bool isstring = false;
 
     assert(o);
     assert(typename);
     assert(fe);
     assert(sql);
 
-    if (n == NULL) return sql;
+    if (!n) return sql;
+    if (!strcmp((char *) n->name, "Function")) return fe_function(o, typename, fe, sql, n);
 
-    if (!strcmp((char *) n->name, "Function"))
-        return fe_function(o, typename, fe, sql, n);
-
-    /* open a bracket when there are grandchildren elements */
+    /* Open a bracket when there is a 'grandchildren' elements */
     if (n->children) {
-        if (n->children->type == XML_ELEMENT_NODE) {
-            if (n->children->children)
-                buffer_add_str(sql, "(");
-        } else {
-            if (n->children->next)
-                if (n->children->next->children)
-                    buffer_add_str(sql, "(");
-        }
+             if (n->children->type == XML_ELEMENT_NODE && n->children->children) buffer_add_str(sql, "(");
+        else if (n->children->next && (n->children->next->children)) buffer_add_str(sql, "(");
     }
 
-    /* eval the left part of the expression */
+    /* Eval the left part of the expression */
     sql = fe_expression(o, typename, fe, sql, n->children);
 
-    /* print the node */
     content = xmlNodeGetContent(n);
 
-    if (strcmp((char *) n->name, "Add") == 0)
-        buffer_add_str(sql, " + ");
-    else if (strcmp((char *) n->name, "Sub") == 0)
-        buffer_add_str(sql, " - ");
-    else if (strcmp((char *) n->name, "Mul") == 0)
-        buffer_add_str(sql, " * ");
-    else if (strcmp((char *) n->name, "Div") == 0)
-        buffer_add_str(sql, " / ");
-    else if (strcmp((char *) n->name, "Literal") == 0) {
+         if (!strcmp((char *) n->name, "Add")) buffer_add_str(sql, " + ");
+    else if (!strcmp((char *) n->name, "Sub")) buffer_add_str(sql, " - ");
+    else if (!strcmp((char *) n->name, "Mul")) buffer_add_str(sql, " * ");
+    else if (!strcmp((char *) n->name, "Div")) buffer_add_str(sql, " / ");
+    else if (!strcmp((char *) n->name, "Literal")) {
 
-        /* strings must be written in quotation marks */
-
+        /* Strings must be written in quotation marks */
         if (check_regexp((char *) content, "^[[:space:]]+$") == 1) {
             buffer_add_str(sql, "''");      /* empty string */
 
         } else {
-          if (!check_regexp((char *)content, "^[-+]?[0-9]*\\.?[0-9]+$"))
-          {
-              isstring = 1;
+          if (!check_regexp((char *)content, "^[-+]?[0-9]*\\.?[0-9]+$")){
+              isstring = true;
               buffer_add_str(sql, "'");
           }
           buffer_add_str(sql, (char *) content);
@@ -189,29 +158,25 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
           if (isstring) buffer_add_str(sql, "'");
         }
 
-
-    } else if (strcmp((char *) n->name, "PropertyName") == 0)
+    } else if (!strcmp((char *) n->name, "PropertyName"))
         sql = fe_property_name(o, typename, fe, sql, n, false);
     else if (n->type != XML_ELEMENT_NODE)
         sql = fe_expression(o, typename, fe, sql, n->next);
 
     xmlFree(content);
 
-    /* eval the right part of the expression */
+    /* Eval the right part of the expression */
     if (n->children && n->children->next) {
-        if (n->children->type == XML_ELEMENT_NODE &&
-                n->children->next->type == XML_ELEMENT_NODE)
-            sql = fe_expression(o, typename, fe, sql, n->children->next);
+        if (n->children->type == XML_ELEMENT_NODE && n->children->next->type == XML_ELEMENT_NODE)
+             sql = fe_expression(o, typename, fe, sql, n->children->next);
         else sql = fe_expression(o, typename, fe, sql, n->children->next->next);
 
         content = xmlNodeGetContent(n->children->next);
 
-        /* if children element is empty */
-        if (check_regexp((char *) content, "^$") == 1)
-            buffer_add_str(sql, "''");
-        /* close a bracket when there are not empty children elements */
-        else if (check_regexp((char *) content, " +") != 1)
-            buffer_add_str(sql, ")");
+        /* If children element is empty */
+        if (check_regexp((char *) content, "^$") == 1) buffer_add_str(sql, "''");
+        /* Close a bracket when there are not empty children elements */
+        else if (check_regexp((char *) content, " +") != 1) buffer_add_str(sql, ")");
 
         xmlFree(content);
     }
@@ -231,14 +196,10 @@ buffer *fe_xpath_property_name(ows * o, buffer * typename, buffer * property)
     assert(typename);
     assert(property);
 
-    if (check_regexp(property->buf, "\\*\\[position"))
-        /*delete the first characters '*[position()=' */
-        buffer_shift(property, 13);
-    else
-        /*delete the first characters '*[' */
-        buffer_shift(property, 2);
+    if (check_regexp(property->buf, "\\*\\[position")) buffer_shift(property, 13); /* Remove '*[position()=' */
+    else buffer_shift(property, 2); /* Remove '*[' */
 
-    /*delete the last character ']' */
+    /* Delete the last character ']' */
     buffer_pop(property, 1);
 
     /* retrieve the matching column name from the number of the column */
@@ -255,8 +216,7 @@ buffer *fe_xpath_property_name(ows * o, buffer * typename, buffer * property)
 /*
  * Check if propertyName is valid and return the appropriate string
  */
-buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
-                         buffer * sql, xmlNodePtr n, bool check_geom_column)
+buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n, bool check_geom_column)
 {
     xmlChar *content;
     array *prop_table;
@@ -269,24 +229,25 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
     assert(fe);
     assert(sql);
 
-    tmp = buffer_init();
-
-    /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE) n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next;       /* Jump to the next element if there are spaces */
+#if 0
+    if (!ows_libxml_check_namespace(o, n)) {
+        fe->error_code = FE_ERROR_NAMESPACE;
+        return sql;
+    }
+#endif
 
     prop_table = ows_psql_describe_table(o, typename);
-
-    assert(prop_table);
+    assert(prop_table); /* FIXME to remove */
 
     content = xmlNodeGetContent(n);
-    buffer_add_str(tmp, (char *) content);
+    tmp = buffer_from_str((char *) content);
 
-    /* check if propertyname is an Xpath expression */
-    if (check_regexp(tmp->buf, "\\*\\["))
-        tmp = fe_xpath_property_name(o, typename, tmp);
+    /* Check if propertyname is an Xpath expression */
+    if (check_regexp(tmp->buf, "\\*\\[")) tmp = fe_xpath_property_name(o, typename, tmp);
    
-    /* if propertyname have an Xpath suffix */
-    /* FIXME i just can't get these use case */
+    /* If propertyname have an Xpath suffix */
+    /* FIXME i just can't understand meaning of this use case */
     if (check_regexp(tmp->buf, ".*\\[[0-9]+\\]")) 
     {
 	l = list_explode('[', tmp);
@@ -295,17 +256,15 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
 	list_free(l);
     }
 
-    /* remove namespaces */
+    /* Remove namespaces */
     tmp = wfs_request_remove_namespaces(o, tmp);
 
-    /* check if propertyname is available */
+    /* Check if propertyname is available */
     if (array_is_key(prop_table, tmp->buf)) {
         buffer_add_str(sql, "\"");
         buffer_copy(sql, tmp);
         buffer_add_str(sql, "\"");
-    } else {
-        fe->error_code = FE_ERROR_PROPERTYNAME;
-    }
+    } else fe->error_code = FE_ERROR_PROPERTYNAME;
 
     if (check_geom_column && !ows_psql_is_geometry_column(o, typename, tmp))
         fe->error_code = FE_ERROR_GEOM_PROPERTYNAME;
@@ -322,32 +281,26 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe,
  */
 buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    xmlChar *fid;
-    buffer *buf_fid, *id_name;
     list *fe_list;
     bool feature_id, gid;
+    xmlChar *fid = NULL;
+    buffer *buf_fid, *id_name = NULL;
 
     assert(o);
     assert(typename);
     assert(n);
     assert(fe);
 
-    fid = NULL;
-    id_name = NULL;
-    feature_id = false;
-    gid = false;
-
-    for (; n != NULL; n = n->next) {
+    for (feature_id = gid = false ; n ; n = n->next) {
         if (n->type == XML_ELEMENT_NODE) {
             buf_fid = buffer_init();
 
             /* retrieve the property fid */
-            if (strcmp((char *) n->name, "FeatureId") == 0) {
+            if (!strcmp((char *) n->name, "FeatureId")) {
                 feature_id = true;
 
                 /* only one type of identifier element must be included */
-                if (gid == false)
-                    fid = xmlGetProp(n, (xmlChar *) "fid");
+                if (!gid) fid = xmlGetProp(n, (xmlChar *) "fid");
                 else {
                     fe->error_code = FE_ERROR_FID;
                     buffer_free(buf_fid);
@@ -356,19 +309,17 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             }
 
             /* retrieve the property gml:id */
-            if (strcmp((char *) n->name, "GmlObjectId") == 0) {
+            if (!strcmp((char *) n->name, "GmlObjectId")) {
                 gid = true;
 
                 /* only one type of identifier element must be included */
-                if (feature_id == false)
-                    fid = xmlGetProp(n, (xmlChar *) "id");
+                if (feature_id == false) fid = xmlGetProp(n, (xmlChar *) "id");
                 else {
                     fe->error_code = FE_ERROR_FID;
                     buffer_free(buf_fid);
                     return fe->sql;
                 }
             }
-
             buffer_add_str(buf_fid, (char *) fid);
             fe_list = list_explode('.', buf_fid);
 
@@ -401,8 +352,7 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             xmlFree(fid);
         }
 
-        if (n->next && n->next->type == XML_ELEMENT_NODE)
-            buffer_add_str(fe->sql, " OR ");
+        if (n->next && n->next->type == XML_ELEMENT_NODE) buffer_add_str(fe->sql, " OR ");
     }
 
     return fe->sql;
@@ -432,11 +382,11 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buf
         buffer_copy(schema_path, o->schema_dir);
 
         if (ows_version_get(o->request->version) == 100) {
-            buffer_add_str(schema_path, FE_SCHEMA_100);
-	    ret = ows_schema_validation(o, schema_path, xmlchar, true, FE_SCHEMA_TYPE_100);
+            buffer_add_str(schema_path, WFS_SCHEMA_100);
+	    ret = ows_schema_validation(o, schema_path, xmlchar, true, WFS_SCHEMA_TYPE_100);
 	} else { 
-	    buffer_add_str(schema_path, FE_SCHEMA_110);
-	    ret = ows_schema_validation(o, schema_path, xmlchar, true, FE_SCHEMA_TYPE_110);
+	    buffer_add_str(schema_path, WFS_SCHEMA_110);
+	    ret = ows_schema_validation(o, schema_path, xmlchar, true, WFS_SCHEMA_TYPE_110);
 	}
 
         if (ret != 0) {
@@ -461,25 +411,12 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buf
     /* jump to the next element if there are spaces */
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    /* Comparison Operators */
-    if (fe_is_comparison_op((char *) n->name))
-        fe->sql = fe_comparison_op(o, typename, fe, n);
-
-    /* Spatial Operators */
-    if (fe_is_spatial_op((char *) n->name))
-        fe->sql = fe_spatial_op(o, typename, fe, n);
-
-    /* Logical Operators */
-    if (fe_is_logical_op((char *) n->name))
-        fe->sql = fe_logical_op(o, typename, fe, n);
-
-    /* FeatureId */
-    if (strcmp((char *) n->name, "FeatureId") == 0)
-        fe->sql = fe_feature_id(o, typename, fe, n);
-    /* GmlObjectId */
-    else if (ows_version_get(o->request->version) == 110
-             && strcmp((char *) n->name, "GmlObjectId") == 0)
-        fe->sql = fe_feature_id(o, typename, fe, n);
+         if (fe_is_comparison_op((char *) n->name))  fe->sql = fe_comparison_op(o, typename, fe, n);
+         if (fe_is_spatial_op((char *) n->name))     fe->sql = fe_spatial_op(o, typename, fe, n);
+         if (fe_is_logical_op((char *) n->name))     fe->sql = fe_logical_op(o, typename, fe, n);
+         if (!strcmp((char *) n->name, "FeatureId")) fe->sql = fe_feature_id(o, typename, fe, n);
+    else if (!strcmp((char *) n->name, "GmlObjectId") && ows_version_get(o->request->version) == 110)
+        fe->sql = fe_feature_id(o, typename, fe, n); /* FIXME Is FeatureId should really have priority ? */
 
     xmlFreeDoc(xmldoc);
 
@@ -503,27 +440,23 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name, ows_bbox * b
 
     where = buffer_init();
     geom = ows_psql_geometry_column(o, layer_name);
-
     buffer_add_str(where, " WHERE");
 
     for (ln = geom->first ; ln ; ln = ln->next) {
 
-	/* We use intersects and &&
-           rather than st_intersects
-           for performances issues */
-
-        buffer_add_str(where, " intersects(");
+	/* We use _ST_Intersects and && operator rather than ST_Intersects for performances issues */
+        buffer_add_str(where, " (_ST_Intersects(\"");
         buffer_copy(where, ln->value);
-        buffer_add_str(where, ", ");
+        buffer_add_str(where, "\",");
         ows_bbox_to_query(o, wr->bbox, where);
-        buffer_add_str(where, ") AND ");
+        buffer_add_str(where, ") AND \"");
         buffer_copy(where, ln->value);
-        buffer_add_str(where, " && ");
+        buffer_add_str(where, "\" && ");
         ows_bbox_to_query(o, wr->bbox, where);
 
-        if (ln->next) buffer_add_str(where, " AND ");
+        if (ln->next) buffer_add_str(where, ") OR ");
+        else          buffer_add_str(where, ")");
     }
-
 
     return where;
 }

@@ -99,12 +99,8 @@ static ows *ows_init()
     o->metadata = NULL;
     o->contact = NULL;
     o->postgis_version = NULL;
-    o->schema_wfs_100_basic = NULL;
-    o->schema_wfs_100_trans = NULL;
-    o->schema_wfs_110_basic = NULL;
-    o->schema_wfs_110_trans = NULL;
-    o->schema_fe_100 = NULL;
-    o->schema_fe_110 = NULL;
+    o->schema_wfs_100 = NULL;
+    o->schema_wfs_110 = NULL;
     o->wfs_default_version = ows_version_init();
     ows_version_set(o->wfs_default_version, 1, 1, 0);
 
@@ -194,12 +190,8 @@ void ows_flush(ows * o, FILE * output)
     fprintf(output, "check_schema: %d\n", o->check_schema?1:0);
     fprintf(output, "check_valid_geom: %d\n", o->check_valid_geom?1:0);
 
-    fprintf(output, "schema WFS 1.0 Basic: %d\n", o->schema_wfs_100_basic?1:0);
-    fprintf(output, "schema WFS 1.0 Trans: %d\n", o->schema_wfs_100_trans?1:0);
-    fprintf(output, "schema WFS 1.1 Basic: %d\n", o->schema_wfs_110_basic?1:0);
-    fprintf(output, "schema WFS 1.1 Trans: %d\n", o->schema_wfs_110_trans?1:0);
-    fprintf(output, "schema FE 1.0: %d\n", o->schema_fe_100?1:0);
-    fprintf(output, "schema FE 1.1: %d\n", o->schema_fe_110?1:0);
+    fprintf(output, "schema WFS 1.0: %d\n", o->schema_wfs_100?1:0);
+    fprintf(output, "schema WFS 1.1: %d\n", o->schema_wfs_110?1:0);
 }
 #endif
 
@@ -229,12 +221,8 @@ void ows_free(ows * o)
     if (o->db_encoding)		 buffer_free(o->db_encoding);
     if (o->wfs_default_version)  ows_version_free(o->wfs_default_version);
     if (o->postgis_version)      ows_version_free(o->postgis_version);
-    if (o->schema_wfs_100_basic) xmlSchemaFree(o->schema_wfs_100_basic);
-    if (o->schema_wfs_100_trans) xmlSchemaFree(o->schema_wfs_100_trans);
-    if (o->schema_wfs_110_basic) xmlSchemaFree(o->schema_wfs_110_basic);
-    if (o->schema_wfs_110_trans) xmlSchemaFree(o->schema_wfs_110_trans);
-    if (o->schema_fe_100)        xmlSchemaFree(o->schema_fe_100);
-    if (o->schema_fe_110)        xmlSchemaFree(o->schema_fe_110);
+    if (o->schema_wfs_100)       xmlSchemaFree(o->schema_wfs_100);
+    if (o->schema_wfs_110)       xmlSchemaFree(o->schema_wfs_110);
 
     free(o);
     o = NULL;
@@ -378,36 +366,30 @@ int main(int argc, char *argv[])
 #endif
 
     query=NULL;
-    if (!o->exit) query = cgi_getback_query(o);
-
-    /* Log input query if asked */
-    if (!o->exit) ows_log(o, 4, query);
+    if (!o->exit) query = cgi_getback_query(o);  /* Retrieve safely query string */
+    if (!o->exit) ows_log(o, 4, query);          /* Log input query if asked */
 
     if (!o->exit && (!query || !strlen(query)))
     {
     	/* Usage or Version command line options */
         if (argc > 1) {
-
-		if (	!strncmp(argv[1], "--help", 6)
-                     || !strncmp(argv[1], "-h", 2)     
-                     || !strncmp(argv[1], "--check", 7))
-			ows_usage(o);
+		     if (    !strncmp(argv[1], "--help", 6)
+                          || !strncmp(argv[1], "-h", 2)     
+                          || !strncmp(argv[1], "--check", 7)) ows_usage(o);
 
         	else if (    !strncmp(argv[1], "--version", 9) 
 			  || !strncmp(argv[1], "-v", 2))
 			fprintf(stdout, "%s\n", TINYOWS_VERSION);
 
-        	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                             "Service Unknown", "service");
+        	else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Service Unknown", "service");
 
-	} else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, 
-                             "Service Unknown", "service");
+	} else ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Service Unknown", "service");
 
-        o->exit=true; /* Have done what we have to */
+        o->exit=true;  /* Have done what we have to */
     } 
 
     if (!o->exit) o->request = ows_request_init();
-    if (!o->exit) ows_kvp_or_xml(o, query);
+    if (!o->exit) ows_kvp_or_xml(o, query);  /* Method is KVP or XML ? */
 
     if (!o->exit) {
 
@@ -419,19 +401,13 @@ int main(int argc, char *argv[])
                 o->cgi = cgi_parse_xml(o, query);
                 break;
 
-            default: ows_error(o, OWS_ERROR_REQUEST_HTTP,
-			"Wrong HTTP request Method", "http");
+            default: ows_error(o, OWS_ERROR_REQUEST_HTTP, "Wrong HTTP request Method", "http");
         }
     }
 
     if (!o->exit) o->psql_requests = list_init();
-
-    /* Fill service's metadata */
-    if (!o->exit) ows_metadata_fill(o, o->cgi);
-
-    /* Process service request */
-    if (!o->exit) ows_request_check(o, o->request, o->cgi, query);
-
+    if (!o->exit) ows_metadata_fill(o, o->cgi);                    /* Fill service's metadata */
+    if (!o->exit) ows_request_check(o, o->request, o->cgi, query); /* Process service request */
 
     /* Run the right OWS service */
     if (!o->exit) {
@@ -442,8 +418,7 @@ int main(int argc, char *argv[])
                 if (!o->exit) wfs(o, o->request->request.wfs);
                 break;
             default:
-                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                      "Service Unknown", "service");
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Service Unknown", "service");
         }
     }
 

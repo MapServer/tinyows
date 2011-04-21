@@ -164,24 +164,12 @@ int ows_schema_validation(ows *o, buffer *xml_schema, buffer *xml, bool schema_i
     doc = xmlParseMemory(xml->buf, xml->use);
     if (!doc) return ret;
 
-    if (schema_type == WFS_SCHEMA_TYPE_100_BASIC && o->schema_wfs_100_basic) {
+    if (schema_type == WFS_SCHEMA_TYPE_100 && o->schema_wfs_100) {
 	schema_generate = false;
-	schema = o->schema_wfs_100_basic;
-    } else if (schema_type == WFS_SCHEMA_TYPE_100_TRANS && o->schema_wfs_100_trans) {
+	schema = o->schema_wfs_100;
+    } else if (schema_type == WFS_SCHEMA_TYPE_110 && o->schema_wfs_110) {
 	schema_generate = false;
-	schema = o->schema_wfs_100_trans;
-    } else if (schema_type == WFS_SCHEMA_TYPE_110_BASIC && o->schema_wfs_110_basic) {
-	schema_generate = false;
-	schema = o->schema_wfs_110_basic;
-    } else if (schema_type == WFS_SCHEMA_TYPE_110_TRANS && o->schema_wfs_110_trans) {
-	schema_generate = false;
-	schema = o->schema_wfs_110_trans;
-    } else if (schema_type == FE_SCHEMA_TYPE_100 && o->schema_fe_100) {
-	schema_generate = false;
-	schema = o->schema_fe_100;
-    } else if (schema_type == FE_SCHEMA_TYPE_110 && o->schema_fe_110) {
-	schema_generate = false;
-	schema = o->schema_fe_110;
+	schema = o->schema_wfs_110;
     }
 
     if (schema_generate) schema = ows_generate_schema(o, xml_schema, schema_is_file);
@@ -197,13 +185,8 @@ int ows_schema_validation(ows *o, buffer *xml_schema, buffer *xml, bool schema_i
     xmlFreeDoc(doc);
 
     if (schema_generate) {
-      	     if (schema_type == WFS_SCHEMA_TYPE_100_BASIC) o->schema_wfs_100_basic = schema;
-    	else if (schema_type == WFS_SCHEMA_TYPE_100_TRANS) o->schema_wfs_100_trans = schema;
-        else if (schema_type == WFS_SCHEMA_TYPE_110_BASIC) o->schema_wfs_110_basic = schema;
-        else if (schema_type == WFS_SCHEMA_TYPE_110_TRANS) o->schema_wfs_110_trans = schema;
-        else if (schema_type == FE_SCHEMA_TYPE_100) o->schema_fe_100 = schema;
-        else if (schema_type == FE_SCHEMA_TYPE_110) o->schema_fe_110 = schema;
-
+    	     if (schema_type == WFS_SCHEMA_TYPE_100) o->schema_wfs_100 = schema;
+        else if (schema_type == WFS_SCHEMA_TYPE_110) o->schema_wfs_110 = schema;
     } 
 
     return ret;
@@ -243,9 +226,9 @@ static ows_version *ows_request_check_version(ows * o, ows_request * or, const a
             return v;
         }
 
-        if (check_regexp(l->first->value->buf, "^[0-9]+$")
-                && check_regexp(l->first->next->value->buf, "^[0-9]+$")
-                && check_regexp(l->first->next->next->value->buf, "^[0-9]+$")) {
+        if (    check_regexp(l->first->value->buf, "^[0-9]+$")
+             && check_regexp(l->first->next->value->buf, "^[0-9]+$")
+             && check_regexp(l->first->next->next->value->buf, "^[0-9]+$")) {
             v->major = atoi(l->first->value->buf);
             v->minor = atoi(l->first->next->value->buf);
             v->release = atoi(l->first->next->next->value->buf);
@@ -285,15 +268,13 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
         /* Tests WFS 1.1.0 require a default value for requests
            encoded in XML if service is not set */
         if (cgi_method_get()) {
-            ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-                      "SERVICE is not set", "SERVICE");
+            ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE, "SERVICE is not set", "SERVICE");
             return;
         } else {
             if (buffer_case_cmp(o->metadata->type, "WFS"))
                 or->service = WFS;
             else {
-                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                          "service unknown", "service");
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "service unknown", "service");
                 return;
             }
         }
@@ -306,13 +287,11 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
             if (buffer_case_cmp(o->metadata->type, "WFS"))
                 or->service = WFS;
             else { 
-                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                          "service unknown", "service");
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "service unknown", "service");
                 return;
             }
         } else {
-                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                      "service unknown", "service");
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "service unknown", "service");
                 return;
         }
     }
@@ -331,17 +310,13 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
         if (!buffer_case_cmp(b, "GetCapabilities")) {
             /* WFS 1.1.0 with KVP need a version set */
             if (o->request->method == OWS_METHOD_KVP) {
-                ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-                          "VERSION is not set", "VERSION");
+                ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE, "VERSION is not set", "VERSION");
                 return;
             }
             /* WFS 1.1.0 require a default value for requests
                encoded in XML if version is not set */
             else if (o->request->method == OWS_METHOD_XML) {
-                if (or->service == WFS)
-                    ows_version_set(o->request->version, 1, 1, 0);
-                else if (or->service == WMS)
-                    ows_version_set(o->request->version, 1, 3, 0);
+                if (or->service == WFS) ows_version_set(o->request->version, 1, 1, 0);
             }
         }
     } else or->version = ows_request_check_version(o, or, cgi);
@@ -363,14 +338,12 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
 
         if (or->service == WFS) {
             if (!ln->layer->ns_prefix->use) {
-                ows_error(o, OWS_ERROR_CONFIG_FILE,
-                          "No layer NameSpace prefix defined", "config_file");
+                ows_error(o, OWS_ERROR_CONFIG_FILE, "No layer NameSpace prefix defined", "config_file");
                 return;
             }
 
             if (!ln->layer->ns_uri->use) {
-                ows_error(o, OWS_ERROR_CONFIG_FILE,
-                          "No layer NameSpace URI defined", "config_file");
+                ows_error(o, OWS_ERROR_CONFIG_FILE, "No layer NameSpace URI defined", "config_file");
                 return;
             }
         }
@@ -381,9 +354,9 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
                 typename = array_get(cgi, "typename");
 
                 if (buffer_cmp(typename, ln->layer->name->buf)) {
-                    if (!check_regexp(b->buf, "^http://www.opengis.net")
-                            && !check_regexp(b->buf, "^EPSG")
-                            && !check_regexp(b->buf, "^urn:")) {
+                    if (    !check_regexp(b->buf, "^http://www.opengis.net")
+                         && !check_regexp(b->buf, "^EPSG")
+                         && !check_regexp(b->buf, "^urn:")) {
                         ows_error(o, OWS_ERROR_CONFIG_FILE, "srsname isn't valid", "srsName");
                         return;
                     }
@@ -403,35 +376,21 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
     }
 
     /* check XML Validity */
-    if ( (cgi_method_post() && (   !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8")
-                                || !strcmp(getenv("CONTENT_TYPE"), "application/xml")
-                                || !strcmp(getenv("CONTENT_TYPE"), "text/xml")
-                                || !strcmp(getenv("CONTENT_TYPE"), "text/plain")
-          )) || (!cgi_method_post() && !cgi_method_get() && query[0] == '<') ) {
+    if ( (cgi_method_post() && (    !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8")
+                                 || !strcmp(getenv("CONTENT_TYPE"), "application/xml")
+                                 || !strcmp(getenv("CONTENT_TYPE"), "text/xml")
+                                 || !strcmp(getenv("CONTENT_TYPE"), "text/plain"))) 
+         || (!cgi_method_post() && !cgi_method_get() && query[0] == '<') /* Unit test command line use case */ ) {
 
         if (or->service == WFS && o->check_schema) {
             xmlstring = buffer_from_str(query);
 
             if (ows_version_get(or->version) == 100) {
-                if (buffer_cmp(b, "Transaction")) {
-                    schema = wfs_generate_schema(o, or->version);
-                    valid = ows_schema_validation(o, schema, xmlstring, false, WFS_SCHEMA_TYPE_100_TRANS);
-                } else {
-                    schema = buffer_init();
-                    buffer_copy(schema, o->schema_dir);
-                    buffer_add_str(schema, WFS_SCHEMA_100_BASIC);
-                    valid = ows_schema_validation(o, schema, xmlstring, true, WFS_SCHEMA_TYPE_100_BASIC);
-                }
+                schema = wfs_generate_schema(o, or->version);
+                valid = ows_schema_validation(o, schema, xmlstring, false, WFS_SCHEMA_TYPE_100);
             } else {
-                if (buffer_cmp(b, "Transaction")) {
-                   schema = wfs_generate_schema(o, or->version);
-                   valid = ows_schema_validation(o, schema, xmlstring, false, WFS_SCHEMA_TYPE_110_TRANS);
-                } else {
-                   schema = buffer_init();
-                   buffer_copy(schema, o->schema_dir);
-                   buffer_add_str(schema, WFS_SCHEMA_110);
-                   valid = ows_schema_validation(o, schema, xmlstring, true, WFS_SCHEMA_TYPE_110_BASIC);
-                }
+                schema = wfs_generate_schema(o, or->version);
+                valid = ows_schema_validation(o, schema, xmlstring, false, WFS_SCHEMA_TYPE_110);
             }
 
             buffer_free(schema);

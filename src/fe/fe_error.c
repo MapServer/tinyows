@@ -38,44 +38,37 @@ void fe_error(ows * o, filter_encoding * fe)
 
     if (fe->error_code == FE_ERROR_FEATUREID) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Featureid must match layer.id", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Featureid must match layer.id", "FILTER");
     } else if (fe->error_code == FE_ERROR_FILTER) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Filter parameter doesn't validate the filter.xsd schema", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Filter parameter doesn't validate WFS Schema", "FILTER");
     } else if (fe->error_code == FE_ERROR_BBOX) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Bbox must match xmin,ymin,xmax,ymax", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Bbox must match xmin,ymin,xmax,ymax", "FILTER");
     } else if (fe->error_code == FE_ERROR_PROPERTYNAME) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "PropertyName not available", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "PropertyName not available", "FILTER");
     } else if (fe->error_code == FE_ERROR_GEOM_PROPERTYNAME) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Geometry PropertyName not available", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Geometry PropertyName not available", "FILTER");
     } else if (fe->error_code == FE_ERROR_UNITS) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Units not supported, use 'meters' or 'kilometers'", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Units not supported, use 'meters' or 'kilometers'", "FILTER");
     } else if (fe->error_code == FE_ERROR_GEOMETRY) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Bad geometry", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Bad geometry", "FILTER");
     } else if (fe->error_code == FE_ERROR_FID) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Only one type of identifiers allowed (FeatureId or GmlObjectId)", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Only one allowed at once among FeatureId and GmlObjectId)", "FILTER");
     } else if (fe->error_code == FE_ERROR_SRS) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "SrsName isn't valid", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "SrsName isn't valid", "FILTER");
     } else if (fe->error_code == FE_ERROR_FUNCTION) {
         filter_encoding_free(fe);
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "Unknown Function Name used in Filter", "FILTER");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Unknown Function Name used in Filter", "FILTER");
+    } else if (fe->error_code == FE_ERROR_NAMESPACE) {
+        filter_encoding_free(fe);
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Filter Element contains incoherent XML Namespaces", "FILTER");
     }
 }
 

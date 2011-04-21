@@ -273,12 +273,8 @@ enum wfs_insert_idgen {
 };
 
 enum ows_schema_type {
-	WFS_SCHEMA_TYPE_100_BASIC,
-	WFS_SCHEMA_TYPE_100_TRANS,
-	WFS_SCHEMA_TYPE_110_BASIC,
-	WFS_SCHEMA_TYPE_110_TRANS,
-	FE_SCHEMA_TYPE_100,
-	FE_SCHEMA_TYPE_110
+	WFS_SCHEMA_TYPE_100,
+	WFS_SCHEMA_TYPE_110
 };
 
 typedef struct Wfs_request {
@@ -318,7 +314,8 @@ enum fe_error_code {
     FE_ERROR_GEOMETRY,
     FE_ERROR_FID,
     FE_ERROR_SRS,
-    FE_ERROR_FUNCTION
+    FE_ERROR_FUNCTION,
+    FE_ERROR_NAMESPACE
 };
 
 typedef struct Filter_encoding {
@@ -382,12 +379,8 @@ typedef struct Ows {
     ows_version * wfs_default_version;
     ows_version * postgis_version;
 
-    xmlSchemaPtr  schema_wfs_100_basic;
-    xmlSchemaPtr  schema_wfs_100_trans;
-    xmlSchemaPtr  schema_wfs_110_basic;
-    xmlSchemaPtr  schema_wfs_110_trans;
-    xmlSchemaPtr  schema_fe_100;
-    xmlSchemaPtr  schema_fe_110;
+    xmlSchemaPtr  schema_wfs_100;
+    xmlSchemaPtr  schema_wfs_110;
 } ows;
 
 #endif /* OWS_STRUCT_H */

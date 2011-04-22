@@ -431,8 +431,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         layer->name = buffer_init();
         buffer_add_str(layer->name, (char *) a);
 
-	if (!layer->storage->table->use)
-        	buffer_add_str(layer->storage->table, (char *) a);
+	if (!layer->storage->table->use) buffer_add_str(layer->storage->table, (char *) a);
         xmlFree(a);
     }
 
@@ -467,7 +466,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     if (a && atoi((char *) a) == 1) {
         layer->retrievable = true;
         xmlFree(a);
-    } else if (a && layer->parent && layer->parent->retrievable)
+    } else if (!a && layer->parent && layer->parent->retrievable)
         layer->retrievable = true;
     else
         xmlFree(a);
@@ -477,7 +476,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     if (a && atoi((char *) a) == 1) {
         layer->writable = true;
         xmlFree(a);
-    } else if (a && layer->parent && layer->parent->writable)
+    } else if (!a && layer->parent && layer->parent->writable)
         layer->writable = true;
     else xmlFree(a);
 

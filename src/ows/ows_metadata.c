@@ -141,14 +141,11 @@ void ows_metadata_fill(ows * o, array * cgi)
     assert(o->metadata);
     assert(cgi);
 
-    /* retrieve the requested service from request */
+    /* Retrieve the requested service from request */
     if (array_is_key(cgi, "xmlns")) {
         b = array_get(cgi, "xmlns");
-
-        if (buffer_case_cmp(b, "http://www.opengis.net/wfs")) {
-            o->metadata->type = buffer_init();
-            buffer_add_str(o->metadata->type, "WFS");
-        }
+        if (buffer_case_cmp(b, "http://www.opengis.net/wfs"))
+            o->metadata->type = buffer_from_str("WFS");
     } else if (array_is_key(cgi, "service")) {
         b = array_get(cgi, "service");
         o->metadata->type = buffer_init();
@@ -158,7 +155,7 @@ void ows_metadata_fill(ows * o, array * cgi)
         return;
     }
 
-    /* initialize supported versions from service type */
+    /* Initialize supported versions from service type */
     if (o->metadata->type) {
         if (buffer_case_cmp(o->metadata->type, "WFS")) {
             o->metadata->versions = list_init();

@@ -148,16 +148,13 @@ void ows_metadata_fill(ows * o, array * cgi)
         if (buffer_case_cmp(b, "http://www.opengis.net/wfs")) {
             o->metadata->type = buffer_init();
             buffer_add_str(o->metadata->type, "WFS");
-            buffer_add_str(o->metadata->name, "WFS");
         }
     } else if (array_is_key(cgi, "service")) {
         b = array_get(cgi, "service");
         o->metadata->type = buffer_init();
         buffer_copy(o->metadata->type, b);
-        buffer_copy(o->metadata->name, b);
     } else {
-        ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE,
-                  "service unknown", "service");
+        ows_error(o, OWS_ERROR_MISSING_PARAMETER_VALUE, "service unknown", "service");
         return;
     }
 

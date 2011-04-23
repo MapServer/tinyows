@@ -309,7 +309,7 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
 static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
     buffer *values, *column, *layer_name, *layer_ns_prefix, *result, *sql, *gml;
-    buffer *handle, *id_column, *fid_full_name, *dup_sql;
+    buffer *handle, *id_column, *fid_full_name, *dup_sql, *id;
     xmlNodePtr node, elemt;
     filter_encoding *fe;
     PGresult *res;
@@ -317,7 +317,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     list *l;
     ows_srs * srs_root;
     int srid_root = 0;
-    buffer *id = NULL;
     xmlChar *attr = NULL;
     enum wfs_insert_idgen idgen = WFS_GENERATE_NEW;
     enum wfs_insert_idgen handle_idgen = WFS_GENERATE_NEW;
@@ -378,9 +377,10 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     /* Create Insert SQL query for each Typename */
-    for (; n; n = n->next) {
+    for ( /* Empty */ ; n ; n = n->next) {
         if (n->type != XML_ELEMENT_NODE) continue;
 
+        id = buffer_init();
         values = buffer_init();
         layer_name = buffer_init();
 
@@ -407,7 +407,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         else if (xmlHasProp(n, (xmlChar *) "fid")) attr = xmlGetProp(n, (xmlChar *) "fid");
         
         if (attr) {
-            id = buffer_init();
+            buffer_empty(id);
             buffer_add_str(id, (char *) attr);
             xmlFree(attr);
         } else idgen = WFS_GENERATE_NEW;
@@ -415,7 +415,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
         id_column = ows_psql_id_column(o, layer_name);
 	if (!id_column) {
-             if (id) buffer_free(id);
+             buffer_free(id);
              buffer_free(sql);
              buffer_free(handle);
              buffer_free(values);
@@ -425,7 +425,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
              return result;
 	} 
 
-        if (id) {
+        if (id->use) {
             l = list_explode('.', id);
 	    if (l->last) {
 	       buffer_empty(id);
@@ -465,7 +465,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
        }
 
         if (idgen == WFS_GENERATE_NEW) {
-            if (id) buffer_free(id);
+            buffer_free(id);
             id = ows_psql_generate_id(o, layer_name);
         }
 

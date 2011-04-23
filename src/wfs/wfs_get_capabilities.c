@@ -214,8 +214,8 @@ static void wfs_feature_type_list(ows * o)
 
     /* print global operations */
     
-    if (   ows_layer_list_retrievable(o->layers)
-        || ows_layer_list_writable(o->layers)) 
+    if (    ows_layer_list_retrievable(o->layers)
+         || ows_layer_list_writable(o->layers)) 
     	fprintf(o->output, "  <Operations>\n");
 
     if (ows_layer_list_retrievable(o->layers)) {
@@ -241,8 +241,8 @@ static void wfs_feature_type_list(ows * o)
         writable = true;
     }
 
-    if (   ows_layer_list_retrievable(o->layers)
-        || ows_layer_list_writable(o->layers)) 
+    if (    ows_layer_list_retrievable(o->layers)
+         || ows_layer_list_writable(o->layers)) 
     	fprintf(o->output, "  </Operations>\n");
 
     for (ln = o->layers->first ; ln ; ln = ln->next) {
@@ -254,8 +254,7 @@ static void wfs_feature_type_list(ows * o)
 
             /* name */
             if (ln->layer->name) {
-                for (s = 0; s < ln->layer->depth; s++)
-                    fprintf(o->output, " ");
+                for (s = 0; s < ln->layer->depth; s++) fprintf(o->output, " ");
 
                 fprintf(o->output, " <Name>");
                 buffer_flush(ln->layer->ns_prefix, o->output);
@@ -266,8 +265,7 @@ static void wfs_feature_type_list(ows * o)
 
             /* title */
             if (ln->layer->title) {
-                for (s = 0; s < ln->layer->depth; s++)
-                    fprintf(o->output, " ");
+                for (s = 0; s < ln->layer->depth; s++) fprintf(o->output, " ");
 
                 fprintf(o->output, " <Title>");
                 buffer_flush(ln->layer->title, o->output);
@@ -276,8 +274,7 @@ static void wfs_feature_type_list(ows * o)
 
             /* abstract */
             if (ln->layer->abstract) {
-                for (s = 0; s < ln->layer->depth; s++)
-                    fprintf(o->output, " ");
+                for (s = 0; s < ln->layer->depth; s++) fprintf(o->output, " ");
 
                 fprintf(o->output, " <Abstract>");
                 buffer_flush(ln->layer->abstract, o->output);
@@ -286,8 +283,7 @@ static void wfs_feature_type_list(ows * o)
 
             /* keywords */
             if (ln->layer->keywords) {
-                for (s = 0; s < ln->layer->depth; s++)
-                    fprintf(o->output, " ");
+                for (s = 0; s < ln->layer->depth; s++) fprintf(o->output, " ");
 
                 fprintf(o->output, " <Keywords>");
 
@@ -302,8 +298,7 @@ static void wfs_feature_type_list(ows * o)
                 }
 
                 if (ows_version_get(o->request->version) == 100)
-                    fprintf(o->output, "%s</Keywords>\n",
-                            keyword->value->buf);
+                    fprintf(o->output, "%s</Keywords>\n", keyword->value->buf);
                 else if (ows_version_get(o->request->version) == 110)
                     fprintf(o->output, "</Keywords>\n");
             }
@@ -320,17 +315,12 @@ static void wfs_feature_type_list(ows * o)
                     buffer_flush(srs, o->output);
                     fprintf(o->output, "</SRS>\n");
                 } else if (ows_version_get(o->request->version) == 110) {
-                    fprintf(o->output, " <DefaultSRS>");
-                    fprintf(o->output, "urn:ogc:def:crs:EPSG::%s", srid->buf);
-                    fprintf(o->output, "</DefaultSRS>\n");
+                    fprintf(o->output, " <DefaultSRS>urn:ogc:def:crs:EPSG::%s</DefaultSRS>\n", srid->buf);
 
                     if (ln->layer->srid) {
                         for (l_srid = ln->layer->srid->first; l_srid; l_srid = l_srid->next) {
                             if (!buffer_cmp(srid, l_srid->value->buf)) {
-                                fprintf(o->output, " <OtherSRS>");
-                                fprintf(o->output, "urn:ogc:def:crs:EPSG::%s",
-                                        l_srid->value->buf);
-                                fprintf(o->output, "</OtherSRS>\n");
+                                fprintf(o->output, " <OtherSRS>urn:ogc:def:crs:EPSG::%s</OtherSRS>\n", l_srid->value->buf);
                             }
                         }
                     }
@@ -341,7 +331,7 @@ static void wfs_feature_type_list(ows * o)
                 else if (ows_version_get(o->request->version) == 110)
                     fprintf(o->output, " <NoSRS/>");
             }
-            /* operations */
+            /* Operations */
             if (retrievable != ln->layer->retrievable || writable != ln->layer->writable) {
                 fprintf(o->output, "  <Operations>\n");
 
@@ -367,7 +357,7 @@ static void wfs_feature_type_list(ows * o)
                 fprintf(o->output, "  </Operations>\n");
             }
 
-            /* boundaries */
+            /* Boundaries */
             if (!ln->layer->geobbox) {
                 gb = ows_geobbox_compute(o, ln->layer->name);
             } else {
@@ -411,12 +401,8 @@ static void wfs_feature_type_list(ows * o)
 
                     fprintf(o->output, " />\n");
                 } else if (ows_version_get(o->request->version) == 110) {
-                    fprintf(o->output,
-                            " <ows:LowerCorner>%f %f</ows:LowerCorner>",
-                            gb->west, gb->south);
-                    fprintf(o->output,
-                            " <ows:UpperCorner>%f %f</ows:UpperCorner>",
-                            gb->east, gb->north);
+                    fprintf(o->output, " <ows:LowerCorner>%f %f</ows:LowerCorner>", gb->west, gb->south);
+                    fprintf(o->output, " <ows:UpperCorner>%f %f</ows:UpperCorner>", gb->east, gb->north);
                 }
             } else {
                 if (ows_version_get(o->request->version) == 100) {

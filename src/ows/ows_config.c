@@ -497,7 +497,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     }
 
-    /* inherits from layer parent and replaces with specified value if defined */
+    /* Inherits from layer parent and replaces with specified value if defined */
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "geobbox");
     if (a) {
         layer->geobbox = ows_geobbox_init();
@@ -507,8 +507,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         layer->geobbox = ows_geobbox_copy(layer->parent->geobbox);
     } else xmlFree(a);
 
-    /* inherits from layer parent and replaces with specified value
-       if defined */
+    /* Inherits from layer parent and replaces with specified value if defined */
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "ns_prefix");
     if (a) {
         buffer_add_str(layer->ns_prefix, (char *) a);
@@ -517,8 +516,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         buffer_copy(layer->ns_prefix, layer->parent->ns_prefix);
     } else xmlFree(a);
 
-    /* inherits from layer parent and replaces with specified value
-       if defined */
+    /* Inherits from layer parent and replaces with specified value if defined */
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "ns_uri");
     if (a) {
         buffer_add_str(layer->ns_uri, (char *) a);

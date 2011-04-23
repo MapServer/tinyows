@@ -286,13 +286,11 @@ list *list_explode(char separator, const buffer * value)
     l = list_init();
     buf = buffer_init();
 
-    for (i = 0; i < value->use; i++)
+    for (i = 0 ; i < value->use ; i++)
         if (value->buf[i] == separator) {
-            /* add the buffer to the list */
-            list_add(l, buf);
+            list_add(l, buf);  /* Add the buffer to the list */
             buf = buffer_init();
-        } else
-            buffer_add(buf, value->buf[i]);
+        } else buffer_add(buf, value->buf[i]);
 
     list_add(l, buf);
 

@@ -40,14 +40,11 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin, float
     assert(o);
     assert(wr);
 
-
-    if (!srid || srid == -1) {
+    if (!srid || srid == -1 || (xmin == ymin && xmax == ymax && xmin == xmax)) {
         if (ows_version_get(o->request->version) == 100)
             fprintf(o->output, "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>\n");
-#if 0
-        else
-            fprintf(o->output, "<gml:boundedBy><gml:Null>missing</gml:Null></gml:boundedBy>\n");
-#endif
+        else return; /* No Null boundedBy in WFS 1.1.0 SF-0 */
+            
     } else {
         fprintf(o->output, "<gml:boundedBy>\n");
 
@@ -66,7 +63,6 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin, float
     
         fprintf(o->output, "</gml:boundedBy>\n");
     }
-
 }
 
 

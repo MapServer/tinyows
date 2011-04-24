@@ -87,7 +87,7 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
 {
     xmlNodePtr n;
     xmlAttr *att;
-    xmlChar *content=NULL;
+    xmlChar *content = NULL;
 
     assert(node);
     assert(output);
@@ -230,12 +230,6 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
     assert(sql);
 
     while (n->type != XML_ELEMENT_NODE) n = n->next;       /* Jump to the next element if there are spaces */
-#if 0
-    if (!ows_libxml_check_namespace(o, n)) {
-        fe->error_code = FE_ERROR_NAMESPACE;
-        return sql;
-    }
-#endif
 
     prop_table = ows_psql_describe_table(o, typename);
     assert(prop_table); /* FIXME to remove */
@@ -369,14 +363,15 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buf
     buffer * schema_path;
     xmlDocPtr xmldoc;
     xmlNodePtr n;
-    int ret=-1;
+    int ret = -1;
 
     assert(o);
     assert(fe);
     assert(typename);
     assert(xmlchar);
 
-    /* No validation if Filter came from KVP method */
+    /* No validation if Filter came from KVP method 
+       FIXME: really, but why ?                     */
     if (o->check_schema && o->request->method == OWS_METHOD_XML) {
         schema_path = buffer_init();
         buffer_copy(schema_path, o->schema_dir);
@@ -402,6 +397,12 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buf
 
     if (!xmldoc) {
         fe->error_code = FE_ERROR_FILTER;
+        xmlFreeDoc(xmldoc);
+        return fe;
+    }
+
+    if (!ows_libxml_check_namespace(o, xmldoc->children)) {
+        fe->error_code = FE_ERROR_NAMESPACE;
         xmlFreeDoc(xmldoc);
         return fe;
     }

@@ -224,3 +224,4 @@ void ows_layers_storage_fill(ows * o);
 void ows_layers_storage_flush(ows * o, FILE * output);
 void ows_log(ows *o, int log_level, const char *log);
 void ows_parse_config_mapfile(ows *o, const char *filename);
+bool ows_libxml_check_namespace(ows *o, xmlNodePtr n);

@@ -162,7 +162,7 @@ int ows_schema_validation(ows *o, buffer *xml_schema, buffer *xml, bool schema_i
     assert(xml);
 
     doc = xmlParseMemory(xml->buf, xml->use);
-    if (!doc) return ret;
+    if (!doc || !ows_libxml_check_namespace(o, doc->children)) return ret;
 
     if (schema_type == WFS_SCHEMA_TYPE_100 && o->schema_wfs_100) {
 	schema_generate = false;
@@ -397,7 +397,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
             buffer_free(xmlstring);
             
             if (valid != 0) {
-                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "xml isn't valid", "request");
+                ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "XML request isn't valid", "request");
                 return;
             }
         }

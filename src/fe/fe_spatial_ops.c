@@ -78,21 +78,21 @@ static  buffer *fe_transform_coord_gml2_to_psql(buffer * coord)
 /*
  * Write a polygon geometry according to postgresql syntax from GML bbox
  */
-buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
+buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *envelope, xmlNodePtr n)
 {
+    list *coord_min, *coord_max, *coord_pair;
     xmlChar *content, *srsname;
     buffer *srid, *name, *tmp;
-    list *coord_min, *coord_max, *coord_pair;
+    ows_bbox *bbox;
     int srid_int;
     bool ret;
-    ows_bbox *bbox;
-    ows_srs *s=NULL;
+    ows_srs *s =NULL;
 
     assert(o);
-    assert(typename);
-    assert(fe);
     assert(n);
-
+    assert(fe);
+    assert(typename);
+    assert(envelope);
 
     name = buffer_init();
     buffer_add_str(name, (char *) n->name);
@@ -105,8 +105,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
     buffer_add_int(srid, srid_int);
 
     srsname = xmlGetProp(n, (xmlChar *) "srsName");
-
-
     if (srsname) {
 	s = ows_srs_init();
 
@@ -116,17 +114,14 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
             buffer_free(name);
             buffer_free(srid);
             ows_srs_free(s);
-            return fe->sql;
+            return envelope;
         }
 
         xmlFree(srsname);
     }
 
-
     n = n->children;
-
-    /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE) n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
 
     content = xmlNodeGetContent(n->children);
 
@@ -135,16 +130,11 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         coord_min = list_explode_str(' ', (char *) content);
 
         n = n->next;
-
-        /* jump to the next element if there are spaces */
-        while (n->type != XML_ELEMENT_NODE) n = n->next;
+        while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
 
         xmlFree(content);
         content = xmlNodeGetContent(n->children);
-
         coord_max = list_explode_str(' ', (char *) content);
-
-	
     }
     /* GML2 */
     else {
@@ -159,7 +149,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         buffer_free(tmp);
         list_free(coord_pair);
     }
-
 
     buffer_free(name);
     xmlFree(content);
@@ -190,17 +179,17 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr
         ows_bbox_free(bbox);
         if (s) ows_srs_free(s);
 
-	return fe->sql;
+	return envelope;
     }
 
     list_free(coord_min);
     list_free(coord_max);
 
-    ows_bbox_to_query(o, bbox, fe->sql);
+    ows_bbox_to_query(o, bbox, envelope);
     ows_bbox_free(bbox);
     if (s) ows_srs_free(s);
 
-    return fe->sql;
+    return envelope;
 }
 
 
@@ -212,47 +201,31 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     bool transform = false;
     buffer *sql;
 
-    assert(o);
     assert(typename);
     assert(fe);
     assert(n);
+    assert(o);
 
-    if (!strcmp((char *) n->name, "Equals"))
-        buffer_add_str(fe->sql, " ST_Equals(");
-
-    if (!strcmp((char *) n->name, "Disjoint"))
-        buffer_add_str(fe->sql, " ST_Disjoint(");
-
-    if (!strcmp((char *) n->name, "Touches"))
-        buffer_add_str(fe->sql, " ST_Touches(");
-
-    if (!strcmp((char *) n->name, "Within"))
-        buffer_add_str(fe->sql, " ST_Within(");
-
-    if (!strcmp((char *) n->name, "Overlaps"))
-        buffer_add_str(fe->sql, " ST_Overlaps(");
-
-    if (!strcmp((char *) n->name, "Crosses"))
-        buffer_add_str(fe->sql, " ST_Crosses(");
-
-    if (!strcmp((char *) n->name, "Intersects"))
-        buffer_add_str(fe->sql, " ST_Intersects(");
-
-    if (!strcmp((char *) n->name, "Contains"))
-        buffer_add_str(fe->sql, " ST_Contains(");
+    if (!strcmp((char *) n->name, "Equals"))     buffer_add_str(fe->sql, " ST_Equals(");
+    if (!strcmp((char *) n->name, "Disjoint"))   buffer_add_str(fe->sql, " ST_Disjoint(");
+    if (!strcmp((char *) n->name, "Touches"))    buffer_add_str(fe->sql, " ST_Touches(");
+    if (!strcmp((char *) n->name, "Within"))     buffer_add_str(fe->sql, " ST_Within(");
+    if (!strcmp((char *) n->name, "Overlaps"))   buffer_add_str(fe->sql, " ST_Overlaps(");
+    if (!strcmp((char *) n->name, "Crosses"))    buffer_add_str(fe->sql, " ST_Crosses(");
+    if (!strcmp((char *) n->name, "Intersects")) buffer_add_str(fe->sql, " ST_Intersects(");
+    if (!strcmp((char *) n->name, "Contains"))   buffer_add_str(fe->sql, " ST_Contains(");
 
     n = n->children;
-
-    /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE) n = n->next;
+    while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
 
     if (o->request->request.wfs->srs) {
         transform = true;
         buffer_add_str(fe->sql, "ST_Transform(");
     }
 
-    /* display the property name (surrounded by quotes) */
-    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
+    buffer_add(fe->sql, '"');
+    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true, true);
+    buffer_add(fe->sql, '"');
 
     if (transform) {
         buffer_add(fe->sql, ',');
@@ -268,7 +241,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     buffer_add_str(fe->sql, ",");
 
     if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope"))
-        fe->sql = fe_envelope(o, typename, fe, n);
+        fe->sql = fe_envelope(o, typename, fe, fe->sql, n);
     else  {
    	buffer_add_str(fe->sql, "'");
         sql = ows_psql_gml_to_sql(o, n, 0);
@@ -322,12 +295,11 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
         buffer_add_str(fe->sql, "ST_Distance_sphere(ST_centroid(");
 
     n = n->children;
+    while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
 
-    /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE) n = n->next;
-
-    /* display the property name (surrounded by quotes) */
-    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
+    buffer_add(fe->sql, '"');
+    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true, true);
+    buffer_add(fe->sql, '"');
 
     buffer_add_str(fe->sql, "),ST_centroid('");
 
@@ -372,48 +344,114 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
 }
 
 
+static buffer *fe_bbox_layer(ows *o, buffer *sql, buffer *propertyname, buffer *envelope)
+{
+    bool transform = false; 
+
+    assert(propertyname);
+    assert(envelope);
+    assert(sql);
+    assert(o);
+
+    buffer_add_str(sql, "(_ST_Intersects(");
+
+    if (o->request->request.wfs->srs) {
+         transform = true;
+         buffer_add_str(sql, "ST_Transform(");
+    }
+
+    buffer_add(sql, '"');
+    buffer_copy(sql, propertyname);
+    buffer_add(sql, '"');
+
+    if (transform) {
+        buffer_add(sql, ',');
+        buffer_add_int(sql, o->request->request.wfs->srs->srid);
+        buffer_add(sql, ')');
+    }
+
+    buffer_add_str(sql, ",");
+    buffer_copy(sql, envelope);
+    buffer_add_str(sql, ") AND ");
+
+    if (o->request->request.wfs->srs) {
+         transform = true;
+         buffer_add_str(sql, "ST_Transform(");
+    }
+
+    buffer_add(sql, '"');
+    buffer_copy(sql, propertyname);
+    buffer_add(sql, '"');
+
+    if (transform) {
+        buffer_add(sql, ',');
+        buffer_add_int(sql, o->request->request.wfs->srs->srid);
+        buffer_add(sql, ')');
+    }
+
+    buffer_add_str(sql, " && ");
+    buffer_copy(sql, envelope);
+    buffer_add_str(sql, ")");
+      
+    return sql;
+}
+
+
 /*
  * BBOX operator : identify all geometries that spatially interact with the specified box
  */
 static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    bool transform = false;
+    buffer *property, *envelope;
+    list *columns;
+    list_node *ln;
 
     assert(o);
     assert(typename);
     assert(fe);
     assert(n);
 
-    buffer_add_str(fe->sql, "ST_Intersects(");
-
-    if (o->request->request.wfs->srs) {
-        transform = true;
-        buffer_add_str(fe->sql, "ST_Transform(");
-    }
-
     n = n->children;
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    /* display the property name (surrounded by quotes) */
-    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true);
+    columns = ows_psql_geometry_column(o, typename);
 
-    if (transform) {
-        buffer_add(fe->sql, ',');
-        buffer_add_int(fe->sql, o->request->request.wfs->srs->srid);
-        buffer_add(fe->sql, ')');
+    /* Retrieve the property name */
+    property = buffer_init();
+    property = fe_property_name(o, typename, fe, property, n, true, false);
+
+    /* If no property name, so we have to check with each Geometry_columns */
+    if (property->use == 0) {
+
+        /* retrieve the geometry matching the bbox */
+        if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope")) {
+            envelope = buffer_init();
+            envelope = fe_envelope(o, typename, fe, envelope, n);
+        } else { fe->error_code = FE_ERROR_FILTER; }
+
+        buffer_add(fe->sql, '(');
+        for (ln = columns->first ; ln ; ln = ln->next) {
+            fe->sql = fe_bbox_layer(o, fe->sql, ln->value, envelope);
+            if      (ln->next && (fe->in_not == 0 || !fe->in_not%2)) buffer_add_str(fe->sql, " OR ");
+            else if (ln->next && fe->in_not%2)                       buffer_add_str(fe->sql, " AND ");
+            else                                                     buffer_add_str(fe->sql, ")");
+        }
+
+    } else {
+        n = n->next;
+        while (n->type != XML_ELEMENT_NODE) n = n->next;
+
+        if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope")) {
+            if (!in_list(columns, property)) {
+                  fe->error_code = FE_ERROR_GEOM_PROPERTYNAME;
+                  return fe->sql;
+            }
+            envelope = buffer_init();
+            envelope = fe_envelope(o, typename, fe, envelope, n);
+        } else { fe->error_code = FE_ERROR_FILTER; }
+
+        fe->sql = fe_bbox_layer(o, fe->sql, property, envelope);
     }
-
-    n = n->next;
-
-    while (n->type != XML_ELEMENT_NODE) n = n->next;
-
-    buffer_add_str(fe->sql, ",");
-
-    /* display the geometry matching the bbox */
-    if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope"))
-        fe->sql = fe_envelope(o, typename, fe, n);
-
-    buffer_add_str(fe->sql, ")");
 
     return fe->sql;
 }

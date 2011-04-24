@@ -63,7 +63,7 @@ array *cgi_parse_kvp (ows * o, char *query);
 array *cgi_parse_xml (ows * o, char *query);
 bool check_regexp (const char *str_request, const char *str_regex);
 buffer *fe_comparison_op (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
-buffer *fe_envelope (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
+buffer *fe_envelope (ows * o, buffer * typename, filter_encoding * fe, buffer *envelope, xmlNodePtr n);
 void fe_error (ows * o, filter_encoding * fe);
 buffer *fe_expression (ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n);
 buffer *fe_feature_id (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
@@ -78,7 +78,7 @@ buffer *fe_kvp_bbox (ows * o, wfs_request * wr, buffer * layer_name, ows_bbox * 
 buffer *fe_kvp_featureid (ows * o, wfs_request * wr, buffer * layer_name, list * fid);
 buffer *fe_logical_op (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
 void fe_node_flush (xmlNodePtr node, FILE * output);
-buffer *fe_property_name (ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n, bool check_geom_column);
+buffer *fe_property_name (ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n, bool check_geom_column, bool mandatory);
 buffer *fe_spatial_op (ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n);
 buffer *fe_xpath_property_name (ows * o, buffer * typename, buffer * property);
 buffer *fill_fe_error (ows * o, filter_encoding * fe);

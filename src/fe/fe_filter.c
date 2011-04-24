@@ -41,6 +41,7 @@ filter_encoding *filter_encoding_init()
 
     fe->sql = buffer_init();
     fe->error_code = FE_NO_ERROR;
+    fe->in_not = 0;
 
     return fe;
 }
@@ -158,10 +159,13 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
           if (isstring) buffer_add_str(sql, "'");
         }
 
-    } else if (!strcmp((char *) n->name, "PropertyName"))
-        sql = fe_property_name(o, typename, fe, sql, n, false);
-    else if (n->type != XML_ELEMENT_NODE)
+    } else if (!strcmp((char *) n->name, "PropertyName")) {
+        buffer_add(sql, '"');
+        sql = fe_property_name(o, typename, fe, sql, n, false, true);
+        buffer_add(sql, '"');
+    } else if (n->type != XML_ELEMENT_NODE) {
         sql = fe_expression(o, typename, fe, sql, n->next);
+    }
 
     xmlFree(content);
 
@@ -216,7 +220,8 @@ buffer *fe_xpath_property_name(ows * o, buffer * typename, buffer * property)
 /*
  * Check if propertyName is valid and return the appropriate string
  */
-buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n, bool check_geom_column)
+buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n, 
+                         bool check_geom_column, bool mandatory)
 {
     xmlChar *content;
     array *prop_table;
@@ -255,12 +260,10 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
 
     /* Check if propertyname is available */
     if (array_is_key(prop_table, tmp->buf)) {
-        buffer_add_str(sql, "\"");
         buffer_copy(sql, tmp);
-        buffer_add_str(sql, "\"");
-    } else fe->error_code = FE_ERROR_PROPERTYNAME;
+    } else if (mandatory) fe->error_code = FE_ERROR_PROPERTYNAME;
 
-    if (check_geom_column && !ows_psql_is_geometry_column(o, typename, tmp))
+    if (mandatory && check_geom_column && !ows_psql_is_geometry_column(o, typename, tmp))
         fe->error_code = FE_ERROR_GEOM_PROPERTYNAME;
 
     buffer_free(tmp);

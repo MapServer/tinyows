@@ -179,9 +179,9 @@ static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding *
 
     /* We need to cast as varchar at least for timestamp
            PostgreSQL data type - cf (Ticket #10) */
-    buffer_add_str(fe->sql, " CAST(");
-    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false);
-    buffer_add_str(fe->sql, " AS varchar) LIKE E");
+    buffer_add_str(fe->sql, " CAST(\"");
+    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false, true);
+    buffer_add_str(fe->sql, "\" AS varchar) LIKE E");
 
     n = n->next;
 
@@ -227,13 +227,10 @@ static buffer *fe_property_is_null(ows * o, buffer * typename, filter_encoding *
     assert(n);
 
     n = n->children;
-
-    /* jump to the next element if there are spaces */
-    while (n->type != XML_ELEMENT_NODE) n = n->next;
-
-    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false);
-
-    buffer_add_str(fe->sql, " isnull");
+    while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
+    buffer_add(fe->sql, '"');
+    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false, true);
+    buffer_add_str(fe->sql, "\" isnull");
 
     return fe->sql;
 }

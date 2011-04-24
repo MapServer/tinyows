@@ -158,7 +158,7 @@ AC_SUBST(USE_FCGI)
 
 
 
-AC_OUTPUT(Makefile src/ows_define.h demo/config.xml demo/install.sh test/config.xml test/install.sh)
+AC_OUTPUT(Makefile src/ows_define.h demo/config.xml demo/install.sh test/config_wfs_100.xml test/config_wfs_110.xml test/install_wfs_100.sh test/install_wfs_110.sh)
 
 rm -rf autom4te.cache
 rm -f config.log config.status

@@ -57,10 +57,17 @@ install-demo:
 	@demo/install.sh
 	cp -i demo/config.xml $(PREFIX)/tinyows
 
-install-test:
-	@chmod +x test/install.sh
-	@test/install.sh
-	cp -i test/config.xml $(PREFIX)/tinyows
+install-test100:
+	@chmod +x test/install_100.sh
+	@test/install_110.sh
+	cp -i test/config_wfs_100.xml $(PREFIX)/tinyows/config.xml
+	@test/unit_test ogc_wfs_dataset_100_sf0.xml 4
+
+install-test110:
+	@chmod +x test/install_100.sh
+	@test/install_100.sh
+	cp -i test/config_wfs_110.xml $(PREFIX)/tinyows/config.xml
+	@test/unit_test ogc_wfs_dataset_100_sf0.xml 4
 
 doc-clean:
 	@rm -rf doc/doxygen

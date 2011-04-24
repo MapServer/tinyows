@@ -148,11 +148,8 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
 
     sql = buffer_init();
     /* Put into a buffer the SQL request calculating an extent */
-    buffer_add_str(sql, "SELECT ST_xmin(g.extent), ST_ymin(g.extent),");
-    buffer_add_str(sql, " ST_xmax(g.extent), ST_ymax(g.extent) FROM ");
-    buffer_add_str(sql, "(SELECT ST_Extent(");
-    buffer_add_str(sql, "foo.the_geom");
-    buffer_add_str(sql, ") as extent FROM ( ");
+    buffer_add_str(sql, "SELECT ST_xmin(g.extent), ST_ymin(g.extent), ST_xmax(g.extent), ST_ymax(g.extent) FROM ");
+    buffer_add_str(sql, "(SELECT ST_Extent(foo.the_geom) as extent FROM ( ");
 
     /* For each layer name or each geometry column, make an union between retrieved features */
     for (ln_from = from->first, ln_where = where->first; ln_from ; ln_from = ln_from->next, ln_where = ln_where->next) {
@@ -176,8 +173,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
         if (ln_from->next) buffer_add_str(sql, " UNION ALL ");
     }
 
-    buffer_add_str(sql, " ) AS foo");
-    buffer_add_str(sql, " ) AS g");
+    buffer_add_str(sql, " ) AS foo) AS g");
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
@@ -310,6 +306,8 @@ void ows_bbox_to_query(ows *o, ows_bbox *bbox, buffer *query)
     buffer_add_str(query, " ");
     buffer_add_double(query, y1);
     buffer_add_str(query, "))'::geometry");
+
+    /* FIXME what about geography ? */
 }
 
 

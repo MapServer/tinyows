@@ -7,17 +7,22 @@
    xmlns:gml="http://www.opengis.net/gml"
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-   elementFormDefault="qualified" version="1.1.0">
+   elementFormDefault="qualified" version="1.1.2">
+
+   <!--
+      WFS is an OGC Standard.
+      Copyright (c) 2002,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+      To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+   -->
 
    <!-- ==============================================================
         Includes and Imports
         ============================================================== -->
-   <xsd:import namespace="http://www.opengis.net/gml"
-               schemaLocation="../../gml/3.1.1/base/gml.xsd"/>
-   <xsd:import namespace="http://www.opengis.net/ogc"
-               schemaLocation="../../filter/1.1.0/filter.xsd"/>
-   <xsd:import namespace="http://www.opengis.net/ows"
-               schemaLocation="../../ows/1.0.0/owsAll.xsd"/>
+   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="../../gml/3.1.1/base/gml.xsd"/>
+   <xsd:import namespace="http://www.opengis.net/ogc" schemaLocation="../../filter/1.1.0/filter.xsd"/>
+   <xsd:import namespace="http://www.opengis.net/ows" schemaLocation="../../ows/1.0.0/owsAll.xsd"/>
+
+
 
    <!-- ================================================================== -->
    <!-- =   BASE REQUEST TYPE                                            = -->
@@ -311,7 +316,7 @@
                       type="wfs:OutputFormatListType"
                       minOccurs="0"/>
          <xsd:element ref="ows:WGS84BoundingBox" 
-                      minOccurs="1" maxOccurs="unbounded"/>
+                      minOccurs="0" maxOccurs="unbounded"/>
          <xsd:element name="MetadataURL"
                       type="wfs:MetadataURLType"
                       minOccurs="0" maxOccurs="unbounded"/>
@@ -1722,7 +1727,8 @@ Schema is so consistent with WFS 1.0.0 and WFS 2.0.0
             </xsd:annotation>
          </xsd:element>
          <xsd:element name="InsertResults"
-                      type="wfs:InsertResultsType">
+                      type="wfs:InsertResultsType"
+                      minOccurs="0">
             <xsd:annotation>
                <xsd:documentation xml:lang="en">
                   A transaction is a collection of Insert,Update and Delete

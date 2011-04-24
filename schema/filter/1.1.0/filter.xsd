@@ -4,14 +4,29 @@
    xmlns:gml="http://www.opengis.net/gml"
    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
    elementFormDefault="qualified"
-   version="1.1.0">
+   version="1.1.2">
+
+   <xsd:annotation>
+      <xsd:documentation>
+         This XML Schema defines OGC query filter capabilities documents.
+         filter is an OGC Standard.
+
+         Copyright (c) 2002,2003,2004,2010 Open Geospatial Consortium, Inc.
+         All Rights Reserved.
+
+         To obtain additional rights of use, visit:
+         http://www.opengeospatial.org/legal/ .
+
+         Updated: 2011-02-04
+      </xsd:documentation>
+   </xsd:annotation>
 
    <xsd:include schemaLocation="expr.xsd"/>
    <xsd:include schemaLocation="sort.xsd"/>
    <xsd:include schemaLocation="filterCapabilities.xsd"/>
 
    <xsd:import namespace="http://www.opengis.net/gml"
-               schemaLocation="../../gml/3.1.1/base/gml.xsd"/>
+               schemaLocation="../../gml/3.1.1/base/geometryAggregates.xsd"/>
 
    <xsd:element name="_Id" type="ogc:AbstractIdType" abstract="true"/>
    <xsd:element name="FeatureId"
@@ -129,8 +144,8 @@
             <xsd:sequence>
                <xsd:element ref="ogc:expression" minOccurs="2" maxOccurs="2"/>
             </xsd:sequence>
-            <xsd:attribute name="matchCase" type="xsd:boolean"
-                           use="optional" default="true"/>
+            <xsd:attribute name="matchCase" type="xsd:boolean" use="optional"
+                           default="true"/>
          </xsd:extension>
       </xsd:complexContent>
    </xsd:complexType>
@@ -144,6 +159,8 @@
             <xsd:attribute name="wildCard" type="xsd:string" use="required"/>
             <xsd:attribute name="singleChar" type="xsd:string" use="required"/>
             <xsd:attribute name="escapeChar" type="xsd:string" use="required"/>
+            <xsd:attribute name="matchCase" type="xsd:boolean" use="optional"
+                           default="true"/>
          </xsd:extension>
       </xsd:complexContent>
    </xsd:complexType>
@@ -183,6 +200,7 @@
             <xsd:sequence>
                <xsd:element ref="ogc:PropertyName"/>
                <xsd:choice>
+                  <xsd:element ref="ogc:PropertyName"/>
                   <xsd:element ref="gml:_Geometry"/>
                   <xsd:element ref="gml:Envelope"/>
                </xsd:choice>
@@ -194,7 +212,7 @@
       <xsd:complexContent>
          <xsd:extension base="ogc:SpatialOpsType">
             <xsd:sequence>
-               <xsd:element ref="ogc:PropertyName"/>
+               <xsd:element ref="ogc:PropertyName" minOccurs="0"/>
                <xsd:element ref="gml:Envelope"/>
             </xsd:sequence>
          </xsd:extension>
@@ -211,8 +229,12 @@
          </xsd:extension>
       </xsd:complexContent>
    </xsd:complexType>
-   <xsd:complexType name="DistanceType" mixed="true">
-      <xsd:attribute name="units" type="xsd:string" use="required"/>
+   <xsd:complexType name="DistanceType">
+      <xsd:simpleContent>
+         <xsd:extension base="xsd:double">
+            <xsd:attribute name="units" type="xsd:anyURI" use="required"/>
+         </xsd:extension>
+      </xsd:simpleContent>
    </xsd:complexType>
    <xsd:complexType name="BinaryLogicOpType">
       <xsd:complexContent>
@@ -221,6 +243,7 @@
                <xsd:element ref="ogc:comparisonOps"/>
                <xsd:element ref="ogc:spatialOps"/>
                <xsd:element ref="ogc:logicOps"/>
+               <xsd:element ref="ogc:Function"/>
             </xsd:choice>
          </xsd:extension>
       </xsd:complexContent>
@@ -233,6 +256,7 @@
                   <xsd:element ref="ogc:comparisonOps"/>
                   <xsd:element ref="ogc:spatialOps"/>
                   <xsd:element ref="ogc:logicOps"/>
+                  <xsd:element ref="ogc:Function"/>
                </xsd:choice>
             </xsd:sequence>
          </xsd:extension>

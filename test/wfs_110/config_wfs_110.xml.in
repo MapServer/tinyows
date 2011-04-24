@@ -26,9 +26,11 @@
   <layer name="SimpleFeatures" title="features110"
          ns_prefix="sf" ns_uri="http://cite.opengeospatial.org/gmlsf"
          retrievable="1" writable="1" srid="4326">
+
        <layer name="AggregateGeoFeature" title="AggregateGeoFeature" />
        <layer name="EntitéGénérique" title="EntitéGénérique" />
        <layer name="PrimitiveGeoFeature" title="PrimitiveGeoFeature" />
+
   </layer>
 
 </tinyows>

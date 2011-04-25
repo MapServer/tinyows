@@ -75,32 +75,30 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
     buffer *time, *pkey, *value_encoded;
     bool gml_ns = false;
 
-    assert(o);
-    assert(wr);
     assert(layer_name);
-    assert(prefix);
     assert(prop_name);
     assert(prop_type);
+    assert(prefix);
     assert(value);
+    assert(wr);
+    assert(o);
 
     pkey = ows_psql_id_column(o, layer_name); /* pkey could be NULL !!! */
 
     /* No Pkey display in GML (default behaviour) */
     if (pkey && pkey->buf && !strcmp(prop_name, pkey->buf) && !o->expose_pk) return;
 
-    if (strlen(value) == 0) return;
+    if (strlen(value) == 0) return; /* Don't display empty property */ 
+
+    /* We have to check if we use gml ns or not */
+    if (in_list_str((ows_layer_get(o->layers, layer_name))->gml_ns, prop_name)) gml_ns = true;
+    if (gml_ns && !strcmp("boundedBy", prop_name)) return; /* TODO handle it */
+    if (gml_ns) fprintf(o->output, "   <gml:%s>", prop_name);
+    else        fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name);
+
 #if 0
-    /* Don't handle boundedBy column (CITE 1.0 Unit test)) */
-    if (!strcmp(prop_name, "boundedBy")) return;
+    if (gml_ns && !strcmp("boundedBy", prop_name)) fprintf(o->output, "<gml:Box>");
 #endif
-
-    /* name, description and boundedBy fields if exists belong to GML namespace */
-    if (    !strcmp(prop_name, "name")
-         || !strcmp(prop_name, "description")
-         || !strcmp(prop_name, "boundedBy")) gml_ns = true;
-
-    if (gml_ns == true) fprintf(o->output, "   <gml:%s>", prop_name);
-    else                fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name);
 
     /* PSQL date must be transformed into GML format */
     if (    buffer_cmp(prop_type, "timestamptz")
@@ -126,8 +124,12 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
 
     } else fprintf(o->output, "%s", value);
     
+#if 0
+    if (gml_ns && !strcmp("boundedBy", prop_name)) fprintf(o->output, "</gml:Box>");
+#endif
     if (gml_ns) fprintf(o->output, "</gml:%s>\n", prop_name);
     else        fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name);
+
 }
 
 
@@ -143,8 +145,8 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
 
     assert(o);
     assert(wr);
-    assert(layer_name);
     assert(res);
+    assert(layer_name);
     /* NOTA: properties could be NULL ! */
 
     number = -1;
@@ -176,8 +178,9 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
 	    if (    !properties
                  || in_list_str(properties, PQfname(res, j))
                  || buffer_cmp(properties->first->value, "*")
-                 || in_list_str(ows_psql_not_null_properties(o, layer_name), PQfname(res, j))
-               ) {
+                 || (ows_psql_not_null_properties(o, layer_name) 
+                      && in_list_str(ows_psql_not_null_properties(o, layer_name), PQfname(res, j)))
+                 || in_list_str((ows_layer_get(o->layers, layer_name))->gml_ns, PQfname(res, j)) ){
                prop_type = array_get(describe, PQfname(res, j));
                wfs_gml_display_feature(o, wr, layer_name, ns_prefix, PQfname(res,j), prop_type, PQgetvalue(res, i ,j));
 	    }
@@ -227,7 +230,6 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     fprintf(o->output, " xmlns:ows='http://www.opengis.net/ows'\n");
 
     fprintf(o->output, " xsi:schemaLocation='");
-
     if (ows_version_get(o->request->version) == 100)
         fprintf(o->output, "%s\n    %s?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType",
                 namespaces->first->value->buf, o->online_resource->buf);
@@ -409,7 +411,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
         if (ows_psql_is_geometry_column(o, layer_name, an->key)) {
 
             if (wr->format == WFS_GML212) {
-                buffer_add_str(select, "ST_AsGml(2, ");
+                buffer_add_str(select, "ST_AsGML(2, ");
 
                 /* Geometry Reprojection on the fly step if asked */
                 if (wr->srs) {
@@ -437,7 +439,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
             }
             /* GML3 */
             else if (wr->format == WFS_GML311) {
-                buffer_add_str(select, "ST_AsGml(3, ");
+                buffer_add_str(select, "ST_AsGML(3, ");
 
                 /* Geometry Reprojection on the fly step if asked */
                 if (wr->srs) {

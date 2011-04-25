@@ -102,6 +102,7 @@ enum map_lmd_state {
     MAP_LMD_TOWS_RETRIEVABLE,
     MAP_LMD_TOWS_WRITABLE,
     MAP_LMD_TOWS_GEOBBOX,
+    MAP_LMD_TOWS_GML_NS_LIST,
     MAP_LMD_SKIP
 };
 
@@ -407,6 +408,8 @@ static void metadata_layer_key(char *yytext, bool quotes)
 		map_lmd_state = MAP_LMD_TOWS_WRITABLE;
 	else if(!strncmp("tinyows_geobbox", yytext, 15))
 		map_md_state = MAP_LMD_TOWS_GEOBBOX;
+	else if(!strncmp("tinyows_gml_ns_list", yytext, 19))
+		map_lmd_state = MAP_LMD_TOWS_GML_NS_LIST;
 	else map_lmd_state = MAP_LMD_SKIP;
 }
 
@@ -458,6 +461,9 @@ static void metadata_layer_value(char *yytext, bool quotes)
 		return;
 	case MAP_LMD_TOWS_TABLE:
        		buffer_add_str(map_l->storage->table, yytext);
+		return;
+        case MAP_LMD_TOWS_GML_NS_LIST:
+		map_l->gml_ns = list_explode_str(',', yytext);
 		return;
 	case MAP_LMD_TOWS_WRITABLE:
 		map_l->writable=atoi(yytext)?1:0;

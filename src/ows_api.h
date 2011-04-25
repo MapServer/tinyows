@@ -221,6 +221,7 @@ ows_layer_storage * ows_layer_storage_init();
 void ows_layer_storage_free(ows_layer_storage * storage);
 void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output);
 void ows_layers_storage_fill(ows * o);
+ows_layer * ows_layer_get(const ows_layer_list * ll, const buffer * name);
 void ows_layers_storage_flush(ows * o, FILE * output);
 void ows_log(ows *o, int log_level, const char *log);
 void ows_parse_config_mapfile(ows *o, const char *filename);

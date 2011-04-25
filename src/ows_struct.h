@@ -171,6 +171,7 @@ typedef struct Ows_layer {
     ows_geobbox * geobbox;
     buffer * abstract;
     list * keywords;
+    list * gml_ns;
     buffer * ns_prefix;
     buffer * ns_uri;
     buffer * encoding;

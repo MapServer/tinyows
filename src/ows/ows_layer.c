@@ -42,7 +42,6 @@ ows_layer_list *ows_layer_list_init()
 
     ll->first = NULL;
     ll->last = NULL;
-
     return ll;
 }
 
@@ -58,6 +57,24 @@ void ows_layer_list_free(ows_layer_list * ll)
     ll->last = NULL;
     free(ll);
     ll = NULL;
+}
+
+
+/*
+ * Retrieve a Layer from a layer list or NULL if not found
+ */
+ows_layer * ows_layer_get(const ows_layer_list * ll, const buffer * name)
+{
+    ows_layer_node *ln;
+
+    assert(ll);
+    assert(name);
+
+    for (ln = ll->first; ln ; ln = ln->next)
+        if (ln->layer->name && !strcmp(ln->layer->name->buf, name->buf))
+            return ln->layer;
+
+    return (ows_layer *) NULL;
 }
 
 
@@ -112,8 +129,7 @@ bool ows_layer_list_retrievable(const ows_layer_list * ll)
     assert(ll);
 
     for (ln = ll->first; ln ; ln = ln->next)
-        if (ln->layer->retrievable == false)
-            return false;
+        if (!ln->layer->retrievable) return false;
 
     return true;
 }
@@ -147,8 +163,7 @@ bool ows_layer_list_writable(const ows_layer_list * ll)
     assert(ll);
 
     for (ln = ll->first; ln ; ln = ln->next)
-        if (ln->layer->writable == false)
-            return false;
+        if (!ln->layer->writable) return false;
 
     return true;
 }
@@ -201,8 +216,7 @@ bool ows_layer_list_in_list(const ows_layer_list * ll, const list * l)
     assert(l);
 
     for (ln = l->first; ln ; ln = ln->next)
-        if (!ows_layer_in_list(ll, ln->value))
-            return false;
+        if (!ows_layer_in_list(ll, ln->value)) return false;
 
     return true;
 }
@@ -220,14 +234,14 @@ array *ows_layer_list_namespaces(ows_layer_list * ll)
     assert(ll);
 
     for (ln = ll->first; ln ; ln = ln->next) {
-        if (ln->layer->ns_prefix && ln->layer->ns_prefix->use) {
-            if (!array_is_key(namespaces, ln->layer->ns_prefix->buf)) {
-                ns_prefix = buffer_init();
-                ns_uri = buffer_init();
-                buffer_copy(ns_prefix, ln->layer->ns_prefix);
-                buffer_copy(ns_uri, ln->layer->ns_uri);
-                array_add(namespaces, ns_prefix, ns_uri);
-            }
+        if (    ln->layer->ns_prefix && ln->layer->ns_prefix->use 
+             && !array_is_key(namespaces, ln->layer->ns_prefix->buf)) {
+
+            ns_prefix = buffer_init();
+            ns_uri = buffer_init();
+            buffer_copy(ns_prefix, ln->layer->ns_prefix);
+            buffer_copy(ns_uri, ln->layer->ns_uri);
+            array_add(namespaces, ns_prefix, ns_uri);
         }
     }
 
@@ -415,6 +429,7 @@ ows_layer *ows_layer_init()
     l->name = NULL;
     l->abstract = NULL;
     l->keywords = NULL;
+    l->gml_ns = NULL;
     l->retrievable = false;
     l->writable = false;
     l->srid = NULL;
@@ -438,6 +453,7 @@ void ows_layer_free(ows_layer * l)
     if (l->name) 	buffer_free(l->name);
     if (l->abstract) 	buffer_free(l->abstract);
     if (l->keywords) 	list_free(l->keywords);
+    if (l->gml_ns) 	list_free(l->gml_ns);
     if (l->srid)	list_free(l->srid);
     if (l->geobbox)	ows_geobbox_free(l->geobbox);
     if (l->ns_uri)	buffer_free(l->ns_uri);
@@ -462,7 +478,7 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     fprintf(output, "depth: %i\n", l->depth);
 
     if (l->parent) {
-        if (l->parent->name)       fprintf(output, "parent: %s\n", l->parent->name->buf);
+             if (l->parent->name)  fprintf(output, "parent: %s\n", l->parent->name->buf);
         else if (l->parent->title) fprintf(output, "parent: %s\n", l->parent->title->buf);
     }
 
@@ -490,6 +506,12 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     if (l->keywords) {
         fprintf(output, "keyword: ");
         list_flush(l->keywords, output);
+        fprintf(output, "\n");
+    }
+
+    if (l->gml_ns) {
+        fprintf(output, "gml_ns: ");
+        list_flush(l->gml_ns, output);
         fprintf(output, "\n");
     }
 

@@ -155,10 +155,8 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
         fprintf(o->output, "xmlns:gml='http://www.opengis.net/gml' ");
         fprintf(o->output, "elementFormDefault='qualified' ");
 
-        if (wfs_version == 100)
-            fprintf(o->output, "version='1.0'>\n");
-        else
-            fprintf(o->output, "version='1.1'>\n");
+        if (wfs_version == 100) fprintf(o->output, "version='1.0'>\n");
+        else                    fprintf(o->output, "version='1.1'>\n");
 
         fprintf(o->output, "<xs:import namespace='http://www.opengis.net/gml'");
 

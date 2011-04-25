@@ -492,7 +492,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         while (node->type != XML_ELEMENT_NODE) node = node->next;
 
         /* Fill SQL fields and values at once */
-        for (; node; node = node->next) {
+        for ( /* empty */ ; node; node = node->next) {
             if (node->type == XML_ELEMENT_NODE && 
                  ( buffer_cmp(ows_layer_ns_uri(o->layers, layer_ns_prefix), (char *) node->ns->href)
                    || !strcmp("http://www.opengis.net/gml",     (char *) node->ns->href)

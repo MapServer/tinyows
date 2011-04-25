@@ -55,13 +55,13 @@ void ows_layer_storage_free(ows_layer_storage * storage)
 {
     assert(storage);
 
-    if (storage->schema)		buffer_free(storage->schema);
-    if (storage->table)			buffer_free(storage->table);
-    if (storage->pkey)			buffer_free(storage->pkey);
-    if (storage->pkey_sequence) 	buffer_free(storage->pkey_sequence);
-    if (storage->geom_columns)		list_free(storage->geom_columns);
-    if (storage->attributes)		array_free(storage->attributes);
-    if (storage->not_null_columns)	list_free(storage->not_null_columns);
+    if (storage->schema)           buffer_free(storage->schema);
+    if (storage->table)            buffer_free(storage->table);
+    if (storage->pkey)             buffer_free(storage->pkey);
+    if (storage->pkey_sequence)    buffer_free(storage->pkey_sequence);
+    if (storage->geom_columns)     list_free(storage->geom_columns);
+    if (storage->attributes)       array_free(storage->attributes);
+    if (storage->not_null_columns) list_free(storage->not_null_columns);
 
     free(storage);
     storage = NULL;
@@ -139,14 +139,12 @@ static void ows_storage_fill_not_null(ows * o, ows_layer * l)
     assert(l->storage);
 
     sql = buffer_init();
-    buffer_add_str(sql, "SELECT a.attname AS field ");
-    buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n ");
+    buffer_add_str(sql, "SELECT a.attname AS field FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n ");
     buffer_add_str(sql, "WHERE n.nspname = '");
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND c.relname = '");
     buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND c.relnamespace = n.oid ");
-    buffer_add_str(sql, "AND a.attnum > 0 AND a.attrelid = c.oid ");
+    buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attnum > 0 AND a.attrelid = c.oid ");
     buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attnotnull = 't' AND a.atthasdef='f'");
 
     res = PQexec(o->pg, sql->buf);
@@ -154,8 +152,7 @@ static void ows_storage_fill_not_null(ows * o, ows_layer * l)
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
         PQclear(res);
-        ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                  "Unable to access pg_* tables.", "not_null columns");
+        ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED, "Unable to access pg_* tables.", "not_null columns");
         return;
     }
 
@@ -186,20 +183,17 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
 
     sql = buffer_init();
 
-    buffer_add_str(sql, "SELECT c.column_name ");
-    buffer_add_str(sql, "FROM information_schema.constraint_column_usage c, pg_namespace n ");
+    buffer_add_str(sql, "SELECT c.column_name FROM information_schema.constraint_column_usage c, pg_namespace n ");
     buffer_add_str(sql, "WHERE n.nspname = '");
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND c.table_name = '");
     buffer_copy(sql, l->storage->table);
     buffer_add_str(sql, "' AND c.constraint_name = (");
 
-    buffer_add_str(sql, "SELECT c.conname ");
-    buffer_add_str(sql, "FROM pg_class r, pg_constraint c, pg_namespace n ");
+    buffer_add_str(sql, "SELECT c.conname FROM pg_class r, pg_constraint c, pg_namespace n ");
     buffer_add_str(sql, "WHERE r.oid = c.conrelid AND relname = '");
     buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND r.relnamespace = n.oid ");
-    buffer_add_str(sql, " AND n.nspname = '");
+    buffer_add_str(sql, "' AND r.relnamespace = n.oid AND n.nspname = '");
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND c.contype = 'p')");
 
@@ -208,8 +202,7 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
         PQclear(res);
         buffer_free(sql);
-        ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                  "Unable to access pg_* tables.", "pkey column");
+        ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED, "Unable to access pg_* tables.", "pkey column");
 	return;
     }
 
@@ -221,10 +214,8 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         PQclear(res);
 
         /* Retrieve the Pkey column number */
-        buffer_add_str(sql, "SELECT a.attnum "); 
-        buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n");
-        buffer_add_str(sql, " WHERE a.attnum > 0 AND a.attrelid = c.oid");
-        buffer_add_str(sql, " AND a.atttypid = t.oid AND n.nspname='");
+        buffer_add_str(sql, "SELECT a.attnum FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n");
+        buffer_add_str(sql, " WHERE a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid AND n.nspname='");
         buffer_copy(sql, l->storage->schema);
         buffer_add_str(sql, "' AND c.relname='");
         buffer_copy(sql, l->storage->table);
@@ -235,8 +226,7 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         if (PQresultStatus(res) != PGRES_TUPLES_OK) {
             PQclear(res);
             buffer_free(sql);
-            ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                  "Unable to find pkey column number.", "pkey_column number");
+            ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED, "Unable to find pkey column number.", "pkey_column number");
 	    return;
         }
 
@@ -295,22 +285,18 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
     sql = buffer_init();
 
     buffer_add_str(sql, "SELECT a.attname AS field, t.typname AS type ");
-    buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n ");
-    buffer_add_str(sql, "WHERE n.nspname = '");
+    buffer_add_str(sql, "FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n WHERE n.nspname = '");
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND c.relname = '");
     buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND c.relnamespace = n.oid ");
-    buffer_add_str(sql, "AND a.attnum > 0 AND a.attrelid = c.oid ");
-    buffer_add_str(sql, "AND a.atttypid = t.oid");
+    buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid");
 
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
         PQclear(res);
-        ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                  "Unable to access pg_* tables.", "fill_attributes");
+        ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED, "Unable to access pg_* tables.", "fill_attributes");
         return;
     }
 
@@ -367,10 +353,8 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
     assert(l->storage);
 
     sql = buffer_init();
-    if (is_geom)
-    	buffer_add_str(sql, "SELECT srid, f_geometry_column FROM geometry_columns");
-    else 
-    	buffer_add_str(sql, "SELECT '4326', f_geography_column FROM geography_columns");
+    if (is_geom) buffer_add_str(sql, "SELECT srid, f_geometry_column FROM geometry_columns");
+    else         buffer_add_str(sql, "SELECT '4326', f_geography_column FROM geography_columns");
 
     buffer_add_str(sql, " WHERE f_table_schema='");
     buffer_copy(sql, l->storage->schema);
@@ -446,11 +430,11 @@ void ows_layers_storage_flush(ows * o, FILE * output)
 
 void ows_layers_storage_fill(ows * o)
 {
-    ows_layer_node *ln;
-    buffer *sql;
     PGresult *res, *res_g;
-    int i, end;
+    ows_layer_node *ln;
     bool filled;
+    buffer *sql;
+    int i, end;
 
     assert(o);
     assert(o->layers);
@@ -468,16 +452,16 @@ void ows_layers_storage_fill(ows * o)
         filled = false;
 
         for (i = 0, end = PQntuples(res); i < end; i++) {
-            if (buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res, i, 0)) && 
-		buffer_cmp(ln->layer->storage->table, (char *) PQgetvalue(res, i, 1))) {
+            if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res, i, 0)) 
+		 && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res, i, 1))) {
                 ows_layer_storage_fill(o, ln->layer, true);
                 filled = true;
             }
         }
             
         for (i = 0, end = PQntuples(res_g); i < end; i++) {
-            if (buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res_g, i, 0)) &&
-		buffer_cmp(ln->layer->storage->table, (char *) PQgetvalue(res, i, 1))) {
+            if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res_g, i, 0))
+		 && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res_g, i, 1))) {
                 ows_layer_storage_fill(o, ln->layer, false);
                 filled = true;
             }
@@ -485,7 +469,7 @@ void ows_layers_storage_fill(ows * o)
 
         if (!filled) {
             if (ln->layer->storage) ows_layer_storage_free(ln->layer->storage);
-                ln->layer->storage = NULL;
+            ln->layer->storage = NULL;
         }
     }
     PQclear(res);

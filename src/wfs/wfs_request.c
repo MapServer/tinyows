@@ -486,11 +486,8 @@ static void wfs_request_check_output(ows * o, wfs_request * wr)
     if (!array_is_key(o->cgi, "outputformat")) {
         /* put the default values according to WFS version and request name */
         if (ows_version_get(o->request->version) == 100) {
-            if (wr->request == WFS_GET_FEATURE)
-                wr->format = WFS_GML212;
-            /* DescribeFeatureType */
-            else
-                wr->format = WFS_XML_SCHEMA;
+            if (wr->request == WFS_GET_FEATURE) wr->format = WFS_GML212;
+            else  /* DescribeFeatureType */     wr->format = WFS_XML_SCHEMA;
         } else
             wr->format = WFS_GML311;
     } else {

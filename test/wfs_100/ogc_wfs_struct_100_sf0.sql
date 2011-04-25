@@ -121,7 +121,7 @@ ALTER TABLE "Other" ADD COLUMN "description" character varying;
 ALTER TABLE "Other" ADD COLUMN "name" character varying;
 SELECT AddGeometryColumn('Other', 'boundedBy', 32615, 'POLYGON', 2); 
 SELECT AddGeometryColumn('Other', 'pointProperty', 32615, 'POINT', 2); 
-ALTER TABLE "Other" ADD COLUMN "string1" character varying;
+ALTER TABLE "Other" ADD COLUMN "string1" character varying NOT NULL;
 ALTER TABLE "Other" ADD COLUMN "string2" character varying;
 ALTER TABLE "Other" ADD COLUMN "integers" integer;
 ALTER TABLE "Other" ADD COLUMN "dates" date;

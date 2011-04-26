@@ -78,9 +78,6 @@ static buffer *fe_binary_logical_op(ows * o, buffer * typename, filter_encoding 
             else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " AND ");
         }
 
-        node = node->next;
-        while (node->type != XML_ELEMENT_NODE) node = node->next; /* Jump to next element if spaces */
-
         /* Execute the matching function's type */
              if (fe_is_logical_op((char *) node->name))    fe->sql = fe_logical_op(o, typename, fe, node);
         else if (fe_is_spatial_op((char *) node->name))    fe->sql = fe_spatial_op(o, typename, fe, node);

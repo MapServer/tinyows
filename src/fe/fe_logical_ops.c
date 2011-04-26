@@ -65,22 +65,27 @@ static buffer *fe_binary_logical_op(ows * o, buffer * typename, filter_encoding 
     else if (fe_is_spatial_op((char *) node->name))    fe->sql = fe_spatial_op(o, typename, fe, node);
     else if (fe_is_comparison_op((char *) node->name)) fe->sql = fe_comparison_op(o, typename, fe, node);
 
-    if (!fe->in_not) {
-             if (!strcmp((char *) n->name, "And")) buffer_add_str(fe->sql, " AND ");
-        else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " OR ");
-    } else {
-             if (!strcmp((char *) n->name, "And")) buffer_add_str(fe->sql, " OR ");
-        else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " AND ");
+    /* We could have severals terms in a logical */
+    for ( node = node->next ; node->next ; node = node->next ) {
+        if (node->type != XML_ELEMENT_NODE) continue;
+
+        /* Revert boolean logical if inside a Not */
+        if (!fe->in_not) {
+                 if (!strcmp((char *) n->name, "And")) buffer_add_str(fe->sql, " AND ");
+            else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " OR ");
+        } else {
+                 if (!strcmp((char *) n->name, "And")) buffer_add_str(fe->sql, " OR ");
+            else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " AND ");
+        }
+
+        node = node->next;
+        while (node->type != XML_ELEMENT_NODE) node = node->next; /* Jump to next element if spaces */
+
+        /* Execute the matching function's type */
+             if (fe_is_logical_op((char *) node->name))    fe->sql = fe_logical_op(o, typename, fe, node);
+        else if (fe_is_spatial_op((char *) node->name))    fe->sql = fe_spatial_op(o, typename, fe, node);
+        else if (fe_is_comparison_op((char *) node->name)) fe->sql = fe_comparison_op(o, typename, fe, node);
     }
-
-    node = node->next;
-    while (node->type != XML_ELEMENT_NODE) node = node->next; /* Jump to next element if spaces */
-
-    /* Execute the matching function's type */
-         if (fe_is_logical_op((char *) node->name))    fe->sql = fe_logical_op(o, typename, fe, node);
-    else if (fe_is_spatial_op((char *) node->name))    fe->sql = fe_spatial_op(o, typename, fe, node);
-    else if (fe_is_comparison_op((char *) node->name)) fe->sql = fe_comparison_op(o, typename, fe, node);
-
     buffer_add_str(fe->sql, ")");
 
     return fe->sql;

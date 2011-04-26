@@ -91,7 +91,8 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
     if (strlen(value) == 0) return; /* Don't display empty property */ 
 
     /* We have to check if we use gml ns or not */
-    if (in_list_str((ows_layer_get(o->layers, layer_name))->gml_ns, prop_name)) gml_ns = true;
+    if ((ows_layer_get(o->layers, layer_name))->gml_ns 
+         && (in_list_str((ows_layer_get(o->layers, layer_name))->gml_ns, prop_name))) gml_ns = true;
     if (gml_ns && !strcmp("boundedBy", prop_name)) return; /* TODO handle it */
     if (gml_ns) fprintf(o->output, "   <gml:%s>", prop_name);
     else        fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name);
@@ -180,7 +181,8 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
                  || buffer_cmp(properties->first->value, "*")
                  || (ows_psql_not_null_properties(o, layer_name) 
                       && in_list_str(ows_psql_not_null_properties(o, layer_name), PQfname(res, j)))
-                 || in_list_str((ows_layer_get(o->layers, layer_name))->gml_ns, PQfname(res, j)) ){
+                 || ((ows_layer_get(o->layers, layer_name))->gml_ns  
+                      && in_list_str((ows_layer_get(o->layers, layer_name))->gml_ns, PQfname(res, j)))) {
                prop_type = array_get(describe, PQfname(res, j));
                wfs_gml_display_feature(o, wr, layer_name, ns_prefix, PQfname(res,j), prop_type, PQgetvalue(res, i ,j));
 	    }

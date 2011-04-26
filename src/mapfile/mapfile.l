@@ -659,26 +659,26 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 <WEB>MAXTEMPLATE		{ OWS_MAP_EATLINE }
 <WEB>TEMPLATE			{ OWS_MAP_EATLINE }
 
-<MAP>SYMBOL			{ yy_push_state(SYMBOL); OWS_MAP_DBG}
-<MAP>SCALEBAR			{ yy_push_state(SCALEBAR); OWS_MAP_DBG}
-<MAP>REFERENCE			{ yy_push_state(REFERENCE); OWS_MAP_DBG}
-<MAP>OUTPUTFORMAT		{ yy_push_state(OUTPUTFORMAT); OWS_MAP_DBG}
-<WEB>METADATA 			{ yy_push_state(METADATA); OWS_MAP_DBG}
-<LAYER>GRID 			{ yy_push_state(GRID); OWS_MAP_DBG}
-<LAYER>JOIN 			{ yy_push_state(JOIN); OWS_MAP_DBG}
-<LAYER>METADATA 		{ yy_push_state(LAYER_METADATA); OWS_MAP_DBG}
-<LAYER>CLASS 			{ yy_push_state(CLASS); OWS_MAP_DBG}
-<CLASS>STYLE 			{ yy_push_state(STYLE); OWS_MAP_DBG}
-<CLASS>LABEL 			{ yy_push_state(LABEL); OWS_MAP_DBG}
-<MAP,LAYER>PROJECTION		{ yy_push_state(PROJECTION); OWS_MAP_DBG}
-<SYMBOL,STYLE>PATTERN		{ yy_push_state(PATTERN); OWS_MAP_DBG}
-<SYMBOL>POINT			{ yy_push_state(POINT); OWS_MAP_DBG}
-<SCALEBAR,LEGEND>LABEL		{ yy_push_state(LABEL); OWS_MAP_DBG}
-<MAP>LAYER 			{ yy_push_state(LAYER); map_l = ows_layer_init(); OWS_MAP_DBG}
-<LAYER>FEATURE 			{ yy_push_state(FEATURE); OWS_MAP_DBG}
-<MAP>NAME			{ BEGIN PROPERTIES; map_prop_state = MAP_NAME;}
-<LAYER>NAME			{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME;}
-<LAYER>CONNECTION		{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_CONNECTION;}
+<MAP>SYMBOL			{ yy_push_state(SYMBOL); OWS_MAP_DBG }
+<MAP>SCALEBAR			{ yy_push_state(SCALEBAR); OWS_MAP_DBG  }
+<MAP>REFERENCE			{ yy_push_state(REFERENCE); OWS_MAP_DBG }
+<MAP>OUTPUTFORMAT		{ yy_push_state(OUTPUTFORMAT); OWS_MAP_DBG }
+<WEB>METADATA 			{ yy_push_state(METADATA); OWS_MAP_DBG }
+<LAYER>GRID 			{ yy_push_state(GRID); OWS_MAP_DBG }
+<LAYER>JOIN 			{ yy_push_state(JOIN); OWS_MAP_DBG }
+<LAYER>METADATA 		{ yy_push_state(LAYER_METADATA); OWS_MAP_DBG }
+<LAYER>CLASS 			{ yy_push_state(CLASS); OWS_MAP_DBG }
+<CLASS>STYLE 			{ yy_push_state(STYLE); OWS_MAP_DBG }
+<CLASS>LABEL 			{ yy_push_state(LABEL); OWS_MAP_DBG }
+<MAP,LAYER>PROJECTION		{ yy_push_state(PROJECTION); OWS_MAP_DBG }
+<SYMBOL,STYLE>PATTERN		{ yy_push_state(PATTERN); OWS_MAP_DBG }
+<SYMBOL>POINT			{ yy_push_state(POINT); OWS_MAP_DBG }
+<SCALEBAR,LEGEND>LABEL		{ yy_push_state(LABEL); OWS_MAP_DBG }
+<MAP>LAYER 			{ yy_push_state(LAYER); map_l = ows_layer_init(); OWS_MAP_DBG }
+<LAYER>FEATURE 			{ yy_push_state(FEATURE); OWS_MAP_DBG }
+<MAP>NAME			{ BEGIN PROPERTIES; map_prop_state = MAP_NAME; }
+<LAYER>NAME			{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME; }
+<LAYER>CONNECTION		{ BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_CONNECTION; }
 <LAYER>CONNECTIONTYPE		{ BEGIN LAYER_CONNECTIONTYPE; }
 <LAYER_CONNECTIONTYPE>POSTGIS	{ BEGIN LAYER; map_is_postgis=true; }
 <LAYER_CONNECTIONTYPE>[A-Za-z]+	{ BEGIN LAYER; map_is_postgis=false; }
@@ -694,7 +694,7 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 <LAYER_METADATA_VALUE>\"[^\"]*\"|\'[^\']*\'	{metadata_layer_value(yytext, true); BEGIN LAYER_METADATA;}
 <INCLUDE>\"[^\"]*\"|\'[^\']*\'			{
 
-	 char *p; 
+	 char *p, *q; 
          buffer *path;
 
 	 yy_pop_state(); OWS_MAP_DBG
@@ -708,8 +708,8 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 	 map_include_stack[map_include_stack_ptr] = YY_CURRENT_BUFFER;
          map_include_stack_ptr++;
 
-	 for (p = yytext; *p ; p++); *(--p) = 0; yytext++;
-         path = mapfile_build_path(map_o, yytext);
+	 for (p = q = yytext; *p ; p++); *(--p) = 0; q++; /* remove surrounding quotes */
+         path = mapfile_build_path(map_o, q);
          yyin = fopen(path->buf, "r");
          buffer_free(path);
 
@@ -767,11 +767,8 @@ void ows_parse_config_mapfile(ows * o, const char *filename)
 
  	while( yylex() ) ;
 
-	if (!map_o->encoding->use)
-		buffer_add_str(map_o->encoding, OWS_DEFAULT_XML_ENCODING);
-
-	if (!map_o->db_encoding->use)
-		buffer_add_str(map_o->db_encoding, OWS_DEFAULT_DB_ENCODING);
+	if (!map_o->encoding->use)    buffer_add_str(map_o->encoding, OWS_DEFAULT_XML_ENCODING);
+	if (!map_o->db_encoding->use) buffer_add_str(map_o->db_encoding, OWS_DEFAULT_DB_ENCODING);
 	
 	if (map_srid) {
 		for (ln = o->layers->first ; ln ; ln = ln->next)

@@ -66,7 +66,7 @@ static buffer *fe_binary_logical_op(ows * o, buffer * typename, filter_encoding 
     else if (fe_is_comparison_op((char *) node->name)) fe->sql = fe_comparison_op(o, typename, fe, node);
 
     /* We could have severals terms in a logical */
-    for ( node = node->next ; node->next ; node = node->next ) {
+    for ( node = node->next ; node ; node = node->next ) {
         if (node->type != XML_ELEMENT_NODE) continue;
 
         /* Revert boolean logical if inside a Not */

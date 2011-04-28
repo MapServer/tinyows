@@ -304,30 +304,26 @@ list *list_explode(char separator, const buffer * value)
  */
 list *list_explode_start_end(char separator_start, char separator_end, buffer * value)
 {
-    size_t i;
-
     list *l;
+    size_t i;
     buffer *buf;
 
     assert(value);
 
     l = list_init();
 
-    /* if first char doesn't match separator, list contains only one element */
-    if (value->buf[0] != separator_start)
+    /* If first char doesn't match separator, list contains only one element */
+    if (value->buf[0] != separator_start) {
         list_add_by_copy(l, value);
-    else {
-        buf = buffer_init();
-
-        for (i = 1; i < value->use; i++)
-            if (value->buf[i] == separator_end)
-                /* add the buffer to the list */
-                list_add(l, buf);
-            else if (value->buf[i] != separator_start)
-                buffer_add(buf, value->buf[i]);
-            else
-                buf = buffer_init();
+        return l;
     }
+
+    buf = buffer_init();
+
+    for (i = 1 ; i < value->use ; i++)
+             if (value->buf[i] == separator_end)   { list_add(l, buf); }
+        else if (value->buf[i] != separator_start) { buffer_add(buf, value->buf[i]); }
+        else     /* separator_start */             { buf = buffer_init(); }
 
     return l;
 }

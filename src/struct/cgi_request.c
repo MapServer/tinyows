@@ -424,20 +424,17 @@ buffer *cgi_add_xml_into_buffer(buffer * element, xmlNodePtr n)
  */
 array *cgi_parse_xml(ows * o, char *query)
 {
-    array *arr;
     buffer *key, *val, *operations, *prop, *filter, *typename;
     bool prop_need_comma, typ_need_comma;
-
     xmlDocPtr xmldoc;
-    xmlNodePtr n, node;
     xmlAttr *att;
+    array *arr;
+    xmlNodePtr node, n = NULL;
 
     assert(o);
     assert(query);
 
-    prop_need_comma = false;
-    typ_need_comma = false;
-    n = NULL;
+    prop_need_comma = typ_need_comma = false;
 
     xmldoc = xmlParseMemory(query, strlen(query));
 
@@ -456,12 +453,12 @@ array *cgi_parse_xml(ows * o, char *query)
     filter = buffer_init();
     typename = buffer_init();
 
-    /* first child processed aside because name node match value array instead of key array */
+    /* First child processed aside because name node match value array instead of key array */
     buffer_add_str(key, "request");
     buffer_add_str(val, (char *) n->name);
     array_add(arr, key, val);
 
-    /* retrieve the namespace linked to the first node */
+    /* Retrieve the namespace linked to the first node */
     if (n->ns && n->ns->href) {
         key = buffer_init();
         val = buffer_init();
@@ -470,40 +467,35 @@ array *cgi_parse_xml(ows * o, char *query)
         array_add(arr, key, val);
     }
 
-    /* name element is put in key, and content element in value */
+    /* Name element is put in key, and content element in value */
     for (att = n->properties ; att ; att = att->next)
         arr = cgi_add_att(arr, att);
 
     for (n = n->children; n; n = n->next) {
-        /* execute the process only if n is an element and not spaces for instance */
-        if (n->type != XML_ELEMENT_NODE)
-            continue;
+        if (n->type != XML_ELEMENT_NODE) continue; /* Eat spaces */
 
-        /* parse the element's attributes */
         for (att = n->properties ; att ; att = att->next) {
 
-            /* add typename to the matching global buffer */
+            /* Add typename to the matching global buffer */
             if (!strcmp((char *) att->name, "typeName")) {
                 typename = cgi_add_into_buffer(typename, att->children, typ_need_comma);
                 typ_need_comma = true;
-
-            /* add name and content element to the array */
-            } else arr = cgi_add_att(arr, att);
+            
+            } else arr = cgi_add_att(arr, att); /* Add name and content element in array */
         }
 
         if (!strcmp((char *) n->name, "TypeName")) {
-            /* add typename to the matching global buffer */
+            /* Add typename to the matching global buffer */
             typename = cgi_add_into_buffer(typename, n, typ_need_comma);
             typ_need_comma = true;
         }
-        /*if n name is an operation, keep the xml to analyse it later */
-        else if (   !strcmp((char *) n->name, "Insert")
-                 || !strcmp((char *) n->name, "Delete")
-                 || !strcmp((char *) n->name, "Update")) {
-            if (!operations->use) buffer_add_str(operations, "<operations>");
+        /* If it's an operation, keep the xml to analyze it later */
+        else if (    !strcmp((char *) n->name, "Insert")
+                  || !strcmp((char *) n->name, "Delete")
+                  || !strcmp((char *) n->name, "Update")) {
 
-            /* add the whole xml operation to the matching global buffer */
-            operations = cgi_add_xml_into_buffer(operations, n);
+            if (!operations->use) buffer_add_str(operations, "<operations>");
+            operations = cgi_add_xml_into_buffer(operations, n); /* Add the whole xml operation to the buffer */
         }
         /* if node name match 'Query', parse the children elements */
         else if (!strcmp((char *) n->name, "Query")) {

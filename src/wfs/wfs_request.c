@@ -643,7 +643,6 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
 
     /*check if propertyname size and typename or fid size are similar */
     if (f->size != layer_name->size) {
-        list_free(layer_name);
         mlist_free(f);
         wfs_error(o, wr, WFS_ERROR_INCORRECT_SIZE_PARAMETER,
                   "propertyname list size and typename list size must be similar",
@@ -661,7 +660,6 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
             if (fe->first->next) {
                 /*check if propertyname values match typename or fid layer names */
                 if (!buffer_cmp(fe->first->value, ln_tpn->value->buf)) {
-                    list_free(layer_name);
                     list_free(fe);
                     mlist_free(f);
                     wfs_error(o, wr, WFS_ERROR_NO_MATCHING,
@@ -678,9 +676,8 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
             list_free(fe);
 
             /* if propertyname is an Xpath expression */
-            if (check_regexp(ln->value->buf, "\\*\\[")) {
+            if (check_regexp(ln->value->buf, "\\*\\["))
                 ln->value = fe_xpath_property_name(o, ln_tpn->value, ln->value);
-            }
 
             /* remove namespaces */
             ln->value = wfs_request_remove_namespaces(o, ln->value);
@@ -688,7 +685,6 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
             /* check if propertyname values are correct */
             if (!buffer_cmp(ln->value, "*") && !array_is_key(prop_table, ln->value->buf)) {
                 mlist_free(f);
-                list_free(layer_name);
                 ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                           "propertyname values not available", "GetFeature");
                 return;

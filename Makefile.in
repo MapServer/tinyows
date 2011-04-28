@@ -80,17 +80,9 @@ doxygen: doc-clean
 	&& doxygen doc/Doxyfile				\
 	) || echo "doxygen seems not installed"
 
-test-valgrind:
-	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 1
+test-valgrind110:
+	@test/unit_test test/wfs_110/cite 1
 
-test-output:
-	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 4
+test-valgrind100:
+	@test/unit_test test/wfs_100/cite 1
 
-test-http:
-	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 5
-
-test-exception:
-	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 6
-
-test-stderr:
-	@test/unit_test test/wfs/cite_wfs_1_1_0-sf0 7

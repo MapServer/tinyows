@@ -193,14 +193,12 @@ static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding *
     pg_string = buffer_init();
     buffer_add_str(pg_string, (char *) content);
 
-    /* replace the wildcard,singlechar and escapechar by Postgrefe->sql's */
+    /* Replace the wildcard,singlechar and escapechar by Postgrefe->sql's */
     if ((char *) wildcard && (char *) singlechar && (char *) escape) {
-        pg_string = buffer_replace(pg_string, (char *) escape, "\\\\");
-        pg_string = buffer_replace(pg_string, (char *) wildcard, "%");
-        pg_string = buffer_replace(pg_string, (char *) singlechar, "_");
-    } else {
-        fe->error_code = FE_ERROR_FILTER;
-    }
+        if (strlen((char *) escape))     pg_string = buffer_replace(pg_string, (char *) escape, "\\\\");
+        if (strlen((char *) wildcard))   pg_string = buffer_replace(pg_string, (char *) wildcard, "%");
+        if (strlen((char *) singlechar)) pg_string = buffer_replace(pg_string, (char *) singlechar, "_");
+    } else fe->error_code = FE_ERROR_FILTER;
 
     buffer_add_str(fe->sql, "'");
     buffer_copy(fe->sql, pg_string);

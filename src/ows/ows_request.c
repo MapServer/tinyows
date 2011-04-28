@@ -158,11 +158,15 @@ int ows_schema_validation(ows *o, buffer *xml_schema, buffer *xml, bool schema_i
     bool schema_generate = true;
 
     assert(o);
-    assert(xml_schema);
     assert(xml);
+    assert(xml_schema);
 
     doc = xmlParseMemory(xml->buf, xml->use);
-    if (!doc || !ows_libxml_check_namespace(o, doc->children)) return ret;
+    if (!doc) return ret;
+    if (!ows_libxml_check_namespace(o, doc->children)) {
+        xmlFreeDoc(doc);
+        return ret;
+    }
 
     if (schema_type == WFS_SCHEMA_TYPE_100 && o->schema_wfs_100) {
 	schema_generate = false;

@@ -236,6 +236,7 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
         	buffer_copy(schema, t->value);
 	  	if (t->next) buffer_add(schema, ',');
 	    }
+            list_free(typename);
         } 
 
         if (wfs_version == 100) buffer_add_str(schema, "&amp;version=1.0.0");

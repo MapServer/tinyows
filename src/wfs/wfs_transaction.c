@@ -359,6 +359,8 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         srs_root = ows_srs_init();
 
         if (!ows_srs_set_from_srsname(o, srs_root, (char *) attr)) {
+             buffer_free(sql);
+             buffer_free(handle);
        	     ows_srs_free(srs_root);
        	     xmlFree(attr);
              result = buffer_from_str("Unkwnown or wrong CRS used");

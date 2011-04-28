@@ -319,6 +319,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
             if (wr->typename) {
                 /* Check the mapping between fid and typename */
                 if (!buffer_cmp(fe->first->value, ln_tpn->value->buf)) {
+                    list_free(layer_name);
                     list_free(fe);
                     mlist_free(f);
                     wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "featureid values and typename values don't match", "");
@@ -328,6 +329,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
             /* Check if featureid is well formed : layer.id */
             if (!fe->first->next) {
+                list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
                 ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "featureid must match layer.id", "GetFeature");
@@ -344,6 +346,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
             /* Check if layer exists */
             if (!ows_layer_in_list(o->layers, fe->first->value)) {
+                list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_DEFINED, "Unknown layer name", "GetFeature");
@@ -352,6 +355,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
             /* Check if layer is retrievable if request is getFeature */
             if (wr->request == WFS_GET_FEATURE && !ows_layer_retrievable(o->layers, fe->first->value)) {
+                list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_RETRIEVABLE,
@@ -361,6 +365,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
             /* Check if layer is writable if request is a transaction operation */
             if (wr->operation && !ows_layer_writable(o->layers, fe->first->value)) {
+                list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_WRITABLE,
@@ -369,7 +374,6 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
             }
 
             list_free(fe);
-
         }
 
         if (wr->typename) ln_tpn = ln_tpn->next;

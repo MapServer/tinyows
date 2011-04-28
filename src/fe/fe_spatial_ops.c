@@ -452,9 +452,9 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
         } else { fe->error_code = FE_ERROR_FILTER; }
 
         fe->sql = fe_bbox_layer(o, fe->sql, property, envelope);
-        if (envelope) buffer_free(envelope);
     }
 
+    if (envelope) buffer_free(envelope);
     buffer_free(property);
     return fe->sql;
 }

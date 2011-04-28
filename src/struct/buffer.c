@@ -124,7 +124,7 @@ void buffer_add(buffer * buf, char c)
 {
     assert(buf);
 
-    if ((buf->use + 2) >= buf->size) buffer_realloc(buf);
+    if ((buf->use + 1) >= buf->size) buffer_realloc(buf);
 
     buf->buf[buf->use] = c;
     buf->buf[buf->use + 1] = '\0';
@@ -355,6 +355,8 @@ void buffer_shift(buffer * buf, size_t len)
     assert(buf);
     assert(len <= buf->use);
 
+    if (len <= 0) return; /* nothing to do */
+
     for (i = len; i < buf->use; i++)
         buf->buf[i - len] = buf->buf[i];
 
@@ -364,46 +366,38 @@ void buffer_shift(buffer * buf, size_t len)
 
 
 /*
- * Replace all occurences of string 'before' inside the buffer by
- * string 'after'
+ * Replace all occurences of string 'before' inside the buffer by string 'after'
  */
 buffer *buffer_replace(buffer * buf, char *before, char *after)
 {
-    char *pos;
     buffer *new_buf, *rest;
-    int length;
+    size_t length;
+    char *pos;
 
-    assert(buf);
     assert(before);
     assert(after);
+    assert(buf);
 
     new_buf = buffer_init();
     buffer_copy(new_buf, buf);
 
-    /* look for first occurence */
-    pos = strstr(new_buf->buf, before);
-
+    pos = strstr(new_buf->buf, before); /* Look for first occurence */
     while (pos) {
         length = strlen(pos);
+        
+        buffer_pop(new_buf, length);    /* Copy the first part without occurence */
+        buffer_add_str(new_buf, after); /* Add the string after */
 
-        /* copy the first party of the string without occurence */
-        buffer_pop(new_buf, length);
-
-        /* add the string after */
-        buffer_add_str(new_buf, after);
-
-        /* add the remaining string */
+        /* Add the remaining string */
         rest = buffer_init();
         buffer_copy(rest, buf);
         buffer_shift(rest, buf->use - length + strlen(before));
         buffer_copy(new_buf, rest);
         buffer_free(rest);
-
-        /* search the next occurence */
-        pos = strstr(new_buf->buf, before);
+        
+        pos = strstr(new_buf->buf, before); /* Search the next occurence */
     }
 
-    /* return the altered buffer */
     buffer_empty(buf);
     buffer_copy(buf, new_buf);
     buffer_free(new_buf);

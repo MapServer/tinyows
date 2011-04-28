@@ -7,6 +7,14 @@
   version="1.0.0"
   service="WFS"
 >
+  <!-- 
+        Original file version retrieved from OGC CITE: 
+        http://cite.opengeospatial.org/te2/wfs-1.0.0-r3/data/data-wfs-1.0.0.zip 
+      
+        Then concatenation of wfsBasicTestData.xml and wfsTransactionTestData.xml
+        Then change some gml namespace to right ones
+  -->
+
   <!-- Null Feature test data -->
   <wfs:Delete typeName="cdf:Nulls">
   	<ogc:Filter>

@@ -248,7 +248,6 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_
 
             /* Check if layer exists and have storage */
             if (!ows_layer_match_table(o, ln->value)) {
-                list_free(layer_name);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_DEFINED, "Unknown layer name", "typename");
                 return NULL;
             }
@@ -256,7 +255,6 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_
             /* Check if layer is retrievable */
             if ((wr->request == WFS_GET_FEATURE || wr->request == WFS_DESCRIBE_FEATURE_TYPE) 
                  && !ows_layer_retrievable(o->layers, ln->value)) {
-                list_free(layer_name);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_RETRIEVABLE,
                           "Not retrievable layer(s), Forbidden operation.", "typename");
                 return NULL;
@@ -264,7 +262,6 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_
 
             /* Check if layer is writable, if request is a transaction operation */
             if (wr->operation && !ows_layer_writable(o->layers, ln->value)) {
-                list_free(layer_name);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_WRITABLE,
                           "Not writable layer(s), Forbidden Transaction Operation",
                           "typename");
@@ -304,7 +301,6 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
     if (wr->typename) {
         /* Check if Typename and FeatureId size are similar */
         if (f->size != wr->typename->size) {
-            list_free(layer_name);
             mlist_free(f);
             wfs_error(o, wr, WFS_ERROR_INCORRECT_SIZE_PARAMETER,
                       "featureid list and typename lists must have the same size", "");
@@ -321,7 +317,6 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
             if (wr->typename) {
                 /* Check the mapping between fid and typename */
                 if (!buffer_cmp(fe->first->value, ln_tpn->value->buf)) {
-                    list_free(layer_name);
                     list_free(fe);
                     mlist_free(f);
                     wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "featureid values and typename values don't match", "");
@@ -331,7 +326,6 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
             /* Check if featureid is well formed : layer.id */
             if (!fe->first->next) {
-                list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
                 ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "featureid must match layer.id", "GetFeature");
@@ -348,7 +342,6 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
             /* Check if layer exists */
             if (!ows_layer_in_list(o->layers, fe->first->value)) {
-                list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_DEFINED, "Unknown layer name", "GetFeature");
@@ -357,7 +350,6 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
             /* Check if layer is retrievable if request is getFeature */
             if (wr->request == WFS_GET_FEATURE && !ows_layer_retrievable(o->layers, fe->first->value)) {
-                list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_RETRIEVABLE,
@@ -368,7 +360,6 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
             /* Check if layer is writable if request is a transaction operation */
             if (wr->operation && !ows_layer_writable(o->layers, fe->first->value)) {
-                list_free(layer_name);
                 list_free(fe);
                 mlist_free(f);
                 wfs_error(o, wr, WFS_ERROR_LAYER_NOT_WRITABLE,
@@ -417,7 +408,6 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
                 srid_tmp = ows_srs_get_srid_from_layer(o, ln->value);
 
                 if (srid != srid_tmp) {
-                    list_free(layer_name);
                     ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                               "Layers in TYPENAME must have the same SRS", "GetFeature");
                     return;
@@ -426,7 +416,6 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
         }
 
         if(!ows_srs_set_from_srid(o, wr->srs, srid)) {
-             list_free(layer_name);
              ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                         "srsName value use an unsupported value, for requested layer(s)", "GetFeature");
              return;
@@ -437,7 +426,6 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
     } else {
         b = array_get(o->cgi, "srsname");
         if (!ows_srs_set_from_srsname(o, wr->srs, b->buf)) {
-             list_free(layer_name);
              ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
                         "srsName value use an unsupported value, for requested layer(s)",
                         "GetFeature");
@@ -466,7 +454,6 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
     wr->bbox = ows_bbox_init();
 
     if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, wr->srs->srid)) {
-        list_free(layer_name);
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Bad parameters for Bbox, must be Xmin,Ymin,Xmax,Ymax", "NULL");
         return;
     }

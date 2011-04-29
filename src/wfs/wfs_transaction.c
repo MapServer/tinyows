@@ -1039,17 +1039,13 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
     for ( /* empty */ ; n && (buffer_cmp(result, "PGRES_COMMAND_OK")) ; n = n->next) {
         if (n->type != XML_ELEMENT_NODE) continue;
 
-        if (!strcmp((char *) n->name, "Insert")) {
+             if (!strcmp((char *) n->name, "Insert")) {
             buffer_free(result);
             result = wfs_insert_xml(o, wr, xmldoc, n);
-        }
-
-        if (!strcmp((char *) n->name, "Delete")) {
+        } else if (!strcmp((char *) n->name, "Delete")) {
             buffer_free(result);
             result = wfs_delete_xml(o, wr, n);
-        }
-
-        if (!strcmp((char *) n->name, "Update")) {
+        } else if (!strcmp((char *) n->name, "Update")) {
             buffer_free(result);
             result = wfs_update_xml(o, wr, xmldoc, n);
         }

@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <assert.h>
 
 #include "../ows/ows.h"
@@ -59,20 +60,31 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 
     /* Output the description of the layer_name */
     for (an = table->first ; an ; an = an->next) {
-            if (    !id_name 
-                 || (id_name && !buffer_cmp(an->key, id_name->buf))
-		 || (id_name &&  buffer_cmp(an->key, id_name->buf) && o->expose_pk)) 
-		{
-        		fprintf(o->output, "    <xs:element name ='");
-         	   	buffer_flush(an->key, o->output);
-         	   	fprintf(o->output, "' type='%s' ", ows_psql_to_xsd(an->value, o->request->version));
 
-          		if (mandatory_prop && in_list(mandatory_prop, an->key))
-                		fprintf(o->output, "nillable='false' minOccurs='1' ");
-            	 	else    fprintf(o->output, "nillable='true' minOccurs='0' ");
+         /* Handle GML namespace */
+         if (            (ows_layer_get(o->layers, layer_name))->gml_ns 
+              && in_list((ows_layer_get(o->layers, layer_name))->gml_ns, an->key)) {
+
+              if (    !strcmp("name", an->key->buf)
+                   || !strcmp("description", an->key->buf) 
+                   || !strcmp("boundedBy", an->key->buf)) { continue; }
+
+               fprintf(o->output, "    <xs:element ref='gml:%s'/>\n", an->key->buf);
+               continue;
+         }
+
+         /* Avoid to expose PK if not specificaly wanted */
+         if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }
+
+         fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
+             an->key->buf, ows_psql_to_xsd(an->value, o->request->version));
+
+         if (mandatory_prop && in_list(mandatory_prop, an->key))
+             fprintf(o->output, "nillable='false' minOccurs='1' ");
+         else
+             fprintf(o->output, "nillable='true' minOccurs='0' ");
 	
-        		fprintf(o->output, "maxOccurs='1'/>\n");
-		}
+      	 fprintf(o->output, "maxOccurs='1'/>\n");
     }
 
     fprintf(o->output, "   </xs:sequence>\n");

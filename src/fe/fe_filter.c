@@ -202,11 +202,9 @@ buffer *fe_xpath_property_name(ows * o, buffer * typename, buffer * property)
 
     if (check_regexp(property->buf, "\\*\\[position")) buffer_shift(property, 13); /* Remove '*[position()=' */
     else buffer_shift(property, 2); /* Remove '*[' */
+    buffer_pop(property, 1);        /* Remove ']' */
 
-    /* Delete the last character ']' */
-    buffer_pop(property, 1);
-
-    /* retrieve the matching column name from the number of the column */
+    /* Retrieve the matching column name from the number of the column */
     prop_name = ows_psql_column_name(o, typename, atoi(property->buf));
     buffer_empty(property);
     buffer_copy(property, prop_name);
@@ -322,11 +320,8 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
 
             /* Check if the layer_name match the typename queried */
             if (fe_list->first && !buffer_cmp(fe_list->first->value, typename->buf)) {
-                fe->error_code = FE_ERROR_FEATUREID;
-                list_free(fe_list);
-                buffer_free(buf_fid);
-                xmlFree(fid);
-                return fe->sql;
+                buffer_add_str(fe->sql, " FALSE"); /* We still execute the query */
+                continue;
             }
 
             /* If there is no id column, raise an error */

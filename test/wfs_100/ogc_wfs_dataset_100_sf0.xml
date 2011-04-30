@@ -7,12 +7,12 @@
   version="1.0.0"
   service="WFS"
 >
+
   <!-- 
         Original file version retrieved from OGC CITE: 
         http://cite.opengeospatial.org/te2/wfs-1.0.0-r3/data/data-wfs-1.0.0.zip 
       
         Then concatenation of wfsBasicTestData.xml and wfsTransactionTestData.xml
-        Then change some gml namespace to right ones
   -->
 
   <!-- Null Feature test data -->
@@ -48,11 +48,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Seven>
     <cdf:Seven>
       <gml:boundedBy>
@@ -60,11 +60,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Seven>
     <cdf:Seven>
       <gml:boundedBy>
@@ -72,11 +72,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Seven>
     <cdf:Seven>
       <gml:boundedBy>
@@ -84,11 +84,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Seven>
     <cdf:Seven>
       <gml:boundedBy>
@@ -96,11 +96,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Seven>
     <cdf:Seven>
       <gml:boundedBy>
@@ -108,11 +108,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Seven>
     <cdf:Seven>
       <gml:boundedBy>
@@ -120,11 +120,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Seven>
   </wfs:Insert>
 
@@ -143,11 +143,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -155,11 +155,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -167,11 +167,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -179,11 +179,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -191,11 +191,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -203,11 +203,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -215,11 +215,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -227,11 +227,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -239,11 +239,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -251,11 +251,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -263,11 +263,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -275,11 +275,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -287,11 +287,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -299,11 +299,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
     <cdf:Fifteen>
       <gml:boundedBy>
@@ -311,11 +311,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Fifteen>
   </wfs:Insert>
   
@@ -337,11 +337,11 @@
           <gml:coordinates>500000,500000 500100,500100</gml:coordinates>
         </gml:Box>
       </gml:boundedBy>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
       <cdf:string1>always</cdf:string1>
       <cdf:string2>sometimes</cdf:string2>
       <cdf:integers>7</cdf:integers>
@@ -362,11 +362,11 @@
   <wfs:Insert handle="cgf:Points">
     <cgf:Points>
       <cgf:id>t0000</cgf:id>
-      <cgf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cgf:pointProperty>
+      </gml:pointProperty>
     </cgf:Points>
   </wfs:Insert>
 
@@ -383,11 +383,11 @@
   <wfs:Insert handle="cgf:Lines">
     <cgf:Lines>
       <cgf:id>t0001</cgf:id>
-      <cgf:lineStringProperty>
+      <gml:lineStringProperty>
         <gml:LineString srsName="EPSG:32615">
           <gml:coordinates>500125,500025 500175,500075</gml:coordinates>
         </gml:LineString>
-      </cgf:lineStringProperty>
+      </gml:lineStringProperty>
     </cgf:Lines>
   </wfs:Insert>
 
@@ -404,7 +404,7 @@
   <wfs:Insert handle="cgf:Polygons">
     <cgf:Polygons>
       <cgf:id>t0002</cgf:id>
-      <cgf:polygonProperty>
+      <gml:polygonProperty>
         <gml:Polygon srsName="EPSG:32615">
           <gml:outerBoundaryIs>
             <gml:LinearRing>
@@ -412,7 +412,7 @@
             </gml:LinearRing>
           </gml:outerBoundaryIs>
         </gml:Polygon>
-      </cgf:polygonProperty>
+      </gml:polygonProperty>
     </cgf:Polygons>
   </wfs:Insert>
 
@@ -429,7 +429,7 @@
   <wfs:Insert handle="cgf:MPoints">
     <cgf:MPoints>
       <cgf:id>t0003</cgf:id>
-      <cgf:multiPointProperty>
+      <gml:multiPointProperty>
         <gml:MultiPoint srsName="EPSG:32615">
           <gml:pointMember>
             <gml:Point>
@@ -442,7 +442,7 @@
             </gml:Point>
           </gml:pointMember>
         </gml:MultiPoint>
-      </cgf:multiPointProperty>
+      </gml:multiPointProperty>
     </cgf:MPoints>
   </wfs:Insert>
 
@@ -459,7 +459,7 @@
    <wfs:Insert handle="cgf:MLines">
     <cgf:MLines>
       <cgf:id>t0004</cgf:id>
-      <cgf:multiLineStringProperty>
+      <gml:multiLineStringProperty>
         <gml:MultiLineString srsName="EPSG:32615">
           <gml:lineStringMember>
             <gml:LineString>
@@ -472,7 +472,7 @@
             </gml:LineString>
           </gml:lineStringMember>
         </gml:MultiLineString>
-      </cgf:multiLineStringProperty>
+      </gml:multiLineStringProperty>
     </cgf:MLines>
   </wfs:Insert>
 
@@ -489,7 +489,7 @@
   <wfs:Insert handle="cgf:MPolygons">
     <cgf:MPolygons>
       <cgf:id>t0005</cgf:id>
-      <cgf:multiPolygonProperty>
+      <gml:multiPolygonProperty>
         <gml:MultiPolygon srsName="EPSG:32615">
           <gml:polygonMember>
             <gml:Polygon>
@@ -510,7 +510,7 @@
             </gml:Polygon>
           </gml:polygonMember>
         </gml:MultiPolygon>
-      </cgf:multiPolygonProperty>
+      </gml:multiPolygonProperty>
     </cgf:MPolygons>
   </wfs:Insert>
 
@@ -540,11 +540,11 @@
         </gml:Box>
       </gml:boundedBy>
       <cdf:id>td0001</cdf:id>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Deletes>
     <cdf:Deletes>
       <gml:boundedBy>
@@ -553,11 +553,11 @@
         </gml:Box>
       </gml:boundedBy>
       <cdf:id>td0002</cdf:id>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Deletes>
     <cdf:Deletes>
       <gml:boundedBy>
@@ -566,11 +566,11 @@
         </gml:Box>
       </gml:boundedBy>
       <cdf:id>td0003</cdf:id>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Deletes>
   </wfs:Insert>
   <!-- UpdateFeature test data -->
@@ -590,11 +590,11 @@
         </gml:Box>
       </gml:boundedBy>
       <cdf:id>tu0001</cdf:id>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Updates>
     <cdf:Updates>
       <gml:boundedBy>
@@ -603,11 +603,11 @@
         </gml:Box>
       </gml:boundedBy>
       <cdf:id>tu0002</cdf:id>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Updates>
     <cdf:Updates>
       <gml:boundedBy>
@@ -616,11 +616,11 @@
         </gml:Box>
       </gml:boundedBy>
       <cdf:id>tu0003</cdf:id>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Updates>
     <cdf:Updates>
       <gml:boundedBy>
@@ -629,11 +629,12 @@
         </gml:Box>
       </gml:boundedBy>
       <cdf:id>tu0004</cdf:id>
-      <cdf:pointProperty>
+      <gml:pointProperty>
         <gml:Point srsName="EPSG:32615">
           <gml:coordinates>500050,500050</gml:coordinates>
         </gml:Point>
-      </cdf:pointProperty>
+      </gml:pointProperty>
     </cdf:Updates>
   </wfs:Insert>
 </wfs:Transaction>
+

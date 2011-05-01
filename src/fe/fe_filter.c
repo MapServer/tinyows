@@ -54,7 +54,7 @@ void filter_encoding_free(filter_encoding * fe)
 {
     assert(fe);
 
-    if (fe->sql) buffer_free(fe->sql);
+    buffer_free(fe->sql);
     free(fe);
     fe = NULL;
 }

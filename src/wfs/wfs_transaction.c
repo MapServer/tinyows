@@ -527,12 +527,11 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                         !strcmp((char *) elemt->name, "Envelope")) {
 
                         fe = filter_encoding_init();
-                        fe->sql = buffer_init();
                         fe->sql = fe_envelope(o, layer_name, fe, fe->sql, elemt);
 			if (fe->error_code != FE_NO_ERROR) {
 				result = fill_fe_error(o, fe);
              			buffer_free(sql);
-             		buffer_free(handle);   /* FIXME really ? */
+             		        buffer_free(handle);
             		 	buffer_free(values);
                             	buffer_free(column);
                             	buffer_free(id);

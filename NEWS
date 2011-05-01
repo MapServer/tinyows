@@ -16,6 +16,7 @@
  - PostGIS version init check (support 1.5 and coming 2.0)
  - Update XSD schema (WFS, FE, GML), so need a new 'make install' step if you upgrade
  - CITE WFS-T 1.1.0 SF-0 almost full compliant (still 2 minors differences, require PostGIS 2.0)
+ - CITE WFS-T 1.0.0 SF-0 full compliant (require PostGIS 2.0)
  - Lot of debug stuff (a special thanks to Boris Leukert for detailled reports)
 
 

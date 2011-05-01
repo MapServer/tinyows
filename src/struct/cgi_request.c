@@ -577,10 +577,12 @@ array *cgi_parse_xml(ows * o, char *query)
     xmlFreeDoc(xmldoc);
 
     if (lock_error) {
+        array_free(arr);
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "LockID is not implemented", "request");
         return NULL;
     }
     if (unknown_error) {
+        array_free(arr);
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Unknown or invalid Query", "request");
         return NULL;
     }

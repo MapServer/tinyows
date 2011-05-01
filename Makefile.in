@@ -38,7 +38,6 @@ svn-clean: clean doc-clean
 clean: 
 	@rm -f tinyows Makefile src/ows_define.h
 	@rm -rf tinyows.dSYM
-	@rm -f src/mapfile/mapfile.c
 	@rm -f demo/config.xml demo/install.sh
 	@rm -f test/config.xml test/install.sh
 

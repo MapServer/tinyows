@@ -394,6 +394,8 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         wfs_request_remove_namespaces(o, layer_name);
 
         if (!layer_name || !ows_layer_writable(o->layers, layer_name)) {
+             buffer_free(id);
+             buffer_free(handle);
              buffer_free(sql);
              buffer_free(values);
 	     if (layer_name) buffer_free(layer_name);

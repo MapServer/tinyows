@@ -419,6 +419,13 @@ buffer *cgi_add_xml_into_buffer(buffer * element, xmlNodePtr n)
 }
 
 
+static bool is_node_ns_wfs(xmlNodePtr n) 
+{
+    if (n->ns && n->ns->href && (!strcmp("http://www.opengis.net/wfs", (char *) n->ns->href) 
+                              || !strcmp("http://www.opengis.net/ogc", (char *) n->ns->href))) return true;
+    return false;
+}
+
 /*
  * Parse the XML request and return an array key/value
  */
@@ -429,12 +436,14 @@ array *cgi_parse_xml(ows * o, char *query)
     xmlDocPtr xmldoc;
     xmlAttr *att;
     array *arr;
+    bool lock_error, unknown_error;
     xmlNodePtr node, n = NULL;
 
     assert(o);
     assert(query);
 
     prop_need_comma = typ_need_comma = false;
+    lock_error = unknown_error = false;
 
     xmldoc = xmlParseMemory(query, strlen(query));
 
@@ -445,8 +454,6 @@ array *cgi_parse_xml(ows * o, char *query)
     }
 
     arr = array_init();
-    key = buffer_init();
-    val = buffer_init();
 
     operations = buffer_init();
     prop = buffer_init();;
@@ -454,16 +461,14 @@ array *cgi_parse_xml(ows * o, char *query)
     typename = buffer_init();
 
     /* First child processed aside because name node match value array instead of key array */
-    buffer_add_str(key, "request");
-    buffer_add_str(val, (char *) n->name);
+    key = buffer_from_str("request");
+    val = buffer_from_str((char *) n->name);
     array_add(arr, key, val);
 
     /* Retrieve the namespace linked to the first node */
     if (n->ns && n->ns->href) {
-        key = buffer_init();
-        val = buffer_init();
-        buffer_add_str(key, "xmlns");
-        buffer_add_str(val, (char *) n->ns->href);
+        key = buffer_from_str("xmlns");
+        val = buffer_from_str((char *) n->ns->href);
         array_add(arr, key, val);
     }
 
@@ -473,6 +478,7 @@ array *cgi_parse_xml(ows * o, char *query)
 
     for (n = n->children; n; n = n->next) {
         if (n->type != XML_ELEMENT_NODE) continue; /* Eat spaces */
+        if (!is_node_ns_wfs(n)) continue;          /* NS check */
 
         for (att = n->properties ; att ; att = att->next) {
 
@@ -484,21 +490,23 @@ array *cgi_parse_xml(ows * o, char *query)
             } else arr = cgi_add_att(arr, att); /* Add name and content element in array */
         }
 
-        if (!strcmp((char *) n->name, "TypeName")) {
+        if (is_node_ns_wfs(n) && !strcmp((char *) n->name, "TypeName")) {
             /* Add typename to the matching global buffer */
             typename = cgi_add_into_buffer(typename, n, typ_need_comma);
             typ_need_comma = true;
         }
+        else if (is_node_ns_wfs(n) && !strcmp((char *) n->name, "LockID")) lock_error = true;
         /* If it's an operation, keep the xml to analyze it later */
-        else if (    !strcmp((char *) n->name, "Insert")
-                  || !strcmp((char *) n->name, "Delete")
-                  || !strcmp((char *) n->name, "Update")) {
+        else if (  is_node_ns_wfs(n) 
+                   && (    !strcmp((char *) n->name, "Insert")
+                        || !strcmp((char *) n->name, "Delete")
+                        || !strcmp((char *) n->name, "Update"))) {
 
             if (!operations->use) buffer_add_str(operations, "<operations>");
             operations = cgi_add_xml_into_buffer(operations, n); /* Add the whole xml operation to the buffer */
         }
         /* if node name match 'Query', parse the children elements */
-        else if (!strcmp((char *) n->name, "Query")) {
+        else if (is_node_ns_wfs(n) && !strcmp((char *) n->name, "Query")) {
             /* each query's propertynames and filter must be in brackets */
             buffer_add_str(prop, "(");
             buffer_add_str(filter, "(");
@@ -507,14 +515,14 @@ array *cgi_parse_xml(ows * o, char *query)
                 /*execute the process only if n is an element and not spaces for instance */
                 if (node->type != XML_ELEMENT_NODE) continue;
 
-                if (!strcmp((char *) node->name, "PropertyName")) {
+                if (is_node_ns_wfs(node) && !strcmp((char *) node->name, "PropertyName")) {
                     /* add propertyname to the matching global buffer */
                     prop = cgi_add_into_buffer(prop, node, prop_need_comma);
                     prop_need_comma = true;
-                } else if (!strcmp((char *) node->name, "Filter")) {
+                } else if (is_node_ns_wfs(node) && !strcmp((char *) node->name, "Filter")) {
                     /* add the whole xml filter to the matching global buffer */
                     filter = cgi_add_xml_into_buffer(filter, node);
-                } else if (!strcmp((char *) node->name, "SortBy")) {
+                } else if (is_node_ns_wfs(node) && !strcmp((char *) node->name, "SortBy")) {
                     /* add sortby element to the array */
                     arr = cgi_add_sortby(arr, node);
                 } else {
@@ -533,8 +541,7 @@ array *cgi_parse_xml(ows * o, char *query)
 	       the list to be sur that filter's size and typename's size are similar */
             buffer_add_str(filter, ")");
 
-            /* add element to the array */
-        } else arr = cgi_add_node(arr, n);
+        } else unknown_error = true;
     }
 
     /* operations */
@@ -568,6 +575,15 @@ array *cgi_parse_xml(ows * o, char *query)
     buffer_free(typename);
 
     xmlFreeDoc(xmldoc);
+
+    if (lock_error) {
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "LockID is not implemented", "request");
+        return NULL;
+    }
+    if (unknown_error) {
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Unknown or invalid Query", "request");
+        return NULL;
+    }
 
     return arr;
 }

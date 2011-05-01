@@ -635,8 +635,7 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
     if (f->size != layer_name->size) {
         mlist_free(f);
         wfs_error(o, wr, WFS_ERROR_INCORRECT_SIZE_PARAMETER,
-                  "propertyname list size and typename list size must be similar",
-                  "GetFeature");
+                  "propertyname list size and typename list size must be similar", "GetFeature");
         return;
     }
 
@@ -653,8 +652,7 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
                     list_free(fe);
                     mlist_free(f);
                     wfs_error(o, wr, WFS_ERROR_NO_MATCHING,
-                              "propertyname values and typename values don't match",
-                              "GetFeature");
+                              "propertyname values and typename values don't match", "GetFeature");
                     return;
                 }
 

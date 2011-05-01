@@ -317,10 +317,13 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             }
             buffer_add_str(buf_fid, (char *) fid);
             fe_list = list_explode('.', buf_fid);
+            xmlFree(fid);
 
             /* Check if the layer_name match the typename queried */
             if (fe_list->first && !buffer_cmp(fe_list->first->value, typename->buf)) {
                 buffer_add_str(fe->sql, " FALSE"); /* We still execute the query */
+                list_free(fe_list);
+                buffer_free(buf_fid);
                 continue;
             }
 
@@ -330,7 +333,6 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
                 fe->error_code = FE_ERROR_FEATUREID;
                 list_free(fe_list);
                 buffer_free(buf_fid);
-                xmlFree(fid);
                 return fe->sql;
             }
 
@@ -341,7 +343,6 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
             buffer_add_str(fe->sql, "\'");
             list_free(fe_list);
             buffer_free(buf_fid);
-            xmlFree(fid);
         }
 
         if (n->next && n->next->type == XML_ELEMENT_NODE) buffer_add_str(fe->sql, " OR ");

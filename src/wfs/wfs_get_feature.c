@@ -93,13 +93,10 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
     /* We have to check if we use gml ns or not */
     if ((ows_layer_get(o->layers, layer_name))->gml_ns 
          && (in_list_str((ows_layer_get(o->layers, layer_name))->gml_ns, prop_name))) gml_ns = true;
-    if (gml_ns && !strcmp("boundedBy", prop_name)) return; /* TODO handle it */
+
     if (gml_ns) fprintf(o->output, "   <gml:%s>", prop_name);
     else        fprintf(o->output, "   <%s:%s>", prefix->buf, prop_name);
 
-#if 0
-    if (gml_ns && !strcmp("boundedBy", prop_name)) fprintf(o->output, "<gml:Box>");
-#endif
 
     /* PSQL date must be transformed into GML format */
     if (    buffer_cmp(prop_type, "timestamptz")
@@ -125,12 +122,8 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
 
     } else fprintf(o->output, "%s", value);
     
-#if 0
-    if (gml_ns && !strcmp("boundedBy", prop_name)) fprintf(o->output, "</gml:Box>");
-#endif
     if (gml_ns) fprintf(o->output, "</gml:%s>\n", prop_name);
     else        fprintf(o->output, "</%s:%s>\n", prefix->buf, prop_name);
-
 }
 
 
@@ -175,7 +168,6 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
 
         /* print properties */
         for (j = 0, nb_fields = PQnfields(res) ; j < nb_fields ; j++) {
-
 	    if (    !properties
                  || in_list_str(properties, PQfname(res, j))
                  || buffer_cmp(properties->first->value, "*")
@@ -242,6 +234,7 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     /* FeatureId request could be without Typename parameter */ 
     if (wr->typename)  
     { 
+         fprintf(o->output, "&amp;Typename=");
          for (ln = wr->typename->first ; ln ; ln = ln->next) { 
                 ns_prefix = ows_layer_ns_prefix(o->layers, ln->value); 
                 fprintf(o->output, "%s:%s", ns_prefix->buf, ln->value->buf); 
@@ -399,6 +392,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
     buffer *select;
     array *prop_table;
     array_node *an;
+    bool gml_boundedby;
 
     assert(o);
     assert(wr);
@@ -409,6 +403,12 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
     prop_table = ows_psql_describe_table(o, layer_name);
 
     for (an = prop_table->first ; an ; an = an->next) {
+
+        if (    !strcmp(an->key->buf, "boundedBy") 
+             && (ows_layer_get(o->layers, layer_name))->gml_ns 
+             && (in_list_str((ows_layer_get(o->layers, layer_name))->gml_ns, an->key->buf))) gml_boundedby = true;
+        else gml_boundedby = false;
+
         /* geometry columns must be returned in GML */
         if (ows_psql_is_geometry_column(o, layer_name, an->key)) {
 
@@ -435,6 +435,8 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                 else 
                     buffer_add_int(select, o->degree_precision);
 
+                if (gml_boundedby) buffer_add_str(select, ",32");
+
                 buffer_add_str(select, ") AS \"");
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\" ");
@@ -457,13 +459,16 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                     buffer_add_str(select, "\",");
                 }
 
-                if ((wr->srs && !wr->srs->is_degree) || 
-                   (!wr->srs && ows_srs_meter_units(o, layer_name))) {
+                if ((wr->srs && !wr->srs->is_degree) || (!wr->srs && ows_srs_meter_units(o, layer_name))) {
                     buffer_add_int(select, o->meter_precision);
-                    buffer_add_str(select, ", 3) AS \"");
+
+                    if (gml_boundedby) buffer_add_str(select, ", 35) AS \"");
+                    else buffer_add_str(select, ", 3) AS \"");
                 } else {
                     buffer_add_int(select, o->degree_precision);
-                    buffer_add_str(select, ", 19) AS \"");
+
+                    if (gml_boundedby) buffer_add_str(select, ", 51) AS \"");
+                    else buffer_add_str(select, ", 19) AS \"");
                 }
 
                 buffer_copy(select, an->key);
@@ -782,7 +787,6 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 }
 
 
-
 /*
  * Execute the GetFeature request
  */
@@ -807,8 +811,7 @@ void wfs_get_feature(ows * o, wfs_request * wr)
     } else if (wr->format == WFS_GEOJSON)
 	wfs_geojson_display_results(o, wr, request_list);
 
-    /* add here other functions to display GetFeature response in
-           other formats */
+    /* add here other functions to display GetFeature response in other formats */
 
     mlist_free(request_list);
 }

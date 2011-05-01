@@ -657,9 +657,7 @@ void wfs_delete(ows * o, wfs_request * wr)
                 buffer_free(where);
                 buffer_free(sql);
                 buffer_free(layer_name);
-                wfs_error(o, wr, WFS_ERROR_NO_MATCHING,
-                          "error : an id_column is required to use featureid",
-                          "Delete");
+                wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "error : an id_column is required to use featureid", "Delete");
                 return;
             }
         }

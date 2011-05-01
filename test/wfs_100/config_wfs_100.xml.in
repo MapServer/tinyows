@@ -3,7 +3,8 @@
 <!-- BEGIN configuration -->
 <tinyows
   online_resource="http://127.0.0.1/cgi-bin/tinyows"
-  schema_dir="@prefix@/tinyows/schema/">
+  schema_dir="@prefix@/tinyows/schema/"
+  check_valid_geom="0">
 
   <pg 
     host="127.0.0.1" 
@@ -27,8 +28,8 @@
          ns_prefix="cdf" ns_uri="http://www.opengis.net/cite/data" 
          retrievable="1" writable="1">
        <layer name="Nulls" title="Nulls" gml_ns="boundedBy,name,description,pointProperty" />
-       <layer name="Seven" title="Seven" gml_ns="boundedBy,pointProperty" />
-       <layer name="Fifteen" title="Fifteen" gml_ns="boundedBy,pointProperty" />
+       <layer name="Seven" title="Seven" gml_ns="boundedBy,name,pointProperty" />
+       <layer name="Fifteen" title="Fifteen" gml_ns="boundedBy,name,pointProperty" />
        <layer name="Other" title="Other" gml_ns="boundedBy,name,description,pointProperty" />
        <layer name="Inserts" title="Inserts" gml_ns="boundedBy,pointProperty" />
        <layer name="Updates" title="Updates" gml_ns="boundedBy,pointProperty" />

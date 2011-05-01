@@ -194,7 +194,10 @@ static void wfs_transaction_response(ows * o, wfs_request * wr, buffer * result,
     assert(result);
 
     if (!buffer_cmp(result, "PGRES_COMMAND_OK")) {
-           wfs_error(o, wr, WFS_ERROR_INVALID_PARAMETER, result->buf, locator->buf);
+           if (buffer_cmp(result, "No FE selector on DELETE statement"))
+               wfs_error(o, wr, WFS_ERROR_MISSING_PARAMETER, result->buf, locator->buf);
+	   else
+               wfs_error(o, wr, WFS_ERROR_INVALID_PARAMETER, result->buf, locator->buf);
 	   return;
     }
 

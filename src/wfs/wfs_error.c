@@ -52,6 +52,8 @@ static char *wfs_error_code_string(enum wfs_error_code code)
             return "NoMatching";
         case WFS_ERROR_INVALID_PARAMETER:
             return "InvalidParameterValue";
+        case WFS_ERROR_MISSING_PARAMETER:
+            return "MissingParameterValue";
     }
 
     assert(0); /* Should not happen */

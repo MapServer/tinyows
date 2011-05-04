@@ -162,7 +162,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
             buffer_add_str(sql, "\"::geometry AS \"the_geom\" FROM ");
             buffer_copy(sql, ows_psql_schema_name(o, ln_from->value));
             buffer_add_str(sql, ".\"");
-            buffer_copy(sql, ln_from->value);
+            buffer_copy(sql, ows_psql_table_name(o, ln_from->value));
             buffer_add_str(sql, "\" ");
             buffer_copy(sql, ln_where->value);
             buffer_add_str(sql, ")");

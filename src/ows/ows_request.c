@@ -177,15 +177,19 @@ int ows_schema_validation(ows *o, buffer *xml_schema, buffer *xml, bool schema_i
     }
 
     if (schema_generate) schema = ows_generate_schema(o, xml_schema, schema_is_file);
+    if (!schema) {
+        xmlFreeDoc(doc);
+        return ret;
+    }
 
     schema_ctx = xmlSchemaNewValidCtxt(schema);
     xmlSchemaSetValidErrors(schema_ctx,
                             (xmlSchemaValidityErrorFunc) libxml2_callback,
                             (xmlSchemaValidityWarningFunc) libxml2_callback, (void *) o);
-
-    if (schema_ctx) ret = xmlSchemaValidateDoc(schema_ctx, doc); /* validation */
-
-    xmlSchemaFreeValidCtxt(schema_ctx);
+    if (schema_ctx) { 
+        ret = xmlSchemaValidateDoc(schema_ctx, doc); /* validation */
+        xmlSchemaFreeValidCtxt(schema_ctx);
+    }
     xmlFreeDoc(doc);
 
     if (schema_generate) {

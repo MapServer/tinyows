@@ -74,6 +74,7 @@ bool ows_libxml_check_namespace(ows *o, xmlNodePtr n)
     assert(n);
 
     ns_doc  = xmlGetNsList(n->doc, xmlDocGetRootElement(n->doc));
+    if (!ns_doc) return false;
 
     for (node = n ; node ; node = node->next) {
         if (node->type != XML_ELEMENT_NODE) continue;

@@ -273,8 +273,12 @@ void ows_usage(ows * o)
     fprintf(stdout, "Output Encoding:   %s\n", o->encoding->buf);
     fprintf(stdout, "Database Encoding: %s\n", o->db_encoding->buf);
     fprintf(stdout, "Schema dir:        %s\n", o->schema_dir->buf);
-    if (o->log_file)
+    if (o->log_file) {
     fprintf(stdout, "Log file:          %s\n", o->log_file->buf);
+    fprintf(stdout, "Log level:         %s%s%s\n",(o->log_level & 1)?"ERROR ":"", 
+                                                  (o->log_level & 2)?"EVENT ":"",
+                                                  (o->log_level & 4)?"QUERY ":"" );
+    }
 
     fprintf(stdout, "Display bbox:      %s\n", o->display_bbox?"Yes":"No");
     fprintf(stdout, "Estimated extent:  %s\n", o->estimated_extent?"Yes":"No");

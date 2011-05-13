@@ -35,12 +35,13 @@
 /*
  * Return the boundaries of the features returned by the request
  */
-void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin, float xmax, float ymax, int srid)
+static void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin, float xmax, float ymax, ows_srs * srs)
 {
     assert(o);
     assert(wr);
+    assert(srs);
 
-    if (!srid || srid == -1 || (xmin == ymin && xmax == ymax && xmin == xmax)) {
+    if (!srs->srid || srs->srid == -1 || (xmin == ymin && xmax == ymax && xmin == xmax)) {
         if (ows_version_get(o->request->version) == 100)
             fprintf(o->output, "<gml:boundedBy><gml:null>missing</gml:null></gml:boundedBy>\n");
         else return; /* No Null boundedBy in WFS 1.1.0 SF-0 */
@@ -49,15 +50,24 @@ void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin, float
         fprintf(o->output, "<gml:boundedBy>\n");
 
         if (wr->format == WFS_GML212) {
-            fprintf(o->output, "  <gml:Box srsName=\"EPSG:%d\">", srid);
-            fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
+            fprintf(o->output, "  <gml:Box srsName=\"EPSG:%d\">", srs->srid);
+            if (srs->is_eastern_axis || srs->is_reverse_axis)
+                 fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
+                               ymin, xmin, ymax, xmax);
+            else
+                 fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
                                xmin, ymin, xmax, ymax);
             fprintf(o->output, "</gml:Box>\n");
 
         } else if (wr->format == WFS_GML311) {
-            fprintf(o->output, "  <gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::%d\">", srid);
-            fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", xmin, ymin);
-            fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", xmax, ymax);
+            fprintf(o->output, "  <gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::%d\">", srs->srid);
+            if (srs->is_eastern_axis || srs->is_reverse_axis) {
+                fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", ymin, xmin);
+                fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", ymax, xmax);
+            } else {
+                fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", xmin, ymin);
+                fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", xmax, ymax);
+            }
             fprintf(o->output, "</gml:Envelope>\n");
         }
     
@@ -330,8 +340,8 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
      */
     if (o->display_bbox) {
         /* print the outerboundaries of the requests */
-        outer_b = ows_bbox_boundaries(o, request_list->first->next->value, request_list->last->value);
-        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin, outer_b->xmax, outer_b->ymax, outer_b->srs->srid);
+        outer_b = ows_bbox_boundaries(o, request_list->first->next->value, request_list->last->value, wr->srs);
+        wfs_gml_bounded_by(o, wr, outer_b->xmin, outer_b->ymin, outer_b->xmax, outer_b->ymax, outer_b->srs);
         ows_bbox_free(outer_b);
     }
 
@@ -389,6 +399,7 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
  */
 static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer * layer_name)
 {
+    int gml_opt;
     buffer *select;
     array *prop_table;
     array_node *an;
@@ -435,8 +446,12 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                 else 
                     buffer_add_int(select, o->degree_precision);
 
-                if (gml_boundedby) buffer_add_str(select, ",32");
+		gml_opt = 0; /* Short SRS */
+                if (wr->srs &&  wr->srs->is_eastern_axis) gml_opt += 16;
+                if (gml_boundedby) gml_opt += 32;
 
+                buffer_add_str(select, ",");
+                buffer_add_int(select, gml_opt);
                 buffer_add_str(select, ") AS \"");
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\" ");
@@ -459,18 +474,20 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                     buffer_add_str(select, "\",");
                 }
 
+		gml_opt = 3; /* Long SRS and no srsDimension (CITE Compliant) */
+                if (gml_boundedby) gml_opt += 32;
+
                 if ((wr->srs && !wr->srs->is_degree) || (!wr->srs && ows_srs_meter_units(o, layer_name))) {
                     buffer_add_int(select, o->meter_precision);
-
-                    if (gml_boundedby) buffer_add_str(select, ", 35) AS \"");
-                    else buffer_add_str(select, ", 3) AS \"");
+                    if (wr->srs &&  wr->srs->is_eastern_axis) gml_opt += 16;
                 } else {
                     buffer_add_int(select, o->degree_precision);
-
-                    if (gml_boundedby) buffer_add_str(select, ", 51) AS \"");
-                    else buffer_add_str(select, ", 19) AS \"");
+                    if (wr->srs && !wr->srs->is_eastern_axis) gml_opt += 16;
                 }
 
+                buffer_add_str(select, ", ");
+                buffer_add_int(select, gml_opt);
+                buffer_add_str(select, ") AS \"");
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\" ");
             } 

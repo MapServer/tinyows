@@ -46,8 +46,25 @@ ows_srs *ows_srs_init()
     c->auth_srid = 0;
     c->is_degree = true;
     c->is_reverse_axis = false;
+    c->is_eastern_axis = false;
 
     return c;
+}
+
+
+ows_srs *ows_srs_copy(ows_srs * d, ows_srs * s)
+{
+    assert(s);
+    assert(d);
+
+    d->srid = s->srid;
+    buffer_copy(d->auth_name, s->auth_name);
+    d->auth_srid = s->auth_srid;
+    d->is_degree = s->is_degree;
+    d->is_reverse_axis = s->is_reverse_axis;
+    d->is_eastern_axis = s->is_eastern_axis;
+
+    return d;
 }
 
 
@@ -86,6 +103,11 @@ void ows_srs_flush(ows_srs * c, FILE * output)
         fprintf(output, " is_reverse_axis: true\n]\n");
     else
         fprintf(output, " is_reverse_axis: false\n]\n");
+
+    if (c->is_eastern_axis)
+        fprintf(output, " is_eastern_axis: true\n]\n");
+    else
+        fprintf(output, " is_eastern_axis: false\n]\n");
 }
 #endif
 
@@ -132,10 +154,8 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
         c->is_degree = false;
 
     /* Is northing-easting SRID ? */
-    if (atoi(PQgetvalue(res, 0, 2)) == 1)
-        c->is_reverse_axis = ~ c->is_reverse_axis;
-    else
-        c->is_reverse_axis = ~ c->is_reverse_axis;
+    if (atoi(PQgetvalue(res, 0, 2)) != 0)
+        c->is_eastern_axis = true;
 
     PQclear(res);
     return true;
@@ -191,10 +211,8 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
         s->is_degree = false;
 
     /* Is northing-easting SRID ? */
-    if (atoi(PQgetvalue(res, 0, 3)) == 1)
-        s->is_reverse_axis = ~ s->is_reverse_axis;
-    else
-        s->is_reverse_axis = ~ s->is_reverse_axis;
+    if (atoi(PQgetvalue(res, 0, 3)) != 0)
+        s->is_eastern_axis = true;
 
     PQclear(res);
     return true;

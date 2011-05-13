@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <float.h>
+#include <string.h>
 #include <math.h>
 
 #include "ows.h"
@@ -129,18 +130,18 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
  * Bbox is set from a list containing one or several layer names
  * and optionnaly one or several WHERE SQL statement following each layer name
  */
-ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
+ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where, ows_srs * srs)
 {
     ows_bbox *bb;
     buffer *sql;
     list *geom;
     list_node *ln_from, *ln_where, *ln_geom;
-    int srid;
     PGresult *res;
 
     assert(o);
     assert(from);
     assert(where);
+    assert(srs);
 
     bb = ows_bbox_init();
 
@@ -157,9 +158,11 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
         geom = ows_psql_geometry_column(o, ln_from->value);
 
         for (ln_geom = geom->first ; ln_geom ; ln_geom = ln_geom->next) {
-            buffer_add_str(sql, " (SELECT \"");
+            buffer_add_str(sql, " (SELECT ST_Transform(\"");
             buffer_copy(sql, ln_geom->value);
-            buffer_add_str(sql, "\"::geometry AS \"the_geom\" FROM ");
+            buffer_add_str(sql, "\"::geometry, ");
+            buffer_add_int(sql, srs->srid);
+            buffer_add_str(sql, ") AS \"the_geom\" FROM ");
             buffer_copy(sql, ows_psql_schema_name(o, ln_from->value));
             buffer_add_str(sql, ".\"");
             buffer_copy(sql, ows_psql_table_name(o, ln_from->value));
@@ -188,8 +191,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where)
     bb->xmax = atof(PQgetvalue(res, 0, 2));
     bb->ymax = atof(PQgetvalue(res, 0, 3));
 
-    srid = ows_srs_get_srid_from_layer(o, from->first->value);
-    ows_srs_set_from_srid(o, bb->srs, srid);
+    ows_srs_copy(bb->srs, srs);
 
     PQclear(res);
     return bb;

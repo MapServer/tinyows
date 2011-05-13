@@ -117,6 +117,7 @@ typedef struct Ows_srs {
     int auth_srid;
     bool is_degree;
     bool is_reverse_axis;
+    bool is_eastern_axis;
 } ows_srs;
 
 

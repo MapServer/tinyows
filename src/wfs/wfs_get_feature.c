@@ -51,11 +51,7 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin
 
         if (wr->format == WFS_GML212) {
             fprintf(o->output, "  <gml:Box srsName=\"EPSG:%d\">", srs->srid);
-            if (srs->is_eastern_axis || srs->is_reverse_axis)
-                 fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
-                               ymin, xmin, ymax, xmax);
-            else
-                 fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
+            fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
                                xmin, ymin, xmax, ymax);
             fprintf(o->output, "</gml:Box>\n");
 

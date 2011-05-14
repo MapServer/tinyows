@@ -514,10 +514,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                 else 
                     buffer_add_int(select, o->degree_precision);
 
-		if (ows_version_get(o->request->version) == 100)
-                	buffer_add_str(select, ", 3) AS \"");	/* Bbox + short SRS */
-		else
-                	buffer_add_str(select, ", 5) AS \"");   /* Bbox + long SRS */
+                buffer_add_str(select, ", 1) AS \"");	/* Bbox */
 
                 buffer_copy(select, an->key);
                 buffer_add_str(select, "\" ");
@@ -735,7 +732,13 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     prop = buffer_init();
 
     fprintf(o->output, "Content-Type: application/json\n\n");
-    fprintf(o->output, "{\"type\": \"FeatureCollection\", \"features\": [");
+    fprintf(o->output, "{\"type\": \"FeatureCollection\", \"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"");
+    if (ows_version_get(o->request->version) == 100)
+        fprintf(o->output, "EPSG:%i", wr->srs->srid);
+    else
+        fprintf(o->output, "urn:ogc:def:crs:EPSG::%i", wr->srs->srid);
+     
+    fprintf(o->output, "\"}}, \"features\": [");
 
     for (ln = request_list->first->value->first ; ln ; ln = ln->next) {
         /* execute the sql request */

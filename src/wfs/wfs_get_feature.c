@@ -119,6 +119,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
         if (!strcmp(value, "f")) fprintf(o->output, "false");
 
     } else if (    buffer_cmp(prop_type, "text")
+                || buffer_cmp(prop_type, "hstore")
                 || buffer_ncmp(prop_type, "char", 4)
                 || buffer_ncmp(prop_type, "varchar", 7)) {
 

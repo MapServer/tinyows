@@ -17,7 +17,7 @@
  - Update XSD schema (WFS, FE, GML), so need a new 'make install' step if you upgrade
  - CITE WFS-T 1.0.0 SF-0 full compliant (require PostGIS 2.0)
  - CITE WFS-T 1.1.0 SF-0 full compliant (require PostGIS 2.0)
- - Lot of debug stuff (a special thanks to Boris Leukert for detailled reports)
+ - Lot of debug stuff (a special thanks to Boris Leukert and Jukka Rahkonen for detailled reports)
 
 
 0.9.0   (19/06/2010)

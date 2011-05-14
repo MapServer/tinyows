@@ -178,6 +178,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where, ows_srs * srs)
 
     buffer_add_str(sql, " ) AS foo) AS g");
 
+    ows_log(o, 8, sql->buf);
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 
@@ -214,6 +215,7 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
     ows_bbox_to_query(o, bb, sql);
     buffer_add_str(sql, ")) AS g ) AS foo");
 
+    ows_log(o, 8, sql->buf);
     res = PQexec(o->pg, sql->buf);
     buffer_free(sql);
 

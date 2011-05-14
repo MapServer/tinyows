@@ -213,6 +213,7 @@ array *cgi_parse_kvp(ows * o, char *query)
                 if (                                 check_regexp(string, "[A-Za-zà-ÿ0-9.\\=;,():/\\*_ \\-]") 
                     || (buffer_cmp(key, "filter") && check_regexp(string, "[A-Za-zà-ÿ0-9.#\\,():/_<> %\"\'=\\*!\\-]|\\[|\\]")))
                     buffer_add(val, query[i]);
+#if 0
                 else {
                     buffer_free(key);
                     buffer_free(val);
@@ -221,6 +222,7 @@ array *cgi_parse_kvp(ows * o, char *query)
                               "QUERY_STRING contains forbidden characters", "request");
                     return NULL;
                 }
+#endif
             }
         }
     }

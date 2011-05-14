@@ -247,7 +247,7 @@ void ows_log(ows *o, int log_level, const char *log)
     if      (log_level & 1) fprintf(o->log, "[%s] [ERROR] %s\n", t, log);
     else if (log_level & 2) fprintf(o->log, "[%s] [EVENT] %s\n", t, log);
     else if (log_level & 4) fprintf(o->log, "[%s] [QUERY] %s\n", t, log);
-    else if (log_level & 8) fprintf(o->log, "[%s] [DEBUG] %s\n", t, log);
+    else if (log_level & 8) fprintf(o->log, "[%s] [SQL] %s\n", t, log);
 
     fflush(o->log);
 }
@@ -269,23 +269,26 @@ void ows_usage(ows * o)
     else 
     fprintf(stdout, "Config File Path:  %s (TinyOWS XML)\n", o->config_file->buf);
 
+    fprintf(stdout, "PostGIS Version:   %d.%d.%d\n", o->postgis_version->major,
+                                                     o->postgis_version->minor,
+                                                     o->postgis_version->release);
+
     fprintf(stdout, "PostGIS dsn:       %s\n", o->pg_dsn->buf);
     fprintf(stdout, "Output Encoding:   %s\n", o->encoding->buf);
     fprintf(stdout, "Database Encoding: %s\n", o->db_encoding->buf);
     fprintf(stdout, "Schema dir:        %s\n", o->schema_dir->buf);
     if (o->log_file) {
     fprintf(stdout, "Log file:          %s\n", o->log_file->buf);
-    fprintf(stdout, "Log level:         %s%s%s\n",(o->log_level & 1)?"ERROR ":"", 
-                                                  (o->log_level & 2)?"EVENT ":"",
-                                                  (o->log_level & 4)?"QUERY ":"" );
+    fprintf(stdout, "Log level:         %s%s%s%s\n",(o->log_level & 1)?"ERROR ":"", 
+                                                    (o->log_level & 2)?"EVENT ":"",
+                                                    (o->log_level & 4)?"QUERY ":"",
+                                                    (o->log_level & 8)?"SQL":"" );
     }
 
     fprintf(stdout, "Display bbox:      %s\n", o->display_bbox?"Yes":"No");
     fprintf(stdout, "Estimated extent:  %s\n", o->estimated_extent?"Yes":"No");
     fprintf(stdout, "Check schema:      %s\n", o->check_schema?"Yes":"No");
     fprintf(stdout, "Check valid geoms: %s\n", o->check_valid_geom?"Yes":"No");
-
-/* TODO PostGIS version */
 
     fprintf(stdout, "Available layers:\n");
     ows_layers_storage_flush(o, stdout);

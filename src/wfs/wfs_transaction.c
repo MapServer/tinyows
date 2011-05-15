@@ -318,6 +318,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     filter_encoding *fe;
     PGresult *res;
     array * table;
+    char *escaped;
     list *l;
     ows_srs * srs_root;
     int srid_root = 0;
@@ -459,7 +460,11 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
            buffer_add_str(dup_sql, "\" WHERE "); 
            buffer_copy(dup_sql, id_column);
            buffer_add_str(dup_sql, "='"); 
-           buffer_copy(dup_sql, id);
+           escaped = ows_psql_escape_string(o, id->buf);
+           if (escaped) {
+                buffer_add_str(dup_sql, escaped);
+                free(escaped);
+           }
            buffer_add_str(dup_sql, "';");
 
            ows_log(o, 8, dup_sql->buf);
@@ -520,7 +525,11 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                 column = buffer_from_str((char *) node->name);
 
                 buffer_add_str(sql, "\"");
-                buffer_copy(sql, column);
+                escaped = ows_psql_escape_string(o, column->buf);
+                if (escaped) {
+                    buffer_add_str(sql, escaped);
+                    free(escaped);
+                }
                 buffer_add_str(sql, "\"");
 
                 /* If column's type is a geometry, transform the GML into WKT */
@@ -579,7 +588,11 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         /* As 'id' could be NULL in GML */
         if (id->use) {  
             buffer_add_str(sql, ") VALUES ('");
-            buffer_copy(sql, id);
+            escaped = ows_psql_escape_string(o, id->buf);
+            if (escaped) {
+                buffer_add_str(sql, escaped);
+                free(escaped);
+            }
             buffer_add_str(sql, "'");
         } else buffer_add_str(sql, ") VALUES (null");
 
@@ -802,6 +815,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     filter_encoding *filter, *fe;
     xmlNodePtr node, elemt;
     xmlChar *content;
+    char *escaped;
     array *table;
     ows_srs *srs_root;
     int srid_root = 0;
@@ -890,7 +904,11 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                     xmlFree(content);
                     wfs_request_remove_namespaces(o, property_name);
                     buffer_add_str(sql, "\"");
-                    buffer_copy(sql, property_name);
+                    escaped = ows_psql_escape_string(o, property_name->buf);
+                    if (escaped) {
+                        buffer_add_str(sql, escaped);
+                        free(escaped);
+                    }
                     buffer_add_str(sql, "\"");
                 }
 

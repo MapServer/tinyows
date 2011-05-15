@@ -378,6 +378,8 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
     assert(after);
     assert(buf);
 
+    if (!strcmp(before, after)) return buf; /* To prevent infinite loop */
+
     new_buf = buffer_init();
     buffer_copy(new_buf, buf);
 

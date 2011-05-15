@@ -548,6 +548,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     int srid, size, cpt, nb;
     filter_encoding *fe;
     ows_bbox *bbox;
+    char *escaped;
 
     assert(o);
     assert(wr);
@@ -672,7 +673,11 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         /* sortby parameter */
         if (wr->sortby) {
             buffer_add_str(where, " ORDER BY ");
-            buffer_copy(where, wr->sortby);
+            escaped = ows_psql_escape_string(o, wr->sortby->buf);
+            if (escaped) {
+                 buffer_add_str(where, escaped);
+                 free(escaped);
+            }
         }
 
         /* maxfeatures parameter, or max_features ows limits, limits the number of results */

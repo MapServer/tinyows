@@ -18,6 +18,7 @@
  - CITE WFS-T 1.0.0 SF-0 full compliant (require PostGIS 2.0)
  - CITE WFS-T 1.1.0 SF-0 full compliant (require PostGIS 2.0)
  - Lot of debug stuff (a special thanks to Boris Leukert, Jukka Rahkonen and Even Rouault for detailled reports)
+ - Security fixes (SQL Injection vulnerability - Reported by Even Rouault)
 
 
 0.9.0   (19/06/2010)

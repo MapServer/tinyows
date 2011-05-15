@@ -480,6 +480,7 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name, ows_bbox * b
 buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name, list * fid)
 {
     buffer *id_name, *where;
+    char *escaped;
     list *fe;
     list_node *ln;
 
@@ -499,7 +500,11 @@ buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name, list * 
         fe = list_explode('.', ln->value);
         buffer_copy(where, id_name);
         buffer_add_str(where, " = '");
-        buffer_copy(where, fe->last->value);
+        escaped = ows_psql_escape_string(o, fe->last->value->buf);
+        if (escaped) {
+            buffer_add_str(where, escaped);
+            free(escaped);
+        }
         buffer_add_str(where, "'");
         list_free(fe);
 

@@ -128,6 +128,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
     /* GML3 */
     if (buffer_cmp(name, "Envelope")) {
         coord_min = list_explode_str(' ', (char *) content);
+/*FIXME add a regex check */
 
         n = n->next;
         while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
@@ -135,6 +136,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
         xmlFree(content);
         content = xmlNodeGetContent(n->children);
         coord_max = list_explode_str(' ', (char *) content);
+/*FIXME add a regex check */
     }
     /* GML2 */
     else {
@@ -144,6 +146,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
         tmp = fe_transform_coord_gml2_to_psql(tmp);
 
         coord_pair = list_explode(',', tmp);
+/*FIXME add a regex check */
         coord_min = list_explode(' ', coord_pair->first->value);
         coord_max = list_explode(' ', coord_pair->first->next->value);
         buffer_free(tmp);
@@ -323,6 +326,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     units = xmlGetProp(n, (xmlChar *) "units");
     buffer_copy(fe->sql, op);
     content = xmlNodeGetContent(n->children);
+/*FIXME add a regex check */
 
     /* units not strictly defined in Filter Encoding specification */
     if (!strcmp((char *) units, "meters") || !strcmp((char *) units, "#metre"))

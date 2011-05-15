@@ -34,8 +34,7 @@
  * PropertyIsEqualTo, PropertyIsNotEqualTo, PropertyIsLessThan
  * PropertyIsGreaterThan, PropertyIsLessThanOrEqualTo, PropertyIsGreaterThanOrEqualTo
  */
-static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
-                                       filter_encoding * fe, xmlNodePtr n)
+static buffer *fe_binary_comparison_op(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
     buffer *tmp, *type, *name;
     xmlChar *matchcase;
@@ -54,10 +53,7 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename,
 
     /* by default, comparison is case sensitive */
     matchcase = xmlGetProp(n, (xmlChar *) "matchCase");
-
-    if (matchcase && !strcmp((char *) matchcase, "false"))
-         sensitive_case = false;
-
+    if (matchcase && !strcmp((char *) matchcase, "false")) sensitive_case = false;
     xmlFree(matchcase);
 
     n = n->children;
@@ -157,6 +153,7 @@ static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding *
 {
     xmlChar *content, *wildcard, *singlechar, *escape;
     buffer *pg_string;
+    char *escaped;
 
     assert(o);
     assert(typename);
@@ -201,7 +198,11 @@ static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding *
     } else fe->error_code = FE_ERROR_FILTER;
 
     buffer_add_str(fe->sql, "'");
-    buffer_copy(fe->sql, pg_string);
+    escaped = ows_psql_escape_string(o, pg_string->buf);
+    if (escaped) {
+          buffer_add_str(fe->sql, escaped);
+          free(escaped);
+    }
     buffer_add_str(fe->sql, "'");
 
     xmlFree(content);

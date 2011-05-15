@@ -117,6 +117,7 @@ void fe_node_flush(xmlNodePtr node, FILE * output)
  */
 buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n)
 {
+    char *escaped;
     xmlChar *content;
     bool isstring = false;
 
@@ -154,8 +155,12 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
               isstring = true;
               buffer_add_str(sql, "'");
           }
-          buffer_add_str(sql, (char *) content);
 
+          escaped = ows_psql_escape_string(o, (char *) content);
+          if (escaped) {
+              buffer_add_str(sql, escaped);
+              free(escaped);
+          }
           if (isstring) buffer_add_str(sql, "'");
         }
 
@@ -276,6 +281,7 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
  */
 buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
+    char *escaped;
     list *fe_list;
     bool feature_id, gid;
     xmlChar *fid = NULL;
@@ -338,8 +344,14 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
 
             buffer_copy(fe->sql, id_name);
             buffer_add_str(fe->sql, " = \'");
-	    if (fe_list->last) buffer_copy(fe->sql, fe_list->last->value);
-	    else               buffer_copy(fe->sql, buf_fid);
+	    if (fe_list->last) escaped = ows_psql_escape_string(o, fe_list->last->value->buf);
+            else               escaped = ows_psql_escape_string(o, buf_fid->buf);
+            
+            if (escaped) {
+                buffer_add_str(fe->sql, escaped);
+                free(escaped);
+            }
+
             buffer_add_str(fe->sql, "\'");
             list_free(fe_list);
             buffer_free(buf_fid);

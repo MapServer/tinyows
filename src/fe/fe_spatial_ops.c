@@ -406,9 +406,10 @@ static buffer *fe_bbox_layer(ows *o, buffer *sql, buffer *propertyname, buffer *
  */
 static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    buffer *property, *envelope;
+    buffer *property;
     list *columns;
     list_node *ln;
+    buffer *envelope = NULL;
 
     assert(o);
     assert(typename);

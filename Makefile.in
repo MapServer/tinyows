@@ -38,35 +38,35 @@ svn-clean: clean doc-clean
 clean: 
 	@rm -f tinyows Makefile src/ows_define.h
 	@rm -rf tinyows.dSYM
-	@rm -f demo/config.xml demo/install.sh
-	@rm -f test/config.xml test/install.sh
+	@rm -f demo/tinyows.xml demo/install.sh
+	@rm -f test/tinyows.xml test/install.sh
 
 install:
 	@echo "-----"
-	@echo "TinyOWS Schema install dir in $(PREFIX)/tinyows/schema"
-	mkdir -p $(PREFIX)/tinyows
-	rm -rf $(PREFIX)/tinyows/schema
-	cp -rf schema $(PREFIX)/tinyows/
+	@echo "TinyOWS Schema install dir in $(PREFIX)/share/tinyows/schema"
+	mkdir -p $(PREFIX)/share/tinyows
+	rm -rf $(PREFIX)/share/tinyows/schema
+	cp -rf schema $(PREFIX)/share/tinyows/
 	@echo "-----"
 	@echo "Now:"
 	@echo " 1) copy 'tinyows' binary to cgi-bin directory"
-	@echo " 2) - put a workable config.xml file in $(PREFIX) dir"
+	@echo " 2) - put a workable tinyows.xml file in /etc dir"
 	@echo "    - OR launch 'make install-demo' as a superuser"
 
 install-demo:
 	@chmod +x demo/install.sh
 	@demo/install.sh
-	cp -i demo/config.xml $(PREFIX)/tinyows
+	cp -i demo/tinyows.xml /etc/tinyows.xml
 
 install-test100:
 	@chmod +x test/wfs_100/install_wfs_100.sh
 	@test/wfs_100/install_wfs_100.sh
-	cp -i test/wfs_100/config_wfs_100.xml $(PREFIX)/tinyows/config.xml
+	cp -i test/wfs_100/config_wfs_100.xml /etc/tinyows.xml
 
 install-test110:
 	@chmod +x test/wfs_110/install_wfs_110.sh
 	@test/wfs_110/install_wfs_110.sh
-	cp -i test/wfs_110/config_wfs_110.xml $(PREFIX)/tinyows/config.xml
+	cp -i test/wfs_110/config_wfs_110.xml /etc/tinyows.xml
 
 doc-clean:
 	@rm -rf doc/doxygen
@@ -85,4 +85,3 @@ test-valgrind110:
 
 test-valgrind100:
 	@test/unit_test test/wfs_100/cite 1
-

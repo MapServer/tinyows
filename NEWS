@@ -1,5 +1,7 @@
 1.0.0
  - Configuration change with broken backward compatibility:
+    * default config file is now /etc/tinyows.xml
+    * default schema dir is now $PREFIX/share/tinyows/schema 
     * rename server and prefix to ns_uri ans ns_prefix
     * rename wfs_display_bbox to display_bbox
  - Encoding support, written by Carlos Ruiz: cruizch@gmail.com

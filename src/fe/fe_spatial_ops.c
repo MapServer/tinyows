@@ -86,7 +86,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
     ows_bbox *bbox;
     int srid_int;
     bool ret;
-    ows_srs *s =NULL;
+    ows_srs *s = NULL;
 
     assert(o);
     assert(n);
@@ -127,26 +127,50 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 
     /* GML3 */
     if (buffer_cmp(name, "Envelope")) {
+        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([-]?[eE][0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
+            xmlFree(content);
+            buffer_free(name);
+            buffer_free(srid);
+            if (s) ows_srs_free(s);
+            fe->error_code = FE_ERROR_BBOX;
+
+	    return envelope;
+        }
         coord_min = list_explode_str(' ', (char *) content);
-/*FIXME add a regex check */
+
 
         n = n->next;
         while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
-
         xmlFree(content);
         content = xmlNodeGetContent(n->children);
+
+        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([-]?[eE][0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
+            xmlFree(content);
+            buffer_free(name);
+            buffer_free(srid);
+            list_free(coord_min);
+            if (s) ows_srs_free(s);
+            fe->error_code = FE_ERROR_BBOX;
+
+	    return envelope;
+        }
         coord_max = list_explode_str(' ', (char *) content);
-/*FIXME add a regex check */
-    }
+
     /* GML2 */
-    else {
+    } else {
         tmp = buffer_init();
         buffer_add_str(tmp, (char *) content);
-
         tmp = fe_transform_coord_gml2_to_psql(tmp);
+        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([-]?[eE][0-9]+)?(,[-]?[0-9]+([.][0-9]+)?([-]?[eE][0-9]+)?){3}")) {
+            xmlFree(content);
+            buffer_free(name);
+            buffer_free(srid);
+            if (s) ows_srs_free(s);
+            fe->error_code = FE_ERROR_BBOX;
 
+	    return envelope;
+        }
         coord_pair = list_explode(',', tmp);
-/*FIXME add a regex check */
         coord_min = list_explode(' ', coord_pair->first->value);
         coord_max = list_explode(' ', coord_pair->first->next->value);
         buffer_free(tmp);

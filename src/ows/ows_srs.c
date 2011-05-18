@@ -47,6 +47,7 @@ ows_srs *ows_srs_init()
     c->is_degree = true;
     c->is_reverse_axis = false;
     c->is_eastern_axis = false;
+    c->is_long = false;
 
     return c;
 }
@@ -63,6 +64,7 @@ ows_srs *ows_srs_copy(ows_srs * d, ows_srs * s)
     d->is_degree = s->is_degree;
     d->is_reverse_axis = s->is_reverse_axis;
     d->is_eastern_axis = s->is_eastern_axis;
+    d->is_long = s->is_long;
 
     return d;
 }
@@ -108,6 +110,11 @@ void ows_srs_flush(ows_srs * c, FILE * output)
         fprintf(output, " is_eastern_axis: true\n]\n");
     else
         fprintf(output, " is_eastern_axis: false\n]\n");
+
+    if (c->is_long)
+        fprintf(output, " is_long: true\n]\n");
+    else
+        fprintf(output, " is_long: false\n]\n");
 }
 #endif
 
@@ -121,8 +128,8 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
     buffer *sql;
 
     assert(o);
-    assert(o->pg);
     assert(c);
+    assert(o->pg);
     assert(auth_name);
 
     sql = buffer_init();
@@ -249,10 +256,12 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const char *srsname)
                              urn:x-ogc:def:crs:EPSG:6.6:4326
                              http://www.opengis.net/gml/srs/epsg.xml#4326
      */
+     s->is_long = true;
 
      if (!strncmp((char *) srsname,        "EPSG:", 5)) {
          sep = ':';
          s->is_reverse_axis = false;
+         s->is_long = false;
 
      } else if (!strncmp((char *) srsname, "urn:ogc:def:crs:EPSG:", 21)
              || !strncmp((char *) srsname, "urn:x-ogc:def:crs:EPSG:", 23)

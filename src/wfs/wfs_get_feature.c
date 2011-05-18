@@ -50,13 +50,13 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin
         fprintf(o->output, "<gml:boundedBy>\n");
 
         if (wr->format == WFS_GML212) {
-            fprintf(o->output, "  <gml:Box srsName=\"EPSG:%d\">", srs->srid);
+            fprintf(o->output, "  <gml:Box srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
             fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
                                xmin, ymin, xmax, ymax);
             fprintf(o->output, "</gml:Box>\n");
 
         } else if (wr->format == WFS_GML311) {
-            fprintf(o->output, "  <gml:Envelope srsName=\"urn:ogc:def:crs:EPSG::%d\">", srs->srid);
+            fprintf(o->output, "  <gml:Envelope srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
             if (srs->is_eastern_axis || srs->is_reverse_axis) {
                 fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", ymin, xmin);
                 fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", ymax, xmax);
@@ -447,6 +447,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                     buffer_add_int(select, o->degree_precision);
 
 		gml_opt = 0; /* Short SRS */
+		if (wr->srs && wr->srs->is_long) gml_opt += 1; /* FIXME really ? */
                 if (wr->srs &&  wr->srs->is_eastern_axis) gml_opt += 16;
                 if (gml_boundedby) gml_opt += 32;
 
@@ -474,15 +475,17 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                     buffer_add_str(select, "\",");
                 }
 
-		gml_opt = 3; /* Long SRS and no srsDimension (CITE Compliant) */
+		gml_opt = 2; /* no srsDimension (CITE Compliant) */
+		if (wr->srs && wr->srs->is_long) gml_opt += 1;
                 if (gml_boundedby) gml_opt += 32;
 
-                if ((wr->srs && !wr->srs->is_degree) || (!wr->srs && ows_srs_meter_units(o, layer_name))) {
+                if (    (wr->srs && !wr->srs->is_degree) 
+                     || (!wr->srs && ows_srs_meter_units(o, layer_name))) {
                     buffer_add_int(select, o->meter_precision);
-                    if (wr->srs &&  wr->srs->is_eastern_axis) gml_opt += 16;
+                    if (wr->srs &&  wr->srs->is_eastern_axis && wr->srs->is_long) gml_opt += 16;
                 } else {
                     buffer_add_int(select, o->degree_precision);
-                    if (wr->srs && !wr->srs->is_eastern_axis) gml_opt += 16;
+                    if (wr->srs && !wr->srs->is_eastern_axis && wr->srs->is_long) gml_opt += 16;
                 }
 
                 buffer_add_str(select, ", ");

@@ -211,8 +211,7 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
     		buffer_add_str(sql, "\" ) AS foo");
 	}
 
-        ows_log(o, 8, sql->buf);
-	res = PQexec(o->pg, sql->buf);
+        res = ows_psql_exec(o, sql->buf);
     	buffer_empty(sql);
     	if (PQresultStatus(res) != PGRES_TUPLES_OK) {
         	PQclear(res);

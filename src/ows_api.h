@@ -159,6 +159,7 @@ void ows_metadata_free (ows_meta * metadata);
 ows_meta *ows_metadata_init ();
 void ows_parse_config (ows * o, const char *filename);
 ows_version * ows_psql_postgis_version(ows *o);
+PGresult * ows_psql_exec(ows *o, const char *sql);
 buffer *ows_psql_column_name (ows * o, buffer * layer_name, int number);
 array *ows_psql_describe_table (ows * o, buffer * layer_name);
 list *ows_psql_geometry_column (ows * o, buffer * layer_name);

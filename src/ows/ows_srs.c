@@ -139,8 +139,7 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
     buffer_add_str(sql, "' AND auth_srid=");
     buffer_add_int(sql, auth_srid);
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     /* If query dont return exactly 1 result, it means projection is not handled */
@@ -199,8 +198,7 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
     buffer_add_int(sql, srid);
     buffer_add_str(sql, "'");
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     /* If query dont return exactly 1 result, it mean projection not handled */
@@ -363,8 +361,7 @@ buffer *ows_srs_get_from_a_srid(ows * o, int srid)
     buffer_add_str(sql, "WHERE srid=");
     buffer_add_int(sql, srid);
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     b = buffer_init();

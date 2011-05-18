@@ -147,8 +147,7 @@ static void ows_storage_fill_not_null(ows * o, ows_layer * l)
     buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attnum > 0 AND a.attrelid = c.oid ");
     buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attnotnull = 't' AND a.atthasdef='f'");
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
@@ -198,9 +197,7 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND c.contype = 'p')");
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
-
+    res = ows_psql_exec(o, sql->buf);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
         PQclear(res);
         buffer_free(sql);
@@ -224,8 +221,7 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         buffer_add_str(sql, "' AND a.attname='");
         buffer_copy(sql, l->storage->pkey);
         buffer_add_str(sql, "'");
-        ows_log(o, 8, sql->buf);
-        res = PQexec(o->pg, sql->buf);
+        res = ows_psql_exec(o, sql->buf);
         if (PQresultStatus(res) != PGRES_TUPLES_OK) {
             PQclear(res);
             buffer_free(sql);
@@ -243,13 +239,11 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         buffer_copy(sql, l->storage->schema);
         buffer_add_str(sql, ".\"");
         buffer_copy(sql, l->storage->table);
-	    buffer_add_str(sql, "\"', '");
+	buffer_add_str(sql, "\"', '");
         buffer_copy(sql, l->storage->pkey);
-	    buffer_add_str(sql, "');");
+	buffer_add_str(sql, "');");
 
-        ows_log(o, 8, sql->buf);
-        res = PQexec(o->pg, sql->buf);
-
+        res = ows_psql_exec(o, sql->buf);
         if (PQresultStatus(res) != PGRES_TUPLES_OK) {
             PQclear(res);
             buffer_free(sql);
@@ -295,8 +289,7 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
     buffer_copy(sql, l->storage->table);
     buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid");
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
@@ -324,8 +317,7 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
 	  buffer_copy(geom_sql, b);
 	  buffer_add_str(geom_sql,"';");
 	  
-          ows_log(o, 8, geom_sql->buf);
-	  geom_res = PQexec(o->pg, geom_sql->buf);
+          geom_res = ows_psql_exec(o, sql->buf);
 	  buffer_free(geom_sql);
 	  
 	  if (PQresultStatus(geom_res) != PGRES_TUPLES_OK) {
@@ -368,8 +360,7 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
     buffer_copy(sql, l->storage->table);
     buffer_add_str(sql, "'");
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_empty(sql);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
@@ -392,8 +383,7 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
 
     PQclear(res);
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     if (PQntuples(res) != 1)
@@ -449,13 +439,11 @@ void ows_layers_storage_fill(ows * o)
 
     sql = buffer_init();
     buffer_add_str(sql, "SELECT DISTINCT f_table_schema, f_table_name FROM geometry_columns");
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_empty(sql);
 
     buffer_add_str(sql, "SELECT DISTINCT f_table_schema, f_table_name FROM geography_columns");
-    ows_log(o, 8, sql->buf);
-    res_g = PQexec(o->pg, sql->buf);
+    res_g = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     for (ln = o->layers->first ; ln ; ln = ln->next) {

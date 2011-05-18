@@ -45,15 +45,11 @@ static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr, buffer
     result = buffer_init();
     cmd_status = buffer_init();
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);
-
-    if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+    res = ows_psql_exec(o, sql->buf);
+    if (PQresultStatus(res) != PGRES_COMMAND_OK)
         buffer_add_str(result, PQresultErrorMessage(res));
-    } else {
+    else
         buffer_add_str(result, PQresStatus(PQresultStatus(res)));
-    }
-
     buffer_add_str(cmd_status, (char *) PQcmdStatus(res));
 
     if (check_regexp(cmd_status->buf, "^DELETE")) {
@@ -467,14 +463,13 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
            }
            buffer_add_str(dup_sql, "';");
 
-           ows_log(o, 8, dup_sql->buf);
-           res = PQexec(o->pg, dup_sql->buf);
-           buffer_free(dup_sql);
+           res = ows_psql_exec(o, dup_sql->buf);
            if (PQresultStatus(res) != PGRES_TUPLES_OK || atoi((char *) PQgetvalue(res, 0, 0)) != 0)
                idgen = WFS_GENERATE_NEW;
            else
                idgen = WFS_USE_EXISTING;
 
+           buffer_free(dup_sql);
            PQclear(res);
        }
 

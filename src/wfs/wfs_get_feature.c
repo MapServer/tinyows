@@ -289,21 +289,17 @@ static void wfs_gml_display_hits(ows * o, wfs_request * wr, mlist * request_list
     for (ln = request_list->first->value->first ; ln ; ln = ln->next) {
 	buffer_add_head_str(ln->value, "SELECT count(*) FROM (");
 	buffer_add_str(ln->value, ") as foo");
-        ows_log(o, 8, ln->value->buf);
-        res = PQexec(o->pg, ln->value->buf);
-
+      
+        res = ows_psql_exec(o, ln->value->buf);
         if (PQresultStatus(res) == PGRES_TUPLES_OK)
             hits = hits + atoi(PQgetvalue(res, 0, 0));
-
         PQclear(res);
     }
 
     /* render GML hits output */
-    ows_log(o, 8, "select localtimestamp");
-    res = PQexec(o->pg, "select localtimestamp");
+    res = ows_psql_exec(o, "SELECT localtimestamp");
     date = ows_psql_timestamp_to_xml_time(PQgetvalue(res, 0, 0));
-    fprintf(o->output, " timeStamp='%s' numberOfFeatures='%d' />\n",
-            date->buf, hits);
+    fprintf(o->output, " timeStamp='%s' numberOfFeatures='%d' />\n", date->buf, hits);
     buffer_free(date);
     PQclear(res);
 }
@@ -350,9 +346,8 @@ static void wfs_gml_display_results(ows * o, wfs_request * wr, mlist * request_l
     if (wr->propertyname) mln_property = wr->propertyname->first;
 
     for (ln = request_list->first->value->first ; ln ; ln = ln->next) {
-        /* execute the sql request */
-        ows_log(o, 8, ln->value->buf);
-        res = PQexec(o->pg, ln->value->buf);
+
+        res = ows_psql_exec(o, ln->value->buf);
 
         if (PQresultStatus(res) != PGRES_TUPLES_OK) {
             PQclear(res);
@@ -749,10 +744,8 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     fprintf(o->output, "\"}}, \"features\": [");
 
     for (ln = request_list->first->value->first ; ln ; ln = ln->next) {
-        /* execute the sql request */
-        ows_log(o, 8, ln->value->buf);
-        res = PQexec(o->pg, ln->value->buf);
 
+        res = ows_psql_exec(o, ln->value->buf);
         if (PQresultStatus(res) != PGRES_TUPLES_OK) {
             PQclear(res);
             ll = ll->next;

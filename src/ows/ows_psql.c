@@ -51,6 +51,20 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
 
 
 /*
+ * Execute an SQL request 
+ */
+PGresult * ows_psql_exec(ows *o, const char *sql)
+{
+    assert(o);
+    assert(sql);
+    assert (o->pg);
+     
+    ows_log(o, 8, sql);
+    return PQexec(o->pg, sql);
+}
+
+
+/*
  * Return the column number of the id column from table matching layer name
  * (needed in wfs_get_feature only)
  */
@@ -148,7 +162,7 @@ bool ows_psql_is_geometry_valid(ows * o, buffer * geom)
     buffer_copy(sql, geom);
     buffer_add_str(sql, "', -1));");
     
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1
@@ -222,7 +236,7 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
     buffer_add_str(sql, "' AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid AND a.attnum = ");
     buffer_add_int(sql, number);
 
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
 
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
@@ -266,7 +280,7 @@ ows_version * ows_psql_postgis_version(ows *o)
     PGresult * res;
     ows_version * v = NULL; 
 
-    res = PQexec(o->pg, "SELECT substr(postgis_full_version(), 10, 5)");
+    res = ows_psql_exec(o, "SELECT substr(postgis_full_version(), 10, 5)");
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
          PQclear(res);
          return NULL;
@@ -412,7 +426,7 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
          buffer_add_str(sql_id, "SELECT nextval('");
          buffer_copy(sql_id, ln->layer->storage->pkey_sequence);
          buffer_add_str(sql_id, "');");
-         res = PQexec(o->pg, sql_id->buf);
+         res = ows_psql_exec(o, sql_id->buf);
          buffer_free(sql_id);
 
          if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1) {
@@ -491,7 +505,7 @@ int ows_psql_number_features(ows * o, list * from, list * where)
              buffer_copy(sql, ln_from->value);
              buffer_add_str(sql, "\" ");
              buffer_copy(sql, ln_where->value);
-             res = PQexec(o->pg, sql->buf);
+             res = ows_psql_exec(o, sql->buf);
              buffer_free(sql);
 
              if (PQresultStatus(res) != PGRES_TUPLES_OK) {
@@ -582,7 +596,7 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, int srid)
        buffer_add_str(sql, "')");
     }
 
-    res = PQexec(o->pg, sql->buf);
+    res = ows_psql_exec(o, sql->buf);
     buffer_free(gml);
 
     /* GML Parse errors cases */
@@ -604,7 +618,7 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, int srid)
         buffer_add_str(sql, result->buf);
         buffer_add_str(sql, "')");
 
-        res = PQexec(o->pg, sql->buf);
+        res = ows_psql_exec(o, sql->buf);
 
         if (    PQresultStatus(res) != PGRES_TUPLES_OK
              || PQntuples(res) != 1

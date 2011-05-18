@@ -317,7 +317,7 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
 	  buffer_copy(geom_sql, b);
 	  buffer_add_str(geom_sql,"';");
 	  
-          geom_res = ows_psql_exec(o, sql->buf);
+          geom_res = ows_psql_exec(o, geom_sql->buf);
 	  buffer_free(geom_sql);
 	  
 	  if (PQresultStatus(geom_res) != PGRES_TUPLES_OK) {

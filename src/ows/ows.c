@@ -44,16 +44,19 @@ static void ows_pg(ows * o, char *con_str)
     if (PQstatus(o->pg) != CONNECTION_OK) {
 	ows_log(o, 1, PQerrorMessage(o->pg));
         ows_error(o, OWS_ERROR_CONNECTION_FAILED, "Connection to database failed", "init_OWS");
-    } else if (PQsetClientEncoding(o->pg, o->db_encoding->buf)) {
+        return;
+    }
+
+    if (PQsetClientEncoding(o->pg, o->db_encoding->buf)) {
 	ows_log(o, 1, PQerrorMessage(o->pg));
         ows_error(o, OWS_ERROR_CONNECTION_FAILED, "Wrong database encoding", "init_OWS");
+        return;
     }
 
     o->postgis_version = ows_psql_postgis_version(o);
     if (!o->postgis_version)
         ows_error(o, OWS_ERROR_CONNECTION_FAILED, "No PostGIS available in database", "init_OWS");
-
-    if (ows_version_get(o->postgis_version) < 150)
+    else if (ows_version_get(o->postgis_version) < 150)
         ows_error(o, OWS_ERROR_CONNECTION_FAILED, "PostGIS version must be at least 1.5.0", "init_OWS");
 }
 

@@ -57,10 +57,10 @@ PGresult * ows_psql_exec(ows *o, const char *sql)
 {
     assert(o);
     assert(sql);
-    assert (o->pg);
+    assert(o->pg);
      
     ows_log(o, 8, sql);
-    return PQexec(o->pg, sql);
+    return PQexecParams(o->pg, sql, 0, NULL, NULL, NULL, NULL, 0); 
 }
 
 

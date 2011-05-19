@@ -312,17 +312,15 @@ static void ows_kvp_or_xml(ows *o, char *query)
         /* WFS 1.1.0 mandatory */
         if (     !strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded"))
             o->request->method = OWS_METHOD_KVP;
-        else if (!strcmp(getenv("CONTENT_TYPE"), "text/xml"))
+        else if (    !strcmp(getenv("CONTENT_TYPE"), "text/xml") 
+                  || !strncmp(getenv("CONTENT_TYPE"), "text/xml; charset=", 18))
             o->request->method = OWS_METHOD_XML;
 
         /* WFS 1.0.0 && CITE Test compliant */
-        else if (!strcmp(getenv("CONTENT_TYPE"), "application/xml") ||
-                 !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8") ||
-                 !strcmp(getenv("CONTENT_TYPE"), "text/plain"))
-            o->request->method = OWS_METHOD_XML;
-
-	/* Udig buggy: to remove a day */
-        else if (!strcmp(getenv("CONTENT_TYPE"), "text/xml, application/xml"))
+        else if (    !strcmp(getenv("CONTENT_TYPE"), "application/xml")
+                  || !strcmp(getenv("CONTENT_TYPE"), "text/plain")
+                  || !strncmp(getenv("CONTENT_TYPE"), "application/xml; charset=", 25)
+                  || !strncmp(getenv("CONTENT_TYPE"), "text/plain; charset=", 20))
             o->request->method = OWS_METHOD_XML;
 
         /* Command line Unit Test cases with XML values (not HTTP) */

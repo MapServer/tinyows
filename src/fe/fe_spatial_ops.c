@@ -127,7 +127,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 
     /* GML3 */
     if (buffer_cmp(name, "Envelope")) {
-        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([-]?[eE][0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
+        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
             xmlFree(content);
             buffer_free(name);
             buffer_free(srid);
@@ -144,7 +144,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
         xmlFree(content);
         content = xmlNodeGetContent(n->children);
 
-        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([-]?[eE][0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
+        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
             xmlFree(content);
             buffer_free(name);
             buffer_free(srid);
@@ -161,7 +161,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
         tmp = buffer_init();
         buffer_add_str(tmp, (char *) content);
         tmp = fe_transform_coord_gml2_to_psql(tmp);
-        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([-]?[eE][0-9]+)?(,[-]?[0-9]+([.][0-9]+)?([-]?[eE][0-9]+)?){3}")) {
+        if (!check_regexp((char *) content, "^[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?,[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?[ ][-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?,[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?$")) {
             xmlFree(content);
             buffer_free(name);
             buffer_free(srid);

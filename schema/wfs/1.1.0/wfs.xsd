@@ -22,8 +22,6 @@
    <xsd:import namespace="http://www.opengis.net/ogc" schemaLocation="../../filter/1.1.0/filter.xsd"/>
    <xsd:import namespace="http://www.opengis.net/ows" schemaLocation="../../ows/1.0.0/owsAll.xsd"/>
 
-
-
    <!-- ================================================================== -->
    <!-- =   BASE REQUEST TYPE                                            = -->
    <!-- ================================================================== -->
@@ -820,14 +818,6 @@
    </xsd:simpleType>
    <xsd:simpleType name="TypeNameListType">
       <xsd:restriction base="wfs:Base_TypeNameListType">
-<!--
-Removed to be able to deal with underscore in TypeName
-see
-Re: [TinyOWS-users] GetFeature POST fails with TiinyOWS 0.9.0
-
-Schema is so consistent with WFS 1.0.0 and WFS 2.0.0
-
-
          <xsd:pattern value="((\w:)?\w(=\w)?){1,}">
             <xsd:annotation>
                <xsd:documentation>
@@ -840,7 +830,6 @@ Schema is so consistent with WFS 1.0.0 and WFS 2.0.0
                </xsd:documentation>
             </xsd:annotation>
          </xsd:pattern>
--->
       </xsd:restriction>
    </xsd:simpleType>
    <!-- RESPONSE -->

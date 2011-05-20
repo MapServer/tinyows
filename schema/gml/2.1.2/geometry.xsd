@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<schema targetNamespace="http://www.opengis.net/gml" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" elementFormDefault="qualified" version="2.1.1">
+<schema targetNamespace="http://www.opengis.net/gml" xmlns="http://www.w3.org/2001/XMLSchema" xmlns:gml="http://www.opengis.net/gml" xmlns:xlink="http://www.w3.org/1999/xlink" elementFormDefault="qualified" version="2.1.2">
 	<annotation>
-		<appinfo>geometry.xsd v2.1.1 2001-12</appinfo>
+		<appinfo>geometry.xsd v2.1.2 2002-07</appinfo>
 		<documentation xml:lang="en">
-      GML Geometry schema. Copyright (c) 2001 OGC, All Rights Reserved.
+      GML Geometry schema. Copyright (c) 2001,2002 OGC, All Rights Reserved.
     </documentation>
 	</annotation>
 	<!-- bring in the XLink attributes -->
@@ -254,8 +254,8 @@
 		</annotation>
 		<complexContent>
 			<extension base="gml:AbstractGeometryCollectionBaseType">
-				<sequence>
-					<element ref="gml:geometryMember" maxOccurs="unbounded"/>
+				<sequence maxOccurs="unbounded">
+					<element ref="gml:geometryMember"/>
 				</sequence>
 			</extension>
 		</complexContent>
@@ -269,8 +269,8 @@
 		</annotation>
 		<complexContent>
 			<restriction base="gml:GeometryCollectionType">
-				<sequence>
-					<element ref="gml:pointMember" maxOccurs="unbounded"/>
+				<sequence maxOccurs="unbounded">
+					<element ref="gml:pointMember"/>
 				</sequence>
 				<attribute name="gid" type="ID" use="optional"/>
 				<attribute name="srsName" type="anyURI" use="required"/>
@@ -286,8 +286,8 @@
 		</annotation>
 		<complexContent>
 			<restriction base="gml:GeometryCollectionType">
-				<sequence>
-					<element ref="gml:lineStringMember" maxOccurs="unbounded"/>
+				<sequence maxOccurs="unbounded">
+					<element ref="gml:lineStringMember"/>
 				</sequence>
 				<attribute name="gid" type="ID" use="optional"/>
 				<attribute name="srsName" type="anyURI" use="required"/>
@@ -303,8 +303,8 @@
 		</annotation>
 		<complexContent>
 			<restriction base="gml:GeometryCollectionType">
-				<sequence>
-					<element ref="gml:polygonMember" maxOccurs="unbounded"/>
+				<sequence maxOccurs="unbounded">
+					<element ref="gml:polygonMember"/>
 				</sequence>
 				<attribute name="gid" type="ID" use="optional"/>
 				<attribute name="srsName" type="anyURI" use="required"/>

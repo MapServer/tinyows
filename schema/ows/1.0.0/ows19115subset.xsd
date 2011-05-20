@@ -3,11 +3,15 @@
 xmlns:ows="http://www.opengis.net/ows" 
 xmlns:xlink="http://www.w3.org/1999/xlink" 
 xmlns="http://www.w3.org/2001/XMLSchema" 
-elementFormDefault="qualified" version="1.0.0" xml:lang="en">
+elementFormDefault="qualified" version="1.0.0 2010-01-30" xml:lang="en">
 	<annotation>
-		<appinfo>ows19115subset.xsd 2005-11-21</appinfo>
+		<appinfo>ows19115subset.xsd 2010-01-30</appinfo>
 		<documentation>This XML Schema Document encodes the parts of ISO 19115 used by the common "ServiceIdentification" and "ServiceProvider" sections of the GetCapabilities operation response, known as the service metadata XML document. The parts encoded here are the MD_Keywords, CI_ResponsibleParty, and related classes. This XML Schema largely follows the current draft for ISO 19139, with the addition of documentation text extracted and edited from Annex B of ISO 19115. The UML package prefixes were omitted from XML names, and the XML element names were all capitalized, for consistency with other OWS Schemas. Also, the optional smXML:id attributes were omitted, as not being useful in a service metadata document.
-		Copyright © 2005 Open Geospatial Consortium, Inc. All Rights Reserved. </documentation>
+		
+		OWS is an OGC Standard.
+		Copyright (c) 2005,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+		To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+		</documentation>
 	</annotation>
 	<!-- ==============================================================
 		includes and imports

@@ -3,8 +3,13 @@
    targetNamespace="http://www.opengis.net/ogc"
    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
    xmlns:ogc="http://www.opengis.net/ogc"
-   elementFormDefault="qualified">
-
+   elementFormDefault="qualified"
+   version="1.0.0 2010-01-22">
+   <!-- 
+      filter is an OGC Standard.
+      Copyright (c) 2002,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+      To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+   -->
    <xsd:complexType name="Arithmetic_OperatorsType">
       <xsd:choice maxOccurs="unbounded">
          <xsd:element ref="ogc:Simple_Arithmetic"/>

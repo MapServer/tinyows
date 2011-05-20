@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<xsd:schema targetNamespace="http://www.opengis.net/ogc"
- xmlns:ogc="http://www.opengis.net/ogc"
- xmlns:gml="http://www.opengis.net/gml"
- xmlns:xsd="http://www.w3.org/2001/XMLSchema"
- elementFormDefault="qualified">
+<xsd:schema targetNamespace="http://www.opengis.net/ogc" xmlns:ogc="http://www.opengis.net/ogc" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" version="1.0.0 2010-01-22">
+<!-- 
+    filter is an OGC Standard.
+    Copyright (c) 2002,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+    To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+-->
 	<xsd:include schemaLocation="expr.xsd"/>
 	<xsd:import namespace="http://www.opengis.net/gml" schemaLocation="../../gml/2.1.2/feature.xsd"/>
 	<!-- ============================================= -->

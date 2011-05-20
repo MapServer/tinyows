@@ -5,8 +5,15 @@
    xmlns:gml="http://www.opengis.net/gml"
    xmlns:ogc="http://www.opengis.net/ogc"
    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-   elementFormDefault="qualified">
-
+   elementFormDefault="qualified"
+   version="1.0.0 2010-02-02">
+   
+   <!--
+      WFS is an OGC Standard.
+      Copyright (c) 2002,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+      To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+   -->
+   
    <!-- Comments in this document may impose additional constraints
         beyond those codified in the schema syntax.  A conformant
         Web Feature Server must provide Capabilities XML that
@@ -17,8 +24,7 @@
    <!-- ==============================================================
         Imports ...
         ============================================================== -->
-   <xsd:import namespace="http://www.opengis.net/ogc"
-               schemaLocation="../../filter/1.0.0/filterCapabilities.xsd" />
+   <xsd:import namespace="http://www.opengis.net/ogc" schemaLocation="../../filter/1.0.0/filterCapabilities.xsd" />
 
    <!-- ==============================================================
         Global elements and attributes

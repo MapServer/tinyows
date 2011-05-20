@@ -5,16 +5,21 @@
    xmlns:gml="http://www.opengis.net/gml"
    xmlns:ogc="http://www.opengis.net/ogc"
    xmlns:wfs="http://www.opengis.net/wfs"
-   elementFormDefault="qualified">
-
+   elementFormDefault="qualified"
+   version="1.0.0 2010-02-02">
+   
+   <!--
+      WFS is an OGC Standard.
+      Copyright (c) 2002,2010 Open Geospatial Consortium, Inc. All Rights Reserved.
+      To obtain additional rights of use, visit http://www.opengeospatial.org/legal/ .
+   -->
+   
    <!-- ==============================================================
         Includes and Imports
         ============================================================== -->
    <xsd:include schemaLocation="WFS-basic.xsd"/>
-   <xsd:import namespace="http://www.opengis.net/gml"
-               schemaLocation="../../gml/2.1.2/feature.xsd"/>
-   <xsd:import namespace="http://www.opengis.net/ogc"
-               schemaLocation="../../filter/1.0.0/filter.xsd"/>
+   <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="../../gml/2.1.2/feature.xsd"/>
+   <xsd:import namespace="http://www.opengis.net/ogc" schemaLocation="../../filter/1.0.0/filter.xsd"/>
 
    <!-- ==============================================================
          REQUEST MESSAGES

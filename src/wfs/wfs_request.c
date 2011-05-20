@@ -425,8 +425,10 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
              return;
         }
 
-        if (wr->srs->is_degree && ows_version_get(o->request->version) == 110)
+        if (wr->srs->is_degree && ows_version_get(o->request->version) == 110) {
             wr->srs->is_reverse_axis = true;
+            wr->srs->is_long = true;
+        }
 
     } else {
         b = array_get(o->cgi, "srsname");

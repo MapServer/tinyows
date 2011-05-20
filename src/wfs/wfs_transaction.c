@@ -45,7 +45,10 @@ static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr, buffer
     result = buffer_init();
     cmd_status = buffer_init();
 
-    res = ows_psql_exec(o, sql->buf);
+    ows_log(o, 8, sql->buf);
+    res = PQexec(o->pg, sql->buf);  /* FIXME as long as we could have several SQL instruction, 
+                                       in Transaction, no way to call PQexecParams, 
+                                       need to be refactored */
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
         buffer_add_str(result, PQresultErrorMessage(res));
     else
@@ -198,7 +201,7 @@ static void wfs_transaction_response(ows * o, wfs_request * wr, buffer * result,
 	   return;
     }
 
-    fprintf(o->output, "Content-Type: application/xml\n\n");
+    fprintf(o->output, "Content-Type: application/xml; charset=%s\n\n", o->encoding->buf);
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
 
     if (ows_version_get(o->request->version) == 100)

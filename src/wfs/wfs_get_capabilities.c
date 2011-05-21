@@ -369,8 +369,7 @@ static void wfs_feature_type_list(ows * o)
             }
             assert(gb);
 
-            for (s = 0; s < ln->layer->depth; s++)
-                fprintf(o->output, " ");
+            for (s = 0; s < ln->layer->depth; s++) fprintf(o->output, " ");
 
             if (ows_version_get(o->request->version) == 100)
                 fprintf(o->output, " <LatLongBoundingBox");
@@ -406,11 +405,7 @@ static void wfs_feature_type_list(ows * o)
                 }
             } else {
                 if (ows_version_get(o->request->version) == 100) {
-                    fprintf(o->output, " minx='0'");
-                    fprintf(o->output, " miny='0'");
-                    fprintf(o->output, " maxx='0'");
-                    fprintf(o->output, " maxy='0'");
-                    fprintf(o->output, " />\n");
+                    fprintf(o->output, " minx='0' miny='0' maxx='0' maxy='0'/>\n");
                 } else if (ows_version_get(o->request->version) == 110) {
                     fprintf(o->output, " <ows:LowerCorner>0 0</ows:LowerCorner>");
                     fprintf(o->output, " <ows:UpperCorner>0 0</ows:UpperCorner>");

@@ -112,20 +112,16 @@ bool ows_geobbox_set_from_bbox(ows * o, ows_geobbox * g, ows_bbox * bb)
     assert(g);
     assert(bb);
 
-    if (bb->xmin < 0.0 && bb->xmax < 0.0) {
-        west = bb->xmin;
-        east = bb->xmax;
-    } else {
-        west = bb->xmax;
-        east = bb->xmin;
-    }
-
     if (bb->ymin < 0.0 && bb->ymax < 0.0) {
         south = bb->ymax;
         north = bb->ymin;
+        west = bb->xmax;
+        east = bb->xmin;
     } else {
         south = bb->ymin;
         north = bb->ymax;
+        west = bb->xmin;
+        east = bb->xmax;
     }
 
     return ows_geobbox_set(o, g, west, east, south, north);
@@ -178,7 +174,7 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
 
     for (ln = geom->first; ln ; ln = ln->next)
     {
-    	buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM ");
+    	buffer_add_str(sql, "SELECT ST_xmin(g), ST_ymin(g), ST_xmax(g), ST_ymax(g) FROM ");
 	if (o->estimated_extent) 
 	{
 		buffer_add_str(sql, "(SELECT ST_Transform(ST_SetSRID(ST_Estimated_Extent('");

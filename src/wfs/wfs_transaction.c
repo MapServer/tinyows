@@ -598,6 +598,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         buffer_free(id);
 
         /* Run the request to insert each feature */
+        if(result) buffer_free(result);
         result = wfs_execute_transaction_request(o, wr, sql);
         if (!buffer_cmp(result, "PGRES_COMMAND_OK")) {
              buffer_free(sql);

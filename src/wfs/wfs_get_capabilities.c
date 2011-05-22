@@ -438,9 +438,9 @@ static void wfs_get_capabilities_110(ows * o, wfs_request * wr)
     assert(wr);
 
     if (wr->format == WFS_TEXT_XML)
-        fprintf(o->output, "Content-Type: text/xml; charset=%s\n\n", o->encoding->buf);
+        fprintf(o->output, "Content-Type: text/xml\n\n");
     else
-        fprintf(o->output, "Content-Type: application/xml; charset=%s\n\n", o->encoding->buf);
+        fprintf(o->output, "Content-Type: application/xml\n\n");
 
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
     fprintf(o->output, "<WFS_Capabilities");

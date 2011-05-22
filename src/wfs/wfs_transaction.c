@@ -45,10 +45,7 @@ static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr, buffer
     result = buffer_init();
     cmd_status = buffer_init();
 
-    ows_log(o, 8, sql->buf);
-    res = PQexec(o->pg, sql->buf);  /* FIXME as long as we could have several SQL instruction, 
-                                       in Transaction, no way to call PQexecParams, 
-                                       need to be refactored */
+    res = ows_psql_exec(o, sql->buf);
     if (PQresultStatus(res) != PGRES_COMMAND_OK)
         buffer_add_str(result, PQresultErrorMessage(res));
     else
@@ -57,12 +54,12 @@ static buffer *wfs_execute_transaction_request(ows * o, wfs_request * wr, buffer
 
     if (check_regexp(cmd_status->buf, "^DELETE")) {
         cmd_status = buffer_replace(cmd_status, "DELETE ", "");
-        wr->delete_results = wr->delete_results + atoi(cmd_status->buf);
+        wr->delete_results += atoi(cmd_status->buf);
     }
 
     if (check_regexp(cmd_status->buf, "^UPDATE")) {
         cmd_status = buffer_replace(cmd_status, "UPDATE ", "");
-        wr->update_results = wr->update_results + atoi(cmd_status->buf);
+        wr->update_results += atoi(cmd_status->buf);
     }
 
     buffer_free(cmd_status);
@@ -201,7 +198,7 @@ static void wfs_transaction_response(ows * o, wfs_request * wr, buffer * result,
 	   return;
     }
 
-    fprintf(o->output, "Content-Type: application/xml; charset=%s\n\n", o->encoding->buf);
+    fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
 
     if (ows_version_get(o->request->version) == 100)
@@ -253,7 +250,6 @@ static buffer *wfs_retrieve_value(ows * o, wfs_request * wr, buffer * value, xml
 
     if (!content_escaped)
     {
-        free(content_escaped);
         xmlFree(content);
         buffer_free(value);
         xmlFreeDoc(xmldoc);
@@ -595,15 +591,21 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         } else buffer_add_str(sql, ") VALUES (null");
 
         buffer_copy(sql, values);
-        buffer_add_str(sql, "); ");
+        buffer_add_str(sql, ") ");
 
         buffer_free(values);
         buffer_free(layer_name);
         buffer_free(id);
+
+        /* Run the request to insert each feature */
+        result = wfs_execute_transaction_request(o, wr, sql);
+        if (!buffer_cmp(result, "PGRES_COMMAND_OK")) {
+             buffer_free(sql);
+             return result;
+        }
+        buffer_empty(sql);
     }
 
-    /* Run the request to insert feature */
-    result = wfs_execute_transaction_request(o, wr, sql);
     buffer_free(sql);
 
     return result;

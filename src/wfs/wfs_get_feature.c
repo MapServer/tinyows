@@ -212,9 +212,9 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
     assert(namespaces);
 
          if (wr->format == WFS_GML212)
-         printf(o->output, "Content-Type: text/xml; subtype=gml/2.1.2\n\n");
+         fprintf(o->output, "Content-Type: text/xml; subtype=gml/2.1.2\n\n");
     else if (wr->format == WFS_GML311)
-         printf(o->output, "Content-Type: text/xml; subtype=gml/3.1.1\n\n");
+         fprintf(o->output, "Content-Type: text/xml; subtype=gml/3.1.1\n\n");
 
     fprintf(o->output, "<?xml version='1.0' encoding='%s'?>\n", o->encoding->buf);
     fprintf(o->output, "<wfs:FeatureCollection\n");

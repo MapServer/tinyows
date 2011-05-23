@@ -126,8 +126,8 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
     content = xmlNodeGetContent(n->children);
 
     /* GML3 */
-    if (buffer_cmp(name, "Envelope")) {
-        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
+    if (!strcmp((char *) n->name, "lowerCorner")) {
+        if (!content || !check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
             xmlFree(content);
             buffer_free(name);
             buffer_free(srid);
@@ -140,11 +140,11 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 
 
         n = n->next;
-        while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
+        while (n->next && n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
         xmlFree(content);
         content = xmlNodeGetContent(n->children);
 
-        if (!check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
+        if (!content || !check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
             xmlFree(content);
             buffer_free(name);
             buffer_free(srid);
@@ -157,10 +157,9 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
         coord_max = list_explode_str(' ', (char *) content);
 
     /* GML2 */
-    } else {
+    } else if (!strcmp((char *) n->name, "coordinates")) {
         tmp = buffer_init();
         buffer_add_str(tmp, (char *) content);
-        tmp = fe_transform_coord_gml2_to_psql(tmp);
         if (!check_regexp((char *) content, "^[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?,[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?[ ][-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?,[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?$")) {
             xmlFree(content);
             buffer_free(name);
@@ -170,11 +169,21 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 
 	    return envelope;
         }
+        tmp = fe_transform_coord_gml2_to_psql(tmp);
         coord_pair = list_explode(',', tmp);
         coord_min = list_explode(' ', coord_pair->first->value);
         coord_max = list_explode(' ', coord_pair->first->next->value);
         buffer_free(tmp);
         list_free(coord_pair);
+    } else {
+    /* FIXME handle coord and pos */
+        xmlFree(content);
+        buffer_free(name);
+        buffer_free(srid);
+        if (s) ows_srs_free(s);
+        fe->error_code = FE_ERROR_BBOX;
+
+        return envelope;
     }
 
     buffer_free(name);
@@ -448,6 +457,10 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
     /* Retrieve the property name */
     property = buffer_init();
     property = fe_property_name(o, typename, fe, property, n, true, false);
+    if (fe->error_code != FE_NO_ERROR) {
+        buffer_free(property);
+        return fe->sql;
+    }
 
     /* If no property name, so we have to check with each Geometry_columns */
     if (property->use == 0) {

@@ -460,7 +460,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
 
         buffer_add(fe->sql, '(');
         for (ln = columns->first ; ln ; ln = ln->next) {
-            fe->sql = fe_bbox_layer(o, fe->sql, ln->value, envelope);
+            if (envelope) fe->sql = fe_bbox_layer(o, fe->sql, ln->value, envelope);
             if      (ln->next && (fe->in_not == 0 || !fe->in_not%2)) buffer_add_str(fe->sql, " OR ");
             else if (ln->next && fe->in_not%2)                       buffer_add_str(fe->sql, " AND ");
             else                                                     buffer_add_str(fe->sql, ")");
@@ -480,7 +480,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
             envelope = fe_envelope(o, typename, fe, envelope, n);
         } else { fe->error_code = FE_ERROR_FILTER; }
 
-        fe->sql = fe_bbox_layer(o, fe->sql, property, envelope);
+        if (envelope) fe->sql = fe_bbox_layer(o, fe->sql, property, envelope);
     }
 
     if (envelope) buffer_free(envelope);

@@ -3,7 +3,7 @@
 <!-- BEGIN configuration -->
 <tinyows
   online_resource="http://127.0.0.1/cgi-bin/tinyows"
-  schema_dir="@prefix@/tinyows/schema/"
+  schema_dir="@prefix@/share/tinyows/schema/"
   check_valid_geom="0">
 
   <pg 

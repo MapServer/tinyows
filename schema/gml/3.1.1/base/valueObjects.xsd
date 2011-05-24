@@ -199,19 +199,20 @@
 	<!-- ====================== Typed ValueExtents ============================ -->
 	<group name="ValueExtent">
 		<choice>
+<!--
 			<element ref="gml:CategoryExtent"/>
 			<element ref="gml:QuantityExtent"/>
+-->
 			<element ref="gml:CountExtent"/>
 		</choice>
 	</group>
-	<!-- ======================================================================
-	<element name="QuantityExtent" type="gml:QuantityExtentType" substitutionGroup="gml:_Value"> -->
+	<!-- ====================================================================== 
+	<element name="QuantityExtent" type="gml:QuantityExtentType" substitutionGroup="gml:_Value"> 
 	<element name="QuantityExtent" type="gml:QuantityExtentType">
 		<annotation>
 			<documentation>Utility element to store a 2-point range of numeric values. If one member is a null, then this is a single ended interval.</documentation>
 		</annotation>
 	</element>
-	<!-- -->
 	<complexType name="QuantityExtentType">
 		<annotation>
 			<documentation>Restriction of list type to store a 2-point range of numeric values. If one member is a null, then this is a single ended interval.</documentation>
@@ -222,14 +223,14 @@
 			</restriction>
 		</simpleContent>
 	</complexType>
+-->
 	<!-- ======================================================================
-	<element name="CategoryExtent" type="gml:CategoryExtentType" substitutionGroup="gml:_Value"> -->
+	<element name="CategoryExtent" type="gml:CategoryExtentType" substitutionGroup="gml:_Value"> 
 	<element name="CategoryExtent" type="gml:CategoryExtentType">
 		<annotation>
 			<documentation>Utility element to store a 2-point range of ordinal values. If one member is a null, then this is a single ended interval.</documentation>
 		</annotation>
 	</element>
-	<!-- -->
 	<complexType name="CategoryExtentType">
 		<annotation>
 			<documentation>Restriction of list type to store a 2-point range of ordinal values. If one member is a null, then this is a single ended interval.</documentation>
@@ -240,6 +241,7 @@
 			</restriction>
 		</simpleContent>
 	</complexType>
+-->
 	<!-- ======================================================================
 	<element name="CountExtent" type="gml:CountExtentType" substitutionGroup="gml:_Value"> -->
 	<element name="CountExtent" type="gml:CountExtentType">

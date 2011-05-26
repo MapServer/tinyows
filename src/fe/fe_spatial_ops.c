@@ -234,7 +234,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
  */
 static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    bool transform = false;
+    int srid;
     buffer *sql;
 
     assert(typename);
@@ -254,20 +254,20 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     n = n->children;
     while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
 
-    if (o->request->request.wfs->srs) {
-        transform = true;
-        buffer_add_str(fe->sql, "ST_Transform(");
-    }
+    if (o->request->request.wfs->srs)
+        srid = o->request->request.wfs->srs->srid;
+    else
+        srid = ows_srs_get_srid_from_layer(o, typename);
+
+    buffer_add_str(fe->sql, "ST_Transform(");
 
     buffer_add(fe->sql, '"');
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true, true);
     buffer_add(fe->sql, '"');
 
-    if (transform) {
-        buffer_add(fe->sql, ',');
-        buffer_add_int(fe->sql, o->request->request.wfs->srs->srid);
-        buffer_add(fe->sql, ')');
-    }
+    buffer_add(fe->sql, ',');
+    buffer_add_int(fe->sql, srid);
+    buffer_add(fe->sql, ')');
         
     n = n->next;
 
@@ -381,9 +381,9 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
 }
 
 
-static buffer *fe_bbox_layer(ows *o, buffer *sql, buffer *propertyname, buffer *envelope)
+static buffer *fe_bbox_layer(ows *o, buffer *typename, buffer *sql, buffer *propertyname, buffer *envelope)
 {
-    bool transform = false; 
+    int srid;
 
     assert(propertyname);
     assert(envelope);
@@ -392,39 +392,33 @@ static buffer *fe_bbox_layer(ows *o, buffer *sql, buffer *propertyname, buffer *
 
     buffer_add_str(sql, "(_ST_Intersects(");
 
-    if (o->request->request.wfs->srs) {
-         transform = true;
-         buffer_add_str(sql, "ST_Transform(");
-    }
+    if (o->request->request.wfs->srs)
+        srid = o->request->request.wfs->srs->srid;
+    else 
+        srid  = ows_srs_get_srid_from_layer(o, typename);
+
+    buffer_add_str(sql, "ST_Transform(");
 
     buffer_add(sql, '"');
     buffer_copy(sql, propertyname);
     buffer_add(sql, '"');
 
-    if (transform) {
-        buffer_add(sql, ',');
-        buffer_add_int(sql, o->request->request.wfs->srs->srid);
-        buffer_add(sql, ')');
-    }
+    buffer_add(sql, ',');
+    buffer_add_int(sql, srid);
+    buffer_add(sql, ')');
 
     buffer_add_str(sql, ",");
     buffer_copy(sql, envelope);
     buffer_add_str(sql, ") AND ");
-
-    if (o->request->request.wfs->srs) {
-         transform = true;
-         buffer_add_str(sql, "ST_Transform(");
-    }
+    buffer_add_str(sql, "ST_Transform(");
 
     buffer_add(sql, '"');
     buffer_copy(sql, propertyname);
     buffer_add(sql, '"');
 
-    if (transform) {
-        buffer_add(sql, ',');
-        buffer_add_int(sql, o->request->request.wfs->srs->srid);
-        buffer_add(sql, ')');
-    }
+    buffer_add(sql, ',');
+    buffer_add_int(sql, srid);
+    buffer_add(sql, ')');
 
     buffer_add_str(sql, " && ");
     buffer_copy(sql, envelope);
@@ -473,7 +467,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
 
         buffer_add(fe->sql, '(');
         for (ln = columns->first ; ln ; ln = ln->next) {
-            if (envelope) fe->sql = fe_bbox_layer(o, fe->sql, ln->value, envelope);
+            if (envelope) fe->sql = fe_bbox_layer(o, typename, fe->sql, ln->value, envelope);
             if      (ln->next && (fe->in_not == 0 || !fe->in_not%2)) buffer_add_str(fe->sql, " OR ");
             else if (ln->next && fe->in_not%2)                       buffer_add_str(fe->sql, " AND ");
             else                                                     buffer_add_str(fe->sql, ")");
@@ -493,7 +487,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
             envelope = fe_envelope(o, typename, fe, envelope, n);
         } else { fe->error_code = FE_ERROR_FILTER; }
 
-        if (envelope) fe->sql = fe_bbox_layer(o, fe->sql, property, envelope);
+        if (envelope) fe->sql = fe_bbox_layer(o, typename, fe->sql, property, envelope);
     }
 
     if (envelope) buffer_free(envelope);

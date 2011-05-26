@@ -425,7 +425,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
              buffer_free(values);
              buffer_free(layer_name);
              result = buffer_init();
-             buffer_add_str(result, "Error unknown Layer Name");
+             buffer_add_str(result, "Error unknown Layer Name or not id column available");
              return result;
 	} 
 

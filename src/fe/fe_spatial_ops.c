@@ -236,6 +236,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
 {
     int srid;
     buffer *sql;
+    bool transform = false;
 
     assert(typename);
     assert(fe);
@@ -254,19 +255,21 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     n = n->children;
     while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
 
-    if (o->request->request.wfs->srs)
+    if (o->request->request.wfs->srs) {
         srid = o->request->request.wfs->srs->srid;
-    else
-        srid = ows_srs_get_srid_from_layer(o, typename);
+        transform = true;
+    } else srid  = ows_srs_get_srid_from_layer(o, typename);
 
-    buffer_add_str(fe->sql, "ST_Transform(");
+    if (transform) buffer_add_str(fe->sql, "ST_Transform(");
 
     buffer_add(fe->sql, '"');
     fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true, true);
     buffer_add(fe->sql, '"');
 
-    buffer_add(fe->sql, ',');
-    buffer_add_int(fe->sql, srid);
+    if (transform) {
+        buffer_add(fe->sql, ',');
+        buffer_add_int(fe->sql, srid);
+    }
     buffer_add(fe->sql, ')');
         
     n = n->next;
@@ -282,8 +285,14 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
    	buffer_add_str(fe->sql, "'");
         sql = ows_psql_gml_to_sql(o, n, 0);
         if (sql) { 
+            if (!transform) buffer_add_str(fe->sql, "ST_SetSRID(");
             buffer_copy(fe->sql, sql);
             buffer_free(sql);
+            if (!transform) { 
+                buffer_add_str(fe->sql, ",");
+                buffer_add_int(fe->sql, srid);
+                buffer_add_str(fe->sql, ")");
+            }
         } else fe->error_code = FE_ERROR_GEOMETRY;
    	buffer_add_str(fe->sql, "'");
     }
@@ -384,6 +393,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
 static buffer *fe_bbox_layer(ows *o, buffer *typename, buffer *sql, buffer *propertyname, buffer *envelope)
 {
     int srid;
+    bool transform = false;
 
     assert(propertyname);
     assert(envelope);
@@ -392,32 +402,37 @@ static buffer *fe_bbox_layer(ows *o, buffer *typename, buffer *sql, buffer *prop
 
     buffer_add_str(sql, "(_ST_Intersects(");
 
-    if (o->request->request.wfs->srs)
+    if (o->request->request.wfs->srs) {
         srid = o->request->request.wfs->srs->srid;
-    else 
-        srid  = ows_srs_get_srid_from_layer(o, typename);
+        transform = true;
+    }
 
-    buffer_add_str(sql, "ST_Transform(");
+    if (transform) buffer_add_str(sql, "ST_Transform(");
 
     buffer_add(sql, '"');
     buffer_copy(sql, propertyname);
     buffer_add(sql, '"');
 
-    buffer_add(sql, ',');
-    buffer_add_int(sql, srid);
+    if (transform) {
+        buffer_add(sql, ',');
+        buffer_add_int(sql, srid);
+    }
     buffer_add(sql, ')');
 
     buffer_add_str(sql, ",");
     buffer_copy(sql, envelope);
     buffer_add_str(sql, ") AND ");
-    buffer_add_str(sql, "ST_Transform(");
+    if (transform)
+        buffer_add_str(sql, "ST_Transform(");
 
     buffer_add(sql, '"');
     buffer_copy(sql, propertyname);
     buffer_add(sql, '"');
 
-    buffer_add(sql, ',');
-    buffer_add_int(sql, srid);
+    if (transform) {
+        buffer_add(sql, ',');
+        buffer_add_int(sql, srid);
+    }
     buffer_add(sql, ')');
 
     buffer_add_str(sql, " && ");

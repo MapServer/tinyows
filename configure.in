@@ -133,8 +133,8 @@ AC_ARG_WITH(fastcgi,
 
 if test "x$FCGI_PATH" != "x"; then
         AC_MSG_RESULT([checking user-specified fast-cgi location: $FCGI_PATH])
-        FCGI_INC="-I$LIBICONV_PATH/include"
-        FCGI_LIB="-L$LIBICONV_PATH/lib"
+        FCGI_INC="-I$FCGI_PATH/include"
+        FCGI_LIB="-L$FCGI_PATH/lib"
 fi
 
 

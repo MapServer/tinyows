@@ -315,9 +315,11 @@ static void metadata_value(char *yytext, bool quotes)
 			return;
 		case MAP_MD_TOWS_DB_ENCODING:
 			buffer_add_str(map_o->db_encoding, yytext);
+			return;
 		case MAP_MD_TOWS_LOG:
 			map_o->log_file = buffer_init();
 			buffer_add_str(map_o->log_file, yytext);
+			return;
 		case MAP_MD_TOWS_LOG_LEVEL:
 			i = atoi(yytext);
 			if (i > 0 && i < 16) map_o->log_level = i;

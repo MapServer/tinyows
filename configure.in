@@ -144,6 +144,21 @@ if test "x$FCGI_PATH" != "xno"; then
    		USE_FCGI=1
  		])
 	])
+
+	dnl Some platforms use fastcgi subdir in include  
+	if test "$USE_FCGI" = "0" ; then
+		echo "checking now FCGI in alternate fastcgi include dir"
+		AC_CHECK_LIB(fcgi, FCGI_Accept, [
+ 			AC_CHECK_HEADERS([fastcgi/fcgi_config.h fastcgi/fcgi_stdio.h],[
+   			USE_FCGI=1
+ 			])
+		])
+		if test "x$FCGI_PATH" != "x"; then
+        		FCGI_INC="-I$FCGI_PATH/include/fastcgi"
+		else
+        		FCGI_INC="-I/usr/include/fastcgi"
+		fi
+	fi
 fi
 
 if test "$USE_FCGI" = "0" ; then

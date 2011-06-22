@@ -193,10 +193,10 @@ static void metadata_key(char *yytext, bool quotes)
 		map_md_state = MAP_MD_TOWS_DB_ENCODING;
 	else if(!strncmp("tinyows_schema_dir", yytext, 18))
 		map_md_state = MAP_MD_TOWS_SCHEMA_DIR;
-	else if(!strncmp("tinyows_log", yytext, 11))
-		map_md_state = MAP_MD_TOWS_LOG;
 	else if(!strncmp("tinyows_log_level", yytext, 17))
 		map_md_state = MAP_MD_TOWS_LOG_LEVEL;
+	else if(!strncmp("tinyows_log", yytext, 11))
+		map_md_state = MAP_MD_TOWS_LOG;
 	else if(!strncmp("tinyows_wfs_default_version", yytext, 77))
 		map_md_state = MAP_MD_TOWS_WFS_DEFAULT_VERSION;
 	else if(!strncmp("tinyows_degree_precision", yytext, 24))

@@ -122,6 +122,14 @@ AC_SUBST(SHP2PGSQL)
 
 
 dnl ---------------------------------------------------------------------------
+dnl Flex check
+dnl ---------------------------------------------------------------------------
+AC_PROG_LEX
+if test "$LEX" != flex; then
+  AC_MSG_ERROR("TinyOWS: Need flex to compile")
+fi
+
+dnl ---------------------------------------------------------------------------
 dnl FastCGI
 dnl ---------------------------------------------------------------------------
 
@@ -160,6 +168,8 @@ if test "x$FCGI_PATH" != "xno"; then
 		fi
 	fi
 fi
+
+
 
 if test "$USE_FCGI" = "0" ; then
   AC_MSG_WARN([No FastCGI support. Performances will be strongly reduced !])

@@ -33,9 +33,9 @@ static buffer * mapfile_build_path(ows * o, char * fpath)
 	/* Path is relative */
 	path = buffer_init();
 	buffer_copy(path, o->config_file);
-	
+
  	for ( /* empty */ ; path->use ; path->use--) 
-		if ((path->buf[path->use] == '/') || (path->buf[path->use] == '\\')) break;	
+		if ((path->buf[path->use] == '/') || (path->buf[path->use] == '\\')) { path->use++ ; break; }	
 	
 	buffer_add_str(path, fpath);
 

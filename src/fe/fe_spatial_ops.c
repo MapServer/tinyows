@@ -392,7 +392,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
 
 static buffer *fe_bbox_layer(ows *o, buffer *typename, buffer *sql, buffer *propertyname, buffer *envelope)
 {
-    int srid;
+    int srid = -1;
     bool transform = false;
 
     assert(propertyname);

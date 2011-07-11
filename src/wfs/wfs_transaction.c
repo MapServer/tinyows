@@ -328,6 +328,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
     sql = buffer_init();
     handle = buffer_init();
+    result = NULL;
 
     /* retrieve handle attribute to report it in transaction response */
     if (xmlHasProp(n, (xmlChar *) "handle")) {
@@ -396,8 +397,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
              buffer_free(sql);
              buffer_free(values);
 	     if (layer_name) buffer_free(layer_name);
-             result = buffer_init();
-             buffer_add_str(result, "Error unknown or not writable Layer Name");
+             result = buffer_from_str("Error unknown or not writable Layer Name");
              return result;
 	}
 
@@ -424,8 +424,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
              buffer_free(handle);
              buffer_free(values);
              buffer_free(layer_name);
-             result = buffer_init();
-             buffer_add_str(result, "Error unknown Layer Name or not id column available");
+             result = buffer_from_str("Error unknown Layer Name or not id column available");
              return result;
 	} 
 

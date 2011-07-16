@@ -13,7 +13,7 @@
 #define OWS_MAP_EATLINE char c ; for (c=input() ; c && c != '\n' ; c=input());
 #define OWS_MAP_MAX_INCLUDE_DEPTH 5
 
-#if 0
+#if 1
 #define OWS_MAP_DBG fprintf(stderr, "State: {%i} %i \n", yy_top_state(), YY_START);
 #else
 #define OWS_MAP_DBG 
@@ -575,7 +575,7 @@ static void end_layer()
 %s OUTPUTFORMAT
 %s SYMBOL
 %s PATTERN
-%s POINT
+%s POINTS
 %s INCLUDE
 
 
@@ -588,7 +588,9 @@ static void end_layer()
 <MAP>LEGEND			{ /*LEGEND rule must appears before END... */
 				  yy_push_state(LEGEND); OWS_MAP_DBG }
 
-END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) { 
+END 				{ 
+				 OWS_MAP_EATLINE
+				 if (yy_top_state() == INITIAL && YY_START != MAP) { 
 					ows_error(map_o, OWS_ERROR_CONFIG_FILE,
 					"MapFile Parse Error", "parse_config_file");
 					yyterminate();}
@@ -674,7 +676,7 @@ END 				{ if (yy_top_state() == INITIAL && YY_START != MAP) {
 <CLASS>LABEL 			{ yy_push_state(LABEL); OWS_MAP_DBG }
 <MAP,LAYER>PROJECTION		{ yy_push_state(PROJECTION); OWS_MAP_DBG }
 <SYMBOL,STYLE>PATTERN		{ yy_push_state(PATTERN); OWS_MAP_DBG }
-<SYMBOL>POINT			{ yy_push_state(POINT); OWS_MAP_DBG }
+<SYMBOL>POINTS			{ yy_push_state(POINTS); OWS_MAP_DBG }
 <SCALEBAR,LEGEND>LABEL		{ yy_push_state(LABEL); OWS_MAP_DBG }
 <MAP>LAYER 			{ yy_push_state(LAYER); map_l = ows_layer_init(); OWS_MAP_DBG }
 <LAYER>FEATURE 			{ yy_push_state(FEATURE); OWS_MAP_DBG }

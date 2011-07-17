@@ -661,5 +661,34 @@ char *ows_psql_escape_string(ows *o, const char *content)
 
 
 /*
+ * Return SRID from a given geometry
+ */
+int ows_psql_geometry_srid(ows *o, const char *geom)
+{
+    int srid;
+    buffer *sql;
+    PGresult *res;
+    
+    assert(o);
+    assert(o->pg);
+    assert(geom);
+
+    sql = buffer_from_str("SELECT ST_SRID('");
+    buffer_add_str(sql, geom);
+    buffer_add_str(sql, "'::geometry)");
+
+    res = ows_psql_exec(o, sql->buf);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) srid = -1;
+    else srid = atoi((char *) PQgetvalue(res, 0, 0));
+
+    buffer_free(sql);
+    PQclear(res);
+
+    return srid;
+}
+
+
+/*
  * vim: expandtab sw=4 ts=4
  */

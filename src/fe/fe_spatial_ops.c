@@ -82,7 +82,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 {
     list *coord_min, *coord_max, *coord_pair;
     xmlChar *content, *srsname;
-    buffer *srid, *name, *tmp;
+    buffer *name, *tmp;
     ows_bbox *bbox;
     int srid_int;
     bool ret;
@@ -97,13 +97,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
     name = buffer_init();
     buffer_add_str(name, (char *) n->name);
 
-    if (o->request->request.wfs->srs)
-        srid_int = o->request->request.wfs->srs->srid;
-    else
-        srid_int = ows_srs_get_srid_from_layer(o, typename);
-    srid = buffer_init();
-    buffer_add_int(srid, srid_int);
-
     srsname = xmlGetProp(n, (xmlChar *) "srsName");
     if (srsname) {
 	s = ows_srs_init();
@@ -112,12 +105,17 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
             fe->error_code = FE_ERROR_SRS;
             xmlFree(srsname);
             buffer_free(name);
-            buffer_free(srid);
             ows_srs_free(s);
             return envelope;
         }
 
         xmlFree(srsname);
+        srid_int = s->srid;
+    } else {
+        if (o->request->request.wfs->srs)
+            srid_int = o->request->request.wfs->srs->srid;
+        else
+            srid_int = ows_srs_get_srid_from_layer(o, typename);
     }
 
     n = n->children;
@@ -130,7 +128,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
         if (!content || !check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
             xmlFree(content);
             buffer_free(name);
-            buffer_free(srid);
             if (s) ows_srs_free(s);
             fe->error_code = FE_ERROR_BBOX;
 
@@ -147,7 +144,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
         if (!content || !check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
             xmlFree(content);
             buffer_free(name);
-            buffer_free(srid);
             list_free(coord_min);
             if (s) ows_srs_free(s);
             fe->error_code = FE_ERROR_BBOX;
@@ -163,7 +159,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
         if (!check_regexp((char *) content, "^[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?,[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?[ ][-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?,[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?$")) {
             xmlFree(content);
             buffer_free(name);
-            buffer_free(srid);
             if (s) ows_srs_free(s);
             fe->error_code = FE_ERROR_BBOX;
 
@@ -179,7 +174,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
     /* FIXME handle coord and pos */
         xmlFree(content);
         buffer_free(name);
-        buffer_free(srid);
         if (s) ows_srs_free(s);
         fe->error_code = FE_ERROR_BBOX;
 
@@ -188,7 +182,6 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 
     buffer_free(name);
     xmlFree(content);
-    buffer_free(srid);
 
     /* return the polygon's coordinates matching the bbox */
     bbox = ows_bbox_init();
@@ -234,9 +227,11 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
  */
 static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    int srid;
-    buffer *sql;
-    bool transform = false;
+    ows_srs *s;
+    buffer *geom;
+    xmlNodePtr p;
+    xmlChar *srsname;
+    int srid = -1;
 
     assert(typename);
     assert(fe);
@@ -255,49 +250,70 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     n = n->children;
     while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
 
-    if (o->request->request.wfs->srs) {
-        srid = o->request->request.wfs->srs->srid;
-        transform = true;
-    } else srid  = ows_srs_get_srid_from_layer(o, typename);
-
-    if (transform) buffer_add_str(fe->sql, "ST_Transform(");
-
-    buffer_add(fe->sql, '"');
-    fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true, true);
-    buffer_add(fe->sql, '"');
-
-    if (transform) {
-        buffer_add(fe->sql, ',');
-        buffer_add_int(fe->sql, srid);
-    }
-    buffer_add(fe->sql, ')');
-        
+    p = n;
     n = n->next;
 
     /* jump to the next element if there are spaces */
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    buffer_add_str(fe->sql, ",");
+    if (o->request->request.wfs->srs) srid = o->request->request.wfs->srs->srid;
+    else srid  = ows_srs_get_srid_from_layer(o, typename);
 
-    if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope"))
-        fe->sql = fe_envelope(o, typename, fe, fe->sql, n);
-    else  {
-   	buffer_add_str(fe->sql, "'");
-        sql = ows_psql_gml_to_sql(o, n, 0);
-        if (sql) { 
-            if (!transform) buffer_add_str(fe->sql, "ST_SetSRID(");
-            buffer_copy(fe->sql, sql);
-            buffer_free(sql);
-            if (!transform) { 
-                buffer_add_str(fe->sql, ",");
-                buffer_add_int(fe->sql, srid);
-                buffer_add_str(fe->sql, ")");
-            }
-        } else fe->error_code = FE_ERROR_GEOMETRY;
-   	buffer_add_str(fe->sql, "'");
+    if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope")) {
+        
+        srsname = xmlGetProp(n, (xmlChar *) "srsName");
+        if (srsname) {
+	    s = ows_srs_init();
+	    if (ows_srs_set_from_srsname(o, s, (char *) srsname)) srid = s->srid;
+            ows_srs_free(s);
+            xmlFree(srsname);
+        }
+
+        buffer_add(fe->sql, '"');
+        fe->sql = fe_property_name(o, typename, fe, fe->sql, p, true, true);
+        buffer_add(fe->sql, '"');
+        buffer_add(fe->sql, ',');
+
+        if (srid != ows_srs_get_srid_from_layer(o, typename)) {
+            buffer_add_str(fe->sql, "ST_Transform(");
+            fe->sql = fe_envelope(o, typename, fe, fe->sql, n);
+            buffer_add(fe->sql, ',');
+            buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename));
+            buffer_add(fe->sql, ')');
+        } else fe->sql = fe_envelope(o, typename, fe, fe->sql, n);
+
+   } else  {
+        geom = ows_psql_gml_to_sql(o, n, srid);
+        if (!geom) {
+            fe->error_code = FE_ERROR_GEOMETRY;
+            return fe->sql;
+        }
+
+        srid = ows_psql_geometry_srid(o, geom->buf);
+
+        buffer_add(fe->sql, '"');
+        fe->sql = fe_property_name(o, typename, fe, fe->sql, p, true, true);
+        buffer_add(fe->sql, '"');
+        buffer_add(fe->sql, ',');
+
+        if (srid != ows_srs_get_srid_from_layer(o, typename))
+            buffer_add_str(fe->sql, "ST_Transform(");
+
+        buffer_add_str(fe->sql, "ST_SetSRID('");
+        buffer_copy(fe->sql, geom);
+        buffer_add_str(fe->sql, "'::geometry,");
+        buffer_add_int(fe->sql, srid);
+        buffer_add(fe->sql, ')');
+        buffer_free(geom);
+
+        if (srid != ows_srs_get_srid_from_layer(o, typename)) {
+            buffer_add(fe->sql, ',');
+            buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename));
+            buffer_add(fe->sql, ')');
+        }
     }
 
-    buffer_add_str(fe->sql, ")");
+    buffer_add(fe->sql, ')');
 
     return fe->sql;
 }

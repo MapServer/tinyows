@@ -94,9 +94,12 @@ bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin, double xmax, 
  */
 bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
 {
+    double xmin, ymin, xmax, ymax;
+    ows_srs *s;
     buffer *b;
     list *l;
-    double xmin, ymin, xmax, ymax;
+    int srs = srid;
+    bool ret_srs = true;
 
     assert(o);
     assert(bb);
@@ -107,7 +110,8 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
     l = list_explode(',', b);
     buffer_free(b);
 
-    if (l->size != 4) {
+    /* srs is optional since WFS 1.1 */
+    if (l->size < 4 || l->size > 5) {
         list_free(l);
         return false;
     }
@@ -118,9 +122,18 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
     xmax = atof(l->first->next->next->value->buf);
     ymax = atof(l->first->next->next->next->value->buf);
 
-    list_free(l);
+    /* srs is optional since WFS 1.1 */
+    if (l->size == 5) {
+        s = ows_srs_init();
+        ret_srs = ows_srs_set_from_srsname(o, s, l->last->value->buf);
+        srs = s->srid;
+        ows_srs_free(s);
+    }
 
-    return ows_bbox_set(o, bb, xmin, ymin, xmax, ymax, srid);
+    list_free(l);
+    if(!ret_srs) return false;
+
+    return ows_bbox_set(o, bb, xmin, ymin, xmax, ymax, srs);
 }
 
 

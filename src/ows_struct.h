@@ -123,18 +123,18 @@ typedef struct Ows_srs {
 
 
 typedef struct Ows_bbox {
-	double xmin;
-	double ymin;
-	double xmax;
-	double ymax;
+    double xmin;
+    double ymin;
+    double xmax;
+    double ymax;
     ows_srs * srs;
 } ows_bbox;
 
 typedef struct Ows_geobbox {
-	double east;
-	double west;
-	double south;
-	double north;
+    double east;
+    double west;
+    double south;
+    double north;
 } ows_geobbox;
 
 typedef struct Ows_version {

@@ -452,9 +452,8 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
     assert(wr);
     assert(layer_name);
     assert(wr->srs);
-
-    /* bbox is not a mandatory parameter */
-    if (!array_is_key(o->cgi, "bbox")) return;
+    
+    if (!array_is_key(o->cgi, "bbox")) return;  /* BBOX is not mandatory */
   
     b = array_get(o->cgi, "bbox");
     wr->bbox = ows_bbox_init();
@@ -895,7 +894,7 @@ static void wfs_request_check_get_feature(ows * o, wfs_request * wr, const array
     if (!o->exit) layer_name = wfs_request_check_fid(o, wr, layer_name);
 
     if (!o->exit) wfs_request_check_srs(o, wr, layer_name);          /* srsName */
-    if (!o->exit) wfs_request_check_bbox(o, wr, layer_name);         /* BBOX=xmin,ymin,xmax,ymax */
+    if (!o->exit) wfs_request_check_bbox(o, wr, layer_name);         /* BBOX=xmin,ymin,xmax,ymax[,srs] */
     if (!o->exit) wfs_request_check_propertyname(o, wr, layer_name); /* PropertyName */
     if (!o->exit) wfs_request_check_output(o, wr);                   /* outputFormat */
     if (!o->exit) wfs_request_check_resulttype(o, wr);               /* resultType */

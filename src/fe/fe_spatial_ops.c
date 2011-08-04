@@ -257,7 +257,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     while (n->type != XML_ELEMENT_NODE) n = n->next;
 
     if (o->request->request.wfs->srs) srid = o->request->request.wfs->srs->srid;
-    else srid  = ows_srs_get_srid_from_layer(o, typename);
+    else srid = ows_srs_get_srid_from_layer(o, typename);
 
     if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope")) {
         
@@ -337,11 +337,8 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     tmp = NULL;
     op = buffer_init();
 
-    if (!strcmp((char *) n->name, "Beyond"))
-        buffer_add_str(op, " > ");
-
-    if (!strcmp((char *) n->name, "DWithin"))
-        buffer_add_str(op, " < ");
+    if (!strcmp((char *) n->name, "Beyond"))  buffer_add_str(op, " > ");
+    if (!strcmp((char *) n->name, "DWithin")) buffer_add_str(op, " < ");
 
 /* FIXME: as geography support available no need to keep this hack ! */
 
@@ -438,8 +435,7 @@ static buffer *fe_bbox_layer(ows *o, buffer *typename, buffer *sql, buffer *prop
     buffer_add_str(sql, ",");
     buffer_copy(sql, envelope);
     buffer_add_str(sql, ") AND ");
-    if (transform)
-        buffer_add_str(sql, "ST_Transform(");
+    if (transform) buffer_add_str(sql, "ST_Transform(");
 
     buffer_add(sql, '"');
     buffer_copy(sql, propertyname);

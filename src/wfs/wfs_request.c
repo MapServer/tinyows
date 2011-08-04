@@ -459,7 +459,7 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
     wr->bbox = ows_bbox_init();
 
     if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, wr->srs->srid)) {
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Bad parameters for Bbox, must be Xmin,Ymin,Xmax,Ymax", "NULL");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Bad parameters for Bbox, must be Xmin,Ymin,Xmax,Ymax[,crsuri]", "NULL");
         return;
     }
 

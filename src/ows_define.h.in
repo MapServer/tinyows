@@ -28,7 +28,7 @@
 #define OWS_DEBUG
 #endif
 
-#define TINYOWS_VERSION             "1.0.0rc3"
+#define TINYOWS_VERSION             "1.0.0rc4"
 #define TINYOWS_FCGI                @USE_FCGI@
 
 #define OWS_CONFIG_FILE_PATH        "/etc/tinyows.xml"

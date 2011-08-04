@@ -444,6 +444,8 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name, ows_bbox * b
     buffer *where;
     list *geom;
     list_node *ln;
+    int srid = -1;
+    bool transform = false;
 
     assert(o);
     assert(wr);
@@ -454,17 +456,40 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name, ows_bbox * b
     geom = ows_psql_geometry_column(o, layer_name);
     buffer_add_str(where, " WHERE");
 
+    if (wr->srs) { 
+       srid = ows_srs_get_srid_from_layer(o, layer_name);
+       transform = true; 
+    }
+    /* BBOX optional crsuri parameter since WFS 1.1 */
+    if (wr->bbox->srs && (wr->bbox->srs->srid != wr->srs->srid)) {
+       srid = wr->srs->srid;
+       transform = true; 
+    }
+
     for (ln = geom->first ; ln ; ln = ln->next) {
 
 	/* We use _ST_Intersects and && operator rather than ST_Intersects for performances issues */
         buffer_add_str(where, " (_ST_Intersects(\"");
         buffer_copy(where, ln->value);
         buffer_add_str(where, "\",");
+
+        if (transform) buffer_add_str(where, "ST_Transform(");
         ows_bbox_to_query(o, wr->bbox, where);
+        if (transform) {
+            buffer_add_str(where, ",");
+            buffer_add_int(where, srid);
+            buffer_add_str(where, ")");
+        }
         buffer_add_str(where, ") AND \"");
         buffer_copy(where, ln->value);
         buffer_add_str(where, "\" && ");
+        if (transform) buffer_add_str(where, "ST_Transform(");
         ows_bbox_to_query(o, wr->bbox, where);
+        if (transform) {
+            buffer_add_str(where, ",");
+            buffer_add_int(where, srid);
+            buffer_add_str(where, ")");
+        }
 
         if (ln->next) buffer_add_str(where, ") OR ");
         else          buffer_add_str(where, ")");

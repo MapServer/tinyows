@@ -191,6 +191,6 @@ rm -f config.log config.status
 echo "------------------------"
 echo "NOTA: This TinyOWS version will need at least PostGIS 1.5.x"
 echo "------------------------"
-echo "IMPORTANT: Make sure prior to anything other step that you read"
+echo "IMPORTANT: Make sure that you read:"
 echo "<http://tinyows.org/trac/wiki/LibxmlSchemaGmlBug>"
 echo "------------------------"

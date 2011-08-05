@@ -449,6 +449,7 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
 static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
 {
     buffer *b;
+    int srid = 4326; /* Default srid if not srs is provided since WFS 1.1.0 */
 
     assert(o);
     assert(wr);
@@ -460,7 +461,9 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
     b = array_get(o->cgi, "bbox");
     wr->bbox = ows_bbox_init();
 
-    if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, wr->srs->srid)) {
+    if (ows_version_get(o->request->version) == 100) srid = wr->srs->srid;
+
+    if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, srid)) {
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "Bad parameters for Bbox, must be Xmin,Ymin,Xmax,Ymax[,crsuri]", "NULL");
         return;
     }

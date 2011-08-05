@@ -477,7 +477,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                 if (    (wr->srs && !wr->srs->is_degree) 
                      || (!wr->srs && ows_srs_meter_units(o, layer_name))) {
                     buffer_add_int(select, o->meter_precision);
-                    if (wr->srs &&  wr->srs->is_eastern_axis && wr->srs->is_long) gml_opt += 16;
+                    if (wr->srs && !wr->srs->is_eastern_axis && wr->srs->is_long) gml_opt += 16;
                 } else {
                     buffer_add_int(select, o->degree_precision);
                     if (wr->srs && !wr->srs->is_eastern_axis && wr->srs->is_long) gml_opt += 16;

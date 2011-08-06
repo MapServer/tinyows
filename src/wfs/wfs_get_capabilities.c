@@ -379,29 +379,29 @@ static void wfs_feature_type_list(ows * o)
             if (gb->east != DBL_MIN) {
                 if (ows_version_get(o->request->version) == 100) {
                     if (gb->west < gb->east)
-                        fprintf(o->output, " minx='%g'", gb->west);
+                        fprintf(o->output, " minx='%f'", gb->west);
                     else
-                        fprintf(o->output, " minx='%g'", gb->east);
+                        fprintf(o->output, " minx='%f'", gb->east);
 
                     if (gb->north < gb->south)
-                        fprintf(o->output, " miny='%g'", gb->north);
+                        fprintf(o->output, " miny='%f'", gb->north);
                     else
-                        fprintf(o->output, " miny='%g'", gb->south);
+                        fprintf(o->output, " miny='%f'", gb->south);
 
                     if (gb->west < gb->east)
-                        fprintf(o->output, " maxx='%g'", gb->east);
+                        fprintf(o->output, " maxx='%f'", gb->east);
                     else
-                        fprintf(o->output, " maxx='%g'", gb->west);
+                        fprintf(o->output, " maxx='%f'", gb->west);
 
                     if (gb->north < gb->south)
-                        fprintf(o->output, " maxy='%g'", gb->south);
+                        fprintf(o->output, " maxy='%f'", gb->south);
                     else
-                        fprintf(o->output, " maxy='%g'", gb->north);
+                        fprintf(o->output, " maxy='%f'", gb->north);
 
                     fprintf(o->output, " />\n");
                 } else if (ows_version_get(o->request->version) == 110) {
-                    fprintf(o->output, " <ows:LowerCorner>%g %g</ows:LowerCorner>", gb->west, gb->south);
-                    fprintf(o->output, " <ows:UpperCorner>%g %g</ows:UpperCorner>", gb->east, gb->north);
+                    fprintf(o->output, " <ows:LowerCorner>%f %f</ows:LowerCorner>", gb->west, gb->south);
+                    fprintf(o->output, " <ows:UpperCorner>%f %f</ows:UpperCorner>", gb->east, gb->north);
                 }
             } else {
                 if (ows_version_get(o->request->version) == 100) {

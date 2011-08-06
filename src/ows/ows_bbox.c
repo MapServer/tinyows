@@ -116,11 +116,11 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
         return false;
     }
 
-    /* FIXME atof don't handle error */
-    xmin = atof(l->first->value->buf);
-    ymin = atof(l->first->next->value->buf);
-    xmax = atof(l->first->next->next->value->buf);
-    ymax = atof(l->first->next->next->next->value->buf);
+    xmin = strtod(l->first->value->buf, NULL);
+    ymin = strtod(l->first->next->value->buf, NULL);
+    xmax = strtod(l->first->next->next->value->buf, NULL);
+    ymax = strtod(l->first->next->next->next->value->buf, NULL);
+    /* TODO error handling */
 
     /* srs is optional since WFS 1.1 */
     if (l->size == 5) {
@@ -199,10 +199,11 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where, ows_srs * srs)
         return bb;
     }
 
-    bb->xmin = atof(PQgetvalue(res, 0, 0));
-    bb->ymin = atof(PQgetvalue(res, 0, 1));
-    bb->xmax = atof(PQgetvalue(res, 0, 2));
-    bb->ymax = atof(PQgetvalue(res, 0, 3));
+    bb->xmin = strtod(PQgetvalue(res, 0, 0), NULL);
+    bb->ymin = strtod(PQgetvalue(res, 0, 1), NULL);
+    bb->xmax = strtod(PQgetvalue(res, 0, 2), NULL);
+    bb->ymax = strtod(PQgetvalue(res, 0, 3), NULL);
+    /* TODO Error handling */
 
     ows_srs_copy(bb->srs, srs);
 
@@ -235,11 +236,11 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
         return false;
     }
 
-    /* FIXME atof don't handle error */
-    bb->xmin = atof(PQgetvalue(res, 0, 0));
-    bb->ymin = atof(PQgetvalue(res, 0, 1));
-    bb->xmax = atof(PQgetvalue(res, 0, 2));
-    bb->ymax = atof(PQgetvalue(res, 0, 3));
+    bb->xmin = strtod(PQgetvalue(res, 0, 0), NULL);
+    bb->ymin = strtod(PQgetvalue(res, 0, 1), NULL);
+    bb->xmax = strtod(PQgetvalue(res, 0, 2), NULL);
+    bb->ymax = strtod(PQgetvalue(res, 0, 3), NULL);
+    /* TODO Error Handling */
 
     return ows_srs_set_from_srid(o, bb->srs, srid);
 }
@@ -334,7 +335,7 @@ void ows_bbox_flush(const ows_bbox * b, FILE * output)
 {
     assert(b);
 
-    fprintf(output, "[%f,%f,%f,%f]\n", b->xmin, b->ymin, b->xmax, b->ymax);
+    fprintf(output, "[%g,%g,%g,%g]\n", b->xmin, b->ymin, b->xmax, b->ymax);
     ows_srs_flush(b->srs, output);
 }
 #endif

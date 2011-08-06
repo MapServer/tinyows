@@ -51,18 +51,18 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin
 
         if (wr->format == WFS_GML212) {
             fprintf(o->output, "  <gml:Box srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
-            fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
+            fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%g,%g %g,%g</gml:coordinates>",
                                xmin, ymin, xmax, ymax);
             fprintf(o->output, "</gml:Box>\n");
 
         } else if (wr->format == WFS_GML311) {
             fprintf(o->output, "  <gml:Envelope srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
             if (srs->is_reverse_axis && !srs->is_eastern_axis) {
-                fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", ymin, xmin);
-                fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", ymax, xmax);
+                fprintf(o->output, "<gml:lowerCorner>%g %g</gml:lowerCorner>", ymin, xmin);
+                fprintf(o->output, "<gml:upperCorner>%g %g</gml:upperCorner>", ymax, xmax);
             } else {
-                fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", xmin, ymin);
-                fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", xmax, ymax);
+                fprintf(o->output, "<gml:lowerCorner>%g %g</gml:lowerCorner>", xmin, ymin);
+                fprintf(o->output, "<gml:upperCorner>%g %g</gml:upperCorner>", xmax, ymax);
             }
             fprintf(o->output, "</gml:Envelope>\n");
         }

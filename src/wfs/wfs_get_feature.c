@@ -57,7 +57,7 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, float xmin, float ymin
 
         } else if (wr->format == WFS_GML311) {
             fprintf(o->output, "  <gml:Envelope srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
-            if (srs->is_reverse_axis) {
+            if (srs->is_reverse_axis && !srs->is_eastern_axis) {
                 fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", ymin, xmin);
                 fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", ymax, xmax);
             } else {
@@ -443,7 +443,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
 
 		gml_opt = 0; /* Short SRS */
 		if (wr->srs && wr->srs->is_long) gml_opt += 1; /* FIXME really ? */
-                if (wr->srs &&  wr->srs->is_eastern_axis) gml_opt += 16;
+                if (wr->srs && wr->srs->is_eastern_axis) gml_opt += 16;
                 if (gml_boundedby) gml_opt += 32;
 
                 buffer_add_str(select, ",");

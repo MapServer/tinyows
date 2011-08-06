@@ -38,6 +38,8 @@ for file in `ls $1`; do
 		echo $1 >> $list_tmp
 	fi
 done
+# remove .out files if any
+sed -i "/.*\.out$/d" $list_tmp
 	
 # run into the created list
 for unit_id in `cat $list_tmp`; do
@@ -80,7 +82,7 @@ elif [ $mode -eq 4 ]; then
 elif [ $mode -eq 5 ]; then
 echo $unit_id
     if [ ! $TINYOWS_CONFIG_FILE ]; then
-	TINYOWS_CONFIG_FILE=/usr/local/tinyows/config.xml
+	TINYOWS_CONFIG_FILE=/etc/tinyows.xml
     fi
     IP=`grep online_resource $TINYOWS_CONFIG_FILE | sed -e 's/.*online_resource="//' -e 's/".*//'`
     FIRST_CHAR=`cat $unit_id | sed -e '2,$d' -e 's/\(.\).*/\1/'` 
@@ -108,8 +110,18 @@ elif [ $mode -eq 7 ]; then
     fi
     rm -f $file_tmp
 
-fi
 
+# regression test mode
+elif [ $mode -eq 8 ]; then
+    path=`dirname $unit_id`
+    ows_ret=`./tinyows > $file_tmp && diff $file_tmp $unit_id.out | wc -l`
+    if [ "$ows_ret" -eq "0" ]; then
+	    echo "$unit_id => OK"
+    else
+	    echo "$unit_id => ERROR"
+    fi
+    rm -f $file_tmp
+fi
 
 done
 rm -f $list_tmp

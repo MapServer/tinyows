@@ -38,8 +38,9 @@ for file in `ls $1`; do
 		echo $1 >> $list_tmp
 	fi
 done
-# remove .out files if any
+# remove .out and LIST files if any
 sed -i "/.*\.out$/d" $list_tmp
+sed -i "/LIST$/d" $list_tmp
 	
 # run into the created list
 for unit_id in `cat $list_tmp`; do

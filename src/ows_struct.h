@@ -343,6 +343,8 @@ typedef struct Ows_request {
 #define OWS_DEFAULT_XML_ENCODING "UTF-8" 
 #define OWS_DEFAULT_DB_ENCODING "UTF8" 
 
+#define OWS_MAX_DOUBLE 1e15  /* %f vs %g */
+
 typedef struct Ows {
     bool init;
     bool exit;

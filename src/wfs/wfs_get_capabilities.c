@@ -379,29 +379,31 @@ static void wfs_feature_type_list(ows * o)
             if (gb->east != DBL_MIN) {
                 if (ows_version_get(o->request->version) == 100) {
                     if (gb->west < gb->east)
-                        fprintf(o->output, " minx='%f'", gb->west);
+                        fprintf(o->output, " minx='%.*f'", o->degree_precision, gb->west);
                     else
-                        fprintf(o->output, " minx='%f'", gb->east);
+                        fprintf(o->output, " minx='%.*f'", o->degree_precision, gb->east);
 
                     if (gb->north < gb->south)
-                        fprintf(o->output, " miny='%f'", gb->north);
+                        fprintf(o->output, " miny='%.*f'", o->degree_precision, gb->north);
                     else
-                        fprintf(o->output, " miny='%f'", gb->south);
+                        fprintf(o->output, " miny='%.*f'", o->degree_precision, gb->south);
 
                     if (gb->west < gb->east)
-                        fprintf(o->output, " maxx='%f'", gb->east);
+                        fprintf(o->output, " maxx='%.*f'", o->degree_precision, gb->east);
                     else
-                        fprintf(o->output, " maxx='%f'", gb->west);
+                        fprintf(o->output, " maxx='%.*f'", o->degree_precision, gb->west);
 
                     if (gb->north < gb->south)
-                        fprintf(o->output, " maxy='%f'", gb->south);
+                        fprintf(o->output, " maxy='%.*f'", o->degree_precision, gb->south);
                     else
-                        fprintf(o->output, " maxy='%f'", gb->north);
+                        fprintf(o->output, " maxy='%.*f'", o->degree_precision, gb->north);
 
                     fprintf(o->output, " />\n");
                 } else if (ows_version_get(o->request->version) == 110) {
-                    fprintf(o->output, " <ows:LowerCorner>%f %f</ows:LowerCorner>", gb->west, gb->south);
-                    fprintf(o->output, " <ows:UpperCorner>%f %f</ows:UpperCorner>", gb->east, gb->north);
+                    fprintf(o->output, " <ows:LowerCorner>%.*f %.*f</ows:LowerCorner>",
+                        o->degree_precision, gb->west, o->degree_precision, gb->south);
+                    fprintf(o->output, " <ows:UpperCorner>%.*f %.*f</ows:UpperCorner>",
+                        o->degree_precision, gb->east, o->degree_precision, gb->north);
                 }
             } else {
                 if (ows_version_get(o->request->version) == 100) {

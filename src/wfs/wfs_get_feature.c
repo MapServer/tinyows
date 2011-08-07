@@ -37,9 +37,14 @@
  */
 static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ymin, double xmax, double ymax, ows_srs * srs)
 {
+    int precision;
+
     assert(o);
     assert(wr);
     assert(srs);
+
+    if (srs->is_degree) precision = o->degree_precision;
+    else precision = o->meter_precision;
 
     if (!srs->srid || srs->srid == -1 || (xmin == ymin && xmax == ymax && xmin == xmax)) {
         if (ows_version_get(o->request->version) == 100)
@@ -51,18 +56,35 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ym
 
         if (wr->format == WFS_GML212) {
             fprintf(o->output, "  <gml:Box srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
-            fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%f,%f %f,%f</gml:coordinates>",
-                               xmin, ymin, xmax, ymax);
+            
+	    if (fabs(xmin) > OWS_MAX_DOUBLE || fabs(ymin) > OWS_MAX_DOUBLE ||
+                fabs(xmax) > OWS_MAX_DOUBLE || fabs(ymax) > OWS_MAX_DOUBLE)
+                 fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%g,%g %g,%g</gml:coordinates>",
+                        xmin, ymin, xmax, ymax);
+            else fprintf(o->output, "<gml:coordinates decimal=\".\" cs=\",\" ts=\" \">%.*f,%.*f %.*f,%.*f</gml:coordinates>",
+                        precision, xmin, precision, ymin, precision, xmax, precision, ymax);
             fprintf(o->output, "</gml:Box>\n");
 
         } else if (wr->format == WFS_GML311) {
             fprintf(o->output, "  <gml:Envelope srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
             if (srs->is_reverse_axis && !srs->is_eastern_axis) {
-                fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", ymin, xmin);
-                fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", ymax, xmax);
+		if (fabs(xmin) > OWS_MAX_DOUBLE || fabs(ymin) > OWS_MAX_DOUBLE ||
+                    fabs(xmax) > OWS_MAX_DOUBLE || fabs(ymax) > OWS_MAX_DOUBLE) {
+                    fprintf(o->output, "<gml:lowerCorner>%g %g</gml:lowerCorner>", ymin, xmin);
+                    fprintf(o->output, "<gml:upperCorner>%g %g</gml:upperCorner>", ymax, xmax);
+                } else {
+                    fprintf(o->output, "<gml:lowerCorner>%.*f %.*f</gml:lowerCorner>", precision, ymin, precision, xmin);
+                    fprintf(o->output, "<gml:upperCorner>%.*f %.*f</gml:upperCorner>", precision, ymax, precision, xmax);
+                }
             } else {
-                fprintf(o->output, "<gml:lowerCorner>%f %f</gml:lowerCorner>", xmin, ymin);
-                fprintf(o->output, "<gml:upperCorner>%f %f</gml:upperCorner>", xmax, ymax);
+		if (fabs(xmin) > OWS_MAX_DOUBLE || fabs(ymin) > OWS_MAX_DOUBLE ||
+                    fabs(xmax) > OWS_MAX_DOUBLE || fabs(ymax) > OWS_MAX_DOUBLE) {
+                    fprintf(o->output, "<gml:lowerCorner>%g %g</gml:lowerCorner>", xmin, ymin);
+                    fprintf(o->output, "<gml:upperCorner>%g %g</gml:upperCorner>", xmax, ymax);
+                } else {
+                    fprintf(o->output, "<gml:lowerCorner>%.*f %.*f</gml:lowerCorner>", precision, xmin, precision, ymin);
+                    fprintf(o->output, "<gml:upperCorner>%.*f %.*f</gml:upperCorner>", precision, xmax, precision, ymax);
+                }
             }
             fprintf(o->output, "</gml:Envelope>\n");
         }

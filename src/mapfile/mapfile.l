@@ -13,7 +13,7 @@
 #define OWS_MAP_EATLINE char c ; for (c=input() ; c && c != '\n' ; c=input());
 #define OWS_MAP_MAX_INCLUDE_DEPTH 5
 
-#if 1
+#if 0
 #define OWS_MAP_DBG fprintf(stderr, "State: {%i} %i \n", yy_top_state(), YY_START);
 #else
 #define OWS_MAP_DBG 

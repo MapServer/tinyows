@@ -292,6 +292,7 @@ void ows_usage(ows * o)
     fprintf(stdout, "Estimated extent:  %s\n", o->estimated_extent?"Yes":"No");
     fprintf(stdout, "Check schema:      %s\n", o->check_schema?"Yes":"No");
     fprintf(stdout, "Check valid geoms: %s\n", o->check_valid_geom?"Yes":"No");
+    if (o->max_features)
     fprintf(stdout, "Max features:      %d\n", o->max_features);
 
     fprintf(stdout, "Available layers:\n");

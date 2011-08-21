@@ -185,6 +185,17 @@ static void wfs_operations_metadata(ows * o)
     fprintf(o->output, "     <ows:Value>UseExisting</ows:Value>\n");
     fprintf(o->output, "    </ows:Parameter>\n"); 
     fprintf(o->output, "   </ows:Operation>\n");
+    if (o->max_features) {
+    fprintf(o->output, "   <ows:Constraint name='DefaultMaxFeatures'>\n");
+    fprintf(o->output, "    <ows:Value>%d</ows:Value>\n", o->max_features);
+    fprintf(o->output, "   </ows:Constraint>\n");
+    }
+    fprintf(o->output, "   <ows:Constraint name='LocalTraverseXLinkScope'>\n");
+    fprintf(o->output, "    <ows:Value>0</ows:Value>\n");
+    fprintf(o->output, "   </ows:Constraint>\n");
+    fprintf(o->output, "   <ows:Constraint name='RemoteTraverseXLinkScope'>\n");
+    fprintf(o->output, "    <ows:Value>0</ows:Value>\n");
+    fprintf(o->output, "   </ows:Constraint>\n");
     fprintf(o->output, " </ows:OperationsMetadata>\n");
 }
 

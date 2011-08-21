@@ -565,7 +565,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     list *fid, *sql_req, *from_list, *where_list;
     list_node *ln_typename, *ln_filter;
     buffer *geom, *sql, *where, *layer_name;
-    int srid, size, cpt, nb;
+    int srid, size, cpt;
     filter_encoding *fe;
     ows_bbox *bbox;
     char *escaped;
@@ -579,7 +579,6 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     where = NULL;
     geom = NULL;
     size = 0;
-    nb = 0;
 
     /* initialize the nodes to run through typename and fid */
     if (wr->typename) {
@@ -703,8 +702,9 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         /* maxfeatures parameter, or max_features ows limits, limits the number of results */
         if (wr->maxfeatures > 0) {
             buffer_add_str(where, " LIMIT ");
-            nb = ows_psql_number_features(o, from_list, where_list);
-            buffer_add_int(where, wr->maxfeatures - nb);
+            if (o->max_features > 0 && wr->maxfeatures > o->max_features)
+                 buffer_add_int(where, o->max_features); /* Server limit took precedence */
+            else buffer_add_int(where, wr->maxfeatures);
         } else if (o->max_features > 0) {
             buffer_add_str(where, " LIMIT ");
             buffer_add_int(where, o->max_features);

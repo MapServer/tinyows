@@ -299,19 +299,17 @@ static void wfs_feature_type_list(ows * o)
                 fprintf(o->output, " <Keywords>");
 
                 for (keyword = ln->layer->keywords->first ; keyword ; keyword = keyword->next) {
-                    if (ows_version_get(o->request->version) == 100)
-                        fprintf(o->output, "%s,", keyword->value->buf);
-                    else if (ows_version_get(o->request->version) == 110) {
+                    if (ows_version_get(o->request->version) == 100) {
+                        fprintf(o->output, "%s", keyword->value->buf);
+			if (keyword->next) fprintf(o->output, ",");
+		    } else if (ows_version_get(o->request->version) == 110) {
                         fprintf(o->output, "  <Keyword>");
                         fprintf(o->output, "%s", keyword->value->buf);
                         fprintf(o->output, "</Keyword>");
                     }
                 }
 
-                if (ows_version_get(o->request->version) == 100)
-                    fprintf(o->output, "%s</Keywords>\n", keyword->value->buf);
-                else if (ows_version_get(o->request->version) == 110)
-                    fprintf(o->output, "</Keywords>\n");
+                fprintf(o->output, "</Keywords>\n");
             }
 
             /* SRS */

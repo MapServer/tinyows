@@ -492,9 +492,9 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
                     buffer_add_str(select, "\",");
                 }
 
-		gml_opt = 2; /* no srsDimension (CITE Compliant) */
-		if (wr->srs && wr->srs->is_long) gml_opt += 1;
-                if (gml_boundedby) gml_opt += 32;
+		gml_opt = 6; /* no srsDimension (CITE Compliant) 
+                                and use LineString rather than curve */
+		if (wr->srs && wr->srs->is_long) gml_opt += 1; /* Long SRS */
 
                 if (    (wr->srs && !wr->srs->is_degree) 
                      || (!wr->srs && ows_srs_meter_units(o, layer_name))) {

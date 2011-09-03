@@ -25,15 +25,15 @@
            email="tinyows-users@lists.maptools.org" />
 
   <layer name="eastern_point" title="eastern" 
-         ns_prefix="tows" ns_uri="http://tinyows.org/test"
+         ns_prefix="tows" ns_uri="http://tinyows.org/"
          retrievable="1" srid="4326,2393,32631" />
 
   <layer name="wgs84_point" title="wgs84"
-         ns_prefix="tows" ns_uri="http://tinyows.org/test"
+         ns_prefix="tows" ns_uri="http://tinyows.org/"
          retrievable="1" srid="4326,2393,32631" />
 
   <layer name="utm_point" title="utm"
-         ns_prefix="tows" ns_uri="http://tinyows.org/test"
+         ns_prefix="tows" ns_uri="http://tinyows.org/"
          retrievable="1" srid="4326,2393,32631" />
 
 </tinyows>

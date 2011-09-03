@@ -169,6 +169,27 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
 }
 
 
+/* 
+ * Aim is to avoid all pg connection, 
+ * not a big deal as we already know values
+ */
+bool ows_srs_set_geobbox(ows * o, ows_srs * s)
+{
+    assert(o);
+    assert(s);
+    
+    s->srid = 4326;
+    buffer_empty(s->auth_name);
+    buffer_add_str(s->auth_name, "EPSG");
+    s->auth_srid = 4326;
+    s->is_degree = true;
+    s->is_reverse_axis = false;
+    s->is_eastern_axis = false;
+
+    return true; 
+}
+
+
 /*
  * Set projection value into srs structure
  */
@@ -186,6 +207,7 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
         s->auth_srid = 0;
         s->is_degree = true;
 	s->is_reverse_axis = false;
+        s->is_eastern_axis = false;
 
         return true;
     }

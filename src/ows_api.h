@@ -194,6 +194,7 @@ int ows_srs_get_srid_from_layer (ows * o, buffer * layer_name);
 ows_srs *ows_srs_init ();
 bool ows_srs_meter_units (ows * o, buffer * layer_name);
 ows_srs *ows_srs_copy(ows_srs * d, ows_srs * s);
+bool ows_srs_set_geobbox(ows * o, ows_srs * s);
 bool ows_srs_set (ows * o, ows_srs * c, const buffer * auth_name, int auth_srid);
 bool ows_srs_set_from_srid (ows * o, ows_srs * s, int srid);
 bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const char *srsname);

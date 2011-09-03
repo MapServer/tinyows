@@ -85,6 +85,8 @@ bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin, double xmax, 
     b->ymin = ymin;
     b->ymax = ymax;
 
+    if (srid == 4326) return ows_srs_set_geobbox(o, b->srs);
+
     return ows_srs_set_from_srid(o, b->srs, srid);
 }
 
@@ -270,7 +272,7 @@ bool ows_bbox_set_from_geobbox(ows * o, ows_bbox * bb, ows_geobbox * geo)
         bb->ymin = geo->south;
     }
 
-    return ows_srs_set_from_srid(o, bb->srs, 4326);
+    return ows_srs_set_geobbox(o, bb->srs);
 }
 
 

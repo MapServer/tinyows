@@ -68,7 +68,7 @@ install-test110:
 	@test/wfs_110/install_wfs_110.sh
 	cp -i test/wfs_110/config_wfs_110.xml /etc/tinyows.xml
 
-install-test110:
+install-regress:
 	@chmod +x test/regress/install.sh
 	@test/regress/install.sh
 	cp -i test/regress/config.xml /etc/tinyows.xml

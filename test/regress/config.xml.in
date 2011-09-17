@@ -10,8 +10,7 @@
     user="postgres" 
     password="postgres" 
     dbname="tinyows_test" 
-    port="5432" 
-    encoding="LATIN1"/>
+    port="5432" />
 <!-- END configuration -->
 
 <!-- Don't need to change anything below this point -->

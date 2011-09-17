@@ -1,7 +1,7 @@
 #/bin/sh
 
 # don't launch directly this script
-# use 'make install-test' to do so
+# use 'make install-test110' to do so
 
 PGBIN=@POSTGIS_BIN@
 PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0

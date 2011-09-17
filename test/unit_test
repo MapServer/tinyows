@@ -9,6 +9,7 @@ path=$1
 mode=$2
 file_tmp=._file_tmp
 list_tmp=._list_tmp
+sed_tmp=._sed_tmp
 
 #valgrind_opt="--run-libc-freeres=no --show-reachable=yes --gen-suppressions=yes"
 valgrind_opt="--run-libc-freeres=no --show-reachable=yes"
@@ -38,9 +39,10 @@ for file in `ls $1`; do
 		echo $1 >> $list_tmp
 	fi
 done
+
 # remove .out and LIST files if any
-sed -i "/.*\.out$/d" $list_tmp
-sed -i "/LIST$/d" $list_tmp
+sed "/.*\.out$/d" $list_tmp > $sed_tmp && mv $sed_tmp $list_tmp
+sed "/LIST$/d" $list_tmp > $sed_tmp && mv $sed_tmp $list_tmp
 	
 # run into the created list
 for unit_id in `cat $list_tmp`; do

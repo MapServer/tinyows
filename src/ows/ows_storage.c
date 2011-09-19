@@ -320,11 +320,11 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
           geom_res = ows_psql_exec(o, geom_sql->buf);
 	  buffer_free(geom_sql);
 	  
-	  if (PQresultStatus(geom_res) != PGRES_TUPLES_OK) {
+	  if (PQresultStatus(geom_res) != PGRES_TUPLES_OK || PQntuples(geom_res) == 0) {
 	    PQclear(res);
 	    PQclear(geom_res);
 	    ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-		      "Unable to access geometry_columns table.", "fill_attributes");
+		      "Unable to access geometry_columns table, try Populate_Geometry_Columns()", "fill_attributes");
 	    return;
 	  }
 	  

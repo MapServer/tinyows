@@ -67,7 +67,7 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ym
 
         } else if (wr->format == WFS_GML311) {
             fprintf(o->output, "  <gml:Envelope srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
-            if (srs->is_reverse_axis && !srs->is_eastern_axis) {
+            if (srs->is_reverse_axis && !srs->is_eastern_axis && srs->is_long) {
 		if (fabs(xmin) > OWS_MAX_DOUBLE || fabs(ymin) > OWS_MAX_DOUBLE ||
                     fabs(xmax) > OWS_MAX_DOUBLE || fabs(ymax) > OWS_MAX_DOUBLE) {
                     fprintf(o->output, "<gml:lowerCorner>%g %g</gml:lowerCorner>", ymin, xmin);

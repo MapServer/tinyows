@@ -447,16 +447,20 @@ void ows_layers_storage_flush(ows * o, FILE * output)
 
     for (ln = o->layers->first ; ln ; ln = ln->next) {
         if (ln->layer->storage) {
-                fprintf(output, " - %s.%s (%i) -> %s.%s [",
+                fprintf(output, " - %s.%s -> %s.%s [",
 			ln->layer->storage->schema->buf,
 			ln->layer->storage->table->buf,
-			ln->layer->storage->srid,
 			ln->layer->ns_prefix->buf,
 			ln->layer->name->buf);
-
                 if (ln->layer->retrievable) fprintf(output, "R");
                 if (ln->layer->writable)    fprintf(output, "W");
                 fprintf(output, "]\n");
+            
+            if (ln->layer->storage->srid) fprintf(output, "\tsrid \t= %i\n", ln->layer->storage->srid);
+            if (ln->layer->storage->pkey) fprintf(output, "\tpkey \t= %s\n", ln->layer->storage->pkey->buf);
+            if (ln->layer->storage->pkey_sequence) fprintf(output, "\tpk_seq \t= %s\n", ln->layer->storage->pkey_sequence->buf);
+            if (ln->layer->storage->pkey_default) fprintf(output, "\tpk_def \t= %s\n", ln->layer->storage->pkey_default->buf);
+
         }
     }
 } 

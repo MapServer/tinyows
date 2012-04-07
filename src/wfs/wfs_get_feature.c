@@ -618,9 +618,9 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         sql = wfs_retrieve_sql_request_select(o, wr, layer_name);
 
         /* FROM : match layer_name (typename or featureid) */
-        buffer_add_str(sql, " FROM ");
+        buffer_add_str(sql, " FROM \"");
         buffer_copy(sql, ows_psql_schema_name(o, layer_name));
-        buffer_add_str(sql, ".\"");
+        buffer_add_str(sql, "\".\"");
         buffer_copy(sql, ows_psql_table_name(o, layer_name));
         buffer_add_str(sql, "\"");
 

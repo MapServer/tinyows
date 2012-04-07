@@ -134,7 +134,7 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
 
 
 /*
- * Retrieve not_null columns of a table related a given layer
+ * Retrieve not_null columns (not has default) of a table related a given layer
  */
 static void ows_storage_fill_not_null(ows * o, ows_layer * l)
 {
@@ -243,9 +243,9 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         PQclear(res);
 
         /* Now try to find a sequence related to this Pkey */
-        buffer_add_str(sql, "SELECT pg_get_serial_sequence('");
+        buffer_add_str(sql, "SELECT pg_get_serial_sequence('\"");
         buffer_copy(sql, l->storage->schema);
-        buffer_add_str(sql, ".\"");
+        buffer_add_str(sql, "\".\"");
         buffer_copy(sql, l->storage->table);
 	buffer_add_str(sql, "\"', '");
         buffer_copy(sql, l->storage->pkey);

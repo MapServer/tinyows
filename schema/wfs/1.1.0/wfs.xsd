@@ -817,8 +817,8 @@
       <xsd:list itemType="xsd:QName"/>
    </xsd:simpleType>
    <xsd:simpleType name="TypeNameListType">
-      <xsd:restriction base="wfs:Base_TypeNameListType">
-         <xsd:pattern value="((\w:)?\w(=\w)?){1,}">
+      <xsd:restriction base="xsd:string">
+         <xsd:pattern value="([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]*(=\w+)?(,\s*([\i-[:]][\c-[:]]*:)?[\i-[:]][\c-[:]]*(=\w+)?)*">
             <xsd:annotation>
                <xsd:documentation>
                   Example typeName attribute value might be:

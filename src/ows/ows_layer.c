@@ -475,6 +475,7 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     assert(l);
     assert(output);
 
+    fprintf(output, "  ==== ows_layer_flush ====\n");
     fprintf(output, "depth: %i\n", l->depth);
 
     if (l->parent) {
@@ -498,7 +499,7 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     }
 
     if (l->srid) {
-        fprintf(output, "srid: ");
+        fprintf(output, "srid: \n");
         list_flush(l->srid, output);
         fprintf(output, "\n");
     }
@@ -534,7 +535,7 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     }
 
     if (l->storage) {
-        fprintf(output, "storage: ");
+        fprintf(output, "storage: \n");
         ows_layer_storage_flush(l->storage, output);
         fprintf(output, "\n");
     }

@@ -76,6 +76,8 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     assert(storage);
     assert(output);
 
+    fprintf(output, "  ==== ows_layer_storage_flush ====\n");
+
     if (storage->schema) {
         fprintf(output, "schema: ");
         buffer_flush(storage->schema, output);
@@ -89,7 +91,7 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     }
 
     if (storage->geom_columns) {
-        fprintf(output, "geom_columns: ");
+        fprintf(output, "geom_columns: \n");
         list_flush(storage->geom_columns, output);
         fprintf(output, "\n");
     }
@@ -118,13 +120,13 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     }
 
     if (storage->attributes) {
-        fprintf(output, "attributes: ");
+        fprintf(output, "attributes: \n");
         array_flush(storage->attributes, output);
         fprintf(output, "\n");
     }
 
     if (storage->not_null_columns) {
-        fprintf(output, "not_null_columns: ");
+        fprintf(output, "not_null_columns: \n");
         list_flush(storage->not_null_columns, output);
         fprintf(output, "\n");
     }
@@ -448,10 +450,10 @@ void ows_layers_storage_flush(ows * o, FILE * output)
     for (ln = o->layers->first ; ln ; ln = ln->next) {
         if (ln->layer->storage) {
                 fprintf(output, " - %s.%s -> %s.%s [",
-			ln->layer->storage->schema->buf,
-			ln->layer->storage->table->buf,
-			ln->layer->ns_prefix->buf,
-			ln->layer->name->buf);
+            ln->layer->storage->schema->buf,
+            ln->layer->storage->table->buf,
+            ln->layer->ns_prefix->buf,
+            ln->layer->name->buf);
                 if (ln->layer->retrievable) fprintf(output, "R");
                 if (ln->layer->writable)    fprintf(output, "W");
                 fprintf(output, "]\n");
@@ -460,6 +462,9 @@ void ows_layers_storage_flush(ows * o, FILE * output)
             if (ln->layer->storage->pkey) fprintf(output, "\tpkey \t= %s\n", ln->layer->storage->pkey->buf);
             if (ln->layer->storage->pkey_sequence) fprintf(output, "\tpk_seq \t= %s\n", ln->layer->storage->pkey_sequence->buf);
             if (ln->layer->storage->pkey_default) fprintf(output, "\tpk_def \t= %s\n", ln->layer->storage->pkey_default->buf);
+            #ifdef OWS_DEBUG
+            ows_layer_flush(ln->layer, stdout);
+            #endif
 
         }
     }

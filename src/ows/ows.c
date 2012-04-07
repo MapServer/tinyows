@@ -84,7 +84,6 @@ static ows *ows_init()
     o->online_resource = buffer_init();
     o->schema_dir = buffer_init();
     o->log_file = NULL;
-    o->log = NULL;
     o->log_level=0;
     o->encoding = buffer_init();
     o->db_encoding = buffer_init();

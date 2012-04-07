@@ -455,6 +455,12 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     }
 
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "allowed_columns");
+    if (a) {
+        layer->allowed_columns = list_explode_str(',', (char *) a);
+        xmlFree(a);
+    }
+
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "gml_ns");
     if (a) {
         layer->gml_ns = list_explode_str(',', (char *) a);

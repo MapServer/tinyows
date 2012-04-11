@@ -216,9 +216,14 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     }
 
     /* Layer could have no Pkey indeed... (An SQL view for example) */
-    if (PQntuples(res) == 1) {
+    if (l->pkey || PQntuples(res) == 1) {
         l->storage->pkey = buffer_init();
-        buffer_add_str(l->storage->pkey, PQgetvalue(res, 0, 0));
+        if (l->pkey) {
+            buffer_copy(l->storage->pkey, l->pkey);
+        } 
+        else {
+            buffer_add_str(l->storage->pkey, PQgetvalue(res, 0, 0));
+        }
         buffer_empty(sql);
         PQclear(res);
 

@@ -461,6 +461,13 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         xmlFree(a);
     }
 
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "pkey");
+    if (a) {
+        layer->pkey = buffer_init();
+        buffer_add_str(layer->pkey, (char *) a);
+        xmlFree(a);
+    }
+
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "gml_ns");
     if (a) {
         layer->gml_ns = list_explode_str(',', (char *) a);

@@ -430,6 +430,7 @@ ows_layer *ows_layer_init()
     l->abstract = NULL;
     l->keywords = NULL;
     l->allowed_columns = NULL;
+    l->pkey = NULL;
     l->gml_ns = NULL;
     l->retrievable = false;
     l->writable = false;
@@ -455,6 +456,7 @@ void ows_layer_free(ows_layer * l)
     if (l->abstract) 	buffer_free(l->abstract);
     if (l->keywords) 	list_free(l->keywords);
     if (l->allowed_columns) 	list_free(l->allowed_columns);
+    if (l->pkey) 	buffer_free(l->pkey);
     if (l->gml_ns) 	list_free(l->gml_ns);
     if (l->srid)	list_free(l->srid);
     if (l->geobbox)	ows_geobbox_free(l->geobbox);

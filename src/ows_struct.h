@@ -175,6 +175,7 @@ typedef struct Ows_layer {
     buffer * abstract;
     list * keywords;
     list * allowed_columns;
+    buffer * pkey;
     list * gml_ns;
     buffer * ns_prefix;
     buffer * ns_uri;

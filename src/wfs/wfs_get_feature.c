@@ -176,7 +176,7 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
     id_name = ows_psql_id_column(o, layer_name);
 
     /* We could imagine layer without PK ! */
-    if (id_name && id_name->use) number = ows_psql_column_number_id_column(o, layer_name);
+    if (id_name && id_name->use) number = PQfnumber(res, id_name->buf);
 
     ns_prefix = ows_layer_ns_prefix(o->layers, layer_name);
     mandatory_prop = ows_psql_not_null_properties(o, layer_name);
@@ -618,9 +618,9 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
         sql = wfs_retrieve_sql_request_select(o, wr, layer_name);
 
         /* FROM : match layer_name (typename or featureid) */
-        buffer_add_str(sql, " FROM ");
+        buffer_add_str(sql, " FROM \"");
         buffer_copy(sql, ows_psql_schema_name(o, layer_name));
-        buffer_add_str(sql, ".\"");
+        buffer_add_str(sql, "\".\"");
         buffer_copy(sql, ows_psql_table_name(o, layer_name));
         buffer_add_str(sql, "\"");
 

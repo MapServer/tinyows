@@ -429,6 +429,8 @@ ows_layer *ows_layer_init()
     l->name = NULL;
     l->abstract = NULL;
     l->keywords = NULL;
+    l->allowed_columns = NULL;
+    l->pkey = NULL;
     l->gml_ns = NULL;
     l->retrievable = false;
     l->writable = false;
@@ -453,6 +455,8 @@ void ows_layer_free(ows_layer * l)
     if (l->name) 	buffer_free(l->name);
     if (l->abstract) 	buffer_free(l->abstract);
     if (l->keywords) 	list_free(l->keywords);
+    if (l->allowed_columns) 	list_free(l->allowed_columns);
+    if (l->pkey) 	buffer_free(l->pkey);
     if (l->gml_ns) 	list_free(l->gml_ns);
     if (l->srid)	list_free(l->srid);
     if (l->geobbox)	ows_geobbox_free(l->geobbox);
@@ -475,6 +479,7 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     assert(l);
     assert(output);
 
+    fprintf(output, "  ==== ows_layer_flush ====\n");
     fprintf(output, "depth: %i\n", l->depth);
 
     if (l->parent) {
@@ -498,7 +503,7 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     }
 
     if (l->srid) {
-        fprintf(output, "srid: ");
+        fprintf(output, "srid: \n");
         list_flush(l->srid, output);
         fprintf(output, "\n");
     }
@@ -506,6 +511,12 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     if (l->keywords) {
         fprintf(output, "keyword: ");
         list_flush(l->keywords, output);
+        fprintf(output, "\n");
+    }
+
+    if (l->allowed_columns) {
+        fprintf(output, "allowed_column: ");
+        list_flush(l->allowed_columns, output);
         fprintf(output, "\n");
     }
 
@@ -534,7 +545,7 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     }
 
     if (l->storage) {
-        fprintf(output, "storage: ");
+        fprintf(output, "storage: \n");
         ows_layer_storage_flush(l->storage, output);
         fprintf(output, "\n");
     }

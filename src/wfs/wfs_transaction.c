@@ -447,9 +447,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 	   if (idgen == WFS_REPLACE_DUPLICATE) {
            dup_sql = buffer_init();
 
-           buffer_add_str(dup_sql, "SELECT count(*) FROM "); 
+           buffer_add_str(dup_sql, "SELECT count(*) FROM \""); 
            buffer_copy(dup_sql, ows_psql_schema_name(o, layer_name));
-           buffer_add_str(dup_sql, ".\"");
+           buffer_add_str(dup_sql, "\".\"");
            buffer_copy(dup_sql, ows_psql_table_name(o, layer_name));
            buffer_add_str(dup_sql, "\" WHERE "); 
            buffer_copy(dup_sql, id_column);
@@ -485,9 +485,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         buffer_copy(fid_full_name, id);
         alist_add(wr->insert_results, handle, fid_full_name);
 
-        buffer_add_str(sql, "INSERT INTO ");
+        buffer_add_str(sql, "INSERT INTO \"");
         buffer_copy(sql, ows_psql_schema_name(o, layer_name));
-        buffer_add_str(sql, ".\"");
+        buffer_add_str(sql, "\".\"");
         buffer_copy(sql, ows_psql_table_name(o, layer_name));
         buffer_add_str(sql, "\" (\"");
         buffer_copy(sql, id_column);
@@ -660,9 +660,9 @@ void wfs_delete(ows * o, wfs_request * wr)
         }
 
         /* FROM */
-        buffer_add_str(sql, "DELETE FROM ");
+        buffer_add_str(sql, "DELETE FROM \"");
         buffer_copy(sql, ows_psql_schema_name(o, layer_name));
-        buffer_add_str(sql, ".\"");
+        buffer_add_str(sql, "\".\"");
         buffer_copy(sql, ows_psql_table_name(o, layer_name));
         buffer_add_str(sql, "\" ");
 
@@ -746,7 +746,7 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     sql = buffer_init();
     s = t = NULL;
 
-    buffer_add_str(sql, "DELETE FROM ");
+    buffer_add_str(sql, "DELETE FROM \"");
 
     /*retrieve the name of the table in which features must be deleted */
     typename = wfs_retrieve_typename(o, wr, n);
@@ -762,7 +762,7 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
     }
 
     buffer_copy(sql, s);
-    buffer_add_str(sql, ".\"");
+    buffer_add_str(sql, "\".\"");
     buffer_copy(sql, t);
     buffer_add_str(sql, "\"");
 
@@ -851,7 +851,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         attr = NULL;
     }
 
-    buffer_add_str(sql, "UPDATE ");
+    buffer_add_str(sql, "UPDATE \"");
 
     /*retrieve the name of the table in which features must be updated */
     typename = wfs_retrieve_typename(o, wr, n);
@@ -866,7 +866,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     }
 
     buffer_copy(sql, s);
-    buffer_add_str(sql, ".\"");
+    buffer_add_str(sql, "\".\"");
     buffer_copy(sql, t);
     buffer_add_str(sql, "\"");
 

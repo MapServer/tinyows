@@ -43,6 +43,7 @@ ows_layer_storage * ows_layer_storage_init()
     storage->table = buffer_init();
     storage->pkey = NULL;
     storage->pkey_sequence = NULL;
+    storage->pkey_default = NULL;
     storage->pkey_column_number = -1;
     storage->attributes = array_init();
     storage->not_null_columns = NULL;
@@ -59,6 +60,7 @@ void ows_layer_storage_free(ows_layer_storage * storage)
     if (storage->table)            buffer_free(storage->table);
     if (storage->pkey)             buffer_free(storage->pkey);
     if (storage->pkey_sequence)    buffer_free(storage->pkey_sequence);
+    if (storage->pkey_default)    buffer_free(storage->pkey_default);
     if (storage->geom_columns)     list_free(storage->geom_columns);
     if (storage->attributes)       array_free(storage->attributes);
     if (storage->not_null_columns) list_free(storage->not_null_columns);
@@ -74,6 +76,8 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     assert(storage);
     assert(output);
 
+    fprintf(output, "  ==== ows_layer_storage_flush ====\n");
+
     if (storage->schema) {
         fprintf(output, "schema: ");
         buffer_flush(storage->schema, output);
@@ -87,7 +91,7 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     }
 
     if (storage->geom_columns) {
-        fprintf(output, "geom_columns: ");
+        fprintf(output, "geom_columns: \n");
         list_flush(storage->geom_columns, output);
         fprintf(output, "\n");
     }
@@ -109,14 +113,20 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
         fprintf(output, "\n");
     }
 
+    if (storage->pkey_default) {
+        fprintf(output, "pkey_default: ");
+        buffer_flush(storage->pkey_default, output);
+        fprintf(output, "\n");
+    }
+
     if (storage->attributes) {
-        fprintf(output, "attributes: ");
+        fprintf(output, "attributes: \n");
         array_flush(storage->attributes, output);
         fprintf(output, "\n");
     }
 
     if (storage->not_null_columns) {
-        fprintf(output, "not_null_columns: ");
+        fprintf(output, "not_null_columns: \n");
         list_flush(storage->not_null_columns, output);
         fprintf(output, "\n");
     }
@@ -126,7 +136,7 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
 
 
 /*
- * Retrieve not_null columns of a table related a given layer
+ * Retrieve not_null columns (not has default) of a table related a given layer
  */
 static void ows_storage_fill_not_null(ows * o, ows_layer * l)
 {
@@ -206,9 +216,14 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     }
 
     /* Layer could have no Pkey indeed... (An SQL view for example) */
-    if (PQntuples(res) == 1) {
+    if (l->pkey || PQntuples(res) == 1) {
         l->storage->pkey = buffer_init();
-        buffer_add_str(l->storage->pkey, PQgetvalue(res, 0, 0));
+        if (l->pkey) {
+            buffer_copy(l->storage->pkey, l->pkey);
+        } 
+        else {
+            buffer_add_str(l->storage->pkey, PQgetvalue(res, 0, 0));
+        }
         buffer_empty(sql);
         PQclear(res);
 
@@ -235,9 +250,9 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         PQclear(res);
 
         /* Now try to find a sequence related to this Pkey */
-        buffer_add_str(sql, "SELECT pg_get_serial_sequence('");
+        buffer_add_str(sql, "SELECT pg_get_serial_sequence('\"");
         buffer_copy(sql, l->storage->schema);
-        buffer_add_str(sql, ".\"");
+        buffer_add_str(sql, "\".\"");
         buffer_copy(sql, l->storage->table);
 	buffer_add_str(sql, "\"', '");
         buffer_copy(sql, l->storage->pkey);
@@ -259,6 +274,34 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
             l->storage->pkey_sequence = buffer_init();
             buffer_add_str(l->storage->pkey_sequence, PQgetvalue(res, 0, 0));
         }
+        buffer_empty(sql);
+        PQclear(res);
+
+        /* Now try to find a DEFAULT value related to this Pkey */
+        buffer_add_str(sql, "SELECT column_default FROM information_schema.columns WHERE table_schema = '");
+        buffer_copy(sql, l->storage->schema);
+        buffer_add_str(sql, "' AND table_name = '");
+        buffer_copy(sql, l->storage->table);
+        buffer_add_str(sql, "' AND column_name = '");
+        buffer_copy(sql, l->storage->pkey);
+        buffer_add_str(sql, "' AND table_catalog = current_database();");
+
+        res = ows_psql_exec(o, sql->buf);
+        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+            PQclear(res);
+            buffer_free(sql);
+            ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
+                  "Unable to SELECT column_default FROM information_schema.columns.", "pkey_default retrieve");
+            return;
+        }
+        
+        /* Even if no DEFAULT value found, this function return an empty row
+         * so we must check that result string returned > 0 char
+         */
+        if (PQntuples(res) == 1 && strlen((char *) PQgetvalue(res, 0, 0)) > 0) {
+            l->storage->pkey_default = buffer_init();
+            buffer_add_str(l->storage->pkey_default, PQgetvalue(res, 0, 0));
+        }
     }
 
     PQclear(res);
@@ -275,6 +318,7 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
     PGresult *res;
     buffer *b, *t;
     int i, end;
+    list_node *ln;
 
     assert(o);
     assert(l);
@@ -287,7 +331,19 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND c.relname = '");
     buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid");
+    buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attrelid = c.oid AND a.atttypid = t.oid");
+    if (l->allowed_columns) {
+        buffer_add_str(sql, " AND a.attname IN (");
+        for (ln = l->allowed_columns->first ; ln ; ln = ln->next) {
+            buffer_add_str(sql, "'");
+            buffer_copy(sql, ln->value);
+            buffer_add_str(sql, "', ");
+        }
+        buffer_add_str(sql, " '');");
+    } else {
+        buffer_add_str(sql, " AND a.attnum > 0;");
+    }
+
 
     res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
@@ -302,37 +358,37 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
         b = buffer_init();
         t = buffer_init();
         buffer_add_str(b, PQgetvalue(res, i, 0));
-	buffer_add_str(t, PQgetvalue(res, i, 1));
+        buffer_add_str(t, PQgetvalue(res, i, 1));
 
-	/* If the column is a geometry, get its real geometry type */
-	if (buffer_cmp(t, "geometry"))
-	{
-	  PGresult *geom_res;
-	  buffer *geom_sql = buffer_init();
-	  buffer_add_str(geom_sql, "SELECT type from geometry_columns where f_table_schema='");
-	  buffer_copy(geom_sql, l->storage->schema);
-	  buffer_add_str(geom_sql,"' and f_table_name='");
-	  buffer_copy(geom_sql, l->storage->table);
-	  buffer_add_str(geom_sql,"' and f_geometry_column='");
-	  buffer_copy(geom_sql, b);
-	  buffer_add_str(geom_sql,"';");
-	  
-          geom_res = ows_psql_exec(o, geom_sql->buf);
-	  buffer_free(geom_sql);
-	  
-	  if (PQresultStatus(geom_res) != PGRES_TUPLES_OK || PQntuples(geom_res) == 0) {
-	    PQclear(res);
-	    PQclear(geom_res);
-	    ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-		      "Unable to access geometry_columns table, try Populate_Geometry_Columns()", "fill_attributes");
-	    return;
-	  }
-	  
-	  buffer_empty(t);
-	  buffer_add_str(t, PQgetvalue(geom_res, 0, 0));
-          PQclear(geom_res);
-	}
-	
+        /* If the column is a geometry, get its real geometry type */
+        if (buffer_cmp(t, "geometry"))
+        {
+            PGresult *geom_res;
+            buffer *geom_sql = buffer_init();
+            buffer_add_str(geom_sql, "SELECT type from geometry_columns where f_table_schema='");
+            buffer_copy(geom_sql, l->storage->schema);
+            buffer_add_str(geom_sql,"' and f_table_name='");
+            buffer_copy(geom_sql, l->storage->table);
+            buffer_add_str(geom_sql,"' and f_geometry_column='");
+            buffer_copy(geom_sql, b);
+            buffer_add_str(geom_sql,"';");
+
+            geom_res = ows_psql_exec(o, geom_sql->buf);
+            buffer_free(geom_sql);
+
+            if (PQresultStatus(geom_res) != PGRES_TUPLES_OK || PQntuples(geom_res) == 0) {
+                PQclear(res);
+                PQclear(geom_res);
+                ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
+                      "Unable to access geometry_columns table, try Populate_Geometry_Columns()", "fill_attributes");
+                return;
+            }
+
+            buffer_empty(t);
+            buffer_add_str(t, PQgetvalue(geom_res, 0, 0));
+            PQclear(geom_res);
+        }
+
         array_add(l->storage->attributes, b, t);
     }
     PQclear(res);
@@ -411,16 +467,23 @@ void ows_layers_storage_flush(ows * o, FILE * output)
 
     for (ln = o->layers->first ; ln ; ln = ln->next) {
         if (ln->layer->storage) {
-                fprintf(output, " - %s.%s (%i) -> %s.%s [",
-			ln->layer->storage->schema->buf,
-			ln->layer->storage->table->buf,
-			ln->layer->storage->srid,
-			ln->layer->ns_prefix->buf,
-			ln->layer->name->buf);
-
+                fprintf(output, " - %s.%s -> %s.%s [",
+            ln->layer->storage->schema->buf,
+            ln->layer->storage->table->buf,
+            ln->layer->ns_prefix->buf,
+            ln->layer->name->buf);
                 if (ln->layer->retrievable) fprintf(output, "R");
                 if (ln->layer->writable)    fprintf(output, "W");
                 fprintf(output, "]\n");
+            
+            if (ln->layer->storage->srid) fprintf(output, "\tsrid \t= %i\n", ln->layer->storage->srid);
+            if (ln->layer->storage->pkey) fprintf(output, "\tpkey \t= %s\n", ln->layer->storage->pkey->buf);
+            if (ln->layer->storage->pkey_sequence) fprintf(output, "\tpk_seq \t= %s\n", ln->layer->storage->pkey_sequence->buf);
+            if (ln->layer->storage->pkey_default) fprintf(output, "\tpk_def \t= %s\n", ln->layer->storage->pkey_default->buf);
+            #ifdef OWS_DEBUG
+            ows_layer_flush(ln->layer, stdout);
+            #endif
+
         }
     }
 } 

@@ -106,6 +106,7 @@ typedef struct Ows_layer_storage {
     int srid;
     buffer * pkey;
     buffer * pkey_sequence;
+    buffer * pkey_default;
     int pkey_column_number;
     bool is_degree;
     array * attributes;
@@ -173,6 +174,8 @@ typedef struct Ows_layer {
     ows_geobbox * geobbox;
     buffer * abstract;
     list * keywords;
+    list * allowed_columns;
+    buffer * pkey;
     list * gml_ns;
     buffer * ns_prefix;
     buffer * ns_uri;

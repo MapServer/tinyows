@@ -331,7 +331,7 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
     buffer_copy(sql, l->storage->schema);
     buffer_add_str(sql, "' AND c.relname = '");
     buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attnum > 0 AND a.attrelid = c.oid AND a.atttypid = t.oid");
+    buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attrelid = c.oid AND a.atttypid = t.oid");
     if (l->allowed_columns) {
         buffer_add_str(sql, " AND a.attname IN (");
         for (ln = l->allowed_columns->first ; ln ; ln = ln->next) {
@@ -340,6 +340,8 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
             buffer_add_str(sql, "', ");
         }
         buffer_add_str(sql, " '');");
+    } else {
+        buffer_add_str(sql, " AND a.attnum > 0;");
     }
 
 

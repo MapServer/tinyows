@@ -80,7 +80,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 			fprintf(o->output, "ceci est un test, (in list) %s", an->key);
 		 }
 		 else{
-		 	fprintf(o->output, "ceci est un test, (not in lis t%s", an->key");
+		 	fprintf(o->output, "ceci est un test, (not in list) %s", an->key);
 		 }
 		 
          fprintf(o->output, "    <xs:element name ='%s' type='%s' ",

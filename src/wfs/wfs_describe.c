@@ -180,12 +180,13 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
         /* Describe each feature type specified in the request */
         for (elemt = wr->typename->first ; elemt ; elemt = elemt->next)
         {
-            fprintf(o->output, "<xs:element name='");
-            buffer_flush(elemt->value, o->output);
-            fprintf(o->output, "' type='%s:", ns_prefix->first->value->buf);
-            buffer_flush(elemt->value, o->output);
-            fprintf(o->output, "Type' substitutionGroup='gml:_Feature' />\n");
-            wfs_complex_type(o, wr, elemt->value);
+			//if(ows_layer_exclude_items(o->layers, wr->typename, elemt->value);
+            // fprintf(o->output, "<xs:element name='");
+            // buffer_flush(elemt->value, o->output);
+            // fprintf(o->output, "' type='%s:", ns_prefix->first->value->buf);
+            // buffer_flush(elemt->value, o->output);
+            // fprintf(o->output, "Type' substitutionGroup='gml:_Feature' />\n");
+            // wfs_complex_type(o, wr, elemt->value);
         }
 
         fprintf(o->output, "</xs:schema>");
@@ -241,14 +242,14 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
         buffer_add_str(schema, "?service=WFS&amp;request=DescribeFeatureType");
 
         if (elemt->next || elemt != ns_prefix->first) {
-            buffer_add_str(schema, "&amp;Typename=");
+			buffer_add_str(schema, "&amp;Typename=");
 
-            typename = ows_layer_list_by_ns_prefix(o->layers, layers, elemt->value);
-            for (t = typename->first ; t ; t = t->next) {
-        	buffer_copy(schema, t->value);
-	  	if (t->next) buffer_add(schema, ',');
-	    }
-            list_free(typename);
+			typename = ows_layer_list_by_ns_prefix(o->layers, layers, elemt->value);
+			for (t = typename->first ; t ; t = t->next) {
+				buffer_copy(schema, t->value);
+				if (t->next) buffer_add(schema, ',');
+			}
+			list_free(typename);
         } 
 
         if (wfs_version == 100) buffer_add_str(schema, "&amp;version=1.0.0");

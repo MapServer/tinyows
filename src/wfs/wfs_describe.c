@@ -76,7 +76,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
          /* Avoid to expose PK if not specificaly wanted */
          if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }
 		
-		 if(in_list(ows_layer_get(o->layers, layer_name)->exclude_items, an->key)){
+		 if(in_list(ows_layer_get(o->layers, layer_name)->exclude_items, an->key->buf)){
 			fprintf(o->output, "ceci est un test, (in list) %s", an->key);
 		 }
 		 else{

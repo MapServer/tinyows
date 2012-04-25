@@ -77,10 +77,10 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
          if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }
 		
 		 if(in_list(ows_layer_get(o->layers, layer_name)->exclude_items, an->key)){
-			fprintf(o->output, "ceci est un test, (in list)", );
+			fprintf(o->output, "ceci est un test, (in list)");
 		 }
 		 else{
-		 	fprintf(o->output, "ceci est un test, (not in list)", );
+		 	fprintf(o->output, "ceci est un test, (not in list)");
 		 }
 		 
          fprintf(o->output, "    <xs:element name ='%s' type='%s' ",

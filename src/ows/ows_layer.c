@@ -434,7 +434,7 @@ ows_layer *ows_layer_init()
     l->writable = false;
     l->srid = NULL;
     l->geobbox = NULL;
-	l->exclude_items = list_init();
+	l->exclude_items = NULL;
     l->ns_prefix = buffer_init();
     l->ns_uri = buffer_init();
     l->storage = ows_layer_storage_init();

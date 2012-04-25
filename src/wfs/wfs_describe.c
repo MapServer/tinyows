@@ -75,7 +75,8 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 
          /* Avoid to expose PK if not specificaly wanted */
          if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }
-
+		
+		 continue;
          fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
              an->key->buf, ows_psql_to_xsd(an->value, o->request->version));
 
@@ -180,14 +181,12 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
         /* Describe each feature type specified in the request */
         for (elemt = wr->typename->first ; elemt ; elemt = elemt->next)
         {
-			if(0){
-				fprintf(o->output, "<xs:element name='");
-				buffer_flush(elemt->value, o->output);
-				fprintf(o->output, "' type='%s:", ns_prefix->first->value->buf);
-				buffer_flush(elemt->value, o->output);
-				fprintf(o->output, "Type' substitutionGroup='gml:_Feature' />\n");
-				wfs_complex_type(o, wr, elemt->value);
-			}
+            fprintf(o->output, "<xs:element name='");
+            buffer_flush(elemt->value, o->output);
+            fprintf(o->output, "' type='%s:", ns_prefix->first->value->buf);
+            buffer_flush(elemt->value, o->output);
+            fprintf(o->output, "Type' substitutionGroup='gml:_Feature' />\n");
+            wfs_complex_type(o, wr, elemt->value);
         }
 
         fprintf(o->output, "</xs:schema>");

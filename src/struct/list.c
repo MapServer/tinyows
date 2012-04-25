@@ -347,6 +347,7 @@ list *list_explode_str(char separator, const char *value)
     for (i = 0; value[i] != '\0'; i++)
         if (value[i] == separator) {
             /* add the buffer to the list */
+			buf = buffer_replace(buf, " ", "");
             list_add(l, buf);
             buf = buffer_init();
         } else

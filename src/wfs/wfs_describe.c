@@ -180,8 +180,8 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
         /* Describe each feature type specified in the request */
         for (elemt = wr->typename->first ; elemt ; elemt = elemt->next)
         {
-			//if(ows_layer_exclude_items(o->layers, wr->typename, elemt->value);
-            // fprintf(o->output, "<xs:element name='");
+            //if(ows_layer_exclude_items(o->layers, wr->typename, elemt->value);
+            //fprintf(o->output, "<xs:element name='");
             // buffer_flush(elemt->value, o->output);
             // fprintf(o->output, "' type='%s:", ns_prefix->first->value->buf);
             // buffer_flush(elemt->value, o->output);

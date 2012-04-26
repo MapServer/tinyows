@@ -95,7 +95,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 				fprintf(o->output, "nillable='true' minOccurs='0' ");
 			fprintf(o->output, "maxOccurs='1'>\n");
 
-			fprintf(o->output, "<simpleType><restriction base='string'> <maxLength value='80'/></restriction></simpleType></element>");
+			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'> <maxLength value='80'/></xs:restriction></xs:simpleType></xs:element>\n");
 			
 		 }else{
 			fprintf(o->output, "    <xs:element name ='%s' type='%s' ", an->key->buf, xsd_type);

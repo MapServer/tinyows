@@ -77,15 +77,33 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 /* Avoid to expose elements in mapfile gml_exclude_items */
 		 if (in_list(ows_layer_get(o->layers, layer_name)->exclude_items, an->key)){ continue; }
 		 
-         fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
-             an->key->buf, ows_psql_to_xsd(an->value, o->request->version));
+		 char * xsd_type = ows_psql_to_xsd(an->value, o->request->version);
+		 
+		 if(xsd_type == "string"){
+// <element name="treeType" nillable="true" minOccurs="0">
+// <simpleType>
+// <restriction base="string">
+// <maxLength value="80"/>
+// </restriction>
+// </simpleType>
+// </element>		 
+			fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
+			if (mandatory_prop && in_list(mandatory_prop, an->key))
+				fprintf(o->output, "nillable='false' minOccurs='1' ");
+			else
+				fprintf(o->output, "nillable='true' minOccurs='0' ");
+			fprintf(o->output, "maxOccurs='1'>\n");
 
-         if (mandatory_prop && in_list(mandatory_prop, an->key))
-             fprintf(o->output, "nillable='false' minOccurs='1' ");
-         else
-             fprintf(o->output, "nillable='true' minOccurs='0' ");
-	
-      	 fprintf(o->output, "maxOccurs='1'/>\n");
+			fprintf(o->output, "<simpleType><restriction base='string'>maxLength value='80'/></restriction></simpleType></element>");
+			
+		 }else{
+			fprintf(o->output, "    <xs:element name ='%s' type='%s' ", an->key->buf, xsd_type);
+			if (mandatory_prop && in_list(mandatory_prop, an->key))
+				fprintf(o->output, "nillable='false' minOccurs='1' ");
+			else
+				fprintf(o->output, "nillable='true' minOccurs='0' ");
+			fprintf(o->output, "maxOccurs='1'/>\n");
+		 }
     }
 
     fprintf(o->output, "   </xs:sequence>\n");

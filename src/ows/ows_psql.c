@@ -278,7 +278,7 @@ buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, 
 
     buffer_add_str(character_maximum_length, PQgetvalue(res, 0, 0));
     PQclear(res);
-*/
+
     return character_maximum_length;
 
 

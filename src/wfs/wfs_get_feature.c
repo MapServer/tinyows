@@ -117,7 +117,7 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
     if (pkey && pkey->buf && !strcmp(prop_name, pkey->buf) && !o->expose_pk) return;
 	/* Avoid to expose elements in mapfile gml_exclude_items */
 	if (in_list(ows_layer_get(o->layers, layer_name)->exclude_items, (buffer *)prop_name)){ return; }
-	
+	else{ fprintf(o->output, "%s", prop_name); }
 
     if (strlen(value) == 0) return; /* Don't display empty property */ 
 

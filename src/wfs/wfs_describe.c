@@ -60,7 +60,6 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 
     /* Output the description of the layer_name */
     for (an = table->first ; an ; an = an->next) {
-
          /* Handle GML namespace */
          if (            (ows_layer_get(o->layers, layer_name))->gml_ns 
               && in_list((ows_layer_get(o->layers, layer_name))->gml_ns, an->key)) {
@@ -74,14 +73,9 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
          }
 
          /* Avoid to expose PK if not specificaly wanted */
-         if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }
-		
-		 if(in_list(ows_layer_get(o->layers, layer_name)->exclude_items, an->key)){
-			fprintf(o->output, "ceci est un test, (in list) %s", an->key->buf);
-		 }
-		 else{
-		 	fprintf(o->output, "ceci est un test, (not in list) %s", an->key->buf);
-		 }
+         if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }	
+		 /* Avoid to expose elements in mapfile gml_exclude_items */
+		 if (in_list(ows_layer_get(o->layers, layer_name)->exclude_items, an->key)){ continue; }
 		 
          fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
              an->key->buf, ows_psql_to_xsd(an->value, o->request->version));

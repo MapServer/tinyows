@@ -40,6 +40,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
     array_node *an;
     list *mandatory_prop;
 	char * xsd_type;
+	buffer *table_name;
 	buffer *character_maximum_length;
 
     assert(o);
@@ -83,12 +84,10 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 
 		 if(!strcmp(xsd_type, "string")){
 			
-			/*character_maximum_length = buffer_from_str(ows_psql_column_character_maximum_length(o, layer_name, an->key->buf)->buf);*/
-			/*character_maximum_length = buffer_init();*/
 			
-			character_maximum_length = ows_psql_table_name(o, layer_name);
+			table_name = ows_psql_table_name(o, layer_name);
 			
-			/*buffer_copy(character_maximum_length, ows_psql_column_character_maximum_length(o, layer_name, an->key->buf));*/
+			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);
 			
 			fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
 			if (mandatory_prop && in_list(mandatory_prop, an->key))

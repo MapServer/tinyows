@@ -82,7 +82,9 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 xsd_type = ows_psql_to_xsd(an->value, o->request->version);
 		 
 		 if(!strcmp(xsd_type, "string")){
-			character_maximum_length = ows_psql_column_character_maximum_length(o, layer_name, an->key->buf);
+			
+			character_maximum_length = buffer_from_str(ows_psql_column_character_maximum_length(o, layer_name, an->key->buf)->buf);
+
 			fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
 			if (mandatory_prop && in_list(mandatory_prop, an->key))
 				fprintf(o->output, "nillable='false' minOccurs='1' ");

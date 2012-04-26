@@ -40,6 +40,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
     array_node *an;
     list *mandatory_prop;
 	char * xsd_type;
+	buffer *character_maximum_length;
 
     assert(o);
     assert(wr);
@@ -81,13 +82,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 xsd_type = ows_psql_to_xsd(an->value, o->request->version);
 		 
 		 if(!strcmp(xsd_type, "string")){
-/*<element name="treeType" nillable="true" minOccurs="0">
-<simpleType>
-<restriction base="string">
-<maxLength value="80"/>
-</restriction>
-</simpleType>
-</element>		 */
+			character_maximum_length = ows_psql_column_character_maximum_length(o, layer_name, an->key->buf);
 			fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
 			if (mandatory_prop && in_list(mandatory_prop, an->key))
 				fprintf(o->output, "nillable='false' minOccurs='1' ");
@@ -95,7 +90,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 				fprintf(o->output, "nillable='true' minOccurs='0' ");
 			fprintf(o->output, "maxOccurs='1'>\n");
 
-			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'> <maxLength value='80'/></xs:restriction></xs:simpleType></xs:element>\n");
+			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'> <maxLength value='%s'/></xs:restriction></xs:simpleType></xs:element>\n", character_maximum_length);
 			
 		 }else{
 			fprintf(o->output, "    <xs:element name ='%s' type='%s' ", an->key->buf, xsd_type);

@@ -80,7 +80,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 
 		 xsd_type = ows_psql_to_xsd(an->value, o->request->version);
 		 
-		 if(xsd_type == "string"){
+		 if(!strcmp(xsd_type, "string")){
 /*<element name="treeType" nillable="true" minOccurs="0">
 <simpleType>
 <restriction base="string">

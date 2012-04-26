@@ -268,10 +268,6 @@ buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, 
 	buffer_add_str(sql, "' and column_name = '");
 	buffer_add_str(sql, column_name->buf);
 	buffer_add_str(sql, "'");
-	       
-	
-	/* for test purposes.
-	fprintf(o->output, sql->buf);*/
 		   
     res = ows_psql_exec(o, sql->buf);
     buffer_free(sql);
@@ -285,8 +281,6 @@ buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, 
     PQclear(res);
 
     return character_maximum_length;
-
-
 }
 
 

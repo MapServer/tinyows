@@ -254,10 +254,11 @@ buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, 
     buffer *sql;
     PGresult *res;
     buffer *character_maximum_length;
-	buffer *table_name;
+	
 
     assert(o);
-    assert(layer_name);
+    assert(column_name);
+	assert(table_name);
 
     sql = buffer_init();
 	

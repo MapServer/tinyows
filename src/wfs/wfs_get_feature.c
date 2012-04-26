@@ -115,13 +115,14 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
 
     /* No Pkey display in GML (default behaviour) */
     if (pkey && pkey->buf && !strcmp(prop_name, pkey->buf) && !o->expose_pk) return;
-	/* Avoid to expose elements in mapfile gml_exclude_items */
-	
+
+	/* Avoid to expose elements in mapfile gml_exclude_items */	
 	prop_name_buffer = buffer_from_str(prop_name);
 	
 	if (in_list(ows_layer_get(o->layers, layer_name)->exclude_items, prop_name_buffer)){ return; }
-	else{ fprintf(o->output, "'%s'", prop_name); }
 
+	buffer_free(prop_name_buffer);
+	
     if (strlen(value) == 0) return; /* Don't display empty property */ 
 
     /* We have to check if we use gml ns or not */

@@ -262,7 +262,7 @@ buffer *ows_psql_column_character_maximum_length(ows * o, buffer * layer_name, b
     sql = buffer_init();
     character_maximum_length = buffer_init();
 	
-	table_name = ows_psql_table_name(layer_name);
+	table_name = ows_psql_table_name(o, layer_name);
 	
 	buffer_add_str(sql, "SELECT character_maximum_length FROM information_schema.columns WHERE table_name = '";
 	buffer_copy(sql, table_name);

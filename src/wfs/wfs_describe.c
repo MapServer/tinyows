@@ -91,7 +91,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 			
 			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);
 			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);
-			if(!strcmp(constraint_name->buf, "")){
+			if(strcmp(constraint_name->buf, "")){
 			
 				fprintf(o->output, "constraint_name= '%s'", constraint_name->buf);
 				/*check_constraint = */

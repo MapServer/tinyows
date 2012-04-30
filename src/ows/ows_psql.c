@@ -302,8 +302,8 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 	buffer_add_str(sql, "' AND column_name='");
 	buffer_add_str(sql, column_name->buf);
 	buffer_add_str(sql, "'");
-	
-	fprintf(o->output, "constraint name query= '%s'", sql->buf);
+	// TODO : Remove this line.
+	fprintf(o->output, "constraint name query= '%s'\n", sql->buf);
 	
 	res = ows_psql_exec(o, sql->buf);
 	
@@ -317,11 +317,13 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 
     return constraint_name;
 }
-/*
+
 list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer *sql;
 	PGresult *res;
 	list *contraints;
+	
+	constraints = list_init();
 	
 	assert(o);
 	assert(constraint_name);
@@ -332,7 +334,10 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer_add_str(sql, constraint_name->buf);
 	buffer_add_str(sql, "'");
 
-	res = ows_psql_exec(o, sql->buf);
+	// TODO : Remove this line.
+	fprintf(o->output, "check_constraint query= '%s'\n", sql->buf);
+	
+	res = ows_psql_exec(o, sql->buf);	
 	
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
         PQclear(res);
@@ -344,7 +349,7 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 
     return contraints;
 }
-*/
+
 
 /*
  * Retrieve description of a table matching a given layer name

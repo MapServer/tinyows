@@ -287,7 +287,7 @@ buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, 
 buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * table_name){
 	buffer *sql;
 	PGresult *res;
-	buffer constraint_name;
+	buffer *constraint_name;
 	
 	constraint_name = buffer_init();
 	

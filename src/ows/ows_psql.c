@@ -303,6 +303,8 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 	buffer_add_str(sql, column_name->buf);
 	buffer_add_str(sql, "'");
 	
+	fprintf(o->output, "constraint name query= '%s'", sql->buf);
+	
 	res = ows_psql_exec(o, sql->buf);
 	
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {

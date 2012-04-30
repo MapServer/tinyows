@@ -93,7 +93,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);
 			if(strcmp(constraint_name->buf, "")){
 			
-				// TODO : Remove this line.
+				/* TODO : Remove this line. */
 				fprintf(o->output, "constraint_name= '%s'\n", constraint_name->buf);				
 				check_constraint = ows_psql_column_check_constraint(o, constraint_name);
 				

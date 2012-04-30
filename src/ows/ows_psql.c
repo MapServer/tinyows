@@ -322,8 +322,10 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer *sql;
 	PGresult *res;
 	list *constraints;
+	buffer *constraint_value;
 	
 	constraints = list_init();
+	constraint_value = buffer_init();
 	
 	assert(o);
 	assert(constraint_name);
@@ -344,8 +346,12 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
         return constraints;
     }
 
-    buffer_add_str(constraint_name, PQgetvalue(res, 0, 0));
+    buffer_add_str(constraint_value, PQgetvalue(res, 0, 0));
     PQclear(res);
+		
+	/*Parse the constraint.*/
+	/* TODO : Remove this line. */
+	fprintf(o->output, "check_constraint query= '%s'\n", constraint_value->buf);
 
     return constraints;
 }

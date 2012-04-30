@@ -85,13 +85,13 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 
 		 xsd_type = ows_psql_to_xsd(an->value, o->request->version);
 		 
-		 if(!strcmp(xsd_type->buf, "string")){
+		 if(!strcmp(xsd_type, "string")){
 			
 			table_name = ows_psql_table_name(o, layer_name);
 			
 			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);
 			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);
-			if(!strcmp(constraint_name, "")){
+			if(!strcmp(constraint_name->buf, "")){
 			
 				fprintf(o->output, "constraint_name= %s", constraint_name);
 				/*check_constraint = */

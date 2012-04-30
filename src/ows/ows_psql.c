@@ -284,6 +284,68 @@ buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, 
 }
 
 
+buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * table_name){
+	buffer *sql;
+	PGresult *res;
+	buffer constraint_name;
+	
+	constraint_name = buffer_init();
+	
+	assert(o);
+	assert(column_name);
+	assert(table_name);
+	
+	sql = buffer_init();
+	
+	buffer_add_str(sql, "SELECT constraint_name FROM information_schema.constraint_column_usage WHERE table_name = '");
+	buffer_add_str(sql, table_name->buf);
+	buffer_add_str(sql, "AND column_name='");
+	buffer_add_str(sql, column_name->buf);
+	buffer_add_str(sql, "'");
+	
+	res = ows_psql_exec(o, sql->buf);
+	
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        PQclear(res);
+        return constraint_name;
+    }
+
+    buffer_add_str(constraint_name, PQgetvalue(res, 0, 0));
+    PQclear(res);
+
+    return constraint_name;
+}
+
+list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
+	buffer *sql;
+	PGresult *res;
+	list *contraints;
+	
+	assert(o);
+	assert(constraint_name);
+	
+	sql = buffer_init();
+	/*select check_clause from information_schema.check_constraints where constraint_name = 'check_etat'*/
+	buffer_add_str(sql, "SELECT check_clause FROM information_schema.check_constraints WHERE constraint_name = '");
+	buffer_add_str(sql, table_name->buf);
+	buffer_add_str(sql, "'");
+	
+	
+/*	
+	res = ows_psql_exec(o, sql->buf);
+	
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        PQclear(res);
+        return contraints;
+    }
+
+    buffer_add_str(constraint_name, PQgetvalue(res, 0, 0));
+    PQclear(res);
+*/
+    return contraints;
+}
+*/
+
 /*
  * Retrieve description of a table matching a given layer name
  */

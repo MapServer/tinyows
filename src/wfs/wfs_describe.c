@@ -42,6 +42,9 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 	char * xsd_type;
 	buffer *table_name;
 	buffer *character_maximum_length;
+	buffer *constraint_name;
+	list *check_constraint;
+	
 
     assert(o);
     assert(wr);
@@ -84,11 +87,25 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 
 		 if(!strcmp(xsd_type, "string")){
 			
-			
 			table_name = ows_psql_table_name(o, layer_name);
 			
 			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);
+			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);
+			if(!strcmp(constraint_name, "")){
 			
+				fprintf(o->output, "constraint_name= %s", constraint_name);
+				/*check_constraint = */
+	/*
+				<xs:simpleType xmlns:xs="http://www.w3.org/2001/XMLSchema" name="StatusCodeTypeEnumerationType">
+					<xs:restriction base="string">
+						<xs:enumeration value="REJECTED"/>
+						<xs:enumeration value="PENDING"/>
+					</xs:restriction>
+				</xs:simpleType>
+	*/
+			
+			}
+						
 			fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
 			if (mandatory_prop && in_list(mandatory_prop, an->key))
 				fprintf(o->output, "nillable='false' minOccurs='1' ");

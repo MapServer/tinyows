@@ -321,7 +321,7 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer *sql;
 	PGresult *res;
-	list *contraints;
+	list *constraints;
 	
 	constraints = list_init();
 	
@@ -341,13 +341,13 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
         PQclear(res);
-        return contraints;
+        return constraints;
     }
 
     buffer_add_str(constraint_name, PQgetvalue(res, 0, 0));
     PQclear(res);
 
-    return contraints;
+    return constraints;
 }
 
 

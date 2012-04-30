@@ -299,7 +299,7 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 	
 	buffer_add_str(sql, "SELECT constraint_name FROM information_schema.constraint_column_usage WHERE table_name = '");
 	buffer_add_str(sql, table_name->buf);
-	buffer_add_str(sql, " AND column_name='");
+	buffer_add_str(sql, "' AND column_name='");
 	buffer_add_str(sql, column_name->buf);
 	buffer_add_str(sql, "'");
 	

@@ -85,7 +85,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 
 		 xsd_type = ows_psql_to_xsd(an->value, o->request->version);
 		 
-		 if(!strcmp(xsd_type, "string")){
+		 if(!strcmp(xsd_type->buf, "string")){
 			
 			table_name = ows_psql_table_name(o, layer_name);
 			

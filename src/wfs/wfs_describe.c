@@ -93,7 +93,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);
 			if(!strcmp(constraint_name->buf, "")){
 			
-				fprintf(o->output, "constraint_name= %s", constraint_name);
+				fprintf(o->output, "constraint_name= %s", constraint_name->buf);
 				/*check_constraint = */
 	/*
 				<xs:simpleType xmlns:xs="http://www.w3.org/2001/XMLSchema" name="StatusCodeTypeEnumerationType">

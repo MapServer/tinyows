@@ -315,7 +315,7 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 
     return constraint_name;
 }
-
+/*
 list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer *sql;
 	PGresult *res;
@@ -325,11 +325,11 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	assert(constraint_name);
 	
 	sql = buffer_init();
-	/*select check_clause from information_schema.check_constraints where constraint_name = 'check_etat'*/
+
 	buffer_add_str(sql, "SELECT check_clause FROM information_schema.check_constraints WHERE constraint_name = '");
 	buffer_add_str(sql, constraint_name->buf);
 	buffer_add_str(sql, "'");
-/*	
+
 	res = ows_psql_exec(o, sql->buf);
 	
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
@@ -339,10 +339,10 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 
     buffer_add_str(constraint_name, PQgetvalue(res, 0, 0));
     PQclear(res);
-*/
+
     return contraints;
 }
-
+*/
 
 /*
  * Retrieve description of a table matching a given layer name

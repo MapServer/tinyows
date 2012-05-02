@@ -321,13 +321,15 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer *sql;
 	PGresult *res;
+	list *intermediate_constraints;
 	list *constraints;
 	buffer *constraint_value;
+	buffer *buf;
 	
-	/*buffer *split;*/
 	list_node *ln;
 	
 	constraints = list_init();
+	intermediate_constraints = list_init();
 	constraint_value = buffer_init();
 	
 	assert(o);
@@ -339,9 +341,6 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer_add_str(sql, constraint_name->buf);
 	buffer_add_str(sql, "'");
 
-	/* TODO : Remove this line. */
-	/*fprintf(o->output, "check_constraint query= '%s'\n", sql->buf);*/
-	
 	res = ows_psql_exec(o, sql->buf);	
 	
     if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
@@ -351,29 +350,32 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 
     buffer_add_str(constraint_value, PQgetvalue(res, 0, 0));
     PQclear(res);
-		
-	/*Parse the constraint.*/
-	/* TODO : Remove this line. */
-	/*fprintf(o->output, "check_constraint query= '%s'\n", constraint_value->buf);*/
 	
-	constraints = list_explode(' ', constraint_value);
+	intermediate_constraints = list_explode(' ', constraint_value);
 		
-	for (ln = constraints->first ; ln ; ln = ln->next) {
+	for (ln = intermediate_constraints->first ; ln ; ln = ln->next) {
 		if(ln->value->buf[0] == '\''){
+		/*
 			fprintf(o->output, "[");
 			buffer_flush(ln->value, o->output);
 			fprintf(o->output, "]\n");
+		*/
+			buf = buffer_init();
+			for (i = 1; ln->value->buf[i] != '\0'; i++){
+				if(ln->value->buf[i] == '\'')
+					continue;
+				else
+					buffer_add(buf, value[i]);
+			}
+			list_add(constraints, buf);
 		}
     }
-/*
-	list_add_str(constraints, strtok(constraint_value->buf, " "));
-	if(split==NULL)
-	{
-		fprintf("No test to search.\n");
-	}else{
-		fprintf(o->output, "first constraint '%s'", split);
+	
+	for (ln = constraints->first ; ln ; ln = ln->next) {
+		fprintf(o->output, "[");
+		buffer_flush(ln->value, o->output);
+		fprintf(o->output, "]\n");	
 	}
-	*/
 	
     return constraints;
 }

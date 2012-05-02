@@ -324,7 +324,7 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	list *constraints;
 	buffer *constraint_value;
 	
-	buffer *split;
+	/*buffer *split;*/
 	list_node *ln;
 	
 	constraints = list_init();
@@ -340,7 +340,7 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer_add_str(sql, "'");
 
 	/* TODO : Remove this line. */
-	fprintf(o->output, "check_constraint query= '%s'\n", sql->buf);
+	/*fprintf(o->output, "check_constraint query= '%s'\n", sql->buf);*/
 	
 	res = ows_psql_exec(o, sql->buf);	
 	
@@ -359,9 +359,11 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	constraints = list_explode(' ', constraint_value);
 		
 	for (ln = constraints->first ; ln ; ln = ln->next) {
-		fprintf(o->output, "[");
-		buffer_flush(ln->value, o->output);
-		fprintf(o->output, "]\n");
+		if(ln->value->buf[0] == '\''){
+			fprintf(o->output, "[");
+			buffer_flush(ln->value, o->output);
+			fprintf(o->output, "]\n");
+		}
     }
 /*
 	list_add_str(constraints, strtok(constraint_value->buf, " "));

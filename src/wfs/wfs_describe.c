@@ -44,7 +44,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 	buffer *character_maximum_length;
 	buffer *constraint_name;
 	list *check_constraint;
-	
+	list_node *ln;
 
     assert(o);
     assert(wr);

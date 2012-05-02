@@ -303,7 +303,7 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 	buffer_add_str(sql, column_name->buf);
 	buffer_add_str(sql, "'");
 	/* TODO : Remove this line. */
-	fprintf(o->output, "constraint name query= '%s'\n", sql->buf);
+	/*fprintf(o->output, "constraint name query= '%s'\n", sql->buf);*/
 	
 	res = ows_psql_exec(o, sql->buf);
 	
@@ -353,6 +353,13 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	/* TODO : Remove this line. */
 	fprintf(o->output, "check_constraint query= '%s'\n", constraint_value->buf);
 
+	array[0]=strtok(search_string," ");
+	if(array[0]==NULL)
+	{
+		fprintf("No test to search.\n");
+	}
+	
+	
     return constraints;
 }
 

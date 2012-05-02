@@ -103,7 +103,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'>");
 			if(strcmp(constraint_name->buf, "")){			
 				check_constraint = ows_psql_column_check_constraint(o, constraint_name);				
-				for (ln = intermediate_constraints->first ; ln ; ln = ln->next) {
+				for (ln = check_constraints->first ; ln ; ln = ln->next) {
 					fprintf(o->output, "<xs:enumeration value='%s'/>", ln->value->buf);
 				}
 			}

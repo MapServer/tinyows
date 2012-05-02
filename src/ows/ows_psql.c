@@ -363,7 +363,7 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 			buf = buffer_init();
 			for (i = 1; ln->value->buf[i] != '\0'; i++){
 				if(ln->value->buf[i] == '\'')
-					continue;
+					break;
 				else
 					buffer_add(buf, ln->value->buf[i]);
 			}

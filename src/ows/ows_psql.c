@@ -355,11 +355,6 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 		
 	for (ln = intermediate_constraints->first ; ln ; ln = ln->next) {
 		if(ln->value->buf[0] == '\''){
-		/*
-			fprintf(o->output, "[");
-			buffer_flush(ln->value, o->output);
-			fprintf(o->output, "]\n");
-		*/
 			buf = buffer_init();
 			for (i = 1; ln->value->buf[i] != '\0'; i++){
 				if(ln->value->buf[i] == '\'')
@@ -370,13 +365,13 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 			list_add(constraints, buf);
 		}
     }
-	
+	/* For test purposes
 	for (ln = constraints->first ; ln ; ln = ln->next) {
 		fprintf(o->output, "[");
 		buffer_flush(ln->value, o->output);
 		fprintf(o->output, "]\n");	
 	}
-	
+	*/
     return constraints;
 }
 

@@ -88,27 +88,6 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 		 if(!strcmp(xsd_type, "string")){
 			
 			table_name = ows_psql_table_name(o, layer_name);
-			
-			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);
-			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);
-			if(strcmp(constraint_name->buf, "")){
-			
-				/* TODO : Remove this line. */
-				/*fprintf(o->output, "constraint_name= '%s'\n", constraint_name->buf);				*/
-				check_constraint = ows_psql_column_check_constraint(o, constraint_name);
-				
-				
-				/*check_constraint = */
-	/*
-				<xs:simpleType xmlns:xs="http://www.w3.org/2001/XMLSchema" name="StatusCodeTypeEnumerationType">
-					<xs:restriction base="string">
-						<xs:enumeration value="REJECTED"/>
-						<xs:enumeration value="PENDING"/>
-					</xs:restriction>
-				</xs:simpleType>
-	*/
-			
-			}
 						
 			fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
 			if (mandatory_prop && in_list(mandatory_prop, an->key))
@@ -117,7 +96,29 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 				fprintf(o->output, "nillable='true' minOccurs='0' ");
 			fprintf(o->output, "maxOccurs='1'>\n");
 
-			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'> <maxLength value='%s'/></xs:restriction></xs:simpleType></xs:element>\n", character_maximum_length->buf);
+			/* Read string constraint from database and convert to gml restrictions*/
+			table_name = ows_psql_table_name(o, layer_name);			
+			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);
+			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);			
+			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'>");
+			if(strcmp(constraint_name->buf, "")){			
+				check_constraint = ows_psql_column_check_constraint(o, constraint_name);				
+				for (ln = intermediate_constraints->first ; ln ; ln = ln->next) {
+					fprintf(o->output, "<xs:enumeration value='%s'/>", ln->value->buf);
+				}
+			}
+				/*
+				<xs:simpleType xmlns:xs="http://www.w3.org/2001/XMLSchema" name="StatusCodeTypeEnumerationType">
+					<xs:restriction base="string">
+						<xs:enumeration value="REJECTED"/>
+						<xs:enumeration value="PENDING"/>
+					</xs:restriction>
+				</xs:simpleType>
+	*/
+		
+			
+			
+			fprintf(o->output, "<maxLength value='%s'/></xs:restriction></xs:simpleType></xs:element>\n", character_maximum_length->buf);
 			
 		 }else{
 			fprintf(o->output, "    <xs:element name ='%s' type='%s' ", an->key->buf, xsd_type);

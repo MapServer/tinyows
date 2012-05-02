@@ -98,7 +98,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 
 			/* Read string constraint from database and convert to gml restrictions*/
 			table_name = ows_psql_table_name(o, layer_name);			
-			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);
+
 			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);			
 			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'>");
 			if(strcmp(constraint_name->buf, "")){			
@@ -107,18 +107,8 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 					fprintf(o->output, "<xs:enumeration value='%s'/>", ln->value->buf);
 				}
 			}
-				/*
-				<xs:simpleType xmlns:xs="http://www.w3.org/2001/XMLSchema" name="StatusCodeTypeEnumerationType">
-					<xs:restriction base="string">
-						<xs:enumeration value="REJECTED"/>
-						<xs:enumeration value="PENDING"/>
-					</xs:restriction>
-				</xs:simpleType>
-	*/
-		
-			
-			
-			fprintf(o->output, "<maxLength value='%s'/></xs:restriction></xs:simpleType></xs:element>\n", character_maximum_length->buf);
+			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);			
+			fprintf(o->output, "<xs:maxLength value='%s'/></xs:restriction></xs:simpleType></xs:element>\n", character_maximum_length->buf);
 			
 		 }else{
 			fprintf(o->output, "    <xs:element name ='%s' type='%s' ", an->key->buf, xsd_type);

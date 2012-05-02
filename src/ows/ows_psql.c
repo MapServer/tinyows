@@ -354,7 +354,7 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 		
 	/*Parse the constraint.*/
 	/* TODO : Remove this line. */
-	fprintf(o->output, "check_constraint query= '%s'\n", constraint_value->buf);
+	/*fprintf(o->output, "check_constraint query= '%s'\n", constraint_value->buf);*/
 	
 	constraints = list_explode(' ', constraint_value);
 		

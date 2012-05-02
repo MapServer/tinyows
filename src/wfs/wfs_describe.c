@@ -106,9 +106,11 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 				for (ln = check_constraints->first ; ln ; ln = ln->next) {
 					fprintf(o->output, "<xs:enumeration value='%s'/>", ln->value->buf);
 				}
+			}else{
+				character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);			
+				fprintf(o->output, "<xs:maxLength value='%s'/>", character_maximum_length->buf);
 			}
-			character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);			
-			fprintf(o->output, "<xs:maxLength value='%s'/></xs:restriction></xs:simpleType></xs:element>\n", character_maximum_length->buf);
+			fprintf(o->output, "</xs:restriction></xs:simpleType></xs:element>");
 			
 		 }else{
 			fprintf(o->output, "    <xs:element name ='%s' type='%s' ", an->key->buf, xsd_type);

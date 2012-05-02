@@ -43,7 +43,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 	buffer *table_name;
 	buffer *character_maximum_length;
 	buffer *constraint_name;
-	list *check_constraint;
+	list *check_constraints;
 	list_node *ln;
 
     assert(o);
@@ -102,7 +102,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);			
 			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'>");
 			if(strcmp(constraint_name->buf, "")){			
-				check_constraint = ows_psql_column_check_constraint(o, constraint_name);				
+				check_constraints = ows_psql_column_check_constraint(o, constraint_name);				
 				for (ln = check_constraints->first ; ln ; ln = ln->next) {
 					fprintf(o->output, "<xs:enumeration value='%s'/>", ln->value->buf);
 				}

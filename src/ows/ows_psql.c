@@ -327,7 +327,7 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer *split;
 	list_node *ln;
 	
-	/*constraints = list_init();*/
+	constraints = list_init();
 	constraint_value = buffer_init();
 	
 	assert(o);

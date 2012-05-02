@@ -324,7 +324,10 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	list *constraints;
 	buffer *constraint_value;
 	
-	constraints = list_init();
+	buffer *split;
+	list_node *ln;
+	
+	/*constraints = list_init();*/
 	constraint_value = buffer_init();
 	
 	assert(o);
@@ -352,13 +355,23 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	/*Parse the constraint.*/
 	/* TODO : Remove this line. */
 	fprintf(o->output, "check_constraint query= '%s'\n", constraint_value->buf);
-
-	array[0]=strtok(search_string," ");
-	if(array[0]==NULL)
+	
+	constraints = list_explode(' ', constraint_value);
+		
+	for (ln = constraints->first ; ln ; ln = ln->next) {
+		fprintf(o->output, "[");
+		buffer_flush(ln->value, o->output);
+		fprintf(o->output, "]\n");
+    }
+/*
+	list_add_str(constraints, strtok(constraint_value->buf, " "));
+	if(split==NULL)
 	{
 		fprintf("No test to search.\n");
+	}else{
+		fprintf(o->output, "first constraint '%s'", split);
 	}
-	
+	*/
 	
     return constraints;
 }

@@ -250,7 +250,13 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
     return column;
 }
 
-buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, buffer * table_name){
+/*
+ * Returns the column character_maximum_length value from the database
+ * information schema.
+ * Used to return maxLenght constraint in describe feature type request.
+ */
+buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, buffer * table_name)
+{
     buffer *sql;
     PGresult *res;
     buffer *character_maximum_length;
@@ -283,7 +289,10 @@ buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, 
     return character_maximum_length;
 }
 
-
+/*
+ * Returns the constraint name for a table column.
+ * Used to return enumeration constraints in describe feature type request.
+ */
 buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * table_name){
 	buffer *sql;
 	PGresult *res;
@@ -302,8 +311,6 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 	buffer_add_str(sql, "' AND column_name='");
 	buffer_add_str(sql, column_name->buf);
 	buffer_add_str(sql, "'");
-	/* TODO : Remove this line. */
-	/*fprintf(o->output, "constraint name query= '%s'\n", sql->buf);*/
 	
 	res = ows_psql_exec(o, sql->buf);
 	
@@ -318,6 +325,10 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
     return constraint_name;
 }
 
+/*
+ * Returns the list of possible values for a column according to the constraint value.
+ * Used to return enumeration constraints in describe feature type request.
+ */
 list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer *sql;
 	PGresult *res;
@@ -365,13 +376,7 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 			list_add(constraints, buf);
 		}
     }
-	/* For test purposes
-	for (ln = constraints->first ; ln ; ln = ln->next) {
-		fprintf(o->output, "[");
-		buffer_flush(ln->value, o->output);
-		fprintf(o->output, "]\n");	
-	}
-	*/
+
     return constraints;
 }
 

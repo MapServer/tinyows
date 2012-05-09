@@ -39,6 +39,12 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
     array *table;
     array_node *an;
     list *mandatory_prop;
+	char * xsd_type;
+	buffer *table_name;
+	buffer *character_maximum_length;
+	buffer *constraint_name;
+	list *check_constraints;
+	list_node *ln;
 
     assert(o);
     assert(wr);
@@ -60,7 +66,6 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 
     /* Output the description of the layer_name */
     for (an = table->first ; an ; an = an->next) {
-
          /* Handle GML namespace */
          if (            (ows_layer_get(o->layers, layer_name))->gml_ns 
               && in_list((ows_layer_get(o->layers, layer_name))->gml_ns, an->key)) {
@@ -74,17 +79,47 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
          }
 
          /* Avoid to expose PK if not specificaly wanted */
-         if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }
+         if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }	
+		 /* Avoid to expose elements in mapfile gml_exclude_items */
+		 if (in_list(ows_layer_get(o->layers, layer_name)->exclude_items, an->key)){ continue; }
+		 
+		 xsd_type = ows_psql_to_xsd(an->value, o->request->version);
+		 
+		 if(!strcmp(xsd_type, "string")){
+			
+			table_name = ows_psql_table_name(o, layer_name);
+						
+			fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
+			if (mandatory_prop && in_list(mandatory_prop, an->key))
+				fprintf(o->output, "nillable='false' minOccurs='1' ");
+			else
+				fprintf(o->output, "nillable='true' minOccurs='0' ");
+			fprintf(o->output, "maxOccurs='1'>\n");
 
-         fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
-             an->key->buf, ows_psql_to_xsd(an->value, o->request->version));
+			/* Read string constraint from database and convert to gml restrictions*/
+			table_name = ows_psql_table_name(o, layer_name);			
 
-         if (mandatory_prop && in_list(mandatory_prop, an->key))
-             fprintf(o->output, "nillable='false' minOccurs='1' ");
-         else
-             fprintf(o->output, "nillable='true' minOccurs='0' ");
-	
-      	 fprintf(o->output, "maxOccurs='1'/>\n");
+			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);			
+			fprintf(o->output, "<xs:simpleType><xs:restriction base='string'>");
+			if(strcmp(constraint_name->buf, "")){			
+				check_constraints = ows_psql_column_check_constraint(o, constraint_name);				
+				for (ln = check_constraints->first ; ln ; ln = ln->next) {
+					fprintf(o->output, "<xs:enumeration value='%s'/>", ln->value->buf);
+				}
+			}else{
+				character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);			
+				fprintf(o->output, "<xs:maxLength value='%s'/>", character_maximum_length->buf);
+			}
+			fprintf(o->output, "</xs:restriction></xs:simpleType></xs:element>");
+			
+		 }else{
+			fprintf(o->output, "    <xs:element name ='%s' type='%s' ", an->key->buf, xsd_type);
+			if (mandatory_prop && in_list(mandatory_prop, an->key))
+				fprintf(o->output, "nillable='false' minOccurs='1' ");
+			else
+				fprintf(o->output, "nillable='true' minOccurs='0' ");
+			fprintf(o->output, "maxOccurs='1'/>\n");
+		 }
     }
 
     fprintf(o->output, "   </xs:sequence>\n");
@@ -241,14 +276,14 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
         buffer_add_str(schema, "?service=WFS&amp;request=DescribeFeatureType");
 
         if (elemt->next || elemt != ns_prefix->first) {
-            buffer_add_str(schema, "&amp;Typename=");
+			buffer_add_str(schema, "&amp;Typename=");
 
-            typename = ows_layer_list_by_ns_prefix(o->layers, layers, elemt->value);
-            for (t = typename->first ; t ; t = t->next) {
-        	buffer_copy(schema, t->value);
-	  	if (t->next) buffer_add(schema, ',');
-	    }
-            list_free(typename);
+			typename = ows_layer_list_by_ns_prefix(o->layers, layers, elemt->value);
+			for (t = typename->first ; t ; t = t->next) {
+				buffer_copy(schema, t->value);
+				if (t->next) buffer_add(schema, ',');
+			}
+			list_free(typename);
         } 
 
         if (wfs_version == 100) buffer_add_str(schema, "&amp;version=1.0.0");

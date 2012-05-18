@@ -29,8 +29,8 @@ XML2_VER=`$LIBXML2_CONFIG --version`
 AC_MSG_RESULT([checking for libxml2 version... $XML2_VER])
 
 xml2_vers=`$LIBXML2_CONFIG --version | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
-if test "$xml2_vers" -lt 2006020 ; then
-	AC_MSG_ERROR([You need at least libxml 2.6.20])
+if test "$xml2_vers" -lt 2008000 ; then
+	AC_MSG_ERROR([You need at least libxml 2.8.0])
 fi
 
 
@@ -172,7 +172,7 @@ fi
 
 
 if test "$USE_FCGI" = "0" ; then
-  AC_MSG_WARN([No FastCGI support. Performances will be strongly reduced !])
+  AC_MSG_WARN([\n\nNo FastCGI support. Performances will be strongly reduced !\n])
 else
   FCGI_LIB="$FCGI_LIB -lfcgi"
 fi
@@ -190,7 +190,4 @@ rm -f config.log config.status
 
 echo "------------------------"
 echo "NOTA: This TinyOWS version will need at least PostGIS 1.5.x"
-echo "------------------------"
-echo "IMPORTANT: Make sure that you read:"
-echo "<http://tinyows.org/trac/wiki/LibxmlSchemaGmlBug>"
 echo "------------------------"

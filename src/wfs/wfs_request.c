@@ -468,12 +468,10 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
         return;
     }
 
-#if 0
-    /* Not use anymore related to BBOX with crsuri and srsName issue like:
-       BBOX=246700,6780800,436400,6924000,EPSG:3067&srsname=urn:ogc:def:crs:EPSG::2393
+    /* related to BBOX with crsuri and srsName issue like:
+       bbox=34.94,-10.52,71.96,32.19,urn:ogc:def:crs:EPSG::4326
     */
     if (wr->srs->is_reverse_axis) wr->bbox->srs->is_reverse_axis = true;
-#endif
 }
 
 

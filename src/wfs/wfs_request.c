@@ -425,7 +425,12 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
              return;
         }
 
-        if (wr->srs->is_degree && ows_version_get(o->request->version) == 110) {
+        if ((wr->format == WFS_GML311 || wr->format == WFS_GML321) && wr->srs->is_degree) {
+            wr->srs->is_reverse_axis = true;
+            wr->srs->is_long = true;
+        } else if (wr->format == WFS_GML311 || wr->format == WFS_GML321) {
+            wr->srs->is_long = true;
+        } else if (ows_version_get(o->request->version) == 110 && wr->srs->is_degree) {
             wr->srs->is_reverse_axis = true;
             wr->srs->is_long = true;
         } else if (ows_version_get(o->request->version) == 110) {

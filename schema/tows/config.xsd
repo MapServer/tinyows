@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<!-- Types -->
+<xs:simpleType name="csvType">
+  <xs:restriction base="xs:string">
+    <xs:pattern value="\w+(,\w+)*"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="bboxType">
+  <xs:restriction base="xs:string">
+    <xs:pattern value="-?\d+(,-?\d+)*"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<xs:simpleType name="sridType">
+  <xs:restriction base="xs:string">
+    <xs:pattern value="\d+(,\d+)*"/>
+  </xs:restriction>
+</xs:simpleType>
+
+<!-- Element tinyows -->
+<xs:element name="tinyows">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="pg" minOccurs="1" maxOccurs="1" />
+      <xs:element name="metadata" minOccurs="1" maxOccurs="1" />
+      <xs:element name="contact" minOccurs="0" maxOccurs="1" />
+      <xs:element name="layer" minOccurs="0" maxOccurs="unbounded" />
+      <xs:element name="limits" minOccurs="0" maxOccurs="1" />
+    </xs:sequence>
+    <xs:attribute name="schema_dir" type="xs:string" use="required" />
+    <xs:attribute name="online_resource" type="xs:string" use="required" />
+    <xs:attribute name="log" type="xs:string" />
+    <xs:attribute name="log_level" type="xs:positiveInteger" />
+    <xs:attribute name="degree_precision" type="xs:positiveInteger" />
+    <xs:attribute name="meter_precision" type="xs:positiveInteger" />
+    <xs:attribute name="display_bbox" type="xs:boolean" />
+    <xs:attribute name="estimated_extent" type="xs:boolean" />
+    <xs:attribute name="check_schema" type="xs:boolean" />
+    <xs:attribute name="check_valid_geom" type="xs:boolean" />
+    <xs:attribute name="expose_pk" type="xs:boolean" />
+    <xs:attribute name="encoding" type="xs:string" />
+    <xs:attribute name="wfs_default_version" type="xs:string" />
+  </xs:complexType>
+</xs:element>
+
+
+<!-- Element pg -->
+<xs:element name="pg">
+  <xs:complexType>
+    <xs:attribute name="host" type="xs:string" />
+    <xs:attribute name="user" type="xs:string" />
+    <xs:attribute name="password" type="xs:string" />
+    <xs:attribute name="dbname" type="xs:string" />
+    <xs:attribute name="port" type="xs:string" />
+    <xs:attribute name="encoding" type="xs:string" />
+  </xs:complexType>
+</xs:element>
+
+<!-- Element metadata -->
+<xs:element name="metadata">
+  <xs:complexType>
+    <xs:sequence minOccurs="0" maxOccurs="1" >
+      <xs:element name="abstract" type="xs:string" />
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required" />
+    <xs:attribute name="title" type="xs:string" use="required" />
+    <xs:attribute name="keywords" type="csvType" />
+    <xs:attribute name="fees" type="xs:string" />
+    <xs:attribute name="access_constraints" type="xs:string" />
+  </xs:complexType>
+</xs:element>
+
+<!-- Element contact -->
+<xs:element name="contact">
+  <xs:complexType>
+    <xs:attribute name="name" type="xs:string" use="required" />
+    <xs:attribute name="site" type="xs:string" use="required" />
+    <xs:attribute name="email" type="xs:string" use="required" />
+    <xs:attribute name="individual_name" type="xs:string" />
+    <xs:attribute name="position" type="xs:string" />
+    <xs:attribute name="phone" type="xs:string" />
+    <xs:attribute name="fax" type="xs:string" />
+    <xs:attribute name="online_resource" type="xs:string" />
+    <xs:attribute name="address" type="xs:string" />
+    <xs:attribute name="postcode" type="xs:string" />
+    <xs:attribute name="city" type="xs:string" />
+    <xs:attribute name="administrative_area" type="xs:string" />
+    <xs:attribute name="country" type="xs:string" />
+    <xs:attribute name="hours_of_service" type="xs:string" />
+    <xs:attribute name="contact_instructions" type="xs:string" />
+  </xs:complexType>
+</xs:element>
+
+<!-- Element layer -->
+<xs:element name="layer">
+  <xs:complexType>
+    <xs:sequence minOccurs="0" maxOccurs="unbounded" >
+      <xs:element name="layer" /> <!-- layers could be nested -->
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required" />
+    <xs:attribute name="title" type="xs:string" use="required" />
+    <xs:attribute name="ns_prefix" type="xs:string" />
+    <xs:attribute name="ns_uri" type="xs:string" />
+    <xs:attribute name="table" type="xs:string" />
+    <xs:attribute name="schema" type="xs:string" />
+    <xs:attribute name="abstract" type="xs:string" />
+    <xs:attribute name="gml_ns" type="csvType" />
+    <xs:attribute name="keywords" type="csvType" />
+    <xs:attribute name="srid" type="sridType" />
+    <xs:attribute name="geobbox" type="bboxType" />
+    <xs:attribute name="retrievable" type="xs:boolean" />
+    <xs:attribute name="writable" type="xs:boolean" />
+  </xs:complexType>
+</xs:element>
+
+<!-- Element limits -->
+<xs:element name="limits">
+  <xs:complexType>
+    <xs:attribute name="features" type="xs:positiveInteger" />
+    <xs:attribute name="geobbox" type="bboxType" />
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

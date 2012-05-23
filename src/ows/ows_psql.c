@@ -257,15 +257,13 @@ buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * 
 list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 	buffer *sql;
 	PGresult *res;
-	list *intermediate_constraints;
 	list *constraints;
 	buffer *constraint_value;
 	buffer *buf;
 	size_t i;
-	list_node *ln;
+	size_t j;
 	
 	constraints = list_init();
-	intermediate_constraints = list_init();
 	constraint_value = buffer_init();
 	
 	assert(o);
@@ -286,22 +284,24 @@ list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
 
     buffer_add_str(constraint_value, PQgetvalue(res, 0, 0));
     PQclear(res);
-	
-	intermediate_constraints = list_explode(' ', constraint_value);
 		
-	for (ln = intermediate_constraints->first ; ln ; ln = ln->next) {
-		if(ln->value->buf[0] == '\''){
-			buf = buffer_init();
-			for (i = 1; ln->value->buf[i] != '\0'; i++){
-				if(ln->value->buf[i] == '\'')
-					break;
-				else
-					buffer_add(buf, ln->value->buf[i]);
-			}
-			list_add(constraints, buf);
-		}
+    j=0;	
+    buf = buffer_init();
+    for (i = 0; constraint_value->buf[i] != '\0'; i++){
+        if(constraint_value->buf[i] == '\''){					
+            j++;
+            if(j%2==1){
+                buf = buffer_init();
+            }
+            else{
+		list_add(constraints, buf);
+	    }
+        }
+        else
+            if(j%2==1)
+                buffer_add(buf, constraint_value->buf[i]);
     }
-
+			
     return constraints;
 }
 

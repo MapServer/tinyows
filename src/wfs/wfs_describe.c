@@ -86,44 +86,65 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 
          xsd_type = ows_psql_to_xsd(an->value, o->request->version);
                 
-         if(!strcmp(xsd_type, "string")) {
-          
-             fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
-             if (mandatory_prop && in_list(mandatory_prop, an->key))
-                 fprintf(o->output, "nillable='false' minOccurs='1' ");
-             else
-                 fprintf(o->output, "nillable='true' minOccurs='0' ");
-             fprintf(o->output, "maxOccurs='1'>\n");
+         if(!strcmp(xsd_type, "string")) {             
+			table_name = ows_psql_table_name(o, layer_name);
+			/* Read string constraint from database and convert to gml restrictions*/
+			constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);
+			if(strcmp(constraint_name->buf, "")) {			             
+				fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
+				if (mandatory_prop && in_list(mandatory_prop, an->key))
+					fprintf(o->output, "nillable='false' minOccurs='1' ");
+				else
+					fprintf(o->output, "nillable='true' minOccurs='0' ");
+				fprintf(o->output, "maxOccurs='1'>\n");
 
-             table_name = ows_psql_table_name(o, layer_name);
-             /* Read string constraint from database and convert to gml restrictions*/
-             constraint_name = ows_psql_column_constraint_name(o, an->key, table_name);
-             
-             fprintf(o->output, "<xs:simpleType><xs:restriction base='string'>");
-             if(strcmp(constraint_name->buf, "")) {			
-                 check_constraints = ows_psql_column_check_constraint(o, constraint_name);	
-                 for (ln = check_constraints->first ; ln ; ln = ln->next) {
-                     fprintf(o->output, "<xs:enumeration value='%s'/>", ln->value->buf);
-                 }
-             } else {
-                 character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);                      
-                 fprintf(o->output, "<xs:maxLength value='%s'/>", character_maximum_length->buf);
-             }
-             
-             fprintf(o->output, "</xs:restriction></xs:simpleType></xs:element>");
-          
-          } else {
+				fprintf(o->output, "<xs:simpleType><xs:restriction base='string'>");
+				check_constraints = ows_psql_column_check_constraint(o, constraint_name);	
+				for (ln = check_constraints->first ; ln ; ln = ln->next) {
+					fprintf(o->output, "<xs:enumeration value='%s'/>", ln->value->buf);
+				}
+				fprintf(o->output, "</xs:restriction></xs:simpleType></xs:element>");
+			} 
+			else
+			{
+				character_maximum_length = ows_psql_column_character_maximum_length(o, an->key, table_name);
+				if(strcmp(character_maximum_length->buf, ""))
+				{	                
+					fprintf(o->output, "    <xs:element name ='%s' ", an->key->buf);
+					if (mandatory_prop && in_list(mandatory_prop, an->key))
+							fprintf(o->output, "nillable='false' minOccurs='1' ");
+					else
+							fprintf(o->output, "nillable='true' minOccurs='0' ");
+					fprintf(o->output, "maxOccurs='1'>\n");
+					fprintf(o->output, "<xs:simpleType><xs:restriction base='string'>");
+					fprintf(o->output, "<xs:maxLength value='%s'/>", character_maximum_length->buf);
+					fprintf(o->output, "</xs:restriction></xs:simpleType></xs:element>");
+				}
+				else
+				{
+					fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
+									   an->key->buf, ows_psql_to_xsd(an->value, o->request->version));
 
-              fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
+					if (mandatory_prop && in_list(mandatory_prop, an->key))
+						fprintf(o->output, "nillable='false' minOccurs='1' ");
+					else
+						fprintf(o->output, "nillable='true' minOccurs='0' ");
+					fprintf(o->output, "maxOccurs='1'/>\n");
+				}
+			}                      
+        } 
+		else
+		{
+			fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
                       an->key->buf, ows_psql_to_xsd(an->value, o->request->version));
 
-              if (mandatory_prop && in_list(mandatory_prop, an->key))
-                  fprintf(o->output, "nillable='false' minOccurs='1' ");
-              else
-                  fprintf(o->output, "nillable='true' minOccurs='0' ");
- 
-              fprintf(o->output, "maxOccurs='1'/>\n");
-          }
+			if (mandatory_prop && in_list(mandatory_prop, an->key))
+				fprintf(o->output, "nillable='false' minOccurs='1' ");
+			else
+				fprintf(o->output, "nillable='true' minOccurs='0' ");
+
+			fprintf(o->output, "maxOccurs='1'/>\n");
+        }
     }
 
     fprintf(o->output, "   </xs:sequence>\n");

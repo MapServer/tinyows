@@ -250,6 +250,45 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
     return column;
 }
 
+/*
+ * Returns the column character_maximum_length value from the database
+ * information schema.
+ * Used to return maxLength constraint in describe feature type request.
+ */
+buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, buffer * table_name)
+{
+    buffer *sql;
+    PGresult *res;
+    buffer *character_maximum_length;
+	
+	character_maximum_length = buffer_init();
+
+    assert(o);
+    assert(column_name);
+	assert(table_name);
+
+    sql = buffer_init();
+	
+	buffer_add_str(sql, "SELECT character_maximum_length FROM information_schema.columns WHERE table_name = '");
+	buffer_add_str(sql, table_name->buf);
+	buffer_add_str(sql, "' and column_name = '");
+	buffer_add_str(sql, column_name->buf);
+	buffer_add_str(sql, "'");
+		   
+    res = ows_psql_exec(o, sql->buf);
+    buffer_free(sql);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        PQclear(res);
+        return character_maximum_length;
+    }
+
+    buffer_add_str(character_maximum_length, PQgetvalue(res, 0, 0));
+    PQclear(res);
+
+    return character_maximum_length;
+}
+
 
 /*
  * Retrieve description of a table matching a given layer name

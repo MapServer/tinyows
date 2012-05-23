@@ -358,6 +358,38 @@ list *list_explode_str(char separator, const char *value)
 }
 
 
+/*
+ * Trunk an initial string into several pieces upon a separator char
+ * Careful returned list must then be free with list_free()
+ */
+list *list_explode_str_trim(char separator, const char *value)
+{
+    size_t i;
+    list *l;
+    buffer *buf;
+
+    assert(value);
+
+    l = list_init();
+    buf = buffer_init();
+
+    for (i = 0; value[i] != '\0'; i++)
+        if (value[i] == separator) {
+            /* add the buffer to the list */
+            list_add(l, buf);
+            buf = buffer_init();
+        } else{
+         if(value[i] != ' '){
+         buffer_add(buf, value[i]);
+        }
+     }
+
+    list_add(l, buf);
+
+    return l;
+}
+
+
 #ifdef OWS_DEBUG
 /*
  * Flush a list to a given file

@@ -1320,6 +1320,8 @@ static void metadata_layer_value(char *yytext, bool quotes)
 	{
 	case MAP_LMD_SKIP: return;
 	case MAP_LMD_EXCLUDE_ITEMS:
+		map_l->exclude_items = list_explode_str_trim(',', yytext);
+		return;
 	case MAP_LMD_FEATURE_ID:
 	case MAP_LMD_INCLUDE_ITEMS:
 	case MAP_LMD_XML_ITEMS:

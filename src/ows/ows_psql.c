@@ -215,6 +215,98 @@ list *ows_psql_not_null_properties(ows * o, buffer * layer_name)
 
 
 /*
+ * Returns the constraint name for a table column.
+ * Used to return enumeration constraints in describe feature type request.
+ */
+buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * table_name){
+	buffer *sql;
+	PGresult *res;
+	buffer *constraint_name;
+	
+	constraint_name = buffer_init();
+	
+	assert(o);
+	assert(column_name);
+	assert(table_name);
+	
+	sql = buffer_init();
+	
+	buffer_add_str(sql, "SELECT constraint_name FROM information_schema.constraint_column_usage WHERE table_name = '");
+	buffer_add_str(sql, table_name->buf);
+	buffer_add_str(sql, "' AND column_name='");
+	buffer_add_str(sql, column_name->buf);
+	buffer_add_str(sql, "'");
+	
+	res = ows_psql_exec(o, sql->buf);
+	
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        PQclear(res);
+        return constraint_name;
+    }
+
+    buffer_add_str(constraint_name, PQgetvalue(res, 0, 0));
+    PQclear(res);
+
+    return constraint_name;
+}
+
+/*
+ * Returns the list of possible values for a column according to the constraint value.
+ * Used to return enumeration constraints in describe feature type request.
+ */
+list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
+	buffer *sql;
+	PGresult *res;
+	list *intermediate_constraints;
+	list *constraints;
+	buffer *constraint_value;
+	buffer *buf;
+	size_t i;
+	list_node *ln;
+	
+	constraints = list_init();
+	intermediate_constraints = list_init();
+	constraint_value = buffer_init();
+	
+	assert(o);
+	assert(constraint_name);
+	
+	sql = buffer_init();
+
+	buffer_add_str(sql, "SELECT check_clause FROM information_schema.check_constraints WHERE constraint_name = '");
+	buffer_add_str(sql, constraint_name->buf);
+	buffer_add_str(sql, "'");
+
+	res = ows_psql_exec(o, sql->buf);	
+	
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        PQclear(res);
+        return constraints;
+    }
+
+    buffer_add_str(constraint_value, PQgetvalue(res, 0, 0));
+    PQclear(res);
+	
+	intermediate_constraints = list_explode(' ', constraint_value);
+		
+	for (ln = intermediate_constraints->first ; ln ; ln = ln->next) {
+		if(ln->value->buf[0] == '\''){
+			buf = buffer_init();
+			for (i = 1; ln->value->buf[i] != '\0'; i++){
+				if(ln->value->buf[i] == '\'')
+					break;
+				else
+					buffer_add(buf, ln->value->buf[i]);
+			}
+			list_add(constraints, buf);
+		}
+    }
+
+    return constraints;
+}
+
+
+/*
  * Return the column's name matching the specified number from table
  * (Only use in specific FE position function, so not directly inside
  *  storage handle mechanism)

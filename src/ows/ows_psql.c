@@ -215,6 +215,98 @@ list *ows_psql_not_null_properties(ows * o, buffer * layer_name)
 
 
 /*
+ * Returns the constraint name for a table column.
+ * Used to return enumeration constraints in describe feature type request.
+ */
+buffer *ows_psql_column_constraint_name(ows * o, buffer * column_name, buffer * table_name){
+	buffer *sql;
+	PGresult *res;
+	buffer *constraint_name;
+	
+	constraint_name = buffer_init();
+	
+	assert(o);
+	assert(column_name);
+	assert(table_name);
+	
+	sql = buffer_init();
+	
+	buffer_add_str(sql, "SELECT constraint_name FROM information_schema.constraint_column_usage WHERE table_name = '");
+	buffer_add_str(sql, table_name->buf);
+	buffer_add_str(sql, "' AND column_name='");
+	buffer_add_str(sql, column_name->buf);
+	buffer_add_str(sql, "'");
+	
+	res = ows_psql_exec(o, sql->buf);
+	
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        PQclear(res);
+        return constraint_name;
+    }
+
+    buffer_add_str(constraint_name, PQgetvalue(res, 0, 0));
+    PQclear(res);
+
+    return constraint_name;
+}
+
+/*
+ * Returns the list of possible values for a column according to the constraint value.
+ * Used to return enumeration constraints in describe feature type request.
+ */
+list *ows_psql_column_check_constraint(ows * o, buffer * constraint_name){
+	buffer *sql;
+	PGresult *res;
+	list *constraints;
+	buffer *constraint_value;
+	buffer *buf;
+	size_t i;
+	size_t j;
+	
+	constraints = list_init();
+	constraint_value = buffer_init();
+	
+	assert(o);
+	assert(constraint_name);
+	
+	sql = buffer_init();
+
+	buffer_add_str(sql, "SELECT check_clause FROM information_schema.check_constraints WHERE constraint_name = '");
+	buffer_add_str(sql, constraint_name->buf);
+	buffer_add_str(sql, "'");
+
+	res = ows_psql_exec(o, sql->buf);	
+	
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        PQclear(res);
+        return constraints;
+    }
+
+    buffer_add_str(constraint_value, PQgetvalue(res, 0, 0));
+    PQclear(res);
+		
+    j=0;	
+    buf = buffer_init();
+    for (i = 0; constraint_value->buf[i] != '\0'; i++){
+        if(constraint_value->buf[i] == '\''){					
+            j++;
+            if(j%2==1){
+                buf = buffer_init();
+            }
+            else{
+		list_add(constraints, buf);
+	    }
+        }
+        else
+            if(j%2==1)
+                buffer_add(buf, constraint_value->buf[i]);
+    }
+			
+    return constraints;
+}
+
+
+/*
  * Return the column's name matching the specified number from table
  * (Only use in specific FE position function, so not directly inside
  *  storage handle mechanism)
@@ -248,6 +340,45 @@ buffer *ows_psql_column_name(ows * o, buffer * layer_name, int number)
     PQclear(res);
 
     return column;
+}
+
+/*
+ * Returns the column character_maximum_length value from the database
+ * information schema.
+ * Used to return maxLength constraint in describe feature type request.
+ */
+buffer *ows_psql_column_character_maximum_length(ows * o, buffer * column_name, buffer * table_name)
+{
+    buffer *sql;
+    PGresult *res;
+    buffer *character_maximum_length;
+	
+	character_maximum_length = buffer_init();
+
+    assert(o);
+    assert(column_name);
+	assert(table_name);
+
+    sql = buffer_init();
+	
+	buffer_add_str(sql, "SELECT character_maximum_length FROM information_schema.columns WHERE table_name = '");
+	buffer_add_str(sql, table_name->buf);
+	buffer_add_str(sql, "' and column_name = '");
+	buffer_add_str(sql, column_name->buf);
+	buffer_add_str(sql, "'");
+		   
+    res = ows_psql_exec(o, sql->buf);
+    buffer_free(sql);
+
+    if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 1) {
+        PQclear(res);
+        return character_maximum_length;
+    }
+
+    buffer_add_str(character_maximum_length, PQgetvalue(res, 0, 0));
+    PQclear(res);
+
+    return character_maximum_length;
 }
 
 

@@ -128,6 +128,51 @@ ALTER TABLE "Other" ADD COLUMN "integers" integer;
 ALTER TABLE "Other" ADD COLUMN "dates" date;
 
 --
+-- Add/Drop foo column
+--
+alter table "Deletes" add column "foo" integer;
+alter table "Deletes" drop column "foo";
+
+alter table "Fifteen" add column "foo" integer;
+alter table "Fifteen" drop column "foo";
+
+alter table "Inserts" add column "foo" integer;
+alter table "Inserts" drop column "foo";
+
+alter table "Lines" add column "foo" integer;
+alter table "Lines" drop column "foo";
+
+alter table "Locks" add column "foo" integer;
+alter table "Locks" drop column "foo";
+
+alter table "MLines" add column "foo" integer;
+alter table "MLines" drop column "foo";
+
+alter table "MPoints" add column "foo" integer;
+alter table "MPoints" drop column "foo";
+
+alter table "MPolygons" add column "foo" integer;
+alter table "MPolygons" drop column "foo";
+
+alter table "Nulls" add column "foo" integer;
+alter table "Nulls" drop column "foo";
+
+alter table "Other" add column "foo" integer;
+alter table "Other" drop column "foo";
+
+alter table "Points" add column "foo" integer;
+alter table "Points" drop column "foo";
+
+alter table "Polygons" add column "foo" integer;
+alter table "Polygons" drop column "foo";
+
+alter table "Seven" add column "foo" integer;
+alter table "Seven" drop column "foo";
+
+alter table "Updates" add column "foo" integer;
+alter table "Updates" drop column "foo";
+
+--
 -- Add Primary keys
 --
 alter table "Deletes" add column pkey serial;

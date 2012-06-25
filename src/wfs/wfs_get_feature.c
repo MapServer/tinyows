@@ -183,7 +183,7 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
     id_name = ows_psql_id_column(o, layer_name);
 
     /* We could imagine layer without PK ! */
-    if (id_name && id_name->use) number = ows_psql_column_number_id_column(o, layer_name);
+    if (id_name && id_name->use) number = PQfnumber(res, id_name->buf);
 
     ns_prefix = ows_layer_ns_prefix(o->layers, layer_name);
     mandatory_prop = ows_psql_not_null_properties(o, layer_name);

@@ -43,6 +43,7 @@ ows_layer_storage * ows_layer_storage_init()
     storage->table = buffer_init();
     storage->pkey = NULL;
     storage->pkey_sequence = NULL;
+    storage->pkey_default = NULL;
     storage->pkey_column_number = -1;
     storage->attributes = array_init();
     storage->not_null_columns = NULL;
@@ -59,6 +60,7 @@ void ows_layer_storage_free(ows_layer_storage * storage)
     if (storage->table)            buffer_free(storage->table);
     if (storage->pkey)             buffer_free(storage->pkey);
     if (storage->pkey_sequence)    buffer_free(storage->pkey_sequence);
+    if (storage->pkey_default)     buffer_free(storage->pkey_default);
     if (storage->geom_columns)     list_free(storage->geom_columns);
     if (storage->attributes)       array_free(storage->attributes);
     if (storage->not_null_columns) list_free(storage->not_null_columns);
@@ -106,6 +108,12 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     if (storage->pkey_sequence) {
         fprintf(output, "pkey_sequence: ");
         buffer_flush(storage->pkey_sequence, output);
+        fprintf(output, "\n");
+    }
+
+    if (storage->pkey_default) {
+        fprintf(output, "pkey_default: ");
+        buffer_flush(storage->pkey_default, output);
         fprintf(output, "\n");
     }
 
@@ -258,6 +266,35 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
         if (PQntuples(res) == 1 && strlen((char *) PQgetvalue(res, 0, 0)) > 0) {
             l->storage->pkey_sequence = buffer_init();
             buffer_add_str(l->storage->pkey_sequence, PQgetvalue(res, 0, 0));
+        }
+
+        buffer_empty(sql);
+        PQclear(res);
+        /* Now try to find a DEFAULT value related to this Pkey */
+        buffer_add_str(sql, "SELECT column_default FROM information_schema.columns WHERE table_schema = '");
+        buffer_copy(sql, l->storage->schema);
+        buffer_add_str(sql, "' AND table_name = '");
+        buffer_copy(sql, l->storage->table);
+        buffer_add_str(sql, "' AND column_name = '");
+        buffer_copy(sql, l->storage->pkey);
+        buffer_add_str(sql, "' AND table_catalog = current_database();");
+
+        res = ows_psql_exec(o, sql->buf);
+        if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+            PQclear(res);
+            buffer_free(sql);
+            ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
+                  "Unable to SELECT column_default FROM information_schema.columns.", 
+		  "pkey_default retrieve");
+            return;
+        }
+        
+        /* Even if no DEFAULT value found, this function return an empty row
+         * so we must check that result string returned > 0 char
+         */
+        if (PQntuples(res) == 1 && strlen((char *) PQgetvalue(res, 0, 0)) > 0) {
+            l->storage->pkey_default = buffer_init();
+            buffer_add_str(l->storage->pkey_default, PQgetvalue(res, 0, 0));
         }
     }
 

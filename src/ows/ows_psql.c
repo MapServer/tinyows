@@ -569,7 +569,28 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
          /* FIXME: Shouldn't we return an error there instead ? */
          PQclear(res);
      } 
-     
+    
+     /* If PK have a DEFAULT in PostgreSQL database,
+      * retrieve next available DEFAULT value
+      */
+     if (ln->layer->storage->pkey_default) {
+         sql_id = buffer_init();
+         buffer_add_str(sql_id, "SELECT ");
+         buffer_copy(sql_id, ln->layer->storage->pkey_default);
+         buffer_add_str(sql_id, ";");
+         res = ows_psql_exec(o, sql_id->buf);
+         buffer_free(sql_id);
+
+         if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) == 1) {
+             buffer_add_str(id, (char *) PQgetvalue(res, 0, 0));
+             PQclear(res);
+             return id;
+         }
+
+         /* FIXME: Shouldn't we return an error there instead ? */
+         PQclear(res);
+     } 
+ 
      /*
       * If we don't have a PostgreSQL Sequence, we will try to 
       * generate a pseudo random keystring using /dev/urandom

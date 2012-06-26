@@ -312,14 +312,15 @@ static void ows_kvp_or_xml(ows *o, char *query)
     /* POST could handle KVP or XML encoding */
     else if (cgi_method_post()) {
         /* WFS 1.1.0 mandatory */
-        if (     !strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded"))
+        if (       !strcmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded")
+		|| !strncmp(getenv("CONTENT_TYPE"), "application/x-www-form-urlencoded;", 34))
             o->request->method = OWS_METHOD_KVP;
         else if (    !strcmp(getenv("CONTENT_TYPE"), "text/xml") 
                   || !strncmp(getenv("CONTENT_TYPE"), "text/xml;", 9))        /* Allowing charset */
             o->request->method = OWS_METHOD_XML;
 
         /* WFS 1.0.0 && CITE Test compliant */
-        else if (    !strcmp(getenv("CONTENT_TYPE"), "application/xml")
+        else if (    !strcmp(getenv("CONTENT_TYPE"),  "application/xml")
                   || !strcmp(getenv("CONTENT_TYPE"), "text/plain")
                   || !strncmp(getenv("CONTENT_TYPE"), "application/xml;", 16) /* Allowing charset */
                   || !strncmp(getenv("CONTENT_TYPE"), "text/plain;", 11))     /* Allowing charset */

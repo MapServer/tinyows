@@ -1324,6 +1324,8 @@ static void metadata_layer_value(char *yytext, bool quotes)
 		return;
 	case MAP_LMD_FEATURE_ID:
 	case MAP_LMD_INCLUDE_ITEMS:
+		map_l->include_items = list_explode_str_trim(',', yytext);
+		return;
 	case MAP_LMD_XML_ITEMS:
 	case MAP_LMD_EXTENT:
 	case MAP_LMD_METADATAURL_FORMAT:

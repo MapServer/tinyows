@@ -434,7 +434,8 @@ ows_layer *ows_layer_init()
     l->writable = false;
     l->srid = NULL;
     l->geobbox = NULL;
-	l->exclude_items = NULL;
+    l->exclude_items = NULL;
+    l->include_items = NULL;
     l->ns_prefix = buffer_init();
     l->ns_uri = buffer_init();
     l->storage = ows_layer_storage_init();
@@ -460,7 +461,8 @@ void ows_layer_free(ows_layer * l)
     if (l->ns_uri)	buffer_free(l->ns_uri);
     if (l->ns_prefix)	buffer_free(l->ns_prefix);
     if (l->storage)	ows_layer_storage_free(l->storage);
-	if (l->exclude_items) list_free(l->exclude_items);
+    if (l->exclude_items) list_free(l->exclude_items);
+    if (l->include_items) list_free(l->include_items);
 
     free(l);
     l = NULL;
@@ -540,12 +542,18 @@ void ows_layer_flush(ows_layer * l, FILE * output)
         ows_layer_storage_flush(l->storage, output);
         fprintf(output, "\n");
     }
-	
-	if(l->exclude_items){
-		fprintf(output, "exclude_items: ");
-		list_flush(l->exclude_items, output);
-		fprintf(output, "\n");	
-	}
+    
+    if(l->exclude_items){
+        fprintf(output, "exclude_items: ");
+        list_flush(l->exclude_items, output);
+        fprintf(output, "\n");
+    }
+    
+    if(l->include_items){
+        fprintf(output, "include_items: ");
+        list_flush(l->include_items, output);
+        fprintf(output, "\n");
+    }
 }
 #endif
 

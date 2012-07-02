@@ -88,7 +88,6 @@ static ows *ows_init()
     o->log_level=0;
     o->encoding = buffer_init();
     o->db_encoding = buffer_init();
-    o->log = NULL;
     o->layers = NULL;
     o->max_features = 0;
     o->degree_precision = 6;

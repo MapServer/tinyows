@@ -119,7 +119,8 @@ void wfs_gml_display_feature(ows * o, wfs_request * wr, buffer * layer_name, buf
 	/* Avoid to expose elements in mapfile gml_exclude_items */	
 	prop_name_buffer = buffer_from_str(prop_name);
 	
-	if (in_list(ows_layer_get(o->layers, layer_name)->exclude_items, prop_name_buffer)){ return; }
+	if ( (ows_layer_get(o->layers, layer_name))->exclude_items
+        && in_list(ows_layer_get(o->layers, layer_name)->exclude_items, prop_name_buffer)){ return; }
 
 	buffer_free(prop_name_buffer);
 	

@@ -82,7 +82,8 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
          /* Avoid to expose PK if not specificaly wanted */
          if (id_name && buffer_cmp(an->key, id_name->buf) && !o->expose_pk) { continue; }
          /* Avoid to expose elements in mapfile gml_exclude_items */
-         if (in_list(ows_layer_get(o->layers, layer_name)->exclude_items, an->key)){ continue; }
+         if ( (ows_layer_get(o->layers, layer_name))->exclude_items 
+            && in_list((ows_layer_get(o->layers, layer_name))->exclude_items, an->key)){ continue; }
 
          xsd_type = ows_psql_to_xsd(an->value, o->request->version);
                 

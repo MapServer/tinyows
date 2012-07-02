@@ -531,6 +531,12 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         buffer_copy(layer->ns_uri, layer->parent->ns_uri);
     } else xmlFree(a);
 
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "include_items");
+    if (a) {
+        layer->include_items = list_explode_str_trim(',', (char *) a);
+        xmlFree(a);
+    }
+
     ows_layer_list_add(o->layers, layer);
 }
 

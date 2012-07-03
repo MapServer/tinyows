@@ -531,9 +531,22 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
         buffer_copy(layer->ns_uri, layer->parent->ns_uri);
     } else xmlFree(a);
 
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "exclude_items");
+    if (a) {
+        layer->exclude_items = list_explode_str_trim(',', (char *) a);
+        xmlFree(a);
+    }
+
     a = xmlTextReaderGetAttribute(r, (xmlChar *) "include_items");
     if (a) {
         layer->include_items = list_explode_str_trim(',', (char *) a);
+        xmlFree(a);
+    }
+
+    a = xmlTextReaderGetAttribute(r, (xmlChar *) "pkey");
+    if (a) {
+        layer->pkey = buffer_init();
+        buffer_add_str(layer->pkey, (char *) a);
         xmlFree(a);
     }
 

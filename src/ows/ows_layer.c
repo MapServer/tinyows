@@ -436,6 +436,7 @@ ows_layer *ows_layer_init()
     l->geobbox = NULL;
     l->exclude_items = NULL;
     l->include_items = NULL;
+    l->pkey = NULL;
     l->ns_prefix = buffer_init();
     l->ns_uri = buffer_init();
     l->storage = ows_layer_storage_init();
@@ -463,6 +464,7 @@ void ows_layer_free(ows_layer * l)
     if (l->storage)	ows_layer_storage_free(l->storage);
     if (l->exclude_items) list_free(l->exclude_items);
     if (l->include_items) list_free(l->include_items);
+    if (l->pkey)          buffer_free(l->pkey);
 
     free(l);
     l = NULL;

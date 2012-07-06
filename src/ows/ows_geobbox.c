@@ -180,7 +180,7 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
 		buffer_add_str(sql, "(SELECT ST_Transform(ST_SetSRID(ST_Estimated_Extent('");
     		buffer_copy(sql, ows_psql_schema_name(o, layer_name));
  	   	buffer_add_str(sql, "','");
-    		buffer_copy(sql, layer_name);
+    		buffer_copy(sql, ows_psql_table_name(o, layer_name));
 	    	buffer_add_str(sql, "','");
 	    	buffer_copy(sql, ln->value);
    	 	buffer_add_str(sql, "'), (SELECT ST_SRID(\"");
@@ -188,7 +188,7 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
     		buffer_add_str(sql, "\") FROM ");
     		buffer_copy(sql, ows_psql_schema_name(o, layer_name));
     		buffer_add_str(sql, ".\"");
-    		buffer_copy(sql, layer_name);
+    		buffer_copy(sql, ows_psql_table_name(o, layer_name));
     		buffer_add_str(sql, "\" LIMIT 1)) ,4326) AS g) AS foo");
 	} else {
 		buffer_add_str(sql, "(SELECT ST_Transform(ST_SetSRID(ST_Extent(\"");
@@ -198,12 +198,12 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
     		buffer_add_str(sql, "\") FROM ");
     		buffer_copy(sql, ows_psql_schema_name(o, layer_name));
     		buffer_add_str(sql, ".\"");
-    		buffer_copy(sql, layer_name);
+    		buffer_copy(sql, ows_psql_table_name(o, layer_name));
     		buffer_add_str(sql, "\" LIMIT 1)), 4326) AS g ");
     		buffer_add_str(sql, " FROM ");
     		buffer_copy(sql, ows_psql_schema_name(o, layer_name));
     		buffer_add_str(sql, ".\"");
-    		buffer_copy(sql, layer_name);
+    		buffer_copy(sql, ows_psql_table_name(o, layer_name));
     		buffer_add_str(sql, "\" ) AS foo");
 	}
 

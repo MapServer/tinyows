@@ -1323,6 +1323,9 @@ static void metadata_layer_value(char *yytext, bool quotes)
 		map_l->exclude_items = list_explode_str_trim(',', yytext);
 		return;
 	case MAP_LMD_FEATURE_ID:
+    map_l->pkey = buffer_init();
+          buffer_add_str(map_l->pkey, yytext);
+    return;
 	case MAP_LMD_INCLUDE_ITEMS:
 		map_l->include_items = list_explode_str_trim(',', yytext);
 		return;

@@ -62,6 +62,129 @@ static void ows_pg(ows * o, char *con_str)
 
 
 /*
+ * Initialize a ows node
+ */
+ows_node *ows_node_init()
+{
+    ows_node *on = malloc(sizeof(ows_node));
+    assert(on);
+
+    on->prev = NULL;
+    on->next = NULL;
+    on->the_ows = NULL;
+
+    return on;
+}
+
+
+/*
+ * Free a ows node
+ */
+void ows_node_free(ows_list * ol, ows_node * on)
+{
+    assert(on);
+
+    if (on->prev) on->prev = NULL;
+    if (on->next)
+    {
+        if (ol) ol->first = on->next;
+        on->next = NULL;
+    } else if (ol) ol->first = NULL;
+
+    if (on->the_ows) ows_free(on->the_ows);
+
+    free(on);
+    on = NULL;
+}
+
+
+/*
+ * Initialize an ows list structure
+ */
+ows_list *ows_list_init()
+{
+    ows_list *ol = malloc(sizeof(ows_list));
+    assert(ol);
+
+    ol->first = NULL;
+    ol->last = NULL;
+    return ol;
+}
+
+
+/*
+ * Free an ows list structure
+ */
+void ows_list_free(ows_list * ol)
+{
+    assert(ol);
+
+    while (ol->first) ows_node_free(ol, ol->first);
+    ol->last = NULL;
+    free(ol);
+    ol = NULL;
+}
+
+
+/*
+ * Add a ows to a ows's list
+ */
+void ows_list_add(ows_list * ol, ows * o)
+{
+    ows_node *on = ows_node_init();
+
+    assert(ol);
+    assert(on);
+
+    on->the_ows = o;
+    if (!ol->first) {
+        on->prev = NULL;
+        ol->first = on;
+    } else {
+        on->prev = ol->last;
+        ol->last->next = on;
+    }
+    ol->last = on;
+    ol->last->next = NULL;
+}
+
+
+/*
+ * Retrieve a ows from a ows list by config file name or NULL if not found
+ */
+ows * ows_get_by_config_file(const ows_list * ol, const buffer * config_file)
+{
+    ows_node *on;
+
+    assert(ol);
+    assert(config_file);
+
+    for (on = ol->first; on ; on = on->next)
+        if (on->the_ows->config_file && !strcmp(on->the_ows->config_file->buf, config_file->buf))
+            return on->the_ows;
+
+    return (ows *) NULL;
+}
+
+
+/*
+ * Retrieve base ows
+ */
+ows * ows_get_base(const ows_list * ol)
+{
+    ows_node *on;
+
+    assert(ol);
+
+    for (on = ol->first; on ; on = on->next)
+        if (on->the_ows->base)
+            return on->the_ows;
+
+    return (ows *) NULL;
+}
+
+
+/*
  * Initialize an ows struct
  */
 static ows *ows_init()
@@ -71,6 +194,7 @@ static ows *ows_init()
     o = malloc(sizeof(ows));
     assert(o);
 
+    o->base = false;
     o->init = true;
     o->exit = false;
     o->request = NULL;
@@ -339,8 +463,15 @@ int main(int argc, char *argv[])
 {
     ows *o;
     char *query;
+#if TINYOWS_FCGI
+    buffer * config_from_query;
+    ows_list * owslist;
+
+    owslist = ows_list_init();
+#endif
 
     o = ows_init();
+    o->base = true;
     o->config_file = buffer_init();
 
     /* Config Files */
@@ -370,9 +501,46 @@ int main(int argc, char *argv[])
     o->init = false;
 
 #if TINYOWS_FCGI
+    ows_list_add(owslist, o);
    if (!o->exit) ows_log(o, 2, "== FCGI START ==");
    while (FCGI_Accept() >= 0)
    {
+    o = NULL;
+    if (getenv("QUERY_STRING"))
+    {
+        config_from_query = buffer_from_str(getenv("QUERY_STRING"));
+        if (buffer_ncmp(config_from_query, "ConfigFromQuery", 15))
+        {
+            buffer_shift(config_from_query, 16);
+            buffer_pop(config_from_query, strlen(strstr(config_from_query->buf, "&")));
+            ows_log(ows_get_base(owslist), 2, "Go to find ows for config - ");
+            o = ows_get_by_config_file(owslist, config_from_query);
+            if (!o)
+            {
+                ows_log(ows_get_base(owslist), 2, "Can not find ows for config - ");
+                ows_log(ows_get_base(owslist), 2, config_from_query->buf);
+                o = ows_init();
+                o->config_file = buffer_init();
+                buffer_copy(o->config_file, config_from_query);
+                /* Parse the configuration file and initialize ows struct */
+                ows_log(ows_get_base(owslist), 2, "START: Parse the configuration file and initialize ows struct");
+                if (!o->exit) ows_parse_config(o, o->config_file->buf);
+                /* Connect the ows to the database */
+                ows_log(ows_get_base(owslist), 2, "START: Connect the ows to the database");
+                if (!o->exit) ows_pg(o, o->pg_dsn->buf);
+                /* Fill layers storage metadata */
+                ows_log(ows_get_base(owslist), 2, "START: Fill layers storage metadata");
+                if (!o->exit) ows_layers_storage_fill(o);
+                o->init = false;
+                ows_list_add(owslist, o);
+            }
+        }
+    }
+    if(!o)
+    {
+        o = ows_get_base(owslist);
+        ows_log(o, 2, "!o is NULL get default");
+    }
 #endif
 
     query=NULL;

@@ -349,6 +349,7 @@ typedef struct Ows_request {
 #define OWS_MAX_DOUBLE 1e15  /* %f vs %g */
 
 typedef struct Ows {
+    bool base;
     bool init;
     bool exit;
     PGconn * pg;
@@ -392,6 +393,19 @@ typedef struct Ows {
     xmlSchemaPtr  schema_wfs_100;
     xmlSchemaPtr  schema_wfs_110;
 } ows;
+
+typedef struct Ows_node {
+    ows * the_ows;
+    struct Ows_node * next;
+    struct Ows_node * prev;
+} ows_node;
+
+typedef struct Ows_list {
+    ows_node * first;
+    ows_node * last;
+    unsigned int size;
+} ows_list;
+
 
 #endif /* OWS_STRUCT_H */
 

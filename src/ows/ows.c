@@ -512,7 +512,7 @@ int main(int argc, char *argv[])
         if (buffer_ncmp(config_from_query, "ConfigFromQuery", 15))
         {
             buffer_shift(config_from_query, 16);
-            buffer_pop(config_from_query, strlen(strstr(config_from_query->buf, "&")));
+            if (strstr(config_from_query->buf, "&")) buffer_pop(config_from_query, strlen(strstr(config_from_query->buf, "&")));
             ows_log(ows_get_base(owslist), 2, "Go to find ows for config - ");
             o = ows_get_by_config_file(owslist, config_from_query);
             if (!o)
@@ -532,6 +532,12 @@ int main(int argc, char *argv[])
                 ows_log(ows_get_base(owslist), 2, "START: Fill layers storage metadata");
                 if (!o->exit) ows_layers_storage_fill(o);
                 o->init = false;
+                /* Correct online resource 
+                TODO: if "?" exist must use "&ConfigFromQuery="*/
+                ows_log(ows_get_base(owslist), 2, "Correct online resource");
+                buffer_add_str(o->online_resource, "?ConfigFromQuery=");
+                buffer_copy(o->online_resource, o->config_file);
+                ows_log(ows_get_base(owslist), 2, o->online_resource->buf);
                 ows_list_add(owslist, o);
             }
         }

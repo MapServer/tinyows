@@ -465,6 +465,7 @@ int main(int argc, char *argv[])
     char *query;
 #if TINYOWS_FCGI
     buffer * config_from_query;
+    buffer * buf_for_log;
     ows_list * owslist;
 
     owslist = ows_list_init();
@@ -513,25 +514,37 @@ int main(int argc, char *argv[])
         {
             buffer_shift(config_from_query, 16);
             if (strstr(config_from_query->buf, "&")) buffer_pop(config_from_query, strlen(strstr(config_from_query->buf, "&")));
-            ows_log(ows_get_base(owslist), 2, "Go to find ows for config - ");
+
+            buf_for_log = buffer_from_str("Go to find ows for config - ");
+            buffer_copy(buf_for_log, config_from_query);
+            ows_log(ows_get_base(owslist), 2, buf_for_log->buf);
+            buffer_free(buf_for_log);
+
             o = ows_get_by_config_file(owslist, config_from_query);
             if (!o)
             {
-                ows_log(ows_get_base(owslist), 2, "Can not find ows for config - ");
-                ows_log(ows_get_base(owslist), 2, config_from_query->buf);
+                buf_for_log = buffer_from_str("Can not find ows for config - ");
+                buffer_copy(buf_for_log, config_from_query);
+                ows_log(ows_get_base(owslist), 2, buf_for_log->buf);
+                buffer_free(buf_for_log);
+
                 o = ows_init();
                 o->config_file = buffer_init();
                 buffer_copy(o->config_file, config_from_query);
+
                 /* Parse the configuration file and initialize ows struct */
                 ows_log(ows_get_base(owslist), 2, "START: Parse the configuration file and initialize ows struct");
                 if (!o->exit) ows_parse_config(o, o->config_file->buf);
+
                 /* Connect the ows to the database */
                 ows_log(ows_get_base(owslist), 2, "START: Connect the ows to the database");
                 if (!o->exit) ows_pg(o, o->pg_dsn->buf);
+
                 /* Fill layers storage metadata */
                 ows_log(ows_get_base(owslist), 2, "START: Fill layers storage metadata");
                 if (!o->exit) ows_layers_storage_fill(o);
                 o->init = false;
+
                 /* Correct online resource 
                 TODO: if "?" exist must use "&ConfigFromQuery="*/
                 ows_log(ows_get_base(owslist), 2, "Correct online resource");
@@ -545,7 +558,11 @@ int main(int argc, char *argv[])
     if(!o)
     {
         o = ows_get_base(owslist);
-        ows_log(o, 2, "!o is NULL get default");
+
+        buf_for_log = buffer_from_str("Set base ows with config - ");
+        buffer_copy(buf_for_log, o->config_file);
+        ows_log(ows_get_base(owslist), 2, buf_for_log->buf);
+        buffer_free(buf_for_log);
     }
 #endif
 

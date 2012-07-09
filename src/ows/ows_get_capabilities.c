@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
 #include "ows.h"
 
@@ -42,7 +43,10 @@ void ows_get_capabilities_dcpt(const ows * o, const char * req)
     fprintf(o->output, "    <ows:DCP>\n");
     fprintf(o->output, "     <ows:HTTP>\n");
     fprintf(o->output, "      <ows:Get xlink:href=\"");
-    fprintf(o->output, "%s?%s\"/>\n", o->online_resource->buf, req);
+    if (!strstr(o->online_resource->buf, "?"))
+        fprintf(o->output, "%s?%s\"/>\n", o->online_resource->buf, req);
+    else
+        fprintf(o->output, "%s&amp;%s\"/>\n", o->online_resource->buf, req);
     fprintf(o->output, "     </ows:HTTP>\n");
     fprintf(o->output, "    </ows:DCP>\n");
     fprintf(o->output, "    <ows:DCP>\n");

@@ -194,8 +194,12 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
         for (elemt = ns_prefix->first ; elemt ; elemt = elemt->next) {
             namespace = ows_layer_ns_uri(o->layers, elemt->value);
             fprintf(o->output, "<xs:import namespace='%s' ", namespace->buf);
-            fprintf(o->output, "schemaLocation='%s?service=WFS&amp;version=",
-                    o->online_resource->buf);
+            if (!strstr(o->online_resource->buf, "?"))
+                fprintf(o->output, "schemaLocation='%s?service=WFS&amp;version=",
+                        o->online_resource->buf);
+            else
+                fprintf(o->output, "schemaLocation='%s&amp;service=WFS&amp;version=",
+                        o->online_resource->buf);
 
             if (wfs_version == 100)
                 fprintf(o->output, "1.0.0&amp;request=DescribeFeatureType&amp;typename=");
@@ -299,7 +303,10 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
         buffer_add_str(schema, "' schemaLocation='");
 
         buffer_copy(schema, o->online_resource);
-        buffer_add_str(schema, "?service=WFS&amp;request=DescribeFeatureType");
+        if (!strstr(o->online_resource->buf, "?"))
+            buffer_add_str(schema, "?service=WFS&amp;request=DescribeFeatureType");
+        else
+            buffer_add_str(schema, "&amp;service=WFS&amp;request=DescribeFeatureType");
 
         if (elemt->next || elemt != ns_prefix->first) {
             buffer_add_str(schema, "&amp;Typename=");

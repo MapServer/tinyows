@@ -253,7 +253,16 @@ void buffer_add_str(buffer * buf, const char *str)
     assert(buf);
     assert(str);
 
-    while (*str++) buffer_add(buf, *(str - 1));
+    if ((strlen(str) + buf->use) >= buf->size)
+    {
+        while ((strlen(str) + buf->use) >= buf->size)
+        {
+            buffer_realloc(buf);
+        }
+    }
+
+    strcat(buf->buf, str);
+    buf->use = buf->use + strlen(str);
 }
 
 
@@ -322,13 +331,10 @@ bool buffer_case_cmp(const buffer * buf, const char *str)
  */
 void buffer_copy(buffer * dest, const buffer * src)
 {
-    size_t i;
-
     assert(dest);
     assert(src);
 
-    for (i = 0; i < src->use; i++)
-        buffer_add(dest, src->buf[i]);
+    buffer_add_str(dest, src->buf);
 }
 
 

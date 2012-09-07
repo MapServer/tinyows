@@ -320,9 +320,7 @@ static void wfs_feature_type_list(ows * o)
 
             if (srs->use) {
                 if (ows_version_get(o->request->version) == 100) {
-                    fprintf(o->output, " <SRS>");
-                    buffer_flush(srs, o->output);
-                    fprintf(o->output, "</SRS>\n");
+                    fprintf(o->output, " <SRS>EPSG:%s</SRS>\n", srid->buf);
                 } else if (ows_version_get(o->request->version) == 110) {
                     fprintf(o->output, " <DefaultSRS>urn:ogc:def:crs:EPSG::%s</DefaultSRS>\n", srid->buf);
 

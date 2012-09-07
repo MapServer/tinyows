@@ -9,6 +9,14 @@ PGUSER=postgres
 SHP2PGSQL=@SHP2PGSQL@
 DB=tinyows_demo
 
+if [ -d @POSTGIS_SHARE@/contrib/postgis-2.0 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
+#else if [ -d @POSTGIS_SHARE@/contrib/postgis-1.5 ]; then
+#	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-1.5
+else
+	echo "Unable to find PostGIS dir in @POSTGIS_SHARE@/contrib/" && exit 1
+fi
+
 echo "Create Spatial Database: $DB"
 su $PGUSER -c "$PGBIN/dropdb $DB > /dev/null 2> /dev/null"
 su $PGUSER -c "$PGBIN/createdb $DB"

@@ -276,10 +276,12 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const char *srsname)
                              urn:ogc:def:crs:EPSG:6.6:4326
                              urn:x-ogc:def:crs:EPSG:6.6:4326
                              http://www.opengis.net/gml/srs/epsg.xml#4326
+                             spatialreferencing.org:900913
      */
      s->is_long = true;
 
-     if (!strncmp((char *) srsname,        "EPSG:", 5)) {
+     if    (!strncmp((char *) srsname,        "EPSG:", 5)
+         || !strncmp((char *) srsname, "spatialreferencing.org", 22)) {
          sep = ':';
          s->is_reverse_axis = false;
          s->is_long = false;
@@ -293,7 +295,7 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const char *srsname)
      } else if (!strncmp((char *) srsname, "http://www.opengis.net/gml/srs/epsg.xml#", 40)) {
          sep = '#';
          s->is_reverse_axis = false;
-     } else return false;
+     } else return false; /* FIXME must we really not allow other value ? */
 
      /*  Retrieve from last separator to the end of srsName string */
      for (p = srsname ; *p ; p++);

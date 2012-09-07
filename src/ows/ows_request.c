@@ -364,7 +364,8 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
                 if (buffer_cmp(typename, ln->layer->name->buf)) {
                     if (    !check_regexp(b->buf, "^http://www.opengis.net")
                          && !check_regexp(b->buf, "^EPSG")
-                         && !check_regexp(b->buf, "^urn:")) {
+                         && !check_regexp(b->buf, "^urn:") 
+                         && !check_regexp(b->buf, "^spatialreferencing.org")) {
                         ows_error(o, OWS_ERROR_CONFIG_FILE, "srsname isn't valid", "srsName");
                         return;
                     }

@@ -55,7 +55,11 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ym
         fprintf(o->output, "<gml:boundedBy>\n");
 
         if (wr->format == WFS_GML212) {
-            fprintf(o->output, "  <gml:Box srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
+            fprintf(o->output, "  <gml:Box srsName=\"");
+            if (strcmp(srs->auth_name->buf, "EPSG")) fprintf(o->output, "%s:", srs->auth_name->buf);
+	    else if (srs->is_long) fprintf(o->output, "urn:ogc:def:crs:EPSG:");
+            else fprintf(o->output, "EPSG:");
+            fprintf(o->output, "%d\">", srs->srid);
             
 	    if (fabs(xmin) > OWS_MAX_DOUBLE || fabs(ymin) > OWS_MAX_DOUBLE ||
                 fabs(xmax) > OWS_MAX_DOUBLE || fabs(ymax) > OWS_MAX_DOUBLE)
@@ -66,7 +70,12 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ym
             fprintf(o->output, "</gml:Box>\n");
 
         } else if (wr->format == WFS_GML311) {
-            fprintf(o->output, "  <gml:Envelope srsName=\"%s:%d\">", srs->is_long?"urn:ogc:def:crs:EPSG:":"EPSG", srs->srid);
+            fprintf(o->output, "  <gml:Envelope srsName=\"");
+            if (strcmp(srs->auth_name->buf, "EPSG")) fprintf(o->output, "%s:", srs->auth_name->buf);
+	    else if (srs->is_long) fprintf(o->output, "urn:ogc:def:crs:EPSG:");
+            else fprintf(o->output, "EPSG:");
+            fprintf(o->output, "%d\">", srs->srid);
+
             if (srs->is_reverse_axis && !srs->is_eastern_axis && srs->is_long) {
 		if (fabs(xmin) > OWS_MAX_DOUBLE || fabs(ymin) > OWS_MAX_DOUBLE ||
                     fabs(xmax) > OWS_MAX_DOUBLE || fabs(ymax) > OWS_MAX_DOUBLE) {

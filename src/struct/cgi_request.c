@@ -69,7 +69,6 @@ char *cgi_getback_query(ows * o)
 {
     char *query;
     int query_size = 0;
-    size_t result;
 
     if (cgi_method_get()) query = getenv("QUERY_STRING");
     else if (cgi_method_post()) {
@@ -77,7 +76,7 @@ char *cgi_getback_query(ows * o)
 
         query = malloc(sizeof(char) * query_size + 1);
         assert(query); /* FIXME Really ? */
-        result = fread(query, query_size, 1, stdin);
+        fread(query, query_size, 1, stdin);
         if (ferror(stdin)) {
             ows_error(o, OWS_ERROR_REQUEST_HTTP, "Error on QUERY input", "request");
             return NULL;

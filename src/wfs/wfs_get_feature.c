@@ -181,7 +181,6 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
     int i, j, number, end, nb_fields;
     buffer *id_name, *ns_prefix, *prop_type;
     array * describe;
-    list *mandatory_prop;
 
     assert(o);
     assert(wr);
@@ -196,7 +195,6 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
     if (id_name && id_name->use) number = PQfnumber(res, id_name->buf);
 
     ns_prefix = ows_layer_ns_prefix(o->layers, layer_name);
-    mandatory_prop = ows_psql_not_null_properties(o, layer_name);
     describe = ows_psql_describe_table(o, layer_name);
 
     /* display the results in gml */

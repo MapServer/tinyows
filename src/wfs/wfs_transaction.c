@@ -621,7 +621,7 @@ void wfs_delete(ows * o, wfs_request * wr)
     buffer *sql, *result, *where, *layer_name, *locator;
     int cpt, size;
     mlist_node *mln_fid;
-    list_node *ln, *ln_typename, *ln_filter;
+    list_node *ln_typename, *ln_filter;
     list *fe;
     filter_encoding *filter;
 
@@ -629,7 +629,6 @@ void wfs_delete(ows * o, wfs_request * wr)
     assert(wr);
 
     sql = buffer_init();
-    ln = NULL;
     ln_typename = NULL;
     ln_filter = NULL;
     mln_fid = NULL;

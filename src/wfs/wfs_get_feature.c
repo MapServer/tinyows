@@ -580,11 +580,12 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
   mlist_node *mln_fid;
   list *fid, *sql_req, *from_list, *where_list;
   list_node *ln_typename, *ln_filter;
-  buffer *geom, *sql, *where, *layer_name;
-  int srid, size, cpt;
+  buffer *geom, *sql, *where, *layer_name, *sql_count;
+  int srid, size, cpt, features, max_features;
   filter_encoding *fe;
   ows_bbox *bbox;
   char *escaped;
+  PGresult * res;
 
   assert(o);
   assert(wr);
@@ -595,6 +596,7 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
   where = NULL;
   geom = NULL;
   size = 0;
+  features = 0;
 
   /* initialize the nodes to run through typename and fid */
   if (wr->typename) {
@@ -716,16 +718,37 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     }
 
     /* maxfeatures parameter, or max_features ows limits, limits the number of results */
-    if (wr->maxfeatures > 0) {
-      buffer_add_str(where, " LIMIT ");
-      if (o->max_features > 0 && wr->maxfeatures > o->max_features)
-        buffer_add_int(where, o->max_features); /* Server limit took precedence */
-      else buffer_add_int(where, wr->maxfeatures);
-    } else if (o->max_features > 0) {
-      buffer_add_str(where, " LIMIT ");
-      buffer_add_int(where, o->max_features);
-    }
+    if (wr->maxfeatures > o->max_features && o->max_features > 0) 
+	max_features = o->max_features;
+    else 
+	max_features = wr->maxfeatures;
 
+    if (max_features > 0 && wr->typename->size == 1) {
+      buffer_add_str(where, " LIMIT ");
+      buffer_add_int(where, max_features);
+    } else if (max_features > 0 && wr->typename->size > 1) {
+	/* We have to compute LIMIT for each layer in this case ! */
+	sql_count = buffer_init();
+	buffer_add_str(sql_count, "SELECT count(*) FROM (");
+        buffer_copy(sql_count, sql);
+        buffer_copy(sql_count, where);
+	buffer_add_str(sql_count, " LIMIT ");
+        buffer_add_int(sql_count, max_features - features );
+	buffer_add_str(sql_count, ") AS c");
+ 	res = ows_psql_exec(o, sql_count->buf);
+    	if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+		if (features + atoi(PQgetvalue(res, 0, 0)) <= max_features) {
+			buffer_add_str(where, " LIMIT ");
+			if ((max_features - features) > 0)
+        			buffer_add_int(where, max_features - features);
+			else buffer_add_int(where, 0);
+      			features += atoi(PQgetvalue(res, 0, 0));
+		}
+        }
+    	PQclear(res);
+	buffer_free(sql_count);
+    }
+	
     buffer_copy(sql, where);
 
     list_add(sql_req, sql);
@@ -878,5 +901,5 @@ void wfs_get_feature(ows * o, wfs_request * wr)
 
 
 /*
- * vim: expandtab sw=4 ts=4
+ * vim: expandtab sw=2 ts=2
  */

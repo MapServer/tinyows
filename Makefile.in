@@ -85,3 +85,7 @@ test-valgrind110:
 
 test-valgrind100:
 	@test/unit_test test/wfs_100/cite 1
+
+astyle:
+	astyle --style=k/r --indent=spaces=2 -c --lineend=linux -S $(SRC) src/*.h*
+	rm -f src/*.orig src/*/*.orig

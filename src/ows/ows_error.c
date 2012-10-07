@@ -32,36 +32,36 @@
  */
 static char *ows_error_code_string(enum ows_error_code code)
 {
-    switch (code) {
-        case OWS_ERROR_OPERATION_NOT_SUPPORTED:
-            return "OperationNotSupported";
-        case OWS_ERROR_MISSING_PARAMETER_VALUE:
-            return "MissingParameterValue";
-        case OWS_ERROR_INVALID_PARAMETER_VALUE:
-            return "InvalidParameterValue";
-        case OWS_ERROR_VERSION_NEGOTIATION_FAILED:
-            return "VersionNegotiationFailed";
-        case OWS_ERROR_INVALID_UPDATE_SEQUENCE:
-            return "InvalidUpdateSequence";
-        case OWS_ERROR_NO_APPLICABLE_CODE:
-            return "NoApplicableCode";
-        case OWS_ERROR_CONNECTION_FAILED:
-            return "ConnectionFailed";
-        case OWS_ERROR_CONFIG_FILE:
-            return "ErrorConfigFile";
-        case OWS_ERROR_REQUEST_SQL_FAILED:
-            return "RequestSqlFailed";
-        case OWS_ERROR_REQUEST_HTTP:
-            return "RequestHTTPNotValid";
-        case OWS_ERROR_FORBIDDEN_CHARACTER:
-            return "ForbiddenCharacter";
-        case OWS_ERROR_MISSING_METADATA:
-            return "MissingMetadata";
-        case OWS_ERROR_NO_SRS_DEFINED:
-            return "NoSrsDefined";
-    }
+  switch (code) {
+    case OWS_ERROR_OPERATION_NOT_SUPPORTED:
+      return "OperationNotSupported";
+    case OWS_ERROR_MISSING_PARAMETER_VALUE:
+      return "MissingParameterValue";
+    case OWS_ERROR_INVALID_PARAMETER_VALUE:
+      return "InvalidParameterValue";
+    case OWS_ERROR_VERSION_NEGOTIATION_FAILED:
+      return "VersionNegotiationFailed";
+    case OWS_ERROR_INVALID_UPDATE_SEQUENCE:
+      return "InvalidUpdateSequence";
+    case OWS_ERROR_NO_APPLICABLE_CODE:
+      return "NoApplicableCode";
+    case OWS_ERROR_CONNECTION_FAILED:
+      return "ConnectionFailed";
+    case OWS_ERROR_CONFIG_FILE:
+      return "ErrorConfigFile";
+    case OWS_ERROR_REQUEST_SQL_FAILED:
+      return "RequestSqlFailed";
+    case OWS_ERROR_REQUEST_HTTP:
+      return "RequestHTTPNotValid";
+    case OWS_ERROR_FORBIDDEN_CHARACTER:
+      return "ForbiddenCharacter";
+    case OWS_ERROR_MISSING_METADATA:
+      return "MissingMetadata";
+    case OWS_ERROR_NO_SRS_DEFINED:
+      return "NoSrsDefined";
+  }
 
-    assert(0); /* Should not happen */
+  assert(0); /* Should not happen */
 }
 
 
@@ -70,17 +70,17 @@ static char *ows_error_code_string(enum ows_error_code code)
  */
 void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
 {
-    assert(o);
-    assert(message);
-    assert(locator);
+  assert(o);
+  assert(message);
+  assert(locator);
 
-    assert(!o->exit);
-    o->exit = true;
+  assert(!o->exit);
+  o->exit = true;
 
-    ows_log(o, 1, message);
+  ows_log(o, 1, message);
 
 #if TINYOWS_FCGI
-if ((o->init && FCGI_Accept() >= 0) || !o->init) {
+  if ((o->init && FCGI_Accept() >= 0) || !o->init) {
 #endif
     fprintf(o->output, "Content-Type: application/xml\n\n");
     fprintf(o->output, "<?xml version='1.0' encoding='UTF-8'?>\n");
@@ -99,7 +99,7 @@ if ((o->init && FCGI_Accept() >= 0) || !o->init) {
 
 #if TINYOWS_FCGI
     fflush(o->output);
-}
+  }
 #endif
 }
 

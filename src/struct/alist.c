@@ -38,15 +38,15 @@
  */
 alist *alist_init()
 {
-    alist *al = NULL;
+  alist *al = NULL;
 
-    al = malloc(sizeof(alist));
-    assert(al);
+  al = malloc(sizeof(alist));
+  assert(al);
 
-    al->first = NULL;
-    al->last = NULL;
+  al->first = NULL;
+  al->last = NULL;
 
-    return al;
+  return al;
 }
 
 
@@ -55,23 +55,23 @@ alist *alist_init()
  */
 void alist_free(alist * al)
 {
-    alist_node *an = NULL;
-    alist_node *an_to_free = NULL;
+  alist_node *an = NULL;
+  alist_node *an_to_free = NULL;
 
-    assert(al);
+  assert(al);
 
-    for (an = al->first ; an ; /* empty */) {
-        an_to_free = an;
-        an = an->next;
+  for (an = al->first ; an ; /* empty */) {
+    an_to_free = an;
+    an = an->next;
 
-        buffer_free(an_to_free->key);
-        list_free(an_to_free->value);
-        free(an_to_free);
-        an_to_free = NULL;
-    }
+    buffer_free(an_to_free->key);
+    list_free(an_to_free->value);
+    free(an_to_free);
+    an_to_free = NULL;
+  }
 
-    free(al);
-    al = NULL;
+  free(al);
+  al = NULL;
 }
 
 
@@ -82,31 +82,31 @@ void alist_free(alist * al)
  */
 void alist_add(alist * al, buffer * key, buffer * value)
 {
-    alist_node *an;
+  alist_node *an;
 
-    assert(al);
-    assert(key);
-    assert(value);
+  assert(al);
+  assert(key);
+  assert(value);
 
-    if (!alist_is_key(al, key->buf)) {
-        an = malloc(sizeof(alist_node));
-        assert(an);
+  if (!alist_is_key(al, key->buf)) {
+    an = malloc(sizeof(alist_node));
+    assert(an);
 
-        an->key = key;
-        an->value = list_init();
+    an->key = key;
+    an->value = list_init();
 
-        if (!al->first) al->first = an;
-        else            al->last->next = an;
+    if (!al->first) al->first = an;
+    else            al->last->next = an;
 
-        al->last = an;
-        al->last->next = NULL;
-    } else {
-        for (an = al->first ; an ; an = an->next)
-            if (buffer_case_cmp(an->key, key->buf))
-                break;
-    }
+    al->last = an;
+    al->last->next = NULL;
+  } else {
+    for (an = al->first ; an ; an = an->next)
+      if (buffer_case_cmp(an->key, key->buf))
+        break;
+  }
 
-    list_add(an->value, value);
+  list_add(an->value, value);
 }
 
 
@@ -115,18 +115,18 @@ void alist_add(alist * al, buffer * key, buffer * value)
  */
 bool alist_is_key(const alist * al, const char *key)
 {
-    alist_node *an;
-    size_t ks;
+  alist_node *an;
+  size_t ks;
 
-    assert(al);
-    assert(key);
+  assert(al);
+  assert(key);
 
-    for (ks = strlen(key), an = al->first ; an ; an = an->next)
-        if (ks == an->key->use)
-            if (buffer_case_cmp(an->key, key))
-                return true;
+  for (ks = strlen(key), an = al->first ; an ; an = an->next)
+    if (ks == an->key->use)
+      if (buffer_case_cmp(an->key, key))
+        return true;
 
-    return false;
+  return false;
 }
 
 
@@ -137,21 +137,21 @@ bool alist_is_key(const alist * al, const char *key)
  */
 list *alist_get(const alist * al, const char *key)
 {
-    alist_node *an;
-    size_t ks;
+  alist_node *an;
+  size_t ks;
 
-    assert(al);
-    assert(key);
+  assert(al);
+  assert(key);
 
-    for (ks = strlen(key), an = al->first ; an ; an = an->next) {
-        if (ks == an->key->use)
-            if (buffer_case_cmp(an->key, key))
-                break;
-    }
+  for (ks = strlen(key), an = al->first ; an ; an = an->next) {
+    if (ks == an->key->use)
+      if (buffer_case_cmp(an->key, key))
+        break;
+  }
 
-    assert(an);
+  assert(an);
 
-    return an->value;
+  return an->value;
 }
 
 
@@ -162,18 +162,18 @@ list *alist_get(const alist * al, const char *key)
  */
 void alist_flush(const alist * al, FILE * output)
 {
-    alist_node *an;
+  alist_node *an;
 
-    assert(al);
-    assert(output);
+  assert(al);
+  assert(output);
 
-    for (an = al->first ; an ; an = an->next) {
-        fprintf(output, "[");
-        buffer_flush(an->key, output);
-        fprintf(output, "] -> ");
-        list_flush(an->value, output);
-        fprintf(output, "\n");
-    }
+  for (an = al->first ; an ; an = an->next) {
+    fprintf(output, "[");
+    buffer_flush(an->key, output);
+    fprintf(output, "] -> ");
+    list_flush(an->value, output);
+    fprintf(output, "\n");
+  }
 }
 #endif
 

@@ -35,26 +35,26 @@
  */
 bool check_regexp(const char *str_request, const char *str_regex)
 {
-    int err;
-    int match;
-    regex_t preg;
+  int err;
+  int match;
+  regex_t preg;
 
-    assert(str_request);
-    assert(str_regex);
+  assert(str_request);
+  assert(str_regex);
 
-    err = regcomp(&preg, str_regex, REG_NOSUB | REG_EXTENDED);
+  err = regcomp(&preg, str_regex, REG_NOSUB | REG_EXTENDED);
 
-    if (err == 0) {
+  if (err == 0) {
 
-        match = regexec(&preg, str_request, 0, NULL, 0);
-        regfree(&preg);
+    match = regexec(&preg, str_request, 0, NULL, 0);
+    regfree(&preg);
 
-        if (match == 0) return true;
-        else if (match == REG_NOMATCH) return false;
-        else return false;
-    }
+    if (match == 0) return true;
+    else if (match == REG_NOMATCH) return false;
+    else return false;
+  }
 
-    return false;
+  return false;
 }
 
 

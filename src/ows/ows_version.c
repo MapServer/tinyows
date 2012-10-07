@@ -32,16 +32,16 @@
  */
 ows_version *ows_version_init()
 {
-    ows_version *v;
+  ows_version *v;
 
-    v = malloc(sizeof(ows_version));
-    assert(v);
+  v = malloc(sizeof(ows_version));
+  assert(v);
 
-    v->major = -1;
-    v->minor = -1;
-    v->release = -1;
+  v->major = -1;
+  v->minor = -1;
+  v->release = -1;
 
-    return v;
+  return v;
 }
 
 
@@ -50,41 +50,41 @@ ows_version *ows_version_init()
  */
 void ows_version_set(ows_version * v, int major, int minor, int release)
 {
-    assert(v);
+  assert(v);
 
-    v->major = major;
-    v->minor = minor;
-    v->release = release;
+  v->major = major;
+  v->minor = minor;
+  v->release = release;
 }
 
 
 bool ows_version_set_str(ows_version * v, char *str)
 {
-    int i, major, minor, release;
-    char *p;
+  int i, major, minor, release;
+  char *p;
 
-    assert(v);
-    assert(str);
+  assert(v);
+  assert(str);
 
-    /* Nota: We don't handle version on 2 digits like X.YY.Z */
-    if (!check_regexp(str, "[0-9].[0-9].[0-9]")) return false;
+  /* Nota: We don't handle version on 2 digits like X.YY.Z */
+  if (!check_regexp(str, "[0-9].[0-9].[0-9]")) return false;
 
-    i = major = minor = release = -1;
-    for ( p = str; *p ; p++, i = *(p - 1)) {
-		     
-	/* 48 means 0 in ASCII */
-	if (*(p) == '.') {
-		     if (major < 0) major = i - 48;
-		else if (major >= 0 && minor < 0) minor = i - 48;
-	}
+  i = major = minor = release = -1;
+  for ( p = str; *p ; p++, i = *(p - 1)) {
+
+    /* 48 means 0 in ASCII */
+    if (*(p) == '.') {
+      if (major < 0) major = i - 48;
+      else if (major >= 0 && minor < 0) minor = i - 48;
     }
-    release = *(p - 1) - 48;
+  }
+  release = *(p - 1) - 48;
 
-    v->major = major;
-    v->minor = minor;
-    v->release = release;
+  v->major = major;
+  v->minor = minor;
+  v->release = release;
 
-    return true;
+  return true;
 }
 
 
@@ -93,10 +93,10 @@ bool ows_version_set_str(ows_version * v, char *str)
  */
 void ows_version_free(ows_version * v)
 {
-    assert(v);
+  assert(v);
 
-    free(v);
-    v = NULL;
+  free(v);
+  v = NULL;
 }
 
 
@@ -105,26 +105,26 @@ void ows_version_free(ows_version * v)
  */
 int ows_version_get(ows_version * v)
 {
-    assert(v);
+  assert(v);
 
-    return v->major * 100 + v->minor * 10 + v->release;
+  return v->major * 100 + v->minor * 10 + v->release;
 }
 
 
 bool ows_version_check(ows_version *v)
 {
-    assert(v);
-    if (v->major == -1 || v->minor == -1 || v->release == -1) return false;
-    return true;
+  assert(v);
+  if (v->major == -1 || v->minor == -1 || v->release == -1) return false;
+  return true;
 }
 
 #ifdef OWS_DEBUG
 void ows_version_flush(ows_version * v, FILE * output)
 {
-    assert(v);
-    assert(output);
+  assert(v);
+  assert(output);
 
-    fprintf(output, "version: [%i,%i,%i]\n", v->major, v->minor, v->release);
+  fprintf(output, "version: [%i,%i,%i]\n", v->major, v->minor, v->release);
 }
 #endif
 

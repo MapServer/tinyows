@@ -34,12 +34,12 @@
  */
 bool fe_is_logical_op(char *name)
 {
-    assert(name);
+  assert(name);
 
-    /* NOTA: GML is case sensitive */
-    if (!strcmp(name, "And") || !strcmp(name, "Or") || !strcmp(name, "Not")) return true;
+  /* NOTA: GML is case sensitive */
+  if (!strcmp(name, "And") || !strcmp(name, "Or") || !strcmp(name, "Not")) return true;
 
-    return false;
+  return false;
 }
 
 
@@ -49,43 +49,43 @@ bool fe_is_logical_op(char *name)
  */
 static buffer *fe_binary_logical_op(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    xmlNodePtr node;
-    assert(o);
-    assert(typename);
-    assert(fe);
-    assert(n);
+  xmlNodePtr node;
+  assert(o);
+  assert(typename);
+  assert(fe);
+  assert(n);
 
-    buffer_add_str(fe->sql, "(");
+  buffer_add_str(fe->sql, "(");
 
-    node = n->children;
-    while (node->type != XML_ELEMENT_NODE) node = node->next; /* Jump to next element if spaces */
+  node = n->children;
+  while (node->type != XML_ELEMENT_NODE) node = node->next; /* Jump to next element if spaces */
+
+  /* Execute the matching function's type */
+  if (fe_is_logical_op((char *) node->name))    fe->sql = fe_logical_op(o, typename, fe, node);
+  else if (fe_is_spatial_op((char *) node->name))    fe->sql = fe_spatial_op(o, typename, fe, node);
+  else if (fe_is_comparison_op((char *) node->name)) fe->sql = fe_comparison_op(o, typename, fe, node);
+
+  /* We could have severals terms in a logical */
+  for ( node = node->next ; node ; node = node->next ) {
+    if (node->type != XML_ELEMENT_NODE) continue;
+
+    /* Revert boolean logical if inside a Not */
+    if (!fe->in_not) {
+      if (!strcmp((char *) n->name, "And")) buffer_add_str(fe->sql, " AND ");
+      else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " OR ");
+    } else {
+      if (!strcmp((char *) n->name, "And")) buffer_add_str(fe->sql, " OR ");
+      else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " AND ");
+    }
 
     /* Execute the matching function's type */
-         if (fe_is_logical_op((char *) node->name))    fe->sql = fe_logical_op(o, typename, fe, node);
+    if (fe_is_logical_op((char *) node->name))    fe->sql = fe_logical_op(o, typename, fe, node);
     else if (fe_is_spatial_op((char *) node->name))    fe->sql = fe_spatial_op(o, typename, fe, node);
     else if (fe_is_comparison_op((char *) node->name)) fe->sql = fe_comparison_op(o, typename, fe, node);
+  }
+  buffer_add_str(fe->sql, ")");
 
-    /* We could have severals terms in a logical */
-    for ( node = node->next ; node ; node = node->next ) {
-        if (node->type != XML_ELEMENT_NODE) continue;
-
-        /* Revert boolean logical if inside a Not */
-        if (!fe->in_not) {
-                 if (!strcmp((char *) n->name, "And")) buffer_add_str(fe->sql, " AND ");
-            else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " OR ");
-        } else {
-                 if (!strcmp((char *) n->name, "And")) buffer_add_str(fe->sql, " OR ");
-            else if (!strcmp((char *) n->name, "Or")) buffer_add_str(fe->sql, " AND ");
-        }
-
-        /* Execute the matching function's type */
-             if (fe_is_logical_op((char *) node->name))    fe->sql = fe_logical_op(o, typename, fe, node);
-        else if (fe_is_spatial_op((char *) node->name))    fe->sql = fe_spatial_op(o, typename, fe, node);
-        else if (fe_is_comparison_op((char *) node->name)) fe->sql = fe_comparison_op(o, typename, fe, node);
-    }
-    buffer_add_str(fe->sql, ")");
-
-    return fe->sql;
+  return fe->sql;
 }
 
 
@@ -95,26 +95,26 @@ static buffer *fe_binary_logical_op(ows * o, buffer * typename, filter_encoding 
  */
 static buffer *fe_unary_logical_op(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    assert(typename);
-    assert(o);
-    assert(fe);
-    assert(n);
+  assert(typename);
+  assert(o);
+  assert(fe);
+  assert(n);
 
-    buffer_add_str(fe->sql, "not(");
-    fe->in_not++;
+  buffer_add_str(fe->sql, "not(");
+  fe->in_not++;
 
-    n = n->children;
-    while (n->type != XML_ELEMENT_NODE) n = n->next;
+  n = n->children;
+  while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-    /* Execute the matching function's type */
-         if (fe_is_logical_op((char *) n->name))    fe->sql = fe_logical_op(o, typename, fe, n);
-    else if (fe_is_spatial_op((char *) n->name))    fe->sql = fe_spatial_op(o, typename, fe, n);
-    else if (fe_is_comparison_op((char *) n->name)) fe->sql = fe_comparison_op(o, typename, fe, n);
+  /* Execute the matching function's type */
+  if (fe_is_logical_op((char *) n->name))    fe->sql = fe_logical_op(o, typename, fe, n);
+  else if (fe_is_spatial_op((char *) n->name))    fe->sql = fe_spatial_op(o, typename, fe, n);
+  else if (fe_is_comparison_op((char *) n->name)) fe->sql = fe_comparison_op(o, typename, fe, n);
 
-    buffer_add_str(fe->sql, ")");
-    fe->in_not--;
+  buffer_add_str(fe->sql, ")");
+  fe->in_not--;
 
-    return fe->sql;
+  return fe->sql;
 }
 
 
@@ -125,21 +125,21 @@ static buffer *fe_unary_logical_op(ows * o, buffer * typename, filter_encoding *
  */
 buffer *fe_logical_op(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-    assert(typename);
-    assert(o);
-    assert(fe);
-    assert(n);
+  assert(typename);
+  assert(o);
+  assert(fe);
+  assert(n);
 
-    /* case sensitive comparison because the gml standard specifies
-       strictly the name of the operator */
-    if (!strcmp((char *) n->name, "And") || !strcmp((char *) n->name, "Or"))
-        fe->sql = fe_binary_logical_op(o, typename, fe, n);
-    else if (!strcmp((char *) n->name, "Not"))
-        fe->sql = fe_unary_logical_op(o, typename, fe, n);
-    else
-        fe->error_code = FE_ERROR_FILTER;
+  /* case sensitive comparison because the gml standard specifies
+     strictly the name of the operator */
+  if (!strcmp((char *) n->name, "And") || !strcmp((char *) n->name, "Or"))
+    fe->sql = fe_binary_logical_op(o, typename, fe, n);
+  else if (!strcmp((char *) n->name, "Not"))
+    fe->sql = fe_unary_logical_op(o, typename, fe, n);
+  else
+    fe->error_code = FE_ERROR_FILTER;
 
-    return fe->sql;
+  return fe->sql;
 }
 
 

@@ -35,16 +35,16 @@
  */
 mlist *mlist_init()
 {
-    mlist *ml = NULL;
+  mlist *ml = NULL;
 
-    ml = malloc(sizeof(mlist));
-    assert(ml);
+  ml = malloc(sizeof(mlist));
+  assert(ml);
 
-    ml->first = NULL;
-    ml->last = NULL;
-    ml->size = 0;
+  ml->first = NULL;
+  ml->last = NULL;
+  ml->size = 0;
 
-    return ml;
+  return ml;
 }
 
 
@@ -53,13 +53,13 @@ mlist *mlist_init()
  */
 void mlist_free(mlist * ml)
 {
-    assert(ml);
+  assert(ml);
 
-    while (ml->first) mlist_node_free(ml, ml->first);
+  while (ml->first) mlist_node_free(ml, ml->first);
 
-    ml->last = NULL;
-    free(ml);
-    ml = NULL;
+  ml->last = NULL;
+  free(ml);
+  ml = NULL;
 }
 
 
@@ -70,27 +70,27 @@ void mlist_free(mlist * ml)
  */
 void mlist_add(mlist * ml, list * value)
 {
-    mlist_node *mln;
+  mlist_node *mln;
 
-    assert(ml);
-    assert(value);
-    assert(ml->size < UINT_MAX);
+  assert(ml);
+  assert(value);
+  assert(ml->size < UINT_MAX);
 
-    mln = mlist_node_init();
+  mln = mlist_node_init();
 
-    mln->value = value;
+  mln->value = value;
 
-    if (!ml->first) {
-        mln->prev = NULL;
-        ml->first = mln;
-    } else {
-        mln->prev = ml->last;
-        ml->last->next = mln;
-    }
+  if (!ml->first) {
+    mln->prev = NULL;
+    ml->first = mln;
+  } else {
+    mln->prev = ml->last;
+    ml->last->next = mln;
+  }
 
-    ml->last = mln;
-    ml->last->next = NULL;
-    ml->size++;
+  ml->last = mln;
+  ml->last->next = NULL;
+  ml->size++;
 }
 
 
@@ -99,16 +99,16 @@ void mlist_add(mlist * ml, list * value)
  */
 mlist_node *mlist_node_init()
 {
-    mlist_node *mln;
+  mlist_node *mln;
 
-    mln = malloc(sizeof(mlist_node));
-    assert(mln);
+  mln = malloc(sizeof(mlist_node));
+  assert(mln);
 
-    mln->value = NULL;
-    mln->prev = NULL;
-    mln->next = NULL;
+  mln->value = NULL;
+  mln->prev = NULL;
+  mln->next = NULL;
 
-    return mln;
+  return mln;
 }
 
 
@@ -117,22 +117,22 @@ mlist_node *mlist_node_init()
  */
 void mlist_node_free(mlist * ml, mlist_node * mln)
 {
-    assert(mln);
-    assert(ml);
+  assert(mln);
+  assert(ml);
 
-    if (mln->prev)
-        mln->prev = NULL;
+  if (mln->prev)
+    mln->prev = NULL;
 
-    if (mln->next) {
-        ml->first = mln->next;
-        mln->next = NULL;
-    } else
-        ml->first = NULL;
+  if (mln->next) {
+    ml->first = mln->next;
+    mln->next = NULL;
+  } else
+    ml->first = NULL;
 
-    if (mln->value) list_free(mln->value);
+  if (mln->value) list_free(mln->value);
 
-    free(mln);
-    mln = NULL;
+  free(mln);
+  mln = NULL;
 }
 
 
@@ -143,41 +143,41 @@ void mlist_node_free(mlist * ml, mlist_node * mln)
  */
 mlist *mlist_explode(char separator_start, char separator_end, buffer * value)
 {
-    size_t i;
-    mlist *ml;
-    list *l;
-    buffer *buf;
+  size_t i;
+  mlist *ml;
+  list *l;
+  buffer *buf;
 
-    assert(value);
+  assert(value);
 
-    ml = mlist_init();
+  ml = mlist_init();
 
-    /* if first char doesn't match separator, mlist contains only one element */
-    if (value->buf[0] != separator_start) {
-        /* according to wfs specification, elements inside a multiple list
-           are separated by a comma */
-        l = list_explode(',', value);
+  /* if first char doesn't match separator, mlist contains only one element */
+  if (value->buf[0] != separator_start) {
+    /* according to wfs specification, elements inside a multiple list
+       are separated by a comma */
+    l = list_explode(',', value);
+    mlist_add(ml, l);
+  } else {
+    buf = buffer_init();
+
+    for (i = 1; i < value->use; i++)
+      if (value->buf[i] == separator_end) {
+        /* explode the mlist's element */
+        l = list_explode(',', buf);
+        /* add the list to the multiple list */
         mlist_add(ml, l);
-    } else {
+        buffer_free(buf);
+      } else if (value->buf[i] != separator_start) {
+        buffer_add(buf, value->buf[i]);
+      }
+    /* separator start */
+      else
         buf = buffer_init();
 
-        for (i = 1; i < value->use; i++)
-            if (value->buf[i] == separator_end) {
-                /* explode the mlist's element */
-                l = list_explode(',', buf);
-                /* add the list to the multiple list */
-                mlist_add(ml, l);
-                buffer_free(buf);
-            } else if (value->buf[i] != separator_start) {
-                buffer_add(buf, value->buf[i]);
-            }
-        /* separator start */
-            else
-                buf = buffer_init();
+  }
 
-    }
-
-    return ml;
+  return ml;
 }
 
 
@@ -188,16 +188,16 @@ mlist *mlist_explode(char separator_start, char separator_end, buffer * value)
  */
 void mlist_flush(const mlist * ml, FILE * output)
 {
-    mlist_node *mln;
+  mlist_node *mln;
 
-    assert(ml);
-    assert(output);
+  assert(ml);
+  assert(output);
 
-    for (mln = ml->first ; mln ; mln = mln->next) {
-        fprintf(output, "(\n");
-        list_flush(mln->value, output);
-        fprintf(output, ")\n");
-    }
+  for (mln = ml->first ; mln ; mln = mln->next) {
+    fprintf(output, "(\n");
+    list_flush(mln->value, output);
+    fprintf(output, ")\n");
+  }
 }
 #endif
 

@@ -35,15 +35,15 @@
  */
 array *array_init()
 {
-    array *arr = NULL;
+  array *arr = NULL;
 
-    arr = malloc(sizeof(array));
-    assert(arr);
+  arr = malloc(sizeof(array));
+  assert(arr);
 
-    arr->first = NULL;
-    arr->last = NULL;
+  arr->first = NULL;
+  arr->last = NULL;
 
-    return arr;
+  return arr;
 }
 
 
@@ -52,23 +52,23 @@ array *array_init()
  */
 void array_free(array * a)
 {
-    array_node *an = NULL;
-    array_node *an_to_free = NULL;
+  array_node *an = NULL;
+  array_node *an_to_free = NULL;
 
-    assert(a);
+  assert(a);
 
-    for (an = a->first ; an ; /* empty */) {
-        an_to_free = an;
-        an = an->next;
+  for (an = a->first ; an ; /* empty */) {
+    an_to_free = an;
+    an = an->next;
 
-        buffer_free(an_to_free->key);
-        buffer_free(an_to_free->value);
-        free(an_to_free);
-        an_to_free = NULL;
-    }
+    buffer_free(an_to_free->key);
+    buffer_free(an_to_free->value);
+    free(an_to_free);
+    an_to_free = NULL;
+  }
 
-    free(a);
-    a = NULL;
+  free(a);
+  a = NULL;
 }
 
 
@@ -79,23 +79,23 @@ void array_free(array * a)
  */
 void array_add(array * a, buffer * key, buffer * value)
 {
-    array_node *an;
+  array_node *an;
 
-    assert(a);
-    assert(key);
-    assert(value);
+  assert(a);
+  assert(key);
+  assert(value);
 
-    an = malloc(sizeof(array_node));
-    assert(an);
+  an = malloc(sizeof(array_node));
+  assert(an);
 
-    an->key = key;
-    an->value = value;
+  an->key = key;
+  an->value = value;
 
-    if (!a->first) a->first = an;
-    else           a->last->next = an;
+  if (!a->first) a->first = an;
+  else           a->last->next = an;
 
-    a->last = an;
-    a->last->next = NULL;
+  a->last = an;
+  a->last->next = NULL;
 }
 
 
@@ -104,18 +104,18 @@ void array_add(array * a, buffer * key, buffer * value)
  */
 bool array_is_key(const array * a, const char *key)
 {
-    array_node *an;
-    size_t ks;
+  array_node *an;
+  size_t ks;
 
-    assert(a);
-    assert(key);
+  assert(a);
+  assert(key);
 
-    for (ks = strlen(key), an = a->first ; an ; an = an->next)
-        if (ks == an->key->use)
-            if (buffer_case_cmp(an->key, key))
-                return true;
+  for (ks = strlen(key), an = a->first ; an ; an = an->next)
+    if (ks == an->key->use)
+      if (buffer_case_cmp(an->key, key))
+        return true;
 
-    return false;
+  return false;
 }
 
 
@@ -126,21 +126,21 @@ bool array_is_key(const array * a, const char *key)
  */
 buffer *array_get(const array * a, const char *key)
 {
-    array_node *an;
-    size_t ks;
+  array_node *an;
+  size_t ks;
 
-    assert(a);
-    assert(key);
+  assert(a);
+  assert(key);
 
-    for (ks = strlen(key), an = a->first ; an ; an = an->next) {
-        if (ks == an->key->use)
-            if (buffer_case_cmp(an->key, key))
-                break;
-    }
+  for (ks = strlen(key), an = a->first ; an ; an = an->next) {
+    if (ks == an->key->use)
+      if (buffer_case_cmp(an->key, key))
+        break;
+  }
 
-    assert(an);
+  assert(an);
 
-    return an->value;
+  return an->value;
 }
 
 
@@ -151,18 +151,18 @@ buffer *array_get(const array * a, const char *key)
  */
 void array_flush(const array * a, FILE * output)
 {
-    array_node *an;
+  array_node *an;
 
-    assert(a);
-    assert(output);
+  assert(a);
+  assert(output);
 
-    for (an = a->first ; an ; an = an->next) {
-        fprintf(output, "[");
-        buffer_flush(an->key, output);
-        fprintf(output, "] -> ");
-        buffer_flush(an->value, output);
-        fprintf(output, "\n");
-    }
+  for (an = a->first ; an ; an = an->next) {
+    fprintf(output, "[");
+    buffer_flush(an->key, output);
+    fprintf(output, "] -> ");
+    buffer_flush(an->value, output);
+    fprintf(output, "\n");
+  }
 }
 #endif
 

@@ -57,7 +57,7 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ym
         if (wr->format == WFS_GML212) {
             fprintf(o->output, "  <gml:Box srsName=\"");
             if (strcmp(srs->auth_name->buf, "EPSG")) fprintf(o->output, "%s:", srs->auth_name->buf);
-	    else if (srs->is_long) fprintf(o->output, "urn:ogc:def:crs:EPSG:");
+	    else if (srs->is_long) fprintf(o->output, "urn:ogc:def:crs:EPSG::");
             else fprintf(o->output, "EPSG:");
             fprintf(o->output, "%d\">", srs->srid);
             
@@ -72,7 +72,7 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ym
         } else if (wr->format == WFS_GML311) {
             fprintf(o->output, "  <gml:Envelope srsName=\"");
             if (strcmp(srs->auth_name->buf, "EPSG")) fprintf(o->output, "%s:", srs->auth_name->buf);
-	    else if (srs->is_long) fprintf(o->output, "urn:ogc:def:crs:EPSG:");
+	    else if (srs->is_long) fprintf(o->output, "urn:ogc:def:crs:EPSG::");
             else fprintf(o->output, "EPSG:");
             fprintf(o->output, "%d\">", srs->srid);
 

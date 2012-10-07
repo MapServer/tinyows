@@ -457,7 +457,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
     if (ows_psql_is_geometry_column(o, layer_name, an->key)) {
 
       if (wr->format == WFS_GML212) {
-        buffer_add_str(select, "ST_AsGML(2, ");
+        buffer_add_str(select, "ST_AsGML(");
 
         /* Geometry Reprojection on the fly step if asked */
         if (wr->srs) {

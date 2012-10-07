@@ -71,9 +71,6 @@ install-test110:
 doc-clean:
 	@rm -rf doc/doxygen
 
-astyle:
-	astyle --style=kr --unpad=paren --indent=spaces=2 $(SRC)
-
 doxygen: doc-clean
 	@(which doxygen 2> /dev/null > /dev/null	\
 	&& mkdir -p doc/doxygen				\

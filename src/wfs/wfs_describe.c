@@ -132,7 +132,9 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
 						fprintf(o->output, "nillable='true' minOccurs='0' ");
 					fprintf(o->output, "maxOccurs='1'/>\n");
 				}
+				buffer_free(character_maximum_length);
 			}                      
+			buffer_free(constraint_name);
         } 
 		else
 		{

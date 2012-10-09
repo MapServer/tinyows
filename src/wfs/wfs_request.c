@@ -629,7 +629,6 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
 {
   buffer *b;
   mlist *f;
-  list *fe;
   list_node *ln, *ln_tpn;
   array *prop_table;
   mlist_node *mln = NULL;
@@ -658,25 +657,6 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
     prop_table = ows_psql_describe_table(o, ln_tpn->value);
 
     for (ln = mln->value->first ; ln ; ln = ln->next) {
-      fe = list_explode('.', ln->value);
-
-      /*case layer_name.propertyname */
-      if (fe->first->next) {
-        /*check if propertyname values match typename or fid layer names */
-        if (!buffer_cmp(fe->first->value, ln_tpn->value->buf)) {
-          list_free(fe);
-          mlist_free(f);
-          wfs_error(o, wr, WFS_ERROR_NO_MATCHING,
-                    "propertyname values and typename values don't match", "GetFeature");
-          return;
-        }
-
-        /* keep only the propertyname (without the layer prefixed) */
-        buffer_empty(ln->value);
-        buffer_copy(ln->value, fe->last->value);
-      }
-
-      list_free(fe);
 
       /* if propertyname is an Xpath expression */
       if (check_regexp(ln->value->buf, "\\*\\["))

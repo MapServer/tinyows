@@ -1,3 +1,12 @@
+12.10
+ - Generate PK using PG DEFAULT value if present (Serge Dikiy) 
+ - XSD max length and enumeration constraint handling (Serge Dikiy & Alan Boudreault)
+ - include_items config handling. To allow to not retrieve all layer's columns (Serge Dikiy)
+ - Add pkey configuration in lyaer config. Usefull for instance when retrieving data from a VIEW. (Serge Dikiy)
+ - Buffer copy improve performance (Serge Dikiy)
+ - Rewrite/fix max features handling (Olivier Courtin)
+ - Few bugfixes as usual
+
 1.0.0
  - Configuration change with broken backward compatibility:
     * default config file is now /etc/tinyows.xml

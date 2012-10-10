@@ -720,37 +720,37 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     /* maxfeatures parameter, or max_features ows limits, limits the number of results */
     max_features = -1;
     if (wr->maxfeatures > 0 && o->max_features > 0 &&
-	wr->maxfeatures > o->max_features) 
-	max_features = o->max_features;
-    else if (wr->maxfeatures > 0) 
-	max_features = wr->maxfeatures;
+        wr->maxfeatures > o->max_features)
+      max_features = o->max_features;
+    else if (wr->maxfeatures > 0)
+      max_features = wr->maxfeatures;
 
     if (max_features > 0 && wr->typename->size == 1) {
       buffer_add_str(where, " LIMIT ");
       buffer_add_int(where, max_features);
     } else if (max_features > 0 && wr->typename->size > 1) {
-	/* We have to compute LIMIT for each layer in this case ! */
-	sql_count = buffer_init();
-	buffer_add_str(sql_count, "SELECT count(*) FROM (");
-        buffer_copy(sql_count, sql);
-        buffer_copy(sql_count, where);
-	buffer_add_str(sql_count, " LIMIT ");
-        buffer_add_int(sql_count, max_features - features );
-	buffer_add_str(sql_count, ") AS c");
- 	res = ows_psql_exec(o, sql_count->buf);
-    	if (PQresultStatus(res) == PGRES_TUPLES_OK) {
-		if (features + atoi(PQgetvalue(res, 0, 0)) <= max_features) {
-			buffer_add_str(where, " LIMIT ");
-			if ((max_features - features) > 0)
-        			buffer_add_int(where, max_features - features);
-			else buffer_add_int(where, 0);
-      			features += atoi(PQgetvalue(res, 0, 0));
-		}
+      /* We have to compute LIMIT for each layer in this case ! */
+      sql_count = buffer_init();
+      buffer_add_str(sql_count, "SELECT count(*) FROM (");
+      buffer_copy(sql_count, sql);
+      buffer_copy(sql_count, where);
+      buffer_add_str(sql_count, " LIMIT ");
+      buffer_add_int(sql_count, max_features - features );
+      buffer_add_str(sql_count, ") AS c");
+      res = ows_psql_exec(o, sql_count->buf);
+      if (PQresultStatus(res) == PGRES_TUPLES_OK) {
+        if (features + atoi(PQgetvalue(res, 0, 0)) <= max_features) {
+          buffer_add_str(where, " LIMIT ");
+          if ((max_features - features) > 0)
+            buffer_add_int(where, max_features - features);
+          else buffer_add_int(where, 0);
+          features += atoi(PQgetvalue(res, 0, 0));
         }
-    	PQclear(res);
-	buffer_free(sql_count);
+      }
+      PQclear(res);
+      buffer_free(sql_count);
     }
-	
+
     buffer_copy(sql, where);
 
     list_add(sql_req, sql);

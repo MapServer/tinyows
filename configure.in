@@ -55,7 +55,7 @@ dnl ---------------------------------------------------------------------------
 dnl Git
 dnl ---------------------------------------------------------------------------
 AC_CHECK_PROG(git, git, yes)
-if test "$git" = "yes"; then
+if test "$git" = "yes" -a -d ".git"; then
 	GIT_FLAGS='"-D TINYOWS_GIT_COMMIT=\"$(shell git log -n 1 HEAD | grep commit)\""'
 	AC_SUBST(GIT_FLAGS)
 fi

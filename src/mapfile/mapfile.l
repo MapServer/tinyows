@@ -409,7 +409,7 @@ static void metadata_layer_key(char *yytext, bool quotes)
 	else if(!strncmp("tinyows_writable", yytext, 16))
 		map_lmd_state = MAP_LMD_TOWS_WRITABLE;
 	else if(!strncmp("tinyows_geobbox", yytext, 15))
-		map_md_state = MAP_LMD_TOWS_GEOBBOX;
+		map_lmd_state = MAP_LMD_TOWS_GEOBBOX;
 	else if(!strncmp("tinyows_gml_ns_list", yytext, 19))
 		map_lmd_state = MAP_LMD_TOWS_GML_NS_LIST;
 	else map_lmd_state = MAP_LMD_SKIP;

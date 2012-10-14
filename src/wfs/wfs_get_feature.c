@@ -719,11 +719,12 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
 
     /* maxfeatures parameter, or max_features ows limits, limits the number of results */
     max_features = -1;
-    if (wr->maxfeatures > 0 && o->max_features > 0 &&
-        wr->maxfeatures > o->max_features)
+    if (wr->maxfeatures > 0 && o->max_features > 0 && wr->maxfeatures > o->max_features)
       max_features = o->max_features;
     else if (wr->maxfeatures > 0)
       max_features = wr->maxfeatures;
+    else if (o->max_features > 0)
+      max_features = o->max_features;
 
     if (max_features > 0 && wr->typename->size == 1) {
       buffer_add_str(where, " LIMIT ");

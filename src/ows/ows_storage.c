@@ -338,6 +338,12 @@ static void ows_storage_fill_attributes(ows * o, ows_layer * l)
       buffer_copy(sql, ln->value);
       buffer_add_str(sql, "', ");
     }
+    if (l->include_items->first && l->storage->pkey) {
+      buffer_add_str(sql, "'");
+      buffer_copy(sql, l->storage->pkey );
+      buffer_add_str(sql, "',");
+    }
+
     buffer_add_str(sql, " '');");
   } else {
     buffer_add_str(sql, " AND a.attnum > 0;");
@@ -446,9 +452,9 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
 
   PQclear(res);
 
+  ows_storage_fill_pkey(o, l);
   ows_storage_fill_attributes(o, l);
   ows_storage_fill_not_null(o, l);
-  ows_storage_fill_pkey(o, l);
 }
 
 

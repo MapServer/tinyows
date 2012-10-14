@@ -11,8 +11,8 @@ DB=tinyows_demo
 
 if [ -d @POSTGIS_SHARE@/contrib/postgis-2.0 ]; then
 	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
-#else if [ -d @POSTGIS_SHARE@/contrib/postgis-1.5 ]; then
-#	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-1.5
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-1.5 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-1.5
 else
 	echo "Unable to find PostGIS dir in @POSTGIS_SHARE@/contrib/" && exit 1
 fi

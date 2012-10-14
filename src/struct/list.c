@@ -299,6 +299,49 @@ list *list_explode(char separator, const buffer * value)
 
 
 /*
+ * Trunk an initial buffer into two pieces upon a separator char
+ * (reverse could be use to begin string parse from the end)
+ * Careful returned list must then be free with list_free()
+ */
+list *list_split(char separator, const buffer * value, bool reverse)
+{
+  long int s;
+  list *l;
+  buffer *buf1, *buf2;
+
+  assert(value);
+
+  l = list_init();
+  buf1 = buffer_init();
+  buffer_copy(buf1, value);
+
+  if (reverse) 
+    s = buffer_rchr(value, separator);
+  else
+    s = buffer_chr(value, separator);
+
+  if (s <= 0 || s == value->use) {
+    list_add(l, buf1);
+    return l;
+  }
+
+  buf2 = buffer_init();
+  buffer_add_nstr(buf2, value->buf, s);
+  buffer_shift(buf1, s + 1);
+
+  if (reverse) {
+    list_add(l, buf1);
+    list_add(l, buf2);
+  } else {
+    list_add(l, buf2);
+    list_add(l, buf1);
+  }
+
+  return l;
+}
+
+
+/*
  * Trunk an initial buffer into several pieces upon two separators
  * Careful returned list must then be free with list_free()
  */

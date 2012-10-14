@@ -314,11 +314,11 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
   for (mln = f->first ; mln ; mln = mln->next) {
     for (ln = mln->value->first ; ln ; ln = ln->next) {
-      fe = list_explode('.', ln->value);
+      fe = list_split('.', ln->value, true);
 
       if (wr->typename) {
         /* Check the mapping between fid and typename */
-        if (!buffer_cmp(fe->first->value, ln_tpn->value->buf)) {
+        if (!buffer_cmp(fe->last->value, ln_tpn->value->buf)) {
           list_free(layer_name);
           list_free(fe);
           mlist_free(f);
@@ -338,14 +338,14 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
       /* If typename is NULL, fill the layer name list */
       if (!wr->typename) {
-        fe->first->value = wfs_request_remove_namespaces(o, fe->first->value);
+        fe->last->value = wfs_request_remove_namespaces(o, fe->last->value);
 
-        if (!in_list(layer_name, fe->first->value))
-          list_add_by_copy(layer_name, fe->first->value);
+        if (!in_list(layer_name, fe->last->value))
+          list_add_by_copy(layer_name, fe->last->value);
       }
 
       /* Check if layer exists */
-      if (!ows_layer_in_list(o->layers, fe->first->value)) {
+      if (!ows_layer_in_list(o->layers, fe->last->value)) {
         list_free(layer_name);
         list_free(fe);
         mlist_free(f);
@@ -354,7 +354,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
       }
 
       /* Check if layer is retrievable if request is getFeature */
-      if (wr->request == WFS_GET_FEATURE && !ows_layer_retrievable(o->layers, fe->first->value)) {
+      if (wr->request == WFS_GET_FEATURE && !ows_layer_retrievable(o->layers, fe->last->value)) {
         list_free(layer_name);
         list_free(fe);
         mlist_free(f);
@@ -364,7 +364,7 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
       }
 
       /* Check if layer is writable if request is a transaction operation */
-      if (wr->operation && !ows_layer_writable(o->layers, fe->first->value)) {
+      if (wr->operation && !ows_layer_writable(o->layers, fe->last->value)) {
         list_free(layer_name);
         list_free(fe);
         mlist_free(f);

@@ -253,14 +253,31 @@ void buffer_add_str(buffer * buf, const char *str)
   assert(buf);
   assert(str);
 
-  if ((strlen(str) + buf->use) >= buf->size) {
-    while ((strlen(str) + buf->use) >= buf->size) {
+  if ((strlen(str) + buf->use) >= buf->size)
+    while ((strlen(str) + buf->use) >= buf->size)
       buffer_realloc(buf);
-    }
-  }
 
   strcat(buf->buf, str);
   buf->use = buf->use + strlen(str);
+}
+
+
+/*
+ * Add n char from string to a buffer
+ */
+void buffer_add_nstr(buffer * buf, const char *str, size_t n)
+{
+  assert(buf);
+  assert(str);
+  assert(n > 0);
+  assert(n <= strlen(str));
+
+  if ((n + buf->use) >= buf->size) 
+    while ((n + buf->use) >= buf->size)
+      buffer_realloc(buf);
+
+  strncat(buf->buf, str, n);
+  buf->use = buf->use + n;
 }
 
 
@@ -409,6 +426,45 @@ buffer *buffer_replace(buffer * buf, char *before, char *after)
   buffer_free(new_buf);
 
   return buf;
+}
+
+
+/*
+ * Retrieve first position inside a buffer of a specific char
+ * or -1 if not found.
+ */
+long int buffer_chr(const buffer * buf, char c)
+{
+  size_t i;
+
+  assert(buf);
+  assert(c);
+
+  for(i=0 ; i < buf->use ; i++) {
+    if (buf->buf[i] == c)
+      return i;
+  }
+
+  return -1;
+}
+
+
+/*
+ * Same as buffer_chr but begin by the end of buffer 
+ */
+long int buffer_rchr(const buffer * buf, char c)
+{
+  size_t i;
+
+  assert(buf);
+  assert(c);
+
+  for(i=buf->use ; i > 0 ; i--) {
+    if (buf->buf[i] == c)
+      return i;
+  }
+
+  return -1;
 }
 
 

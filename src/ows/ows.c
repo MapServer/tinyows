@@ -181,6 +181,7 @@ void ows_flush(ows * o, FILE * output)
   fprintf(output, "max_features: %d\n", o->max_features);
   fprintf(output, "degree_precision: %d\n", o->degree_precision);
   fprintf(output, "meter_precision: %d\n", o->meter_precision);
+  fprintf(output, "expose_pk: %d\n", o->expose_pk?1:0);
 
   if (o->max_geobbox) {
     fprintf(output, "max_geobbox: ");

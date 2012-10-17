@@ -99,6 +99,7 @@ list *list_explode (char separator, const buffer * value);
 list *list_explode_start_end (char separator_start, char separator_end, buffer * value);
 list *list_explode_str (char separator, const char *value);
 list *list_explode_str_trim(char separator, const char *value);
+void list_implode(buffer * buf, const char * separator, const list * l);
 void list_flush (const list * l, FILE * output);
 void list_free (list * l);
 list *list_init ();

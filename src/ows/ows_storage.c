@@ -153,7 +153,7 @@ static void ows_storage_fill_not_null(ows * o, ows_layer * l)
   buffer_add_str(sql, "' AND c.relname = '");
   buffer_copy(sql, l->storage->table);
   buffer_add_str(sql, "' AND c.relnamespace = n.oid AND a.attnum > 0 AND a.attrelid = c.oid ");
-  buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attnotnull = 't' AND a.atthasdef='f'");
+  buffer_add_str(sql, "AND a.atttypid = t.oid AND a.attnotnull = 't'");
 
   res = ows_psql_exec(o, sql->buf);
   buffer_free(sql);

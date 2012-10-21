@@ -59,7 +59,7 @@ ows_geobbox *ows_geobbox_copy(ows_geobbox *g)
 
   assert(g);
   c = malloc(sizeof(g));
-  return memcpy(c, g, sizeof(*g));
+  return memcpy(c, g, sizeof(g));
 }
 
 

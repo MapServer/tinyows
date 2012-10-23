@@ -437,6 +437,24 @@ list *list_explode_str_trim(char separator, const char *value)
 }
 
 
+/*
+ * Join list to a given bufer
+ */
+void list_implode(buffer * buf, const char * separator, const list * l)
+{
+  list_node *ln;
+
+  assert(buf);
+  assert(l);
+
+  for (ln = l->first ; ln ; ln = ln->next) {
+    buffer_add_str(buf, ln->value->buf);
+    if (ln->next)
+      buffer_add_str(buf, separator);
+  }
+}
+
+
 #ifdef OWS_DEBUG
 /*
  * Flush a list to a given file

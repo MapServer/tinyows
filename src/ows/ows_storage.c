@@ -418,6 +418,17 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
   buffer_add_str(sql, "' AND f_table_name='");
   buffer_copy(sql, l->storage->table);
   buffer_add_str(sql, "'");
+  if (l->include_items) {
+    buffer_add_str(sql, is_geom?" AND f_geometry_column IN ('":" AND f_geography_column IN ('");
+    list_implode(sql, "','", l->include_items);
+    buffer_add_str(sql, "')");
+  }
+  if (l->exclude_items) {
+    buffer_add_str(sql, is_geom?" AND f_geometry_column NOT IN ('":" AND f_geography_column NOT IN ('");
+    list_implode(sql, "','", l->exclude_items);
+    buffer_add_str(sql, "')");
+  }
+  buffer_add_str(sql, ";");
 
   res = ows_psql_exec(o, sql->buf);
   buffer_empty(sql);

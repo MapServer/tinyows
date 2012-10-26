@@ -475,7 +475,7 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     buffer_add_str(layer->storage->schema, (char *) a);
     xmlFree(a);
   } else if (layer->parent && layer->parent->storage->schema) 
-    layer->storage->schema = layer->parent->storage->schema;
+    buffer_copy(layer->storage->schema, layer->parent->storage->schema);
   else buffer_add_str(layer->storage->schema, "public");
 
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "retrievable");

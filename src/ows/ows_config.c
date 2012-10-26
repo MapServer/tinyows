@@ -420,6 +420,9 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
   layer->depth = xmlTextReaderDepth(r);
   layer->parent = ows_parse_config_layer_get_parent(o, layer->depth);
 
+
+  /* Not herited properties  */
+
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "table");
   if (a) {
     buffer_add_str(layer->storage->table, (char *) a);
@@ -449,35 +452,40 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     xmlFree(a);
   }
 
-  a = xmlTextReaderGetAttribute(r, (xmlChar *) "keywords");
-  if (a) {
-    layer->keywords = list_explode_str(',', (char *) a);
-    xmlFree(a);
-  }
-
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "gml_ns");
   if (a) {
     layer->gml_ns = list_explode_str(',', (char *) a);
     xmlFree(a);
   }
 
+
+  /* Herited properties  */
+
+  a = xmlTextReaderGetAttribute(r, (xmlChar *) "keywords");
+  if (a) {
+    layer->keywords = list_explode_str(',', (char *) a);
+    xmlFree(a);
+  } else if (layer->parent && layer->parent->keywords) {
+    layer->keywords = list_init();
+    list_add_list(layer->keywords, layer->parent->keywords);
+  }
+
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "schema");
   if (a) {
     buffer_add_str(layer->storage->schema, (char *) a);
     xmlFree(a);
-  } else buffer_add_str(layer->storage->schema, "public");
+  } else if (layer->parent && layer->parent->storage->schema) 
+    layer->storage->schema = layer->parent->storage->schema;
+  else buffer_add_str(layer->storage->schema, "public");
 
-  /* inherits from layer parent and replaces with specified value if defined */
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "retrievable");
   if (a && atoi((char *) a) == 1) {
     layer->retrievable = true;
     xmlFree(a);
   } else if (!a && layer->parent && layer->parent->retrievable)
     layer->retrievable = true;
-  else
-    xmlFree(a);
+  else xmlFree(a);
 
-  /* inherits from layer parent and replaces with specified value if defined */
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "writable");
   if (a && atoi((char *) a) == 1) {
     layer->writable = true;
@@ -486,7 +494,6 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     layer->writable = true;
   else xmlFree(a);
 
-  /* inherits from layer parent and adds specified value */
   if (layer->parent && layer->parent->srid) {
     layer->srid = list_init();
     list_add_list(layer->srid, layer->parent->srid);
@@ -503,44 +510,47 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     xmlFree(a);
   }
 
-  /* Inherits from layer parent and replaces with specified value if defined */
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "geobbox");
   if (a) {
     layer->geobbox = ows_geobbox_init();
     ows_geobbox_set_from_str(o, layer->geobbox, (char *) a);
     xmlFree(a);
-  } else if (!a && layer->parent && layer->parent->geobbox) {
+  } else if (!a && layer->parent && layer->parent->geobbox)
     layer->geobbox = ows_geobbox_copy(layer->parent->geobbox);
-  } else xmlFree(a);
+  else xmlFree(a);
 
-  /* Inherits from layer parent and replaces with specified value if defined */
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "ns_prefix");
   if (a) {
     buffer_add_str(layer->ns_prefix, (char *) a);
     xmlFree(a);
-  } else if (!a && layer->parent && layer->parent->ns_prefix) {
+  } else if (!a && layer->parent && layer->parent->ns_prefix)
     buffer_copy(layer->ns_prefix, layer->parent->ns_prefix);
-  } else xmlFree(a);
+  else xmlFree(a);
 
-  /* Inherits from layer parent and replaces with specified value if defined */
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "ns_uri");
   if (a) {
     buffer_add_str(layer->ns_uri, (char *) a);
     xmlFree(a);
-  } else if (!a && layer->parent && layer->parent->ns_uri) {
+  } else if (!a && layer->parent && layer->parent->ns_uri)
     buffer_copy(layer->ns_uri, layer->parent->ns_uri);
-  } else xmlFree(a);
+  else xmlFree(a);
 
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "exclude_items");
   if (a) {
     layer->exclude_items = list_explode_str_trim(',', (char *) a);
     xmlFree(a);
+  } else if (layer->parent && layer->parent->exclude_items) {
+    layer->exclude_items = list_init();
+    list_add_list(layer->exclude_items, layer->parent->exclude_items);
   }
 
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "include_items");
   if (a) {
     layer->include_items = list_explode_str_trim(',', (char *) a);
     xmlFree(a);
+  } else if (layer->parent && layer->parent->include_items) {
+    layer->include_items = list_init();
+    list_add_list(layer->exclude_items, layer->parent->include_items);
   }
 
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "pkey");
@@ -548,6 +558,9 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     layer->pkey = buffer_init();
     buffer_add_str(layer->pkey, (char *) a);
     xmlFree(a);
+  } else if (layer->parent && layer->parent->pkey) {
+    layer->pkey = buffer_init();
+    buffer_copy(layer->pkey, layer->parent->pkey);
   }
 
   ows_layer_list_add(o->layers, layer);

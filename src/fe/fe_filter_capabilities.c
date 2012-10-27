@@ -142,10 +142,11 @@ void fe_filter_capabilities_110(const ows * o)
   fprintf(o->output, "   <ogc:GeometryOperand>gml:Point</ogc:GeometryOperand>\n");
   fprintf(o->output, "   <ogc:GeometryOperand>gml:LineString</ogc:GeometryOperand>\n");
   fprintf(o->output, "   <ogc:GeometryOperand>gml:Polygon</ogc:GeometryOperand>\n");
-  /* FIXME: For theses 3 ones, we should only add them with PostGIS 2.0 */
-  fprintf(o->output, "   <ogc:GeometryOperand>gml:Triangle</ogc:GeometryOperand>\n");
-  fprintf(o->output, "   <ogc:GeometryOperand>gml:PolyhedralSurface</ogc:GeometryOperand>\n");
-  fprintf(o->output, "   <ogc:GeometryOperand>gml:Tin</ogc:GeometryOperand>\n");
+  if (ows_version_get(o->postgis_version) >= 200) {
+    fprintf(o->output, "   <ogc:GeometryOperand>gml:Triangle</ogc:GeometryOperand>\n");
+    fprintf(o->output, "   <ogc:GeometryOperand>gml:PolyhedralSurface</ogc:GeometryOperand>\n");
+    fprintf(o->output, "   <ogc:GeometryOperand>gml:Tin</ogc:GeometryOperand>\n");
+  }
   fprintf(o->output, "  </ogc:GeometryOperands>\n");
 
   fprintf(o->output, "  <ogc:SpatialOperators>\n");

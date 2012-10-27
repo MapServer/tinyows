@@ -446,6 +446,7 @@ char *ows_psql_to_xsd(buffer * type, ows_version *version)
   assert(type);
   assert(version);
 
+  /* FIXME should it be related to wfs version or to GML version ? */
   wfs_version = ows_version_get(version);
 
   if (buffer_case_cmp(type, "geometry")) return "gml:GeometryPropertyType";
@@ -466,11 +467,14 @@ char *ows_psql_to_xsd(buffer * type, ows_version *version)
   if (buffer_cmp(type, "LINESTRING") && wfs_version == 110) return "gml:CurvePropertyType";
   if (buffer_cmp(type, "POLYGON") && wfs_version == 100) return "gml:PolygonPropertyType";
   if (buffer_cmp(type, "POLYGON") && wfs_version == 110) return "gml:SurfacePropertyType";
+  if (buffer_cmp(type, "TRIANGLE")) return "gml:TrianglePropertyType";
   if (buffer_cmp(type, "MULTIPOINT")) return "gml:MultiPointPropertyType";
   if (buffer_cmp(type, "MULTILINESTRING") && wfs_version == 100) return "gml:MultiLineStringPropertyType";
   if (buffer_cmp(type, "MULTILINESTRING") && wfs_version == 110) return "gml:MultiCurvePropertyType";
   if (buffer_cmp(type, "MULTIPOLYGON") && wfs_version == 100) return "gml:MultiPolygonPropertyType";
   if (buffer_cmp(type, "MULTIPOLYGON") && wfs_version == 110) return "gml:MultiSurfacePropertyType";
+  if (buffer_cmp(type, "TIN")) return "gml:TriangulatedSurfacePropertyType";
+  if (buffer_cmp(type, "POLYHEDRALSURFACE")) return "gml:PolyhedralSurfacePropertyType";
   if (buffer_cmp(type, "GEOMETRYCOLLECTION")) return "gml:MultiGeometryPropertyType";
 
   return "string";
@@ -687,21 +691,25 @@ static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n, xmlNodePtr
 
     /* Check on namespace GML 3 and GML 3.2 */
     if (    strcmp("http://www.opengis.net/gml",     (char *) n->ns->href)
-            && strcmp("http://www.opengis.net/gml/3.2", (char *) n->ns->href)) continue;
+         && strcmp("http://www.opengis.net/gml/3.2", (char *) n->ns->href)) continue;
 
     /* GML SF Geometries Types */
     if (   !strcmp((char *) n->name, "Point")
-           || !strcmp((char *) n->name, "LineString")
-           || !strcmp((char *) n->name, "LinearRing")
-           || !strcmp((char *) n->name, "Curve")
-           || !strcmp((char *) n->name, "Polygon")
-           || !strcmp((char *) n->name, "Surface")
-           || !strcmp((char *) n->name, "MultiPoint")
-           || !strcmp((char *) n->name, "MultiLineString")
-           || !strcmp((char *) n->name, "MultiCurve")
-           || !strcmp((char *) n->name, "MultiPolygon")
-           || !strcmp((char *) n->name, "MultiSurface")
-           || !strcmp((char *) n->name, "MultiGeometry")) return n;
+        || !strcmp((char *) n->name, "LineString")
+        || !strcmp((char *) n->name, "LinearRing")
+        || !strcmp((char *) n->name, "Curve")
+        || !strcmp((char *) n->name, "Polygon")
+        || !strcmp((char *) n->name, "Triangle")
+        || !strcmp((char *) n->name, "Surface")
+        || !strcmp((char *) n->name, "MultiPoint")
+        || !strcmp((char *) n->name, "MultiLineString")
+        || !strcmp((char *) n->name, "MultiCurve")
+        || !strcmp((char *) n->name, "MultiPolygon")
+        || !strcmp((char *) n->name, "MultiSurface")
+        || !strcmp((char *) n->name, "PolyhedralSurface")
+        || !strcmp((char *) n->name, "Tin")
+        || !strcmp((char *) n->name, "TriangulatedSurface")
+        || !strcmp((char *) n->name, "MultiGeometry")) return n;
 
     /* Recursive exploration */
     if (n->children)
@@ -772,8 +780,8 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, int srid)
     res = ows_psql_exec(o, sql->buf);
 
     if (    PQresultStatus(res) != PGRES_TUPLES_OK
-            || PQntuples(res) != 1
-            || (char) PQgetvalue(res, 0, 0)[0] !=  't') {
+         || PQntuples(res) != 1
+         || (char) PQgetvalue(res, 0, 0)[0] !=  't') {
       buffer_free(sql);
       buffer_free(result);
       PQclear(res);

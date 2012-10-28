@@ -1,4 +1,4 @@
-12.10
+1.1.0
  - Generate PK value using PostgresSQL DEFAULT value if present (Serge Dikiy) 
  - XSD max length and enumeration constraint handling (Serge Dikiy & Alan Boudreault)
  - include_items and exclude_items config handling. To choose exactly which columns to retrieve (Serge Dikiy)

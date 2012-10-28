@@ -55,12 +55,18 @@ buffer *ows_psql_id_column(ows * o, buffer * layer_name)
  */
 PGresult * ows_psql_exec(ows *o, const char *sql)
 {
+  PGresult* res;
+
   assert(o);
   assert(sql);
   assert(o->pg);
 
   ows_log(o, 8, sql);
-  return PQexecParams(o->pg, sql, 0, NULL, NULL, NULL, NULL, 0);
+  res = PQexecParams(o->pg, sql, 0, NULL, NULL, NULL, NULL, 0);
+  if (strlen(PQresultErrorMessage(res)))
+    ows_log(o, 1, PQresultErrorMessage(res));
+
+  return res;
 }
 
 

@@ -783,10 +783,11 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
   list_node *ln, *ll;
   array *prop_table;
   array_node *an;
-  buffer *prop, *value_enc, *geom;
-  bool first;
+  buffer *prop, *value_enc, *geom, *id_name;
+  bool first_row, first_col;
   int i,j;
   int geoms;
+  int number;
 
   assert(o);
   assert(wr);
@@ -797,6 +798,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
   ll = request_list->first->next->value->first;
   geom = buffer_init();
   prop = buffer_init();
+  id_name = buffer_init();
 
   fprintf(o->output, "Content-Type: application/json\n\n");
   fprintf(o->output, "{\"type\": \"FeatureCollection\", \"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"");
@@ -817,20 +819,36 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
     }
 
     prop_table = ows_psql_describe_table(o, ll->value);
+    first_row = true;
+    id_name = ows_psql_id_column(o, ll->value);
+    number = -1;
+    if (id_name && id_name->use)
+         number = PQfnumber(res, id_name->buf);
+    buffer_empty(id_name);
 
     for (i=0 ; i < PQntuples(res) ; i++) {
 
-      first = true;
+      first_col = true;
       geoms = 0;
 
-      for (an = prop_table->first, j=0 ; an ; an = an->next, j++) {
+      if (first_row) first_row = false;
+      else fprintf(o->output, ",");
 
+      if ( number >= 0 ) {
+        buffer_add_str(id_name, "\"id\": \"");
+        buffer_copy(id_name, ll->value);
+        buffer_add_str(id_name, ".");
+        buffer_add_str(id_name, PQgetvalue(res, i, number));
+        buffer_add_str(id_name, "\", ");
+      }
+      for (an = prop_table->first, j=0 ; an ; an = an->next, j++) {
+        
         if (ows_psql_is_geometry_column(o, ll->value, an->key)) {
           buffer_add_str(geom, PQgetvalue(res, i, j));
           geoms++;
         } else {
 
-          if (first)  first = false;
+          if (first_col)  first_col = false;
           else buffer_add_str(prop, ", \"");
 
           buffer_copy(prop, an->key);
@@ -844,22 +862,22 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
       if (geoms == 0) {
         fprintf(o->output,
-                "{\"type\":\"Feature\", \"properties\":{\"%s}}\n",
-                prop->buf);
+                "{\"type\":\"Feature\", %s\"properties\":{\"%s}}\n",
+                id_name->buf, prop->buf);
       } else if (geoms == 1) {
         fprintf(o->output,
-                "{\"type\":\"Feature\", \"properties\":{\"%s}, \"geometry\":%s}\n",
-                prop->buf, geom->buf);
+                "{\"type\":\"Feature\", %s\"properties\":{\"%s}, \"geometry\":%s}\n",
+                id_name->buf, prop->buf, geom->buf);
       } else if (geoms > 1) {
         fprintf(o->output,
-                "{\"type\":\"Feature\", \"properties\":{\"%s}, \"geometry\":%s%s]}}\n",
+                "{\"type\":\"Feature\", %s\"properties\":{\"%s}, \"geometry\":%s%s]}}\n",
+                id_name->buf,
                 prop->buf, "{ \"type\": \"GeometryCollection\", \"geometries\": [",
                 geom->buf);
       }
-      if (j) fprintf(o->output, ",");
-
       buffer_empty(prop);
       buffer_empty(geom);
+      buffer_empty(id_name);
     }
 
     PQclear(res);

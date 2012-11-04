@@ -411,7 +411,7 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
 
   sql = buffer_init();
   if (is_geom) buffer_add_str(sql, "SELECT srid, f_geometry_column FROM geometry_columns");
-  else         buffer_add_str(sql, "SELECT '4326', f_geography_column FROM geography_columns");
+  else         buffer_add_str(sql, "SELECT srid, f_geography_column FROM geography_columns");
 
   buffer_add_str(sql, " WHERE f_table_schema='");
   buffer_copy(sql, l->storage->schema);

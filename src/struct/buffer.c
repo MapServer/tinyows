@@ -140,9 +140,8 @@ buffer *buffer_ftoa(double f)
   buffer *res;
 
   res = buffer_init();
-  /* FIXME use snprintf instead ! */
   while (res->size < 100) buffer_realloc(res);
-  sprintf(res->buf, "%f", f);
+  snprintf(res->buf, 99, "%f", f);
   res->use = strlen(res->buf);
 
   return res;

@@ -75,7 +75,10 @@ char *cgi_getback_query(ows * o)
     query_size = atoi(getenv("CONTENT_LENGTH"));
 
     query = malloc(sizeof(char) * query_size + 1);
-    assert(query); /* FIXME Really ? */
+    if (!query) {
+      ows_error(o, OWS_ERROR_REQUEST_HTTP, "Error on QUERY input - Memory allocation", "request");
+      return NULL;
+    }
     fread(query, query_size, 1, stdin);
     if (ferror(stdin)) {
       ows_error(o, OWS_ERROR_REQUEST_HTTP, "Error on QUERY input", "request");

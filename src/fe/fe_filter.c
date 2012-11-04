@@ -119,7 +119,6 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
 {
   char *escaped;
   xmlChar *content;
-  bool isstring = false;
 
   assert(o);
   assert(typename);
@@ -145,25 +144,13 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
   else if (!strcmp((char *) n->name, "Mul")) buffer_add_str(sql, " * ");
   else if (!strcmp((char *) n->name, "Div")) buffer_add_str(sql, " / ");
   else if (!strcmp((char *) n->name, "Literal")) {
-
-    /* Strings must be written in quotation marks */
-    if (check_regexp((char *) content, "^[[:space:]]+$") == 1) {
-      buffer_add_str(sql, "''");      /* empty string */
-
-    } else {
-      if (!check_regexp((char *)content, "^[-+]?[0-9]*\\.?[0-9]+$")) {
-        isstring = true;
-        buffer_add_str(sql, "'");
-      }
-
-      escaped = ows_psql_escape_string(o, (char *) content);
-      if (escaped) {
-        buffer_add_str(sql, escaped);
-        free(escaped);
-      }
-      if (isstring) buffer_add_str(sql, "'");
+    buffer_add_str(sql, "'");
+    escaped = ows_psql_escape_string(o, (char *) content);
+    if (escaped) {
+      buffer_add_str(sql, escaped);
+      free(escaped);
     }
-
+    buffer_add_str(sql, "'");
   } else if (!strcmp((char *) n->name, "PropertyName")) {
     buffer_add(sql, '"');
     sql = fe_property_name(o, typename, fe, sql, n, false, true);

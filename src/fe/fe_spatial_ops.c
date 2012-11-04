@@ -125,7 +125,8 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 
   /* GML3 */
   if (!strcmp((char *) n->name, "lowerCorner")) {
-    if (!content || !check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
+    if (!content || !check_regexp((char *) content, 
+         "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
       xmlFree(content);
       buffer_free(name);
       if (s) ows_srs_free(s);
@@ -141,7 +142,8 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
     xmlFree(content);
     content = xmlNodeGetContent(n->children);
 
-    if (!content || !check_regexp((char *) content, "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
+    if (!content || !check_regexp((char *) content,
+          "[-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)? [-]?[0-9]+([.][0-9]+)?([eE][-]?[0-9]+)?")) {
       xmlFree(content);
       buffer_free(name);
       list_free(coord_min);
@@ -340,17 +342,9 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
   if (!strcmp((char *) n->name, "Beyond"))  buffer_add_str(op, " > ");
   if (!strcmp((char *) n->name, "DWithin")) buffer_add_str(op, " < ");
 
-  /* FIXME: as geography support available no need to keep this hack ! */
-
-  /* parameters are passed with centroid function because
-     Distance_sphere parameters must be points
-     So to be able to calculate distance between lines or polygons
-     whose coordinates are degree, centroid function must be used
-     To be coherent, centroid is also used with Distance function */
-  if (ows_srs_meter_units(o, typename))
-    buffer_add_str(fe->sql, "ST_Distance(ST_centroid(");
-  else
-    buffer_add_str(fe->sql, "ST_Distance_sphere(ST_centroid(");
+  buffer_add_str(fe->sql, "ST_Distance(");
+  if (!ows_srs_meter_units(o, typename))
+    buffer_add_str(fe->sql, "ST_Transform(");
 
   n = n->children;
   while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
@@ -359,11 +353,17 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
   fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true, true);
   buffer_add(fe->sql, '"');
 
-  buffer_add_str(fe->sql, "),ST_centroid('");
+  if (!ows_srs_meter_units(o, typename))
+    buffer_add_str(fe->sql, ", 4326)::geography");
+
+  buffer_add_str(fe->sql, "),('");
 
   n = n->next;
 
   while (n->type != XML_ELEMENT_NODE) n = n->next;
+
+  if (!ows_srs_meter_units(o, typename))
+    buffer_add_str(fe->sql, "ST_Transform(");
 
   /* display the geometry */
   sql = ows_psql_gml_to_sql(o, n, 0);
@@ -371,6 +371,9 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     buffer_copy(fe->sql, sql);
     buffer_free(sql);
   } else fe->error_code = FE_ERROR_GEOMETRY;
+
+  if (!ows_srs_meter_units(o, typename))
+    buffer_add_str(fe->sql, ", 4326)::geography");
 
   buffer_add_str(fe->sql, "'))");
 
@@ -381,7 +384,6 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
   units = xmlGetProp(n, (xmlChar *) "units");
   buffer_copy(fe->sql, op);
   content = xmlNodeGetContent(n->children);
-  /*FIXME add a regex check */
 
   /* units not strictly defined in Filter Encoding specification */
   if (!strcmp((char *) units, "meters") || !strcmp((char *) units, "#metre"))

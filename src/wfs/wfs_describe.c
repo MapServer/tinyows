@@ -91,7 +91,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
       continue;
     }
 
-    xsd_type = ows_psql_to_xsd(an->value, o->request->version);
+    xsd_type = ows_psql_to_xsd(an->value, o->request->request.wfs->format);
 
     if(!strcmp(xsd_type, "string")) {
       table_name = ows_psql_table_name(o, layer_name);
@@ -125,7 +125,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
           fprintf(o->output, "</xs:restriction></xs:simpleType></xs:element>");
         } else {
           fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
-                  an->key->buf, ows_psql_to_xsd(an->value, o->request->version));
+                  an->key->buf, ows_psql_to_xsd(an->value, o->request->request.wfs->format));
 
           if (mandatory_prop && in_list(mandatory_prop, an->key))
             fprintf(o->output, "nillable='false' minOccurs='1' ");
@@ -138,7 +138,7 @@ static void wfs_complex_type(ows * o, wfs_request * wr, buffer * layer_name)
       buffer_free(constraint_name);
     } else {
       fprintf(o->output, "    <xs:element name ='%s' type='%s' ",
-              an->key->buf, ows_psql_to_xsd(an->value, o->request->version));
+              an->key->buf, ows_psql_to_xsd(an->value, o->request->request.wfs->format));
 
       if (mandatory_prop && in_list(mandatory_prop, an->key))
         fprintf(o->output, "nillable='false' minOccurs='1' ");

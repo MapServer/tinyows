@@ -445,15 +445,14 @@ ows_version * ows_psql_postgis_version(ows *o)
  * Convert a PostgreSql type to a valid
  * OGC XMLSchema's type
  */
-char *ows_psql_to_xsd(buffer * type, ows_version *version)
+char *ows_psql_to_xsd(buffer * type, enum wfs_format format)
 {
-  int wfs_version;
+  int gml_version = 311;
 
   assert(type);
-  assert(version);
+  assert(format);
 
-  /* FIXME should it be related to wfs version or to GML version ? */
-  wfs_version = ows_version_get(version);
+  if (format == WFS_GML212) gml_version = 212;
 
   if (buffer_case_cmp(type, "geometry")) return "gml:GeometryPropertyType";
   if (buffer_cmp(type, "geography")) return "gml:GeometryPropertyType";
@@ -469,16 +468,16 @@ char *ows_psql_to_xsd(buffer * type, ows_version *version)
   if (buffer_ncmp(type, "numeric", 7)) return "decimal";
   if (buffer_ncmp(type, "timestamp", 9)) return "dateTime"; /* Could be also timestamptz */
   if (buffer_cmp(type, "POINT")) return "gml:PointPropertyType";
-  if (buffer_cmp(type, "LINESTRING") && wfs_version == 100) return "gml:LineStringPropertyType";
-  if (buffer_cmp(type, "LINESTRING") && wfs_version == 110) return "gml:CurvePropertyType";
-  if (buffer_cmp(type, "POLYGON") && wfs_version == 100) return "gml:PolygonPropertyType";
-  if (buffer_cmp(type, "POLYGON") && wfs_version == 110) return "gml:SurfacePropertyType";
+  if (buffer_cmp(type, "LINESTRING") && gml_version == 212) return "gml:LineStringPropertyType";
+  if (buffer_cmp(type, "LINESTRING") && gml_version >= 311) return "gml:CurvePropertyType";
+  if (buffer_cmp(type, "POLYGON") && gml_version == 212) return "gml:PolygonPropertyType";
+  if (buffer_cmp(type, "POLYGON") && gml_version >= 311) return "gml:SurfacePropertyType";
   if (buffer_cmp(type, "TRIANGLE")) return "gml:TrianglePropertyType";
   if (buffer_cmp(type, "MULTIPOINT")) return "gml:MultiPointPropertyType";
-  if (buffer_cmp(type, "MULTILINESTRING") && wfs_version == 100) return "gml:MultiLineStringPropertyType";
-  if (buffer_cmp(type, "MULTILINESTRING") && wfs_version == 110) return "gml:MultiCurvePropertyType";
-  if (buffer_cmp(type, "MULTIPOLYGON") && wfs_version == 100) return "gml:MultiPolygonPropertyType";
-  if (buffer_cmp(type, "MULTIPOLYGON") && wfs_version == 110) return "gml:MultiSurfacePropertyType";
+  if (buffer_cmp(type, "MULTILINESTRING") && gml_version == 212) return "gml:MultiLineStringPropertyType";
+  if (buffer_cmp(type, "MULTILINESTRING") && gml_version >= 311) return "gml:MultiCurvePropertyType";
+  if (buffer_cmp(type, "MULTIPOLYGON") && gml_version == 212) return "gml:MultiPolygonPropertyType";
+  if (buffer_cmp(type, "MULTIPOLYGON") && gml_version >= 311) return "gml:MultiSurfacePropertyType";
   if (buffer_cmp(type, "TIN")) return "gml:TriangulatedSurfacePropertyType";
   if (buffer_cmp(type, "POLYHEDRALSURFACE")) return "gml:PolyhedralSurfacePropertyType";
   if (buffer_cmp(type, "GEOMETRYCOLLECTION")) return "gml:MultiGeometryPropertyType";

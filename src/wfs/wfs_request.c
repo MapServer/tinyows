@@ -519,7 +519,7 @@ static void wfs_request_check_resulttype(ows * o, wfs_request * wr)
 /*
  * Check and fill the sortBy parameter
  */
-static void wfs_request_check_sortby(ows * o, wfs_request * wr)
+static void wfs_request_check_sortby(ows * o, wfs_request * wr, list * layer_name)
 {
   buffer *b;
   list *l, *fe;
@@ -537,12 +537,13 @@ static void wfs_request_check_sortby(ows * o, wfs_request * wr)
 
   for (ln = l->first ; ln ; ln = ln->next) {
     fe = list_explode(' ', ln->value);
+    ln->value = wfs_request_remove_prop_ns_prefix(o, ln->value, layer_name); 
 
-    /* add quotation marks */
+    /* Add quotation marks */
     buffer_add_head_str(fe->first->value, "\"");
     buffer_add_str(fe->first->value, "\"");
 
-    /* put the order into postgresql syntax */
+    /* SQL Order syntax */
     if (fe->last->value && fe->last != fe->first) {
       if (buffer_cmp(fe->last->value, "D") || buffer_cmp(fe->last->value, "DESC")) {
         buffer_empty(fe->last->value);
@@ -593,6 +594,31 @@ static void wfs_request_check_maxfeatures(ows * o, wfs_request * wr)
 
 
 /*
+ * TODO
+ */
+buffer *wfs_request_remove_prop_ns_prefix(ows * o, buffer * prop, list * layer_name)  
+{
+  list * ns;
+  list_node * ln; 
+
+  assert(o);
+  assert(prop);
+  assert(layer_name);
+
+  ns = ows_layer_list_ns_prefix(o->layers, layer_name);
+
+  for (ln = ns->first ; ln ; ln = ln->next) {
+    if (buffer_ncmp(ln->value, prop->buf, ln->value->use)) {
+      buffer_shift(prop, ln->value->use + 1);  /* +1 for : separator */
+      return prop;
+    }
+  }
+
+  return prop;  /* if ns_prefix don't match, just don't do anything */
+}
+
+
+/*
  * Check and fill the propertyName parameter
  */
 static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * layer_name)
@@ -633,10 +659,11 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
         ln->value = fe_xpath_property_name(o, ln_tpn->value, ln->value);
 
       /* check if propertyname values are correct */
+      ln->value = wfs_request_remove_prop_ns_prefix(o, ln->value, layer_name);
       if (!buffer_cmp(ln->value, "*") && !array_is_key(prop_table, ln->value->buf)) {
         mlist_free(f);
         ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
-                  "propertyname values not available", "GetFeature");
+                  "PropertyName values not available", "GetFeature");
         return;
       }
     }
@@ -858,7 +885,7 @@ static void wfs_request_check_get_feature(ows * o, wfs_request * wr, const array
   if (!o->exit) wfs_request_check_propertyname(o, wr, layer_name); /* PropertyName */
   if (!o->exit) wfs_request_check_output(o, wr);                   /* outputFormat */
   if (!o->exit) wfs_request_check_resulttype(o, wr);               /* resultType */
-  if (!o->exit) wfs_request_check_sortby(o, wr);                   /* sortBy */
+  if (!o->exit) wfs_request_check_sortby(o, wr, layer_name);       /* sortBy */
   if (!o->exit) wfs_request_check_maxfeatures(o, wr);              /* maxFeatures */
   if (!o->exit) wfs_request_check_filter(o, wr);                   /* Filter */
 

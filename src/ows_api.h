@@ -226,6 +226,7 @@ void wfs_gml_feature_member (ows * o, wfs_request * wr, buffer * layer_name, lis
 void wfs_parse_operation (ows * o, wfs_request * wr, buffer * op);
 void wfs_request_check (ows * o, wfs_request * wr, const array * cgi);
 void wfs_request_flush (wfs_request * wr, FILE * output);
+buffer *wfs_request_remove_prop_ns_prefix(ows * o, buffer * prop, list * layer_name);
 void wfs_request_free (wfs_request * wr);
 wfs_request *wfs_request_init ();
 ows_layer_storage * ows_layer_storage_init();

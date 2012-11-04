@@ -216,7 +216,7 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
   xmlChar *content;
   array *prop_table;
   buffer *tmp;
-  list *l;
+  list *l, *ll;
 
   assert(o);
   assert(typename);
@@ -245,6 +245,10 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
   }
 
   /* Check if propertyname is available */
+  ll = list_init();
+  list_add(ll, typename);
+  tmp = wfs_request_remove_prop_ns_prefix(o, tmp, ll);
+  free(ll); /* don't call list_free here */ 
   if (array_is_key(prop_table, tmp->buf)) {
     buffer_copy(sql, tmp);
   } else if (mandatory) fe->error_code = FE_ERROR_PROPERTYNAME;

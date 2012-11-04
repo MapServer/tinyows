@@ -817,6 +817,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
   ows_srs *srs_root;
   int srid_root = 0;
   xmlChar *attr = NULL;
+  list *l;
 
   assert(o);
   assert(wr);
@@ -901,6 +902,10 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
           buffer_add_str(property_name, (char *) content);
           xmlFree(content);
           buffer_add_str(sql, "\"");
+          l = list_init();
+          list_add(l, property_name);
+          property_name =  wfs_request_remove_prop_ns_prefix(o, property_name, l);
+          free(l);
           escaped = ows_psql_escape_string(o, property_name->buf);
           if (escaped) {
             buffer_add_str(sql, escaped);

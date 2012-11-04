@@ -78,13 +78,22 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename, filter_encodi
   if (buffer_cmp(name, "PropertyIsEqualTo") || buffer_cmp(name, "PropertyIsNotEqualTo")) {
     /* remove brackets (if any) and quotation marks */
     if (tmp->buf[0] == '(') {
-      /* FIXME assert in User input ! */
       assert(tmp->use > 3);
+      if (tmp->use > 3) {
+        buffer_free(tmp);
+        buffer_free(name);
+        fe->error_code = FE_ERROR_FILTER;
+        return fe->sql;
+      }
       buffer_pop(tmp, 2);
       buffer_shift(tmp, 2);
     } else {
-      /* FIXME assert in User input ! */
-      assert(tmp->use > 1);
+      if (tmp->use > 1) {
+        buffer_free(tmp);
+        buffer_free(name);
+        fe->error_code = FE_ERROR_FILTER;
+        return fe->sql;
+      }
       buffer_pop(tmp, 1);
       buffer_shift(tmp, 1);
     }

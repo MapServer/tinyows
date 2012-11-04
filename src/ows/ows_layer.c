@@ -31,7 +31,7 @@
 
 
 /*
- * Initialize an aws layer structure
+ * Initialize an ows layer structure
  */
 ows_layer_list *ows_layer_list_init()
 {

@@ -284,7 +284,6 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
     if (!strcmp((char *) att->name, "typeName")) {
       content = xmlNodeGetContent(att->children);
       buffer_add_str(typename, (char *) content);
-      wfs_request_remove_namespaces(o, typename);  /* FIXME need to be rewrite */
 
       if (!ows_layer_writable(o->layers, typename)) {
         xmlFree(content);
@@ -388,7 +387,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
     /* name of the table in which features must be inserted */
     buffer_add_str(layer_name, (char *) n->name);
-    wfs_request_remove_namespaces(o, layer_name);
 
     if (!layer_name || !ows_layer_writable(o->layers, layer_name)) {
       buffer_free(id);
@@ -902,7 +900,6 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
           content = xmlNodeGetContent(node);
           buffer_add_str(property_name, (char *) content);
           xmlFree(content);
-          wfs_request_remove_namespaces(o, property_name);
           buffer_add_str(sql, "\"");
           escaped = ows_psql_escape_string(o, property_name->buf);
           if (escaped) {

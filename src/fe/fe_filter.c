@@ -244,9 +244,6 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
     list_free(l);
   }
 
-  /* Remove namespaces */
-  tmp = wfs_request_remove_namespaces(o, tmp);
-
   /* Check if propertyname is available */
   if (array_is_key(prop_table, tmp->buf)) {
     buffer_copy(sql, tmp);

@@ -228,7 +228,6 @@ void wfs_request_check (ows * o, wfs_request * wr, const array * cgi);
 void wfs_request_flush (wfs_request * wr, FILE * output);
 void wfs_request_free (wfs_request * wr);
 wfs_request *wfs_request_init ();
-buffer *wfs_request_remove_namespaces (ows * o, buffer * b);
 ows_layer_storage * ows_layer_storage_init();
 void ows_layer_storage_free(ows_layer_storage * storage);
 void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output);

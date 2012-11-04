@@ -522,6 +522,10 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "ns_prefix");
   if (a) {
     buffer_add_str(layer->ns_prefix, (char *) a);
+    if (layer->name) {
+      buffer_add_head(layer->name, ':');
+      buffer_add_head_str(layer->name, (char *) a);
+    }
     xmlFree(a);
   } else if (!a && layer->parent && layer->parent->ns_prefix)
     buffer_copy(layer->ns_prefix, layer->parent->ns_prefix);

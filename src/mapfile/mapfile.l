@@ -443,6 +443,10 @@ static void metadata_layer_value(char *yytext, bool quotes)
 		return;
 	case MAP_LMD_NAMESPACE_PREFIX:
 		buffer_add_str(map_l->ns_prefix, yytext);
+                if (map_l->name->use) {
+                    buffer_add_head(map_l->name, ':');
+                    buffer_add_head_str(map_l->name, yytext); 
+                }
 		return;
 	case MAP_LMD_SRS:
 		map_l->srid = list_explode_str(',', yytext);
@@ -512,6 +516,10 @@ static void layer_properties(char * yytext, bool quotes)
 	case MAP_LAYER_NAME:
 		map_l->name = buffer_init();
        		buffer_add_str(map_l->name, yytext);
+                if (map_l->ns_prefix->use) {
+                    buffer_add_head(map_l->name, ':');
+                    buffer_add_head_str(map_l->name, map_l->ns_prefix->buf);
+                }
 		return;
 	case MAP_LAYER_CONNECTION:
 		/* TODO: Having a Layer connection notion in TinyOWS */

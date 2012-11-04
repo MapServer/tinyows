@@ -200,31 +200,6 @@ static void wfs_request_check_version(ows * o, wfs_request * wr, const array * c
 
 
 /*
- * Remove prefix namespace from a buffer
- * to expect return value could be used in SQL request
- */
-buffer *wfs_request_remove_namespaces(ows * o, buffer * b)
-{
-  list *prefix;
-
-  assert(o);
-  assert(b);
-
-  /* TODO could be rewrite without using a list */
-  prefix = list_explode(':', b);
-
-  if (prefix->first->next) {
-    buffer_empty(b);
-    buffer_copy(b, prefix->first->next->value);
-  }
-
-  list_free(prefix);
-
-  return b;
-}
-
-
-/*
  * Check and fill typename parameter
  * Return a list of layers' names
  */
@@ -243,7 +218,6 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_
 
     for (ln = wr->typename->first ; ln ; ln = ln->next) {
 
-      ln->value = wfs_request_remove_namespaces(o, ln->value); /* Remove prefix */
       list_add_by_copy(layer_name, ln->value);                 /* Fill the global layer name list */
 
       /* Check if layer exists and have storage */
@@ -338,8 +312,6 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 
       /* If typename is NULL, fill the layer name list */
       if (!wr->typename) {
-        fe->last->value = wfs_request_remove_namespaces(o, fe->last->value);
-
         if (!in_list(layer_name, fe->last->value))
           list_add_by_copy(layer_name, fe->last->value);
       }
@@ -565,8 +537,6 @@ static void wfs_request_check_sortby(ows * o, wfs_request * wr)
 
   for (ln = l->first ; ln ; ln = ln->next) {
     fe = list_explode(' ', ln->value);
-    /*remove namespaces */
-    fe->first->value = wfs_request_remove_namespaces(o, fe->first->value);
 
     /* add quotation marks */
     buffer_add_head_str(fe->first->value, "\"");
@@ -661,9 +631,6 @@ static void wfs_request_check_propertyname(ows * o, wfs_request * wr, list * lay
       /* if propertyname is an Xpath expression */
       if (check_regexp(ln->value->buf, "\\*\\["))
         ln->value = fe_xpath_property_name(o, ln_tpn->value, ln->value);
-
-      /* remove namespaces */
-      ln->value = wfs_request_remove_namespaces(o, ln->value);
 
       /* check if propertyname values are correct */
       if (!buffer_cmp(ln->value, "*") && !array_is_key(prop_table, ln->value->buf)) {

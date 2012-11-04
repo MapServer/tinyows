@@ -227,7 +227,7 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
   while (n->type != XML_ELEMENT_NODE) n = n->next;       /* Jump to the next element if there are spaces */
 
   prop_table = ows_psql_describe_table(o, typename);
-  assert(prop_table); /* FIXME to remove */
+  assert(prop_table); /* should never happens as Typename checked previsously */
 
   content = xmlNodeGetContent(n);
   tmp = buffer_from_str((char *) content);

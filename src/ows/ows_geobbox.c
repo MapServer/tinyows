@@ -92,7 +92,7 @@ bool ows_geobbox_set(ows * o, ows_geobbox * g, double west, double east, double 
   if (fabs(south - north) < DBL_EPSILON || fabs(east - west) < DBL_EPSILON)
     return false;
 
-  /* FIXME add a test to see if north is northern than south and so forth... */
+  /* TODO add a test to see if north is northern than south and so forth... */
   g->west = west;
   g->east = east;
   g->south = south;

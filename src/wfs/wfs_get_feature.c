@@ -206,11 +206,11 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
     /* print layer's name and id according to GML version */
     if (id_name && id_name->use) {
       if (wr->format == WFS_GML311)
-        fprintf(o->output,  "   <%s:%s gml:id=\"%s.%s\">\n",
-                ns_prefix->buf, layer_name->buf, layer_name->buf, PQgetvalue(res, i, number));
-      else fprintf(o->output, "   <%s:%s fid=\"%s.%s\">\n",
-                     ns_prefix->buf, layer_name->buf, layer_name->buf, PQgetvalue(res, i, number));
-    } else fprintf(o->output,   "   <%s:%s>\n", ns_prefix->buf, layer_name->buf);
+        fprintf(o->output,  "   <%s gml:id=\"%s.%s\">\n",
+                layer_name->buf, layer_name->buf, PQgetvalue(res, i, number));
+      else fprintf(o->output, "   <%s fid=\"%s.%s\">\n",
+                      layer_name->buf, layer_name->buf, PQgetvalue(res, i, number));
+    } else fprintf(o->output,   "   <%s>\n", layer_name->buf);
 
     /* print properties */
     for (j = 0, nb_fields = PQnfields(res) ; j < nb_fields ; j++) {
@@ -226,7 +226,7 @@ void wfs_gml_feature_member(ows * o, wfs_request * wr, buffer * layer_name, list
       }
     }
 
-    fprintf(o->output, "   </%s:%s>\n", ns_prefix->buf, layer_name->buf);
+    fprintf(o->output, "   </%s>\n", layer_name->buf);
     fprintf(o->output, "  </gml:featureMember>\n");
   }
 

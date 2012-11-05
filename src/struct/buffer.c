@@ -353,6 +353,23 @@ void buffer_copy(buffer * dest, const buffer * src)
 
 
 /*
+ * Copy the whole buffer struct to an another struct
+ */
+buffer *buffer_clone(buffer * buf)
+{
+  buffer *b;
+
+  assert(buf);
+  assert(buf->buf);
+
+  b = buffer_init();
+  buffer_copy(b, buf);
+  
+  return b;
+}
+
+
+/*
  * Delete last N chars from a buffer
  */
 void buffer_pop(buffer * buf, size_t len)

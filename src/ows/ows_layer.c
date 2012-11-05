@@ -301,6 +301,26 @@ list *ows_layer_list_ns_prefix(ows_layer_list * ll, list * layer_name)
 
 
 /*
+ * Retrieve the layer name without prefix
+ */
+buffer *ows_layer_no_prefix(ows_layer_list * ll, buffer * layer_name)
+{
+  ows_layer_node *ln;
+
+  assert(ll);
+  assert(layer_name);
+
+  for (ln = ll->first; ln ; ln = ln->next)
+    if (buffer_cmp(ln->layer->name, layer_name->buf)) {
+      buffer_shift(layer_name, ln->layer->ns_prefix->use + 1);  /* +1 for ':' separator */
+      return layer_name;
+    }
+  
+  return (buffer *) NULL;
+}
+
+
+/*
  * Retrieve the prefix linked to the specified layer
  */
 buffer *ows_layer_ns_prefix(ows_layer_list * ll, buffer * layer_name)

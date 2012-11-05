@@ -268,8 +268,6 @@ static void wfs_feature_type_list(ows * o)
         for (s = 0; s < ln->layer->depth; s++) fprintf(o->output, " ");
 
         fprintf(o->output, " <Name>");
-        buffer_flush(ln->layer->ns_prefix, o->output);
-        fprintf(o->output, ":");
         buffer_flush(ln->layer->name, o->output);
         fprintf(o->output, "</Name>\n");
       }

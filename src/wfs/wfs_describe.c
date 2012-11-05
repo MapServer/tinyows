@@ -165,7 +165,7 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
   int wfs_version;
   list_node *elemt, *ln;
   list *ns_prefix, *typ;
-  buffer *namespace;
+  buffer *namespace, *typename;
 
   assert(o);
   assert(wr);
@@ -242,8 +242,10 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     /* Describe each feature type specified in the request */
     for (elemt = wr->typename->first ; elemt ; elemt = elemt->next) {
       fprintf(o->output, "<xs:element name='");
-      buffer_flush(elemt->value, o->output);
-      fprintf(o->output, "' type='%s:", ns_prefix->first->value->buf);
+      typename = ows_layer_no_prefix(o->layers, buffer_clone(elemt->value));
+      buffer_flush(typename, o->output);
+      buffer_free(typename);
+      fprintf(o->output, "' type='");
       buffer_flush(elemt->value, o->output);
       fprintf(o->output, "Type' substitutionGroup='gml:_Feature' />\n");
       wfs_complex_type(o, wr, elemt->value);

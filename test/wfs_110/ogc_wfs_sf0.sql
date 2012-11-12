@@ -5,7 +5,7 @@
 --
 -- NOTA: Datas are based on a PostGIS 2.0 dump.
 --
---SET client_encoding = 'UTF8';
+SET client_encoding = 'UTF8';
 
 delete from geometry_columns where f_table_name = 'PrimitiveGeoFeature' ;
 delete from geometry_columns where f_table_name = 'AggregateGeoFeature' ;

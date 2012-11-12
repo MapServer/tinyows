@@ -285,7 +285,7 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
       content = xmlNodeGetContent(att->children);
       buffer_add_str(typename, (char *) content);
 
-      if (!ows_layer_writable(o->layers, typename)) {
+      if (!ows_layer_writable(o->layers, ows_layer_prefix_to_uri(o->layers, typename))) {
         xmlFree(content);
         return NULL;
       }
@@ -344,7 +344,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
   if (xmlHasProp(n, (xmlChar *) "idgen")) {
     attr =  xmlGetProp(n, (xmlChar *) "idgen");
     if (!strcmp((char *) attr, "ReplaceDuplicate")) handle_idgen = WFS_REPLACE_DUPLICATE;
-    else if (!strcmp((char *) attr, "UseExisting"))      handle_idgen = WFS_USE_EXISTING;
+    else if (!strcmp((char *) attr, "UseExisting")) handle_idgen = WFS_USE_EXISTING;
     xmlFree(attr);
     attr = NULL;
   }
@@ -386,13 +386,15 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     layer_name = buffer_init();
 
     /* name of the table in which features must be inserted */
+    buffer_add_str(layer_name, (char *) n->ns->href);
+    buffer_add(layer_name, ':');
     buffer_add_str(layer_name, (char *) n->name);
 
     if (!layer_name || !ows_layer_writable(o->layers, layer_name)) {
       buffer_free(id);
-      buffer_free(handle);
       buffer_free(sql);
       buffer_free(values);
+      buffer_free(handle);
       if (layer_name) buffer_free(layer_name);
       result = buffer_from_str("Error unknown or not writable Layer Name");
       return result;
@@ -404,7 +406,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
      * In both cases no other attribute allowed in this element
      * and in both cases (f)id is optionnal !
      */
-    if (xmlHasProp(n, (xmlChar *) "id"))  attr = xmlGetProp(n, (xmlChar *) "id");
+    if (xmlHasProp(n, (xmlChar *) "id"))       attr = xmlGetProp(n, (xmlChar *) "id");
     else if (xmlHasProp(n, (xmlChar *) "fid")) attr = xmlGetProp(n, (xmlChar *) "fid");
 
     if (attr) {
@@ -418,7 +420,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     if (!id_column) {
       buffer_free(id);
       buffer_free(sql);
-      buffer_free(handle);
       buffer_free(values);
       buffer_free(layer_name);
       result = buffer_from_str("Error unknown Layer Name or not id column available");
@@ -477,7 +478,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
      * to report it in transaction respons
      */
     fid_full_name = buffer_init();
-    buffer_copy(fid_full_name, layer_name);
+    buffer_add_str(fid_full_name, (char *) n->name);
     buffer_add(fid_full_name, '.');
     buffer_copy(fid_full_name, id);
     alist_add(wr->insert_results, handle, fid_full_name);
@@ -497,15 +498,17 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
     /* Fill SQL fields and values at once */
     for ( /* empty */ ; node; node = node->next) {
+
+
       if (node->type == XML_ELEMENT_NODE &&
-          ( buffer_cmp(ows_layer_ns_uri(o->layers, layer_ns_prefix), (char *) node->ns->href)
+          ( buffer_cmp(ows_layer_ns_uri(o->layers, layer_name), (char *) node->ns->href)
             || !strcmp("http://www.opengis.net/gml",     (char *) node->ns->href)
             || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href))) {
 
         /* We have to ignore if not present in database,
                        gml elements (name, description, boundedBy) */
         if (    !strcmp("http://www.opengis.net/gml",     (char *) node->ns->href)
-                || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href)) {
+             || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href)) {
           table = ows_psql_describe_table(o, layer_name);
           if (!array_is_key(table, (char *) node->name)) continue;
         }
@@ -537,11 +540,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
             if (fe->error_code != FE_NO_ERROR) {
               result = fill_fe_error(o, fe);
               buffer_free(sql);
-              buffer_free(handle);
               buffer_free(values);
               buffer_free(column);
               buffer_free(id);
-              buffer_free(layer_name);
               filter_encoding_free(fe);
               return result;
             }
@@ -560,9 +561,9 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
             } else {
               buffer_free(sql);
               buffer_free(values);
-              buffer_free(layer_name);
               buffer_free(column);
               buffer_free(id);
+              buffer_free(layer_name);
 
               result = buffer_from_str("Error invalid Geometry");
               return result;
@@ -590,7 +591,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     buffer_add_str(sql, ") ");
 
     buffer_free(values);
-    buffer_free(layer_name);
     buffer_free(id);
 
     /* Run the request to insert each feature */
@@ -601,6 +601,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
       return result;
     }
     buffer_empty(sql);
+    buffer_free(layer_name);
   }
 
   buffer_free(sql);
@@ -671,7 +672,6 @@ void wfs_delete(ows * o, wfs_request * wr)
       if (!where->use) {
         buffer_free(where);
         buffer_free(sql);
-        buffer_free(layer_name);
         wfs_error(o, wr, WFS_ERROR_NO_MATCHING, "error : an id_column is required to use featureid", "Delete");
         return;
       }
@@ -690,7 +690,6 @@ void wfs_delete(ows * o, wfs_request * wr)
         if (filter->error_code != FE_NO_ERROR) {
           buffer_free(where);
           buffer_free(sql);
-          buffer_free(layer_name);
           fe_error(o, filter);
           return;
         }
@@ -703,7 +702,6 @@ void wfs_delete(ows * o, wfs_request * wr)
     buffer_copy(sql, where);
     buffer_add_str(sql, "; ");
     buffer_free(where);
-    buffer_free(layer_name);
 
     /*incrementation of the nodes */
     if (wr->featureid) mln_fid = mln_fid->next;
@@ -732,7 +730,7 @@ void wfs_delete(ows * o, wfs_request * wr)
  */
 static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 {
-  buffer *typename, *xmlstring, *result, *sql, *s, *t;
+  buffer *typename, *layer_name, *xmlstring, *result, *sql, *s, *t;
   filter_encoding *filter;
 
   assert(o);
@@ -746,10 +744,11 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
 
   /*retrieve the name of the table in which features must be deleted */
   typename = wfs_retrieve_typename(o, wr, n);
-  if (typename) s = ows_psql_schema_name(o, typename);
-  if (typename) t = ows_psql_table_name(o, typename);
+  layer_name = ows_layer_prefix_to_uri(o->layers, typename);
+  if (layer_name) s = ows_psql_schema_name(o, layer_name);
+  if (layer_name) t = ows_psql_table_name(o, layer_name);
 
-  if (!typename || !s || !t) {
+  if (!layer_name || !s || !t) {
     if (typename) buffer_free(typename);
     buffer_free(sql);
     result = buffer_from_str("Typename provided is unknown or not writable");
@@ -808,7 +807,7 @@ static buffer *wfs_delete_xml(ows * o, wfs_request * wr, xmlNodePtr n)
  */
 static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
-  buffer *typename, *xmlstring, *result, *sql, *property_name, *values, *gml, *s, *t;
+  buffer *typename, *layer_name, *xmlstring, *result, *sql, *property_name, *values, *gml, *s, *t;
   filter_encoding *filter, *fe;
   xmlNodePtr node, elemt;
   xmlChar *content;
@@ -826,11 +825,11 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
   sql = buffer_init();
   content = NULL;
-  s = t = result = NULL;
+  s = t = result = layer_name = NULL;
 
   /*
    * In WFS 1.1.0 default srsName could be define
-   * TODO: what about for WFS 1.0.0 ?
+   * FIXME: what about for WFS 1.0.0 ?
    */
   if (xmlHasProp(n, (xmlChar *) "srsName")) {
     attr =  xmlGetProp(n, (xmlChar *) "srsName");
@@ -853,10 +852,11 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
   /*retrieve the name of the table in which features must be updated */
   typename = wfs_retrieve_typename(o, wr, n);
-  if (typename) s = ows_psql_schema_name(o, typename);
-  if (typename) t = ows_psql_table_name(o, typename);
+  if (typename) layer_name = ows_layer_prefix_to_uri(o->layers, typename);
+  if (layer_name) s = ows_psql_schema_name(o, layer_name);
+  if (layer_name) t = ows_psql_table_name(o, layer_name);
 
-  if (!typename || !s || !t) {
+  if (!layer_name || !s || !t) {
     if (typename) buffer_free(typename);
     buffer_free(sql);
     result = buffer_from_str("Typename provided is unknown or not writable");
@@ -889,8 +889,8 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         /* We have to ignore if not present in database,
            gml elements (name, description, boundedBy) */
         if (    !strcmp("http://www.opengis.net/gml", (char *) node->ns->href)
-                || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href)) {
-          table = ows_psql_describe_table(o, typename);
+             || !strcmp("http://www.opengis.net/gml/3.2", (char *) node->ns->href)) {
+          table = ows_psql_describe_table(o, layer_name);
           if (!array_is_key(table, (char *) node->name)) continue;
         }
 
@@ -903,9 +903,9 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
           xmlFree(content);
           buffer_add_str(sql, "\"");
           l = list_init();
-          list_add(l, property_name);
+          list_add_by_copy(l, layer_name);
           property_name =  wfs_request_remove_prop_ns_prefix(o, property_name, l);
-          free(l);
+          list_free(l);
           escaped = ows_psql_escape_string(o, property_name->buf);
           if (escaped) {
             buffer_add_str(sql, escaped);
@@ -923,7 +923,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
         /* replacement value is optional, set to NULL if not defined */
         if (!node) buffer_add_str(sql, "NULL");
         else if (!strcmp((char *) node->name, "Value")) {
-          if (ows_psql_is_geometry_column(o, typename, property_name)) {
+          if (ows_psql_is_geometry_column(o, layer_name, property_name)) {
             elemt = node->children;
 
             /* jump to the next element if there are spaces */
@@ -1106,8 +1106,3 @@ void wfs_parse_operation(ows * o, wfs_request * wr, buffer * op)
 
   xmlFreeDoc(xmldoc);
 }
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

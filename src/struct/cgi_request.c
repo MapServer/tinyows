@@ -423,8 +423,9 @@ buffer *cgi_add_xml_into_buffer(buffer * element, xmlNodePtr n)
 
 static bool is_node_ns_wfs(xmlNodePtr n)
 {
-  if (n->ns && n->ns->href && (!strcmp("http://www.opengis.net/wfs", (char *) n->ns->href)
-                               || !strcmp("http://www.opengis.net/ogc", (char *) n->ns->href))) return true;
+  if (n->ns && n->ns->href 
+       && (!strcmp("http://www.opengis.net/wfs", (char *) n->ns->href)
+       || !strcmp("http://www.opengis.net/ogc", (char *) n->ns->href))) return true;
   return false;
 }
 
@@ -451,7 +452,7 @@ array *cgi_parse_xml(ows * o, char *query)
 
   if (!xmldoc || !(n = xmlDocGetRootElement(xmldoc))) {
     xmlFreeDoc(xmldoc);
-    ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "xml isn't valid", "request");
+    ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "XML isn't valid", "request");
     return NULL;
   }
 

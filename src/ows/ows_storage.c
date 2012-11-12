@@ -485,7 +485,7 @@ void ows_layers_storage_flush(ows * o, FILE * output)
               ln->layer->storage->schema->buf,
               ln->layer->storage->table->buf,
               ln->layer->storage->srid,
-              ln->layer->name->buf);
+              ln->layer->name_prefix->buf);
 
       if (ln->layer->retrievable) fprintf(output, "R");
       if (ln->layer->writable)    fprintf(output, "W");
@@ -520,7 +520,7 @@ void ows_layers_storage_fill(ows * o)
 
     for (i = 0, end = PQntuples(res); i < end; i++) {
       if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res, i, 0))
-              && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res, i, 1))) {
+           && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res, i, 1))) {
         ows_layer_storage_fill(o, ln->layer, true);
         filled = true;
       }
@@ -528,7 +528,7 @@ void ows_layers_storage_fill(ows * o)
 
     for (i = 0, end = PQntuples(res_g); i < end; i++) {
       if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res_g, i, 0))
-              && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res_g, i, 1))) {
+           && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res_g, i, 1))) {
         ows_layer_storage_fill(o, ln->layer, false);
         filled = true;
       }
@@ -539,11 +539,7 @@ void ows_layers_storage_fill(ows * o)
       ln->layer->storage = NULL;
     }
   }
+
   PQclear(res);
   PQclear(res_g);
-
 }
-
-/*
- * vim: expandtab sw=4 ts=4
- */

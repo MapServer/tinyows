@@ -165,8 +165,3 @@ void array_flush(const array * a, FILE * output)
   }
 }
 #endif
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

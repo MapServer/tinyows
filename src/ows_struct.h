@@ -167,6 +167,8 @@ typedef struct Ows_layer {
   struct Ows_layer * parent;
   int depth;
   buffer * name;
+  buffer * name_prefix;
+  buffer * name_no_uri;
   buffer * title;
   bool retrievable;
   bool writable;

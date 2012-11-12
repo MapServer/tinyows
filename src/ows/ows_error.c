@@ -102,7 +102,3 @@ void ows_error(ows * o, enum ows_error_code code, char *message, char *locator)
   }
 #endif
 }
-
-/*
- * vim: expandtab sw=4 ts=4
- */

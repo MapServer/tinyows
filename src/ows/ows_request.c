@@ -237,8 +237,8 @@ static ows_version *ows_request_check_version(ows * o, ows_request * or, const a
     }
 
     if (    check_regexp(l->first->value->buf, "^[0-9]+$")
-            && check_regexp(l->first->next->value->buf, "^[0-9]+$")
-            && check_regexp(l->first->next->next->value->buf, "^[0-9]+$")) {
+         && check_regexp(l->first->next->value->buf, "^[0-9]+$")
+         && check_regexp(l->first->next->next->value->buf, "^[0-9]+$")) {
       v->major = atoi(l->first->value->buf);
       v->minor = atoi(l->first->next->value->buf);
       v->release = atoi(l->first->next->next->value->buf);
@@ -268,10 +268,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
   bool srsname = false;
   int valid = 0;
 
-  assert(o);
-  assert(or);
-  assert(cgi);
-  assert(query);
+  assert(o && or && cgi && query);
 
   /* check if SERVICE is set */
   if (!array_is_key(cgi, "service")) {
@@ -284,7 +281,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
       if (buffer_case_cmp(o->metadata->type, "WFS"))
         or->service = WFS;
       else {
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "service unknown", "service");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "SERVICE Unknown", "SERVICE");
         return;
       }
     }
@@ -297,11 +294,11 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
       if (buffer_case_cmp(o->metadata->type, "WFS"))
         or->service = WFS;
       else {
-        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "service unknown", "service");
+        ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "SERVICE Unknown", "SERVICE");
         return;
       }
     } else {
-      ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "service unknown", "service");
+      ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE, "SERVICE unknown", "SERVICE");
       return;
     }
   }
@@ -365,9 +362,9 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
 
         if (buffer_cmp(typename, ln->layer->name->buf)) {
           if (    !check_regexp(b->buf, "^http://www.opengis.net")
-                  && !check_regexp(b->buf, "^EPSG")
-                  && !check_regexp(b->buf, "^urn:")
-                  && !check_regexp(b->buf, "^spatialreferencing.org")) {
+               && !check_regexp(b->buf, "^EPSG")
+               && !check_regexp(b->buf, "^urn:")
+               && !check_regexp(b->buf, "^spatialreferencing.org")) {
             ows_error(o, OWS_ERROR_CONFIG_FILE, "srsname isn't valid", "srsName");
             return;
           }
@@ -377,8 +374,7 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
           }
 
           if (srsname == false) {
-            ows_error(o, OWS_ERROR_CONFIG_FILE, "srsname doesn't match srid",
-                      "config_file");
+            ows_error(o, OWS_ERROR_CONFIG_FILE, "srsname doesn't match srid", "config_file");
             return;
           }
         }
@@ -388,9 +384,9 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
 
   /* check XML Validity */
   if ( (cgi_method_post() && (    !strcmp(getenv("CONTENT_TYPE"), "application/xml; charset=UTF-8")
-                                  || !strcmp(getenv("CONTENT_TYPE"), "application/xml")
-                                  || !strcmp(getenv("CONTENT_TYPE"), "text/xml")
-                                  || !strcmp(getenv("CONTENT_TYPE"), "text/plain")))
+                               || !strcmp(getenv("CONTENT_TYPE"), "application/xml")
+                               || !strcmp(getenv("CONTENT_TYPE"), "text/xml")
+                               || !strcmp(getenv("CONTENT_TYPE"), "text/plain")))
        || (!cgi_method_post() && !cgi_method_get() && query[0] == '<') /* Unit test command line use case */ ) {
 
     if (or->service == WFS && o->check_schema) {
@@ -414,8 +410,3 @@ void ows_request_check(ows * o, ows_request * or, const array * cgi, const char 
     }
   }
 }
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

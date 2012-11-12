@@ -39,16 +39,16 @@ bool fe_is_spatial_op(char *name)
   /* case sensitive comparison because the gml standard specifies
      strictly the name of the operator */
   if (    !strcmp(name, "Equals")
-          || !strcmp(name, "Disjoint")
-          || !strcmp(name, "Touches")
-          || !strcmp(name, "Within")
-          || !strcmp(name, "Overlaps")
-          || !strcmp(name, "Crosses")
-          || !strcmp(name, "Intersects")
-          || !strcmp(name, "Contains")
-          || !strcmp(name, "DWithin")
-          || !strcmp(name, "Beyond")
-          || !strcmp(name, "BBOX"))
+       || !strcmp(name, "Disjoint")
+       || !strcmp(name, "Touches")
+       || !strcmp(name, "Within")
+       || !strcmp(name, "Overlaps")
+       || !strcmp(name, "Crosses")
+       || !strcmp(name, "Intersects")
+       || !strcmp(name, "Contains")
+       || !strcmp(name, "DWithin")
+       || !strcmp(name, "Beyond")
+       || !strcmp(name, "BBOX"))
     return true;
 
   return false;
@@ -115,7 +115,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
     if (o->request->request.wfs->srs)
       srid_int = o->request->request.wfs->srs->srid;
     else
-      srid_int = ows_srs_get_srid_from_layer(o, typename);
+      srid_int = ows_srs_get_srid_from_layer(o, ows_layer_prefix_to_uri(o->layers, typename));
   }
 
   n = n->children;
@@ -230,7 +230,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
   ows_srs *s;
-  buffer *geom;
+  buffer *geom, *layer_name;
   xmlNodePtr p;
   xmlChar *srsname;
   int srid = -1;
@@ -254,12 +254,14 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
 
   p = n;
   n = n->next;
+  
+  layer_name = ows_layer_prefix_to_uri(o->layers, typename);
 
   /* jump to the next element if there are spaces */
   while (n->type != XML_ELEMENT_NODE) n = n->next;
 
   if (o->request->request.wfs->srs) srid = o->request->request.wfs->srs->srid;
-  else srid = ows_srs_get_srid_from_layer(o, typename);
+  else srid = ows_srs_get_srid_from_layer(o, layer_name);
 
   if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope")) {
 
@@ -276,11 +278,11 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     buffer_add(fe->sql, '"');
     buffer_add(fe->sql, ',');
 
-    if (srid != ows_srs_get_srid_from_layer(o, typename)) {
+    if (srid != ows_srs_get_srid_from_layer(o, layer_name)) {
       buffer_add_str(fe->sql, "ST_Transform(");
       fe->sql = fe_envelope(o, typename, fe, fe->sql, n);
       buffer_add(fe->sql, ',');
-      buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename));
+      buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, layer_name));
       buffer_add(fe->sql, ')');
     } else fe->sql = fe_envelope(o, typename, fe, fe->sql, n);
 
@@ -298,7 +300,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     buffer_add(fe->sql, '"');
     buffer_add(fe->sql, ',');
 
-    if (srid != ows_srs_get_srid_from_layer(o, typename))
+    if (srid != ows_srs_get_srid_from_layer(o, layer_name))
       buffer_add_str(fe->sql, "ST_Transform(");
 
     buffer_add_str(fe->sql, "ST_SetSRID('");
@@ -308,9 +310,9 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     buffer_add(fe->sql, ')');
     buffer_free(geom);
 
-    if (srid != ows_srs_get_srid_from_layer(o, typename)) {
+    if (srid != ows_srs_get_srid_from_layer(o, layer_name)) {
       buffer_add(fe->sql, ',');
-      buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, typename));
+      buffer_add_int(fe->sql, ows_srs_get_srid_from_layer(o, layer_name));
       buffer_add(fe->sql, ')');
     }
   }
@@ -462,7 +464,7 @@ static buffer *fe_bbox_layer(ows *o, buffer *typename, buffer *sql, buffer *prop
  */
 static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-  buffer *property;
+  buffer *property, *layer_name;
   list *columns;
   list_node *ln;
   buffer *envelope = NULL;
@@ -475,7 +477,8 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
   n = n->children;
   while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-  columns = ows_psql_geometry_column(o, typename);
+  layer_name = ows_layer_prefix_to_uri(o->layers, typename);
+  columns = ows_psql_geometry_column(o, layer_name);
 
   /* Retrieve the property name */
   property = buffer_init();
@@ -491,7 +494,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
     /* retrieve the geometry matching the bbox */
     if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope")) {
       envelope = buffer_init();
-      envelope = fe_envelope(o, typename, fe, envelope, n);
+      envelope = fe_envelope(o, layer_name, fe, envelope, n);
     } else {
       fe->error_code = FE_ERROR_FILTER;
     }
@@ -515,7 +518,7 @@ static buffer *fe_bbox(ows * o, buffer * typename, filter_encoding * fe, xmlNode
         return fe->sql;
       }
       envelope = buffer_init();
-      envelope = fe_envelope(o, typename, fe, envelope, n);
+      envelope = fe_envelope(o, layer_name, fe, envelope, n);
     } else {
       fe->error_code = FE_ERROR_FILTER;
     }

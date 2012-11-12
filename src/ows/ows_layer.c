@@ -252,19 +252,19 @@ array *ows_layer_list_namespaces(ows_layer_list * ll)
 /*
  * Return a list of layer names grouped by prefix
  */
-list *ows_layer_list_by_ns_prefix(ows_layer_list * ll, list * layer_name, buffer * ns_prefix)
+list *ows_layer_list_by_ns_prefix(ows_layer_list * ll, list * layer_name_prefix, buffer * ns_prefix)
 {
   list *typ;
   list_node *ln;
   buffer *layer_ns_prefix;
 
   assert(ll);
-  assert(layer_name);
+  assert(layer_name_prefix);
   assert(ns_prefix);
 
   typ = list_init();
 
-  for (ln = layer_name->first; ln ; ln = ln->next) {
+  for (ln = layer_name_prefix->first; ln ; ln = ln->next) {
     layer_ns_prefix = ows_layer_ns_prefix(ll, ln->value);
 
     if (buffer_cmp(layer_ns_prefix, ns_prefix->buf))
@@ -278,22 +278,24 @@ list *ows_layer_list_by_ns_prefix(ows_layer_list * ll, list * layer_name, buffer
 /*
  * Retrieve a list of prefix used for a specified list of layers
  */
-list *ows_layer_list_ns_prefix(ows_layer_list * ll, list * layer_name)
+list *ows_layer_list_ns_prefix(ows_layer_list * ll, list * layer_name_uri)
 {
   list_node *ln;
   list *ml_ns_prefix;
   buffer *ns_prefix;
 
-  assert(ll);
-  assert(layer_name);
+  assert(ll && layer_name_uri);
 
   ml_ns_prefix = list_init();
 
-  for (ln = layer_name->first; ln ; ln = ln->next) {
-    ns_prefix = ows_layer_ns_prefix(ll, ln->value);
+  for (ln = layer_name_uri->first; ln ; ln = ln->next) {
+    ns_prefix = ows_layer_ns_prefix(ll, ows_layer_uri_to_prefix(ll, ln->value));
 
     if (!in_list(ml_ns_prefix, ns_prefix))
       list_add_by_copy(ml_ns_prefix, ns_prefix);
+
+    if ((ows_layer_get(ll, ln->value))->gml_ns && !in_list_str(ml_ns_prefix, "gml"))
+      list_add_str(ml_ns_prefix, "gml");
   }
 
   return ml_ns_prefix;
@@ -301,21 +303,101 @@ list *ows_layer_list_ns_prefix(ows_layer_list * ll, list * layer_name)
 
 
 /*
- * Retrieve the layer name without prefix
+ * TODO
  */
-buffer *ows_layer_no_prefix(ows_layer_list * ll, buffer * layer_name)
+list *ows_layer_list_prefix_to_uri(ows_layer_list * ll, list * layer_name_prefix)
+{
+  list_node *ln;
+  list *prefix;
+  assert(ll && layer_name_prefix);
+
+  prefix = list_init();
+
+  for (ln = layer_name_prefix->first; ln ; ln = ln->next) {
+    list_add_by_copy(prefix, ows_layer_prefix_to_uri(ll, ln->value));
+  }
+
+  return prefix;
+}
+
+
+/*
+ * TODO
+ */
+buffer *ows_layer_uri_to_prefix(ows_layer_list * ll, buffer * layer_name)
 {
   ows_layer_node *ln;
-
-  assert(ll);
-  assert(layer_name);
+  assert(ll && layer_name);
 
   for (ln = ll->first; ln ; ln = ln->next)
-    if (buffer_cmp(ln->layer->name, layer_name->buf)) {
-      buffer_shift(layer_name, ln->layer->ns_prefix->use + 1);  /* +1 for ':' separator */
-      return layer_name;
-    }
+    if (buffer_cmp(ln->layer->name, layer_name->buf))
+      return ln->layer->name_prefix;
   
+  return (buffer *) NULL;
+}
+
+
+/*
+ * TODO
+ */
+buffer *ows_layer_prefix_to_uri(ows_layer_list * ll, buffer * layer_name_prefix)
+{
+  ows_layer_node *ln;
+  assert(ll && layer_name_prefix);
+
+  for (ln = ll->first; ln ; ln = ln->next)
+    if (buffer_cmp(ln->layer->name_prefix, layer_name_prefix->buf))
+      return ln->layer->name;
+  
+  return (buffer *) NULL;
+}
+  
+
+/*
+ * TODO
+ */
+buffer *ows_layer_ns_prefix_to_ns_uri(ows_layer_list * ll, buffer * ns_prefix)
+{
+  ows_layer_node *ln;
+  assert(ll && ns_prefix);
+
+  for (ln = ll->first; ln ; ln = ln->next) {
+    if (buffer_cmp(ln->layer->ns_prefix, ns_prefix->buf))
+      return ln->layer->ns_uri;
+  }
+
+  return (buffer *) NULL;
+}
+
+
+/*
+ * Retrieve layer name without uri
+ */
+buffer *ows_layer_no_uri(ows_layer_list * ll, buffer * layer_name)
+{
+  ows_layer_node *ln;
+  assert(ll && layer_name);
+
+  for (ln = ll->first; ln ; ln = ln->next)
+    if (buffer_cmp(ln->layer->name, layer_name->buf))
+      return ln->layer->name_no_uri;
+
+  return (buffer *) NULL;
+}
+
+
+/*
+ * Retrieve layer name without uri
+ */
+buffer *ows_layer_no_uri_to_uri(const ows_layer_list * ll, buffer * layer_name_no_uri)
+{
+  ows_layer_node *ln;
+  assert(ll && layer_name_no_uri);
+
+  for (ln = ll->first; ln ; ln = ln->next)
+    if (buffer_cmp(ln->layer->name_no_uri, layer_name_no_uri->buf))
+      return ln->layer->name;
+
   return (buffer *) NULL;
 }
 
@@ -323,15 +405,13 @@ buffer *ows_layer_no_prefix(ows_layer_list * ll, buffer * layer_name)
 /*
  * Retrieve the prefix linked to the specified layer
  */
-buffer *ows_layer_ns_prefix(ows_layer_list * ll, buffer * layer_name)
+buffer *ows_layer_ns_prefix(ows_layer_list * ll, buffer * layer_name_prefix)
 {
   ows_layer_node *ln;
-
-  assert(ll);
-  assert(layer_name);
+  assert(ll && layer_name_prefix);
 
   for (ln = ll->first; ln ; ln = ln->next)
-    if (buffer_cmp(ln->layer->name, layer_name->buf))
+    if (buffer_cmp(ln->layer->name_prefix, layer_name_prefix->buf))
       return ln->layer->ns_prefix;
 
   return (buffer *) NULL;
@@ -339,17 +419,15 @@ buffer *ows_layer_ns_prefix(ows_layer_list * ll, buffer * layer_name)
 
 
 /*
- * Retrieve the ns_uri associated to the specified ns_prefix
+ * Retrieve the ns_uri associated to the specified layer
  */
-buffer *ows_layer_ns_uri(ows_layer_list * ll, buffer * ns_prefix)
+buffer *ows_layer_ns_uri(ows_layer_list * ll, buffer * layer_name_uri)
 {
   ows_layer_node *ln;
-
-  assert(ll);
-  assert(ns_prefix);
+  assert(ll && layer_name_uri);
 
   for (ln = ll->first; ln ; ln = ln->next)
-    if (buffer_cmp(ln->layer->ns_prefix, ns_prefix->buf))
+    if (buffer_cmp(ln->layer->name, layer_name_uri->buf))
       return ln->layer->ns_uri;
 
   return (buffer *) NULL;
@@ -362,9 +440,7 @@ buffer *ows_layer_ns_uri(ows_layer_list * ll, buffer * ns_prefix)
 void ows_layer_list_add(ows_layer_list * ll, ows_layer * l)
 {
   ows_layer_node *ln = ows_layer_node_init();
-
-  assert(ll);
-  assert(l);
+  assert(ll && l);
 
   ln->layer = l;
   if (!ll->first) {
@@ -442,10 +518,12 @@ ows_layer *ows_layer_init()
   ows_layer *l = malloc(sizeof(ows_layer));
   assert(l);
 
-  l->parent = NULL;
   l->depth = 0;
+  l->parent = NULL;
   l->title = NULL;
   l->name = NULL;
+  l->name_prefix = NULL;
+  l->name_no_uri = NULL;
   l->abstract = NULL;
   l->keywords = NULL;
   l->gml_ns = NULL;
@@ -471,16 +549,18 @@ void ows_layer_free(ows_layer * l)
 {
   assert(l);
 
-  if (l->title)   buffer_free(l->title);
-  if (l->name)  buffer_free(l->name);
-  if (l->abstract)  buffer_free(l->abstract);
-  if (l->keywords)  list_free(l->keywords);
-  if (l->gml_ns)  list_free(l->gml_ns);
-  if (l->srid)  list_free(l->srid);
-  if (l->geobbox) ows_geobbox_free(l->geobbox);
-  if (l->ns_uri)  buffer_free(l->ns_uri);
-  if (l->ns_prefix) buffer_free(l->ns_prefix);
-  if (l->storage) ows_layer_storage_free(l->storage);
+  if (l->title)         buffer_free(l->title);
+  if (l->name)          buffer_free(l->name);
+  if (l->name_prefix)   buffer_free(l->name_prefix);
+  if (l->name_no_uri)   buffer_free(l->name_no_uri);
+  if (l->abstract)      buffer_free(l->abstract);
+  if (l->keywords)      list_free(l->keywords);
+  if (l->gml_ns)        list_free(l->gml_ns);
+  if (l->srid)          list_free(l->srid);
+  if (l->geobbox)       ows_geobbox_free(l->geobbox);
+  if (l->ns_uri)        buffer_free(l->ns_uri);
+  if (l->ns_prefix)     buffer_free(l->ns_prefix);
+  if (l->storage)       ows_layer_storage_free(l->storage);
   if (l->exclude_items) list_free(l->exclude_items);
   if (l->include_items) list_free(l->include_items);
   if (l->pkey)          buffer_free(l->pkey);
@@ -503,7 +583,7 @@ void ows_layer_flush(ows_layer * l, FILE * output)
   fprintf(output, "depth: %i\n", l->depth);
 
   if (l->parent) {
-    if (l->parent->name)  fprintf(output, "parent: %s\n", l->parent->name->buf);
+    if      (l->parent->name)  fprintf(output, "parent: %s\n", l->parent->name->buf);
     else if (l->parent->title) fprintf(output, "parent: %s\n", l->parent->title->buf);
   }
 
@@ -519,6 +599,18 @@ void ows_layer_flush(ows_layer * l, FILE * output)
   if (l->name) {
     fprintf(output, "name: ");
     buffer_flush(l->name, output);
+    fprintf(output, "\n");
+  }
+
+  if (l->name_prefix) {
+    fprintf(output, "name_prefix: ");
+    buffer_flush(l->name_prefix, output);
+    fprintf(output, "\n");
+  }
+
+  if (l->name_no_uri) {
+    fprintf(output, "name_no_uri: ");
+    buffer_flush(l->name_no_uri, output);
     fprintf(output, "\n");
   }
 
@@ -577,7 +669,3 @@ void ows_layer_flush(ows_layer * l, FILE * output)
   }
 }
 #endif
-
-/*
- * vim: expandtab sw=4 ts=4
- */

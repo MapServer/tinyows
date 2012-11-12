@@ -139,11 +139,16 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
 
   content = xmlNodeGetContent(n);
 
-  if (!strcmp((char *) n->name, "Add")) buffer_add_str(sql, " + ");
+  /* Order is meaningfull (i.e Arithmetic, PropertyName, Literal) */
+       if (!strcmp((char *) n->name, "Add")) buffer_add_str(sql, " + ");
   else if (!strcmp((char *) n->name, "Sub")) buffer_add_str(sql, " - ");
   else if (!strcmp((char *) n->name, "Mul")) buffer_add_str(sql, " * ");
   else if (!strcmp((char *) n->name, "Div")) buffer_add_str(sql, " / ");
-  else if (!strcmp((char *) n->name, "Literal")) {
+  else if (!strcmp((char *) n->name, "PropertyName")) {
+    buffer_add(sql, '"');
+    sql = fe_property_name(o, typename, fe, sql, n, false, true);
+    buffer_add(sql, '"');
+  } else if (!strcmp((char *) n->name, "Literal")) {
     buffer_add_str(sql, "'");
     escaped = ows_psql_escape_string(o, (char *) content);
     if (escaped) {
@@ -151,10 +156,6 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
       free(escaped);
     }
     buffer_add_str(sql, "'");
-  } else if (!strcmp((char *) n->name, "PropertyName")) {
-    buffer_add(sql, '"');
-    sql = fe_property_name(o, typename, fe, sql, n, false, true);
-    buffer_add(sql, '"');
   } else if (n->type != XML_ELEMENT_NODE) {
     sql = fe_expression(o, typename, fe, sql, n->next);
   }
@@ -215,7 +216,7 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
 {
   xmlChar *content;
   array *prop_table;
-  buffer *tmp;
+  buffer *tmp, *layer_name;
   list *l, *ll;
 
   assert(o);
@@ -226,12 +227,12 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
 
   while (n->type != XML_ELEMENT_NODE) n = n->next;       /* Jump to the next element if there are spaces */
 
-  prop_table = ows_psql_describe_table(o, typename);
+  layer_name = ows_layer_prefix_to_uri(o->layers, typename);
+  prop_table = ows_psql_describe_table(o, layer_name);
   assert(prop_table); /* should never happens as Typename checked previsously */
 
   content = xmlNodeGetContent(n);
   tmp = buffer_from_str((char *) content);
-
   /* Check if propertyname is an Xpath expression */
   if (check_regexp(tmp->buf, "\\*\\[")) tmp = fe_xpath_property_name(o, typename, tmp);
 
@@ -246,14 +247,14 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
 
   /* Check if propertyname is available */
   ll = list_init();
-  list_add(ll, typename);
+  list_add_by_copy(ll, layer_name);
   tmp = wfs_request_remove_prop_ns_prefix(o, tmp, ll);
-  free(ll); /* don't call list_free here */ 
-  if (array_is_key(prop_table, tmp->buf)) {
-    buffer_copy(sql, tmp);
-  } else if (mandatory) fe->error_code = FE_ERROR_PROPERTYNAME;
+  list_free(ll);
 
-  if (mandatory && check_geom_column && !ows_psql_is_geometry_column(o, typename, tmp))
+  if (array_is_key(prop_table, tmp->buf)) buffer_copy(sql, tmp);
+  else if (mandatory) fe->error_code = FE_ERROR_PROPERTYNAME;
+
+  if (mandatory && check_geom_column && !ows_psql_is_geometry_column(o, layer_name, tmp))
     fe->error_code = FE_ERROR_GEOM_PROPERTYNAME;
 
   buffer_free(tmp);
@@ -313,7 +314,9 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
       xmlFree(fid);
 
       /* Check if the layer_name match the typename queried */
-      if (fe_list->first && !buffer_cmp(fe_list->first->value, typename->buf)) {
+      if (fe_list->first && !buffer_cmp(fe_list->first->value, 
+          (ows_layer_no_uri(o->layers, 
+           ows_layer_prefix_to_uri(o->layers, typename)))->buf)) {
         buffer_add_str(fe->sql, " FALSE"); /* We still execute the query */
         list_free(fe_list);
         buffer_free(buf_fid);
@@ -321,7 +324,7 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
       }
 
       /* If there is no id column, raise an error */
-      id_name = ows_psql_id_column(o, typename);
+      id_name = ows_psql_id_column(o, ows_layer_prefix_to_uri(o->layers, typename));
       if (!id_name || !id_name->use) {
         fe->error_code = FE_ERROR_FEATUREID;
         list_free(fe_list);

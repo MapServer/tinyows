@@ -356,11 +356,11 @@ static void ows_parse_config_pg(ows * o, xmlTextReaderPtr r)
   do {
     a = xmlTextReaderName(r);
 
-    if (       !strcmp((char *) a, "host")
-               || !strcmp((char *) a, "user")
-               || !strcmp((char *) a, "password")
-               || !strcmp((char *) a, "dbname")
-               || !strcmp((char *) a, "port")) {
+    if (    !strcmp((char *) a, "host")
+         || !strcmp((char *) a, "user")
+         || !strcmp((char *) a, "password")
+         || !strcmp((char *) a, "dbname")
+         || !strcmp((char *) a, "port")) {
       v = xmlTextReaderValue(r);
       buffer_add_str(o->pg_dsn, (char *) a);
       buffer_add_str(o->pg_dsn, "=");
@@ -432,9 +432,13 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "name");
   if (a) {
     layer->name = buffer_init();
+    layer->name_no_uri = buffer_init();
+    layer->name_prefix = buffer_init();
     buffer_add_str(layer->name, (char *) a);
-
-    if (!layer->storage->table->use) buffer_add_str(layer->storage->table, (char *) a);
+    buffer_copy(layer->name_no_uri, layer->name);
+    buffer_copy(layer->name_prefix, layer->name);
+    if (!layer->storage->table->use)
+      buffer_add_str(layer->storage->table, (char *) a);
     xmlFree(a);
   }
 
@@ -522,10 +526,6 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
   a = xmlTextReaderGetAttribute(r, (xmlChar *) "ns_prefix");
   if (a) {
     buffer_add_str(layer->ns_prefix, (char *) a);
-    if (layer->name) {
-      buffer_add_head(layer->name, ':');
-      buffer_add_head_str(layer->name, (char *) a);
-    }
     xmlFree(a);
   } else if (!a && layer->parent && layer->parent->ns_prefix)
     buffer_copy(layer->ns_prefix, layer->parent->ns_prefix);
@@ -567,6 +567,14 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     buffer_copy(layer->pkey, layer->parent->pkey);
   }
 
+  if (layer->name && layer->ns_uri) {
+      buffer_add_head(layer->name, ':');
+      buffer_add_head_str(layer->name, layer->ns_uri->buf);
+  }
+  if (layer->name && layer->ns_prefix) {
+      buffer_add_head(layer->name_prefix, ':');
+      buffer_add_head_str(layer->name_prefix, layer->ns_prefix->buf);
+  }
   ows_layer_list_add(o->layers, layer);
 }
 
@@ -689,8 +697,3 @@ void ows_parse_config(ows * o, const char *filename)
   else      ows_parse_config_xml(o, filename);
   if (!o->exit) ows_config_check(o);
 }
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

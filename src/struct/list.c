@@ -55,7 +55,7 @@ void list_free(list * l)
 {
   assert(l);
 
-  while (l->first != NULL) list_node_free(l, l->first);
+  while (l->first) list_node_free(l, l->first);
 
   l->last = NULL;
   free(l);
@@ -123,6 +123,24 @@ void list_add_str(list * l, char *value)
   l->last = ln;
   l->last->next = NULL;
   l->size++;
+}
+
+
+void list_pop(list *l)
+{
+  list_node *ln;
+
+  assert(l);
+  if (l->size == 0) return;
+
+  ln = l->last->prev;
+  list_node_free(l, l->last);
+  ln->next = NULL; 
+  l->last = ln;
+  l->size--;
+
+  if (l->size == 0) l->first = l->last = NULL;
+  if (l->size == 1) l->first = l->last = ln;
 }
 
 

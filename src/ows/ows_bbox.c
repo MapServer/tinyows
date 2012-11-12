@@ -70,15 +70,14 @@ void ows_bbox_free(ows_bbox * b)
  */
 bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin, double xmax, double ymax, int srid)
 {
-  assert(o);
-  assert(b);
+  assert(o && b);
 
   if (xmin >= xmax || ymin >= ymax) return false;
 
   if (    fabs(xmin - DBL_MAX) < DBL_EPSILON
-          || fabs(ymin - DBL_MAX) < DBL_EPSILON
-          || fabs(xmax - DBL_MAX) < DBL_EPSILON
-          || fabs(ymax - DBL_MAX) < DBL_EPSILON) return false;
+       || fabs(ymin - DBL_MAX) < DBL_EPSILON
+       || fabs(xmax - DBL_MAX) < DBL_EPSILON
+       || fabs(ymax - DBL_MAX) < DBL_EPSILON) return false;
 
   b->xmin = xmin;
   b->xmax = xmax;
@@ -103,9 +102,7 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
   int srs = srid;
   bool ret_srs = true;
 
-  assert(o);
-  assert(bb);
-  assert(str);
+  assert(o && bb && str);
 
   b = buffer_init();
   buffer_add_str(b, str);
@@ -122,7 +119,7 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
   ymin = strtod(l->first->next->value->buf, NULL);
   xmax = strtod(l->first->next->next->value->buf, NULL);
   ymax = strtod(l->first->next->next->next->value->buf, NULL);
-  /* TODO error handling */
+  /* FIXME error handling */
 
   /* srs is optional since WFS 1.1 */
   if (l->size == 5) {
@@ -153,10 +150,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where, ows_srs * srs)
   list_node *ln_from, *ln_where, *ln_geom;
   PGresult *res;
 
-  assert(o);
-  assert(from);
-  assert(where);
-  assert(srs);
+  assert(o && from && where && srs);
 
   bb = ows_bbox_init();
 
@@ -168,7 +162,9 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where, ows_srs * srs)
   buffer_add_str(sql, "(SELECT ST_Extent(foo.the_geom) as extent FROM ( ");
 
   /* For each layer name or each geometry column, make an union between retrieved features */
-  for (ln_from = from->first, ln_where = where->first; ln_from ; ln_from = ln_from->next, ln_where = ln_where->next) {
+  for (ln_from = from->first, ln_where = where->first; 
+       ln_from; 
+       ln_from = ln_from->next, ln_where = ln_where->next) {
 
     geom = ows_psql_geometry_column(o, ln_from->value);
 
@@ -196,7 +192,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where, ows_srs * srs)
   res = ows_psql_exec(o, sql->buf);
   buffer_free(sql);
 
-  if (PQresultStatus(res) != PGRES_TUPLES_OK && PQntuples(res) != 4) {
+  if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) != 4) {
     PQclear(res);
     return bb;
   }
@@ -205,7 +201,7 @@ ows_bbox *ows_bbox_boundaries(ows * o, list * from, list * where, ows_srs * srs)
   bb->ymin = strtod(PQgetvalue(res, 0, 1), NULL);
   bb->xmax = strtod(PQgetvalue(res, 0, 2), NULL);
   bb->ymax = strtod(PQgetvalue(res, 0, 3), NULL);
-  /* TODO Error handling */
+  /* FIXME Error handling */
 
   ows_srs_copy(bb->srs, srs);
 
@@ -222,8 +218,7 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
   buffer *sql;
   PGresult *res;
 
-  assert(o);
-  assert(bb);
+  assert(o && bb);
 
   sql = buffer_init();
   buffer_add_str(sql, "SELECT xmin(g), ymin(g), xmax(g), ymax(g) FROM (SELECT ST_Transform(");
@@ -242,7 +237,7 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
   bb->ymin = strtod(PQgetvalue(res, 0, 1), NULL);
   bb->xmax = strtod(PQgetvalue(res, 0, 2), NULL);
   bb->ymax = strtod(PQgetvalue(res, 0, 3), NULL);
-  /* TODO Error Handling */
+  /* FIXME Error Handling */
 
   return ows_srs_set_from_srid(o, bb->srs, srid);
 }
@@ -253,8 +248,7 @@ bool ows_bbox_transform(ows * o, ows_bbox * bb, int srid)
  */
 bool ows_bbox_set_from_geobbox(ows * o, ows_bbox * bb, ows_geobbox * geo)
 {
-  assert(bb);
-  assert(geo);
+  assert(bb && geo);
 
   if (geo->west < geo->east) {
     bb->xmin = geo->west;
@@ -283,9 +277,7 @@ void ows_bbox_to_query(ows *o, ows_bbox *bbox, buffer *query)
 {
   double x1, y1, x2, y2;
 
-  assert(o);
-  assert(bbox);
-  assert(query);
+  assert(o && bbox && query);
 
   if (bbox->srs->is_reverse_axis) {
     x1 = bbox->ymin;
@@ -341,8 +333,3 @@ void ows_bbox_flush(const ows_bbox * b, FILE * output)
   ows_srs_flush(b->srs, output);
 }
 #endif
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

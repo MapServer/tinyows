@@ -206,22 +206,22 @@ void ows_free(ows * o)
 {
   assert(o);
 
-  if (o->config_file)    buffer_free(o->config_file);
-  if (o->schema_dir)     buffer_free(o->schema_dir);
-  if (o->online_resource)    buffer_free(o->online_resource);
-  if (o->pg)       PQfinish(o->pg);
-  if (o->log_file)     buffer_free(o->log_file);
+  if (o->config_file)          buffer_free(o->config_file);
+  if (o->schema_dir)           buffer_free(o->schema_dir);
+  if (o->online_resource)      buffer_free(o->online_resource);
+  if (o->pg)                   PQfinish(o->pg);
+  if (o->log_file)             buffer_free(o->log_file);
   if (o->log)                  fclose(o->log);
-  if (o->pg_dsn)     buffer_free(o->pg_dsn);
-  if (o->cgi)      array_free(o->cgi);
-  if (o->psql_requests)  list_free(o->psql_requests);
-  if (o->layers)     ows_layer_list_free(o->layers);
-  if (o->request)    ows_request_free(o->request);
-  if (o->max_geobbox)    ows_geobbox_free(o->max_geobbox);
-  if (o->metadata)     ows_metadata_free(o->metadata);
-  if (o->contact)      ows_contact_free(o->contact);
-  if (o->encoding)       buffer_free(o->encoding);
-  if (o->db_encoding)    buffer_free(o->db_encoding);
+  if (o->pg_dsn)               buffer_free(o->pg_dsn);
+  if (o->cgi)                  array_free(o->cgi);
+  if (o->psql_requests)        list_free(o->psql_requests);
+  if (o->layers)               ows_layer_list_free(o->layers);
+  if (o->request)              ows_request_free(o->request);
+  if (o->max_geobbox)          ows_geobbox_free(o->max_geobbox);
+  if (o->metadata)             ows_metadata_free(o->metadata);
+  if (o->contact)              ows_contact_free(o->contact);
+  if (o->encoding)             buffer_free(o->encoding);
+  if (o->db_encoding)          buffer_free(o->db_encoding);
   if (o->wfs_default_version)  ows_version_free(o->wfs_default_version);
   if (o->postgis_version)      ows_version_free(o->postgis_version);
   if (o->schema_wfs_100)       xmlSchemaFree(o->schema_wfs_100);
@@ -454,8 +454,3 @@ int main(int argc, char *argv[])
 
   return EXIT_SUCCESS;
 }
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

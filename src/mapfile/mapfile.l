@@ -516,10 +516,6 @@ static void layer_properties(char * yytext, bool quotes)
 	case MAP_LAYER_NAME:
 		map_l->name = buffer_init();
        		buffer_add_str(map_l->name, yytext);
-                if (map_l->ns_prefix->use) {
-                    buffer_add_head(map_l->name, ':');
-                    buffer_add_head_str(map_l->name, map_l->ns_prefix->buf);
-                }
 		return;
 	case MAP_LAYER_CONNECTION:
 		/* TODO: Having a Layer connection notion in TinyOWS */
@@ -542,9 +538,21 @@ static void end_layer()
 		if (!map_l->storage->schema->use)
 			buffer_add_str(map_l->storage->schema, "public");
 		if (!map_is_dump) map_l->retrievable=map_l->writable = false;
+
+                buffer_copy(map_l->name_prefix, map_l->name);
+                if (map_l->ns_prefix->use) {
+                    buffer_add_head(map_l->name_prefix, ':');
+                    buffer_add_head_str(map_l->name_prefix, map_l->ns_prefix->buf);
+                }
+
+                buffer_copy(map_l->name_no_uri, map_l->name);
+                if (map_l->ns_uri->use) {
+                    buffer_add_head(map_l->name, ':');
+                    buffer_add_head_str(map_l->name, map_l->ns_uri->buf);
+                }
+
 		ows_layer_list_add(map_o->layers, map_l);
 	}
-
 		
 	map_is_dump = map_is_postgis = false;
 }

@@ -97,7 +97,7 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename, filter_encodi
       buffer_shift(tmp, 1);
     }
 
-    type = ows_psql_type(o, typename, tmp);
+    type = ows_psql_type(o, ows_layer_prefix_to_uri(o->layers, typename), tmp);
 
     if (buffer_cmp(type, "bool")) bool_type = true;
   }
@@ -140,8 +140,8 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename, filter_encodi
   /* if property is a boolean, xml content( 1 or 0) must be transformed
      into fe->sql (true or false) */
   if (bool_type) {
-    if (buffer_cmp(tmp, "1")) buffer_add_str(fe->sql, "'t'");
-    if (buffer_cmp(tmp, "0")) buffer_add_str(fe->sql, "'f'");
+    if (buffer_cmp(tmp, "'1'")) buffer_add_str(fe->sql, "'t'");
+    if (buffer_cmp(tmp, "'0'")) buffer_add_str(fe->sql, "'f'");
   } else buffer_copy(fe->sql, tmp);
 
   if (!sensitive_case) buffer_add_str(fe->sql, ")");
@@ -304,15 +304,15 @@ bool fe_is_comparison_op(char *name)
 
   /* case sensitive comparison because the gml standard specifies
      strictly the name of the operator */
-  if (       !strcmp(name, "PropertyIsEqualTo")
-             || !strcmp(name, "PropertyIsNotEqualTo")
-             || !strcmp(name, "PropertyIsLessThan")
-             || !strcmp(name, "PropertyIsGreaterThan")
-             || !strcmp(name, "PropertyIsLessThanOrEqualTo")
-             || !strcmp(name, "PropertyIsGreaterThanOrEqualTo")
-             || !strcmp(name, "PropertyIsLike")
-             || !strcmp(name, "PropertyIsNull")
-             || !strcmp(name, "PropertyIsBetween"))
+  if (    !strcmp(name, "PropertyIsEqualTo")
+       || !strcmp(name, "PropertyIsNotEqualTo")
+       || !strcmp(name, "PropertyIsLessThan")
+       || !strcmp(name, "PropertyIsGreaterThan")
+       || !strcmp(name, "PropertyIsLessThanOrEqualTo")
+       || !strcmp(name, "PropertyIsGreaterThanOrEqualTo")
+       || !strcmp(name, "PropertyIsLike")
+       || !strcmp(name, "PropertyIsNull")
+       || !strcmp(name, "PropertyIsBetween"))
     return true;
 
   return false;
@@ -334,11 +334,11 @@ buffer *fe_comparison_op(ows * o, buffer * typename, filter_encoding * fe, xmlNo
   /* case sensitive comparison because the gml standard specifies
      strictly the name of the operator */
   if (    !strcmp((char *) n->name, "PropertyIsEqualTo")
-          || !strcmp((char *) n->name, "PropertyIsNotEqualTo")
-          || !strcmp((char *) n->name, "PropertyIsLessThan")
-          || !strcmp((char *) n->name, "PropertyIsGreaterThan")
-          || !strcmp((char *) n->name, "PropertyIsLessThanOrEqualTo")
-          || !strcmp((char *) n->name, "PropertyIsGreaterThanOrEqualTo"))
+       || !strcmp((char *) n->name, "PropertyIsNotEqualTo")
+       || !strcmp((char *) n->name, "PropertyIsLessThan")
+       || !strcmp((char *) n->name, "PropertyIsGreaterThan")
+       || !strcmp((char *) n->name, "PropertyIsLessThanOrEqualTo")
+       || !strcmp((char *) n->name, "PropertyIsGreaterThanOrEqualTo"))
     fe->sql = fe_binary_comparison_op(o, typename, fe, n);
   else if (!strcmp((char *) n->name, "PropertyIsLike"))
     fe->sql = fe_property_is_like(o, typename, fe, n);

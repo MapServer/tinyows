@@ -39,8 +39,3 @@
 #include "../ows_api.h"
 
 #endif /* OWS_H */
-
-
-/*
- * vim: expandtab sw=4 ts=4 
- */

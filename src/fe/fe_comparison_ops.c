@@ -41,27 +41,23 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename, filter_encodi
   bool bool_type = false;
   bool sensitive_case = true;
 
-  assert(o);
-  assert(typename);
-  assert(fe);
-  assert(n);
+  assert(o && typename && fe && n);
 
   tmp = buffer_init();
   name = buffer_init();
 
   buffer_add_str(name, (char *) n->name);
 
-  /* by default, comparison is case sensitive */
+  /* By default, comparison is case sensitive */
   matchcase = xmlGetProp(n, (xmlChar *) "matchCase");
   if (matchcase && !strcmp((char *) matchcase, "false")) sensitive_case = false;
   xmlFree(matchcase);
 
   n = n->children;
 
-  /* jump to the next element if there are spaces */
-  while (n->type != XML_ELEMENT_NODE) n = n->next;
+  while (n->type != XML_ELEMENT_NODE) n = n->next; /* eat spaces */
 
-  /* if comparison isn't case sensitive, strings are passed in lower case */
+  /* If comparison are explicitly not case sensitive */
   if (!sensitive_case) buffer_add_str(fe->sql, "lower(");
 
   tmp = fe_expression(o, typename, fe, tmp, n);
@@ -73,8 +69,6 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename, filter_encodi
 
   buffer_copy(fe->sql, tmp);
 
-  /* if property is a boolean, xml content( 1 or 0) must be transformed
-     into FE->SQL syntax (true or false) */
   if (buffer_cmp(name, "PropertyIsEqualTo") || buffer_cmp(name, "PropertyIsNotEqualTo")) {
     /* remove brackets (if any) and quotation marks */
     if (tmp->buf[0] == '(') {
@@ -137,8 +131,7 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename, filter_encodi
     return fe->sql;
   }
 
-  /* if property is a boolean, xml content( 1 or 0) must be transformed
-     into fe->sql (true or false) */
+  /* If property is a boolean, XML content transformation */
   if (bool_type) {
     if (buffer_cmp(tmp, "'1'")) buffer_add_str(fe->sql, "'t'");
     if (buffer_cmp(tmp, "'0'")) buffer_add_str(fe->sql, "'f'");
@@ -163,10 +156,7 @@ static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding *
   buffer *pg_string;
   char *escaped;
 
-  assert(o);
-  assert(typename);
-  assert(fe);
-  assert(n);
+  assert(o && typename && fe && n);
 
   wildcard = xmlGetProp(n, (xmlChar *) "wildCard");
   singlechar = xmlGetProp(n, (xmlChar *) "singleChar");
@@ -179,29 +169,26 @@ static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding *
 
   n = n->children;
 
-  /* jump to the next element if there are spaces */
-  while (n->type != XML_ELEMENT_NODE) n = n->next;
+  while (n->type != XML_ELEMENT_NODE) n = n->next; /* eat spaces */
 
-  /* We need to cast as varchar at least for timestamp
-         PostgreSQL data type - cf (Ticket #10) */
+  /* We need to cast as varchar at least for timestamp PostgreSQL data type */
   buffer_add_str(fe->sql, " CAST(\"");
   fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false, true);
   buffer_add_str(fe->sql, "\" AS varchar) LIKE E");
 
   n = n->next;
 
-  /* jump to the next element if there are spaces */
-  while (n->type != XML_ELEMENT_NODE) n = n->next;
+  while (n->type != XML_ELEMENT_NODE) n = n->next; /* eat spaces */
 
   content = xmlNodeGetContent(n->children);
 
   pg_string = buffer_init();
   buffer_add_str(pg_string, (char *) content);
 
-  /* Replace the wildcard,singlechar and escapechar by Postgrefe->sql's */
+  /* Replace the wildcard,singlechar and escapechar */
   if ((char *) wildcard && (char *) singlechar && (char *) escape) {
-    if (strlen((char *) escape))     pg_string = buffer_replace(pg_string, (char *) escape, "\\\\");
-    if (strlen((char *) wildcard))   pg_string = buffer_replace(pg_string, (char *) wildcard, "%");
+    if (strlen((char *) escape))     pg_string = buffer_replace(pg_string, (char *) escape,     "\\\\");
+    if (strlen((char *) wildcard))   pg_string = buffer_replace(pg_string, (char *) wildcard,   "%");
     if (strlen((char *) singlechar)) pg_string = buffer_replace(pg_string, (char *) singlechar, "_");
   } else fe->error_code = FE_ERROR_FILTER;
 
@@ -228,13 +215,10 @@ static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding *
  */
 static buffer *fe_property_is_null(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-  assert(o);
-  assert(typename);
-  assert(fe);
-  assert(n);
+  assert(o && typename && fe && n);
 
   n = n->children;
-  while (n->type != XML_ELEMENT_NODE) n = n->next; /* Jump to next element if spaces */
+  while (n->type != XML_ELEMENT_NODE) n = n->next; /* eat spaces */
   buffer_add(fe->sql, '"');
   fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false, true);
   buffer_add_str(fe->sql, "\" isnull");
@@ -250,17 +234,13 @@ static buffer *fe_property_is_between(ows * o, buffer * typename, filter_encodin
 {
   buffer *tmp;
 
-  assert(o);
-  assert(typename);
-  assert(fe);
-  assert(n);
+  assert(o && typename && fe && n);
 
   tmp = buffer_init();
 
   n = n->children;
 
-  /* jump to the next element if there are spaces */
-  while (n->type != XML_ELEMENT_NODE) n = n->next;
+  while (n->type != XML_ELEMENT_NODE) n = n->next;  /* eat spaces */
 
   tmp = fe_expression(o, typename, fe, tmp, n);
 
@@ -271,8 +251,7 @@ static buffer *fe_property_is_between(ows * o, buffer * typename, filter_encodin
 
   n = n->next;
 
-  /* jump to the next element if there are spaces */
-  while (n->type != XML_ELEMENT_NODE) n = n->next;
+  while (n->type != XML_ELEMENT_NODE) n = n->next; /* eat spaces */
 
   tmp = fe_expression(o, typename, fe, tmp, n->children);
 
@@ -283,8 +262,7 @@ static buffer *fe_property_is_between(ows * o, buffer * typename, filter_encodin
 
   n = n->next;
 
-  /* jump to the next element if there are spaces */
-  while (n->type != XML_ELEMENT_NODE) n = n->next;
+  while (n->type != XML_ELEMENT_NODE) n = n->next; /* eat spaces */
 
   tmp = fe_expression(o, typename, fe, tmp, n->children);
 
@@ -302,8 +280,7 @@ bool fe_is_comparison_op(char *name)
 {
   assert(name);
 
-  /* case sensitive comparison because the gml standard specifies
-     strictly the name of the operator */
+  /* Case sensitive comparison as specified in GML standard */
   if (    !strcmp(name, "PropertyIsEqualTo")
        || !strcmp(name, "PropertyIsNotEqualTo")
        || !strcmp(name, "PropertyIsLessThan")
@@ -320,19 +297,14 @@ bool fe_is_comparison_op(char *name)
 
 
 /*
- * Execute the matching function
- * Warning : before calling this function,
- * Check if n->name is a comparison operator with fe_is_comparison_op()
+ * Execute the matching comparison function
+ * CAUTION : call fe_is_comparison_op before calling this function,
  */
 buffer *fe_comparison_op(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-  assert(o);
-  assert(typename);
-  assert(fe);
-  assert(n);
+  assert(o && typename && fe && n);
 
-  /* case sensitive comparison because the gml standard specifies
-     strictly the name of the operator */
+  /* Case sensitive comparison as specified in GML standard */
   if (    !strcmp((char *) n->name, "PropertyIsEqualTo")
        || !strcmp((char *) n->name, "PropertyIsNotEqualTo")
        || !strcmp((char *) n->name, "PropertyIsLessThan")
@@ -351,8 +323,3 @@ buffer *fe_comparison_op(ows * o, buffer * typename, filter_encoding * fe, xmlNo
 
   return fe->sql;
 }
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

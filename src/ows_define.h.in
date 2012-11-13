@@ -37,8 +37,3 @@
 #define WFS_SCHEMA_110              "wfs/1.1.0/wfs.xsd"
 
 #endif /* OWS_DEFINE_H */
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

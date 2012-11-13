@@ -442,6 +442,24 @@ ows_version * ows_psql_postgis_version(ows *o)
 
 
 /*
+ * TODO
+ */
+bool ows_psql_is_numeric(buffer * type)
+{
+  assert(type);
+
+  if (buffer_cmp(type, "int2")) return true;
+  if (buffer_cmp(type, "int4")) return true;
+  if (buffer_cmp(type, "int8")) return true;
+  if (buffer_cmp(type, "float4")) return true;
+  if (buffer_cmp(type, "float8")) return true;
+  if (buffer_ncmp(type, "numeric", 7)) return true;
+
+  return false;
+}
+
+
+/*
  * Convert a PostgreSql type to a valid
  * OGC XMLSchema's type
  */

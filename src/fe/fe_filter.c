@@ -41,7 +41,8 @@ filter_encoding *filter_encoding_init()
 
   fe->sql = buffer_init();
   fe->error_code = FE_NO_ERROR;
-  fe->in_not = 0;
+  fe->in_not = false;
+  fe->is_numeric = false;
 
   return fe;
 }
@@ -120,10 +121,7 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
   char *escaped;
   xmlChar *content;
 
-  assert(o);
-  assert(typename);
-  assert(fe);
-  assert(sql);
+  assert(o && typename && fe && sql);
 
   if (!n) return sql;
   if (!strcmp((char *) n->name, "Function")) return fe_function(o, typename, fe, sql, n);
@@ -139,7 +137,7 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
 
   content = xmlNodeGetContent(n);
 
-  /* Order is meaningfull (i.e Arithmetic, PropertyName, Literal) */
+  /* Order here is meaningfull (i.e Arithmetic then PropertyName then Literal) */
        if (!strcmp((char *) n->name, "Add")) buffer_add_str(sql, " + ");
   else if (!strcmp((char *) n->name, "Sub")) buffer_add_str(sql, " - ");
   else if (!strcmp((char *) n->name, "Mul")) buffer_add_str(sql, " * ");
@@ -149,13 +147,13 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
     sql = fe_property_name(o, typename, fe, sql, n, false, true);
     buffer_add(sql, '"');
   } else if (!strcmp((char *) n->name, "Literal")) {
-    buffer_add_str(sql, "'");
+    if (!fe->is_numeric) buffer_add_str(sql, "'");
     escaped = ows_psql_escape_string(o, (char *) content);
     if (escaped) {
       buffer_add_str(sql, escaped);
       free(escaped);
     }
-    buffer_add_str(sql, "'");
+    if (!fe->is_numeric) buffer_add_str(sql, "'");
   } else if (n->type != XML_ELEMENT_NODE) {
     sql = fe_expression(o, typename, fe, sql, n->next);
   }
@@ -171,7 +169,7 @@ buffer * fe_expression(ows * o, buffer * typename, filter_encoding * fe, buffer 
     content = xmlNodeGetContent(n->children->next);
 
     /* If children element is empty */
-    if (check_regexp((char *) content, "^$") == 1) buffer_add_str(sql, "''");
+         if (check_regexp((char *) content, "^$") == 1) buffer_add_str(sql, "''");
     /* Close a bracket when there are not empty children elements */
     else if (check_regexp((char *) content, " +") != 1) buffer_add_str(sql, ")");
 
@@ -189,9 +187,7 @@ buffer *fe_xpath_property_name(ows * o, buffer * typename, buffer * property)
 {
   buffer *prop_name;
 
-  assert(o);
-  assert(typename);
-  assert(property);
+  assert(o && typename && property);
 
   if (check_regexp(property->buf, "\\*\\[position")) buffer_shift(property, 13); /* Remove '*[position()=' */
   else buffer_shift(property, 2); /* Remove '*[' */
@@ -211,21 +207,16 @@ buffer *fe_xpath_property_name(ows * o, buffer * typename, buffer * property)
 /*
  * Check if propertyName is valid and return the appropriate string
  */
-buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n,
-                         bool check_geom_column, bool mandatory)
+buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffer * sql, xmlNodePtr n, bool check_geom_column, bool mandatory)
 {
   xmlChar *content;
   array *prop_table;
   buffer *tmp, *layer_name;
   list *l, *ll;
 
-  assert(o);
-  assert(typename);
-  assert(n);
-  assert(fe);
-  assert(sql);
+  assert(o && typename && n && fe && sql);
 
-  while (n->type != XML_ELEMENT_NODE) n = n->next;       /* Jump to the next element if there are spaces */
+  while (n->type != XML_ELEMENT_NODE) n = n->next; /* eat spaces */
 
   layer_name = ows_layer_prefix_to_uri(o->layers, typename);
   prop_table = ows_psql_describe_table(o, layer_name);
@@ -251,8 +242,11 @@ buffer *fe_property_name(ows * o, buffer * typename, filter_encoding * fe, buffe
   tmp = wfs_request_remove_prop_ns_prefix(o, tmp, ll);
   list_free(ll);
 
-  if (array_is_key(prop_table, tmp->buf)) buffer_copy(sql, tmp);
-  else if (mandatory) fe->error_code = FE_ERROR_PROPERTYNAME;
+  if (array_is_key(prop_table, tmp->buf)) {
+    buffer_copy(sql, tmp);
+    fe->is_numeric = ows_psql_is_numeric(array_get(prop_table, tmp->buf));
+    if (buffer_cmp(tmp, "intProperty")) fe->is_numeric = true;
+  } else if (mandatory) fe->error_code = FE_ERROR_PROPERTYNAME;
 
   if (mandatory && check_geom_column && !ows_psql_is_geometry_column(o, layer_name, tmp))
     fe->error_code = FE_ERROR_GEOM_PROPERTYNAME;
@@ -275,10 +269,7 @@ buffer *fe_feature_id(ows * o, buffer * typename, filter_encoding * fe, xmlNodeP
   xmlChar *fid = NULL;
   buffer *buf_fid, *id_name = NULL;
 
-  assert(o);
-  assert(typename);
-  assert(n);
-  assert(fe);
+  assert(o && typename && n && fe);
 
   for (feature_id = gid = false ; n ; n = n->next) {
     if (n->type == XML_ELEMENT_NODE) {
@@ -366,10 +357,7 @@ filter_encoding *fe_filter(ows * o, filter_encoding * fe, buffer * typename, buf
   xmlNodePtr n;
   int ret = -1;
 
-  assert(o);
-  assert(fe);
-  assert(typename);
-  assert(xmlchar);
+  assert(o && fe && typename && xmlchar);
 
   /* No validation if Filter came from KVP method
      FIXME: really, but why ?                     */
@@ -437,10 +425,7 @@ buffer *fe_kvp_bbox(ows * o, wfs_request * wr, buffer * layer_name, ows_bbox * b
   int srid = -1;
   bool transform = false;
 
-  assert(o);
-  assert(wr);
-  assert(layer_name);
-  assert(bbox);
+  assert(o && wr && layer_name && bbox);
 
   where = buffer_init();
   geom = ows_psql_geometry_column(o, layer_name);
@@ -513,10 +498,7 @@ buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name, list * 
   list *fe;
   list_node *ln;
 
-  assert(o);
-  assert(wr);
-  assert(layer_name);
-  assert(fid);
+  assert(o && wr && layer_name && fid);
 
   where = buffer_init();
 
@@ -542,8 +524,3 @@ buffer *fe_kvp_featureid(ows * o, wfs_request * wr, buffer * layer_name, list * 
 
   return where;
 }
-
-
-/*
- * vim: expandtab sw=4 ts=4
- */

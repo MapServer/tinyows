@@ -330,6 +330,7 @@ enum fe_error_code {
 
 typedef struct Filter_encoding {
   bool in_not;
+  bool is_numeric;
   buffer * sql;
   enum fe_error_code error_code;
 } filter_encoding;

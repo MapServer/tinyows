@@ -426,7 +426,7 @@ static bool is_node_ns_wfs(xmlNodePtr n)
 {
   if (n->ns && n->ns->href 
        && (!strcmp("http://www.opengis.net/wfs", (char *) n->ns->href)
-       || !strcmp("http://www.opengis.net/ogc", (char *) n->ns->href))) return true;
+       ||  !strcmp("http://www.opengis.net/ogc", (char *) n->ns->href))) return true;
   return false;
 }
 
@@ -439,7 +439,7 @@ array *cgi_parse_xml(ows * o, char *query)
   bool prop_need_comma, typ_need_comma;
   xmlDocPtr xmldoc;
   xmlAttr *att;
-  array *arr;
+  array *arr, *o_ns;
   bool lock_error, unknown_error;
   xmlNodePtr node, n = NULL;
 
@@ -463,6 +463,8 @@ array *cgi_parse_xml(ows * o, char *query)
   prop = buffer_init();;
   filter = buffer_init();
   typename = buffer_init();
+
+  o_ns = ows_layer_list_namespaces(o->layers);
 
   /* First child processed aside because name node match value array instead of key array */
   key = buffer_from_str("request");
@@ -488,8 +490,16 @@ array *cgi_parse_xml(ows * o, char *query)
 
       /* Add typename to the matching global buffer */
       if (!strcmp((char *) att->name, "typeName")) {
+
         typename = cgi_add_into_buffer(typename, att->children, typ_need_comma);
         typ_need_comma = true;
+
+        /* Handle case when ns_prefix don't match but ns_uri does */
+        /* FIXME is this still work with several ns_uri ? */
+        if (n->nsDef && n->nsDef->href && array_is_value(o_ns, (char *) n->nsDef->href)) {
+          buffer_shift(typename, strlen((char *) n->nsDef->prefix));
+          buffer_add_head_str(typename, (array_get_key(o_ns, (char *) n->nsDef->href))->buf);
+        }
 
       } else arr = cgi_add_att(arr, att); /* Add name and content element in array */
     }
@@ -502,8 +512,8 @@ array *cgi_parse_xml(ows * o, char *query)
     /* If it's an operation, keep the xml to analyze it later */
     else if (  is_node_ns_wfs(n)
                && (    !strcmp((char *) n->name, "Insert")
-                       || !strcmp((char *) n->name, "Delete")
-                       || !strcmp((char *) n->name, "Update"))) {
+                    || !strcmp((char *) n->name, "Delete")
+                    || !strcmp((char *) n->name, "Update"))) {
 
       if (!operations->use) buffer_add_str(operations, "<operations>");
       operations = cgi_add_xml_into_buffer(operations, n); /* Add the whole xml operation to the buffer */

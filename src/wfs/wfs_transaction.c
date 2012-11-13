@@ -275,15 +275,24 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
   xmlAttr *att;
   xmlChar *content;
   buffer *typename;
+  array *o_ns;
 
-  typename = buffer_init();
   content = NULL;
+  typename = buffer_init();
+  o_ns = ows_layer_list_namespaces(o->layers);
 
   for (att = n->properties ; att ; att = att->next) {
 
     if (!strcmp((char *) att->name, "typeName")) {
       content = xmlNodeGetContent(att->children);
       buffer_add_str(typename, (char *) content);
+
+      /* Handle case when ns_prefix don't match but ns_uri does */
+      /* FIXME is this still work with several ns_uri ? */
+      if (n->nsDef && n->nsDef->href && array_is_value(o_ns, (char *) n->nsDef->href)) {
+        buffer_shift(typename, strlen((char *) n->nsDef->prefix));
+        buffer_add_head_str(typename, (array_get_key(o_ns, (char *) n->nsDef->href))->buf);
+      }
 
       if (!ows_layer_writable(o->layers, ows_layer_prefix_to_uri(o->layers, typename))) {
         xmlFree(content);

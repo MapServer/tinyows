@@ -586,6 +586,7 @@ array *cgi_parse_xml(ows * o, char *query)
   buffer_free(operations);
   buffer_free(filter);
   buffer_free(typename);
+  array_free(o_ns);
 
   xmlFreeDoc(xmldoc);
 

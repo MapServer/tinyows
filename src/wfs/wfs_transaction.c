@@ -300,10 +300,12 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
       }
 
       xmlFree(content);
+      array_free(o_ns);
       return typename;
     }
   }
 
+  array_free(o_ns);
   return NULL;
 }
 

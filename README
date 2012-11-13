@@ -11,11 +11,11 @@ TinyOWS was written with the following things in mind:
 
 Code quality policy:
 All code must meet the following rules :
-- gcc -ansi -pedantic -Wall compile without any warning (make)
+- gcc -c99 -pedantic -Wall compile without any warning (make)
 - Unit test with Valgrind error and leak free (make valgrind)
 - Pass trought OGC CITE WFS-T tests (1.0.0 and 1.1.0 SF-0)
 
-Code dynamically linked with the following other libriaries:
-- postgresql 8.x
-- libxml2.x
+Code dynamically linked with the following other librairies:
+- PostgreSQL 8.x and 9.x
+- libxml 2.8.x
 - flex

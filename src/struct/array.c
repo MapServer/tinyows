@@ -120,6 +120,26 @@ bool array_is_key(const array * a, const char *key)
 
 
 /*
+ * Check if a given value string is or not in the array
+ */
+bool array_is_value(const array * a, const char *value)
+{
+  array_node *an;
+  size_t vs;
+
+  assert(a);
+  assert(value);
+
+  for (vs = strlen(value), an = a->first ; an ; an = an->next)
+    if (vs == an->value->use)
+      if (buffer_case_cmp(an->value, value))
+        return true;
+
+  return false;
+}
+
+
+/*
  * Return a value buffer from an array (from key value)
  * You must be sure key is defined for this array, see is_key() above
  * Carreful return a reference on the array buf itself !
@@ -141,6 +161,29 @@ buffer *array_get(const array * a, const char *key)
   assert(an);
 
   return an->value;
+}
+
+
+/*
+ * Return a key buffer from an array (from value)
+ */
+buffer *array_get_key(const array * a, const char *value)
+{
+  array_node *an;
+  size_t vs;
+
+  assert(a);
+  assert(value);
+
+  for (vs = strlen(value), an = a->first ; an ; an = an->next) {
+    if (vs == an->value->use)
+      if (buffer_case_cmp(an->value, value))
+        break;
+  }
+
+  assert(an);
+
+  return an->key;
 }
 
 

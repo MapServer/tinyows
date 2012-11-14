@@ -1,10 +1,12 @@
 1.1.0
- - Generate PK value using PostgresSQL DEFAULT value if present (Serge Dikiy) 
+ - Add include_items and exclude_items config handling. To choose exactly which columns to retrieve (Serge Dikiy)
  - XSD max length and enumeration constraint handling (Serge Dikiy & Alan Boudreault)
- - include_items and exclude_items config handling. To choose exactly which columns to retrieve (Serge Dikiy)
+ - First real support of typename namespace provided in request (Olivier Courtin)
+ - Generate PK value using PostgresSQL DEFAULT value if present (Serge Dikiy) 
  - Add pkey configuration in layer config. Usefull for instance when retrieving data from a VIEW. (Serge Dikiy)
  - Buffer copy performance improve (Serge Dikiy)
  - Rewrite/fix max features handling (Olivier Courtin)
+ - Extent layer's properties allowed to inherit (Olivier Courtin)
  - Several bugfixes as usual (special thanks to Andreas Peri, Serge Dikiy and Jukka Rahkonen for detailled reports)
 
 1.0.0   (08/02/2012)

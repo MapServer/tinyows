@@ -268,9 +268,13 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     /* Even if no sequence found, this function return an empty row
      * so we must check that result string returned > 0 char
      */
-    if (PQntuples(res) == 1 && strlen((char *) PQgetvalue(res, 0, 0)) > 0) {
+    if ( l->pkey_sequence ||
+         (PQntuples(res) == 1 && strlen((char *) PQgetvalue(res, 0, 0)) > 0) ) {
       l->storage->pkey_sequence = buffer_init();
-      buffer_add_str(l->storage->pkey_sequence, PQgetvalue(res, 0, 0));
+      if ( l->pkey_sequence )
+        buffer_copy(l->storage->pkey_sequence, l->pkey_sequence);
+      else
+        buffer_add_str(l->storage->pkey_sequence, PQgetvalue(res, 0, 0));
     }
 
     buffer_empty(sql);

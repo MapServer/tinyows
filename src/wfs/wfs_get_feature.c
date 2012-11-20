@@ -822,7 +822,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
       if ( number >= 0 ) {
         buffer_add_str(id_name, "\"id\": \"");
-        buffer_copy(id_name, ll->value);
+        buffer_copy(id_name, ows_layer_no_uri(o->layers, ll->value));
         buffer_add_str(id_name, ".");
         buffer_add_str(id_name, PQgetvalue(res, i, number));
         buffer_add_str(id_name, "\", ");

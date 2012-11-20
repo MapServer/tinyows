@@ -669,5 +669,17 @@ void ows_layer_flush(ows_layer * l, FILE * output)
     list_flush(l->include_items, output);
     fprintf(output, "\n");
   }
+
+  if(l->pkey) {
+    fprintf(output, "pkey: ");
+    list_flush(l->pkey, output);
+    fprintf(output, "\n");
+  }
+
+  if(l->pkey_sequence) {
+    fprintf(output, "pkey_sequence: ");
+    list_flush(l->pkey_sequence, output);
+    fprintf(output, "\n");
+  }
 }
 #endif

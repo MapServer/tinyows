@@ -567,6 +567,16 @@ static void ows_parse_config_layer(ows * o, xmlTextReaderPtr r)
     buffer_copy(layer->pkey, layer->parent->pkey);
   }
 
+  a = xmlTextReaderGetAttribute(r, (xmlChar *) "pkey_sequence");
+  if (a) {
+    layer->pkey_sequence = buffer_init();
+    buffer_add_str(layer->pkey_sequence, (char *) a);
+    xmlFree(a);
+  } else if (layer->parent && layer->parent->pkey_sequence) {
+    layer->pkey_sequence = buffer_init();
+    buffer_copy(layer->pkey_sequence, layer->parent->pkey_sequence);
+  }
+
   if (layer->name && layer->ns_uri) {
       buffer_add_head(layer->name, ':');
       buffer_add_head_str(layer->name, layer->ns_uri->buf);

@@ -161,7 +161,7 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
   else
     c->is_degree = false;
 
-  /* Is northing-easting SRID ? */
+  /* Is easting-northing SRID ? */
   if (atoi(PQgetvalue(res, 0, 2)) != 0)
     c->is_eastern_axis = true;
 
@@ -240,7 +240,7 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
   else
     s->is_degree = false;
 
-  /* Is northing-easting SRID ? */
+  /* Is easting-northing SRID ? */
   if (atoi(PQgetvalue(res, 0, 3)) != 0)
     s->is_eastern_axis = true;
 

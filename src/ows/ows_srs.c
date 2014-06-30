@@ -134,7 +134,7 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
 
   sql = buffer_init();
   buffer_add_str(sql, "SELECT srid, position('+units=m ' in proj4text)");
-  buffer_add_str(sql, ", (position('AXIS[\"X\",NORTH]]' in srtext) + position('AXIS[\"Easting\",EAST]]' in srtext))");
+  buffer_add_str(sql, ", (position('AXIS[\"X\",NORTH]]' in srtext) + position('AXIS[\"Northing\",NORTH]]' in srtext))");
   buffer_add_str(sql, " FROM spatial_ref_sys WHERE auth_name='");
   buffer_copy(sql, auth_name);
   buffer_add_str(sql, "' AND auth_srid=");
@@ -161,7 +161,7 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
   else
     c->is_degree = false;
 
-  /* Is northing-easting SRID ? */
+  /* Is easting-northing SRID ? */
   if (atoi(PQgetvalue(res, 0, 2)) != 0)
     c->is_eastern_axis = true;
 
@@ -216,7 +216,7 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
   sql = buffer_init();
   buffer_add_str(sql, "SELECT auth_name, auth_srid, ");
   buffer_add_str(sql, "position('+units=m ' in proj4text), ");
-  buffer_add_str(sql, "(position('AXIS[\"X\",NORTH]]' in srtext) + position('AXIS[\"Easting\",EAST]]' in srtext)) ");
+  buffer_add_str(sql, "(position('AXIS[\"X\",NORTH]]' in srtext) + position('AXIS[\"Northing\",NORTH]]' in srtext)) ");
   buffer_add_str(sql, "FROM spatial_ref_sys WHERE srid = '");
   buffer_add_int(sql, srid);
   buffer_add_str(sql, "'");
@@ -240,7 +240,7 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
   else
     s->is_degree = false;
 
-  /* Is northing-easting SRID ? */
+  /* Is easting-northing SRID ? */
   if (atoi(PQgetvalue(res, 0, 3)) != 0)
     s->is_eastern_axis = true;
 

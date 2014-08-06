@@ -131,14 +131,9 @@ void ows_service_identification(const ows * o)
   }
 
   fprintf(o->output, "  <ows:ServiceType>%s</ows:ServiceType>\n", o->metadata->type->buf);
-  fprintf(o->output, "  <ows:ServiceTypeVersion>");
+  for (ln = o->metadata->versions->first ; ln ; ln = ln->next)
+    fprintf(o->output, "  <ows:ServiceTypeVersion>%s</ows:ServiceTypeVersion>\n", ln->value->buf);
 
-  for (ln = o->metadata->versions->first ; ln ; ln = ln->next) {
-    fprintf(o->output, "%s", ln->value->buf);
-    if (ln->next) fprintf(o->output, ",");
-  }
-
-  fprintf(o->output, "</ows:ServiceTypeVersion>\n");
 
   if (o->metadata->fees)
     fprintf(o->output, "  <ows:Fees>%s</ows:Fees>\n", o->metadata->fees->buf);

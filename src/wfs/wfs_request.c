@@ -253,7 +253,7 @@ static list *wfs_request_check_typename(ows * o, wfs_request * wr, list * layer_
  */
 static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
 {
-  list *fe;
+  list *fe, *ff;
   mlist *f;
   buffer *b, *layer;
   list_node *ln, *ln_tpn;
@@ -302,7 +302,9 @@ static list *wfs_request_check_fid(ows * o, wfs_request * wr, list * layer_name)
         return NULL;
       }
 
-      layer = ows_layer_no_uri_to_uri(o->layers, fe->last->value);
+      ff = list_split(':', fe->last->value, false);
+      layer = ows_layer_no_uri_to_uri(o->layers, ff->last->value);
+      list_free(ff);
 
       /* If typename is NULL, fill the layer name list */
       if (!wr->typename && !in_list(layer_name, layer))

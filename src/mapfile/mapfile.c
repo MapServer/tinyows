@@ -12759,7 +12759,7 @@ static void layer_properties(char * yytext, bool quotes)
 	switch(map_layer_prop_state) {
 	case MAP_LAYER_NAME:
 		map_l->name = buffer_init();
-	   	buffer_add_str(map_l->name, yytext);
+	   	        buffer_add_str(map_l->name, yytext);
 		return;
 	case MAP_LAYER_CONNECTION:
 		/* TODO: Having a Layer connection notion in TinyOWS */
@@ -12777,9 +12777,8 @@ static void end_layer()
 {
 	if (!map_is_postgis) ows_layer_free(map_l);
 	else {
-	/*	 map_l->name = buffer_init(); */ 
 		if (!map_l->storage->table->use)
-			buffer_add_str(map_l->storage->table, map_l->name);
+			buffer_copy(map_l->storage->table, map_l->name);
 		if (!map_l->storage->schema->use)
 			buffer_add_str(map_l->storage->schema, "public");
 		if (!map_is_dump) map_l->retrievable=map_l->writable = false;
@@ -12787,14 +12786,12 @@ static void end_layer()
                 map_l->name_prefix = buffer_init();
 		buffer_copy(map_l->name_prefix, map_l->name);
                 if (map_l->ns_prefix->use) {
-		/*    buffer_add_head(map_l->name_prefix, ':'); */ 
                     buffer_add_head_str(map_l->name, map_l->ns_prefix->buf);
                 } 
 
 		map_l->name_no_uri = buffer_init();
                 buffer_copy(map_l->name_no_uri, map_l->name_prefix); 
                 if (map_l->ns_uri->use) {
-		/* buffer_add_head(map_l->name_no_uri, ':'); */
                     buffer_add_head_str(map_l->name, map_l->ns_uri->buf);
                 }
 
@@ -12833,7 +12830,7 @@ static void end_layer()
 
 
 
-#line 12837 "lex.yy.c"
+#line 12834 "lex.yy.c"
 
 #define INITIAL 0
 #define MAP 1
@@ -13062,10 +13059,10 @@ YY_DECL
 		}
 
 	{
-#line 601 "src/mapfile/mapfile.l"
+#line 598 "src/mapfile/mapfile.l"
 
 
-#line 13069 "lex.yy.c"
+#line 13066 "lex.yy.c"
 
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
@@ -13112,23 +13109,23 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 603 "src/mapfile/mapfile.l"
+#line 600 "src/mapfile/mapfile.l"
 { char c ; for (c=input() ; c && c != '\n' ; c=input()); }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 604 "src/mapfile/mapfile.l"
+#line 601 "src/mapfile/mapfile.l"
 { yy_push_state(INCLUDE); OWS_MAP_DBG }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 607 "src/mapfile/mapfile.l"
+#line 604 "src/mapfile/mapfile.l"
 { /*LEGEND rule must appears before END... */
 				  yy_push_state(LEGEND); OWS_MAP_DBG }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 610 "src/mapfile/mapfile.l"
+#line 607 "src/mapfile/mapfile.l"
 { 
 				 OWS_MAP_EATLINE
 				 if (yy_top_state() == INITIAL && YY_START != MAP) { 
@@ -13142,483 +13139,483 @@ YY_RULE_SETUP
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 621 "src/mapfile/mapfile.l"
+#line 618 "src/mapfile/mapfile.l"
 { yy_push_state(MAP); OWS_MAP_DBG }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 622 "src/mapfile/mapfile.l"
+#line 619 "src/mapfile/mapfile.l"
 { yy_push_state(WEB); OWS_MAP_DBG }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 623 "src/mapfile/mapfile.l"
+#line 620 "src/mapfile/mapfile.l"
 { yy_push_state(QUERYMAP); OWS_MAP_DBG }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 624 "src/mapfile/mapfile.l"
+#line 621 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE /* must be before SYMBOL */ }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 625 "src/mapfile/mapfile.l"
+#line 622 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 626 "src/mapfile/mapfile.l"
+#line 623 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 627 "src/mapfile/mapfile.l"
+#line 624 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 628 "src/mapfile/mapfile.l"
+#line 625 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 629 "src/mapfile/mapfile.l"
+#line 626 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 630 "src/mapfile/mapfile.l"
+#line 627 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 631 "src/mapfile/mapfile.l"
+#line 628 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 632 "src/mapfile/mapfile.l"
+#line 629 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 633 "src/mapfile/mapfile.l"
+#line 630 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 634 "src/mapfile/mapfile.l"
+#line 631 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 635 "src/mapfile/mapfile.l"
+#line 632 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 636 "src/mapfile/mapfile.l"
+#line 633 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 637 "src/mapfile/mapfile.l"
+#line 634 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 638 "src/mapfile/mapfile.l"
+#line 635 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 639 "src/mapfile/mapfile.l"
+#line 636 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 640 "src/mapfile/mapfile.l"
+#line 637 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 641 "src/mapfile/mapfile.l"
+#line 638 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 642 "src/mapfile/mapfile.l"
+#line 639 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 643 "src/mapfile/mapfile.l"
+#line 640 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 644 "src/mapfile/mapfile.l"
+#line 641 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 645 "src/mapfile/mapfile.l"
+#line 642 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 646 "src/mapfile/mapfile.l"
+#line 643 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 647 "src/mapfile/mapfile.l"
+#line 644 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 648 "src/mapfile/mapfile.l"
+#line 645 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 649 "src/mapfile/mapfile.l"
+#line 646 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 650 "src/mapfile/mapfile.l"
+#line 647 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 651 "src/mapfile/mapfile.l"
+#line 648 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 652 "src/mapfile/mapfile.l"
+#line 649 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 653 "src/mapfile/mapfile.l"
+#line 650 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 654 "src/mapfile/mapfile.l"
+#line 651 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 655 "src/mapfile/mapfile.l"
+#line 652 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 656 "src/mapfile/mapfile.l"
+#line 653 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 657 "src/mapfile/mapfile.l"
+#line 654 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 658 "src/mapfile/mapfile.l"
+#line 655 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 659 "src/mapfile/mapfile.l"
+#line 656 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 660 "src/mapfile/mapfile.l"
+#line 657 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 661 "src/mapfile/mapfile.l"
+#line 658 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 662 "src/mapfile/mapfile.l"
+#line 659 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 663 "src/mapfile/mapfile.l"
+#line 660 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 664 "src/mapfile/mapfile.l"
+#line 661 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 665 "src/mapfile/mapfile.l"
+#line 662 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 666 "src/mapfile/mapfile.l"
+#line 663 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 667 "src/mapfile/mapfile.l"
+#line 664 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 668 "src/mapfile/mapfile.l"
+#line 665 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 669 "src/mapfile/mapfile.l"
+#line 666 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 670 "src/mapfile/mapfile.l"
+#line 667 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 671 "src/mapfile/mapfile.l"
+#line 668 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 672 "src/mapfile/mapfile.l"
+#line 669 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 673 "src/mapfile/mapfile.l"
+#line 670 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 674 "src/mapfile/mapfile.l"
+#line 671 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 675 "src/mapfile/mapfile.l"
+#line 672 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 676 "src/mapfile/mapfile.l"
+#line 673 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 677 "src/mapfile/mapfile.l"
+#line 674 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 678 "src/mapfile/mapfile.l"
+#line 675 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 679 "src/mapfile/mapfile.l"
+#line 676 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 680 "src/mapfile/mapfile.l"
+#line 677 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 681 "src/mapfile/mapfile.l"
+#line 678 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 682 "src/mapfile/mapfile.l"
+#line 679 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 683 "src/mapfile/mapfile.l"
+#line 680 "src/mapfile/mapfile.l"
 { OWS_MAP_EATLINE }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 685 "src/mapfile/mapfile.l"
+#line 682 "src/mapfile/mapfile.l"
 { yy_push_state(SYMBOL); OWS_MAP_DBG }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 686 "src/mapfile/mapfile.l"
+#line 683 "src/mapfile/mapfile.l"
 { yy_push_state(SCALEBAR); OWS_MAP_DBG  }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 687 "src/mapfile/mapfile.l"
+#line 684 "src/mapfile/mapfile.l"
 { yy_push_state(REFERENCE); OWS_MAP_DBG }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 688 "src/mapfile/mapfile.l"
+#line 685 "src/mapfile/mapfile.l"
 { yy_push_state(OUTPUTFORMAT); OWS_MAP_DBG }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 689 "src/mapfile/mapfile.l"
+#line 686 "src/mapfile/mapfile.l"
 { yy_push_state(METADATA); OWS_MAP_DBG }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 690 "src/mapfile/mapfile.l"
+#line 687 "src/mapfile/mapfile.l"
 { yy_push_state(GRID); OWS_MAP_DBG }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 691 "src/mapfile/mapfile.l"
+#line 688 "src/mapfile/mapfile.l"
 { yy_push_state(JOIN); OWS_MAP_DBG }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 692 "src/mapfile/mapfile.l"
+#line 689 "src/mapfile/mapfile.l"
 { yy_push_state(LAYER_METADATA); OWS_MAP_DBG }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 693 "src/mapfile/mapfile.l"
+#line 690 "src/mapfile/mapfile.l"
 { yy_push_state(CLASS); OWS_MAP_DBG }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 694 "src/mapfile/mapfile.l"
+#line 691 "src/mapfile/mapfile.l"
 { yy_push_state(STYLE); OWS_MAP_DBG }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 695 "src/mapfile/mapfile.l"
+#line 692 "src/mapfile/mapfile.l"
 { yy_push_state(LABEL); OWS_MAP_DBG }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 696 "src/mapfile/mapfile.l"
+#line 693 "src/mapfile/mapfile.l"
 { yy_push_state(PROJECTION); OWS_MAP_DBG }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 697 "src/mapfile/mapfile.l"
+#line 694 "src/mapfile/mapfile.l"
 { yy_push_state(PATTERN); OWS_MAP_DBG }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 698 "src/mapfile/mapfile.l"
+#line 695 "src/mapfile/mapfile.l"
 { yy_push_state(POINTS); OWS_MAP_DBG }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 699 "src/mapfile/mapfile.l"
+#line 696 "src/mapfile/mapfile.l"
 { yy_push_state(LABEL); OWS_MAP_DBG }
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 700 "src/mapfile/mapfile.l"
+#line 697 "src/mapfile/mapfile.l"
 { yy_push_state(LAYER); map_l = ows_layer_init(); OWS_MAP_DBG }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 701 "src/mapfile/mapfile.l"
+#line 698 "src/mapfile/mapfile.l"
 { yy_push_state(FEATURE); OWS_MAP_DBG }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 702 "src/mapfile/mapfile.l"
+#line 699 "src/mapfile/mapfile.l"
 { BEGIN PROPERTIES; map_prop_state = MAP_NAME; }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 703 "src/mapfile/mapfile.l"
+#line 700 "src/mapfile/mapfile.l"
 { BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_NAME; }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 704 "src/mapfile/mapfile.l"
+#line 701 "src/mapfile/mapfile.l"
 { BEGIN LAYER_PROPERTIES; map_layer_prop_state = MAP_LAYER_CONNECTION; }
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 705 "src/mapfile/mapfile.l"
+#line 702 "src/mapfile/mapfile.l"
 { BEGIN LAYER_CONNECTIONTYPE; }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 706 "src/mapfile/mapfile.l"
+#line 703 "src/mapfile/mapfile.l"
 { BEGIN LAYER; map_is_postgis=true; }
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 707 "src/mapfile/mapfile.l"
+#line 704 "src/mapfile/mapfile.l"
 { BEGIN LAYER; map_is_postgis=false; }
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 708 "src/mapfile/mapfile.l"
+#line 705 "src/mapfile/mapfile.l"
 { BEGIN LAYER_DUMP; }
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 709 "src/mapfile/mapfile.l"
+#line 706 "src/mapfile/mapfile.l"
 { BEGIN LAYER; map_is_dump=true; }
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 710 "src/mapfile/mapfile.l"
+#line 707 "src/mapfile/mapfile.l"
 { BEGIN LAYER; map_is_dump=false; }
 	YY_BREAK
 case 94:
 /* rule 94 can match eol */
 YY_RULE_SETUP
-#line 712 "src/mapfile/mapfile.l"
+#line 709 "src/mapfile/mapfile.l"
 {}
 	YY_BREAK
 case 95:
 /* rule 95 can match eol */
 YY_RULE_SETUP
-#line 714 "src/mapfile/mapfile.l"
+#line 711 "src/mapfile/mapfile.l"
 {metadata_key(yytext, true); BEGIN METADATA_VALUE;}
 	YY_BREAK
 case 96:
 /* rule 96 can match eol */
 YY_RULE_SETUP
-#line 715 "src/mapfile/mapfile.l"
+#line 712 "src/mapfile/mapfile.l"
 {metadata_value(yytext, true); BEGIN METADATA;}
 	YY_BREAK
 case 97:
 /* rule 97 can match eol */
 YY_RULE_SETUP
-#line 716 "src/mapfile/mapfile.l"
+#line 713 "src/mapfile/mapfile.l"
 {metadata_layer_key(yytext, true); BEGIN LAYER_METADATA_VALUE;}
 	YY_BREAK
 case 98:
 /* rule 98 can match eol */
 YY_RULE_SETUP
-#line 717 "src/mapfile/mapfile.l"
+#line 714 "src/mapfile/mapfile.l"
 {metadata_layer_value(yytext, true); BEGIN LAYER_METADATA;}
 	YY_BREAK
 case 99:
 /* rule 99 can match eol */
 YY_RULE_SETUP
-#line 718 "src/mapfile/mapfile.l"
+#line 715 "src/mapfile/mapfile.l"
 {
 
 	 char *p, *q; 
@@ -13652,40 +13649,40 @@ YY_RULE_SETUP
 case 100:
 /* rule 100 can match eol */
 YY_RULE_SETUP
-#line 749 "src/mapfile/mapfile.l"
+#line 746 "src/mapfile/mapfile.l"
 {properties(yytext, true);  BEGIN MAP;}
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 750 "src/mapfile/mapfile.l"
+#line 747 "src/mapfile/mapfile.l"
 {properties(yytext, false);  BEGIN MAP;}		
 	YY_BREAK
 case 102:
 /* rule 102 can match eol */
 YY_RULE_SETUP
-#line 751 "src/mapfile/mapfile.l"
+#line 748 "src/mapfile/mapfile.l"
 {layer_properties(yytext, true);  BEGIN LAYER;}
 	YY_BREAK
 case 103:
 YY_RULE_SETUP
-#line 752 "src/mapfile/mapfile.l"
+#line 749 "src/mapfile/mapfile.l"
 {layer_properties(yytext, false);  BEGIN LAYER;}		
 	YY_BREAK
 case 104:
 /* rule 104 can match eol */
 YY_RULE_SETUP
-#line 753 "src/mapfile/mapfile.l"
+#line 750 "src/mapfile/mapfile.l"
 {}
 	YY_BREAK
 case 105:
 YY_RULE_SETUP
-#line 754 "src/mapfile/mapfile.l"
+#line 751 "src/mapfile/mapfile.l"
 {}
 	YY_BREAK
 case 106:
 /* rule 106 can match eol */
 YY_RULE_SETUP
-#line 755 "src/mapfile/mapfile.l"
+#line 752 "src/mapfile/mapfile.l"
 {}
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
@@ -13717,7 +13714,7 @@ case YY_STATE_EOF(SYMBOL):
 case YY_STATE_EOF(PATTERN):
 case YY_STATE_EOF(POINTS):
 case YY_STATE_EOF(INCLUDE):
-#line 757 "src/mapfile/mapfile.l"
+#line 754 "src/mapfile/mapfile.l"
 { 
 	/* End of main file */
 	if (map_include_stack_ptr == 0 && YY_START == 0) yyterminate(); 
@@ -13735,10 +13732,10 @@ case YY_STATE_EOF(INCLUDE):
 	YY_BREAK
 case 107:
 YY_RULE_SETUP
-#line 772 "src/mapfile/mapfile.l"
+#line 769 "src/mapfile/mapfile.l"
 ECHO;
 	YY_BREAK
-#line 13742 "lex.yy.c"
+#line 13739 "lex.yy.c"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -14734,7 +14731,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 772 "src/mapfile/mapfile.l"
+#line 769 "src/mapfile/mapfile.l"
 
 
 

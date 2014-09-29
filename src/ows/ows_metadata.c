@@ -158,10 +158,14 @@ void ows_metadata_fill(ows * o, array * cgi)
   /* Initialize supported versions from service type */
   if (o->metadata->type) {
     if (buffer_case_cmp(o->metadata->type, "WFS")) {
+      buffer_free(o->metadata->type);
+      o->metadata->type = buffer_from_str("WFS");
       o->metadata->versions = list_init();
       list_add_str(o->metadata->versions, "1.0.0");
       list_add_str(o->metadata->versions, "1.1.0");
     } else if (buffer_case_cmp(o->metadata->type, "WMS")) {
+      buffer_free(o->metadata->type);
+      o->metadata->type = buffer_from_str("WMS");
       o->metadata->versions = list_init();
       list_add_str(o->metadata->versions, "1.1.0");
       list_add_str(o->metadata->versions, "1.3.0");

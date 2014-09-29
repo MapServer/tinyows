@@ -515,7 +515,7 @@ static void layer_properties(char * yytext, bool quotes)
 	switch(map_layer_prop_state) {
 	case MAP_LAYER_NAME:
 		map_l->name = buffer_init();
-       		buffer_add_str(map_l->name, yytext);
+	   	buffer_add_str(map_l->name, yytext);
 		return;
 	case MAP_LAYER_CONNECTION:
 		/* TODO: Having a Layer connection notion in TinyOWS */
@@ -534,22 +534,22 @@ static void end_layer()
 	if (!map_is_postgis) ows_layer_free(map_l);
 	else {
 		if (!map_l->storage->table->use)
-			buffer_copy(map_l->storage->table, map_l->name);
+			buffer_add_str(map_l->storage->table, map_l->name);
 		if (!map_l->storage->schema->use)
 			buffer_add_str(map_l->storage->schema, "public");
 		if (!map_is_dump) map_l->retrievable=map_l->writable = false;
 
-                	map_l->name_prefix = buffer_init();
+                map_l->name_prefix = buffer_init();
 		buffer_copy(map_l->name_prefix, map_l->name);
                 if (map_l->ns_prefix->use) {
-                    buffer_add_head(map_l->name_prefix, ':');
-                    buffer_add_head_str(map_l->name_prefix, map_l->ns_prefix->buf);
-                }
+		/*    buffer_add_head(map_l->name_prefix, ':'); */ 
+                    buffer_add_head_str(map_l->name, map_l->ns_prefix->buf);
+                } 
 
-                	map_l->name_no_uri = buffer_init();
-		buffer_copy(map_l->name_no_uri, map_l->name);
+		map_l->name_no_uri = buffer_init();
+                buffer_copy(map_l->name_no_uri, map_l->name_prefix); 
                 if (map_l->ns_uri->use) {
-                    buffer_add_head(map_l->name, ':');
+		/* buffer_add_head(map_l->name_no_uri, ':'); */
                     buffer_add_head_str(map_l->name, map_l->ns_uri->buf);
                 }
 

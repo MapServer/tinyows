@@ -316,7 +316,7 @@ static buffer *wfs_retrieve_typename(ows * o, wfs_request * wr, xmlNodePtr n)
  */
 static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNodePtr n)
 {
-  buffer *values, *column, *layer_name, *layer_ns_prefix, *result, *sql, *gml;
+  buffer *values, *column, *layer_name, *result, *sql, *gml;
   buffer *handle, *id_column, *fid_full_name, *dup_sql, *id;
   xmlNodePtr node, elemt;
   filter_encoding *fe;
@@ -445,8 +445,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
       }
       list_free(l);
     }
-
-    layer_ns_prefix = ows_layer_ns_prefix(o->layers, layer_name);
 
     /* ReplaceDuplicate look if an ID is already used
      *

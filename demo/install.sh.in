@@ -9,7 +9,9 @@ PGUSER=postgres
 SHP2PGSQL=@SHP2PGSQL@
 DB=tinyows_demo
 
-if [ -d @POSTGIS_SHARE@/contrib/postgis-2.0 ]; then
+if [ -d @POSTGIS_SHARE@/contrib/postgis-2.1 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.1
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.0 ]; then
 	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-1.5 ]; then
 	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-1.5

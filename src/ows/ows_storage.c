@@ -192,7 +192,7 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
   sql = buffer_init();
 
   buffer_add_str(sql, "SELECT c.column_name FROM information_schema.constraint_column_usage c, pg_namespace n ");
-  buffer_add_str(sql, "WHERE n.nspname = '");
+  buffer_add_str(sql, "WHERE c.table_schema=n.nspname AND n.nspname = '");
   buffer_copy(sql, l->storage->schema);
   buffer_add_str(sql, "' AND c.table_name = '");
   buffer_copy(sql, l->storage->table);

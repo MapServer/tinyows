@@ -550,14 +550,7 @@ buffer *buffer_encode_json_str(const char * str)
   buf = buffer_init();
 
   for( /* empty */ ; *str ; str++) {
-    switch(*str) {
-      case '"':
-        buffer_add_str(buf, "\\\"");
-        break;
-
-      default:
-        buffer_add(buf, *str);
-    }
+    buffer_add(buf, *str);
   }
 
   return buf;

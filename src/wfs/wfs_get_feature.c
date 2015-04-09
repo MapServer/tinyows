@@ -806,7 +806,8 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
     prop_table = ows_psql_describe_table(o, ll->value);
     first_row = true;
-    buffer_copy(id_name, ows_psql_id_column(o, ll->value));
+    if(ows_psql_id_column(o, ll->value)) /* CAUTION: pkey could be NULL ! */
+      buffer_copy(id_name, ows_psql_id_column(o, ll->value));
     number = -1;
     if (id_name && id_name->use)
          number = PQfnumber(res, id_name->buf);

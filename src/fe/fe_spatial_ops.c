@@ -433,11 +433,17 @@ static buffer *fe_bbox_layer(ows *o, buffer *typename, buffer *sql, buffer *prop
   if (transform) {
     buffer_add(sql, ',');
     buffer_add_int(sql, srid);
+    buffer_add(sql, ')');
   }
-  buffer_add(sql, ')');
 
   buffer_add_str(sql, ",");
+  if (transform) buffer_add_str(sql, "ST_Transform(");
   buffer_copy(sql, envelope);
+  if (transform) {
+    buffer_add(sql, ',');
+    buffer_add_int(sql, srid);
+    buffer_add(sql, ')');
+  }
   buffer_add_str(sql, ") AND ");
   if (transform) buffer_add_str(sql, "ST_Transform(");
 
@@ -448,11 +454,17 @@ static buffer *fe_bbox_layer(ows *o, buffer *typename, buffer *sql, buffer *prop
   if (transform) {
     buffer_add(sql, ',');
     buffer_add_int(sql, srid);
+    buffer_add(sql, ')');
   }
-  buffer_add(sql, ')');
 
   buffer_add_str(sql, " && ");
+  if (transform) buffer_add_str(sql, "ST_Transform(");
   buffer_copy(sql, envelope);
+  if (transform) {
+    buffer_add(sql, ',');
+    buffer_add_int(sql, srid);
+    buffer_add(sql, ')');
+  }
   buffer_add_str(sql, ")");
 
   return sql;

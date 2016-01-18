@@ -467,6 +467,9 @@ static void wfs_request_check_output(ows * o, wfs_request * wr)
     else if (    buffer_cmp(array_get(o->cgi, "outputformat"), "JSON")
               || buffer_cmp(array_get(o->cgi, "outputformat"), "application/json"))
       wr->format = WFS_GEOJSON;
+    else if (    buffer_cmp(array_get(o->cgi, "outputformat"), "JSONP")
+              || buffer_cmp(array_get(o->cgi, "outputformat"), "application/javascript"))
+      wr->format = WFS_JSONP;
     else if (    wr->request == WFS_DESCRIBE_FEATURE_TYPE
               && buffer_cmp(array_get(o->cgi, "outputformat"), "XMLSCHEMA"))  // FIXME: really ?
       wr->format = WFS_XML_SCHEMA;

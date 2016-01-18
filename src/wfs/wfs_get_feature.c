@@ -511,7 +511,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
         buffer_add_str(select, ") AS \"");
         buffer_copy(select, an->key);
         buffer_add_str(select, "\" ");
-      } else if (wr->format == WFS_GEOJSON) {
+      } else if (wr->format == WFS_GEOJSON || wr->format == WFS_JSONP) {
         buffer_add_str(select, "ST_AsGeoJSON(");
 
         /* Geometry Reprojection on the fly step if asked */
@@ -786,7 +786,14 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
   prop = buffer_init();
   id_name = buffer_init();
 
-  fprintf(o->output, "Content-Type: application/json\n\n");
+  if (wr->format == WFS_JSONP)
+  {
+         fprintf(o->output, "Content-Type: application/javascript\n\n");
+         fprintf(o->output, "wfs_jsonp_callback(");
+
+  } else fprintf(o->output, "Content-Type: application/json\n\n");
+  
+
   fprintf(o->output, "{\"type\": \"FeatureCollection\", \"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"");
   if (ows_version_get(o->request->version) == 100)
     fprintf(o->output, "EPSG:%i", wr->srs->srid);
@@ -872,6 +879,7 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
   }
 
   fprintf(o->output, "]}");
+  if (wr->format == WFS_JSONP) fprintf(o->output, ");");
 
   buffer_free(geom);
   buffer_free(prop);
@@ -897,7 +905,7 @@ void wfs_get_feature(ows * o, wfs_request * wr)
     else
       wfs_gml_display_results(o, wr, request_list);
 
-  } else if (wr->format == WFS_GEOJSON)
+  } else if (wr->format == WFS_GEOJSON || wr->format == WFS_JSONP)
     wfs_geojson_display_results(o, wr, request_list);
 
   /* Add here other functions to display GetFeature response in other formats */

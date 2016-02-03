@@ -304,6 +304,7 @@ typedef struct Wfs_request {
   buffer * resulttype;
   buffer * sortby;
   list * sections;
+  buffer * callback;
 
   alist * insert_results;
   int delete_results;

@@ -788,8 +788,11 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
 
   if (wr->format == WFS_JSONP)
   {
+         assert(wr->callback);
+
          fprintf(o->output, "Content-Type: application/javascript\n\n");
-         fprintf(o->output, "wfs_jsonp_callback(");
+         fprintf(o->output, wr->callback->buf);
+         fprintf(o->output, "(");
 
   } else fprintf(o->output, "Content-Type: application/json\n\n");
   

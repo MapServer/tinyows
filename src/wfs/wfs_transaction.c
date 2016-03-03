@@ -505,7 +505,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     node = n->children;
 
     /* Jump to the next element if spaces */
-    while (node->type != XML_ELEMENT_NODE) node = node->next;
+    while (node != NULL && node->type != XML_ELEMENT_NODE) node = node->next;
 
     /* Fill SQL fields and values at once */
     for ( /* empty */ ; node; node = node->next) {

@@ -541,45 +541,48 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
           elemt = node->children;
 
           /* Jump to the next element if spaces */
-          while (elemt->type != XML_ELEMENT_NODE) elemt = elemt->next;
+          while (elemt != NULL && elemt->type != XML_ELEMENT_NODE) elemt = elemt->next;
+          if (elemt != NULL) {
+            if (!strcmp((char *) elemt->name, "Box") ||
+                !strcmp((char *) elemt->name, "Envelope")) {
 
-          if (!strcmp((char *) elemt->name, "Box") ||
-              !strcmp((char *) elemt->name, "Envelope")) {
-
-            fe = filter_encoding_init();
-            fe->sql = fe_envelope(o, layer_name, fe, fe->sql, elemt);
-            if (fe->error_code != FE_NO_ERROR) {
-              result = fill_fe_error(o, fe);
-              buffer_free(sql);
-              buffer_free(values);
-              buffer_free(column);
-              buffer_free(id);
+              fe = filter_encoding_init();
+              fe->sql = fe_envelope(o, layer_name, fe, fe->sql, elemt);
+              if (fe->error_code != FE_NO_ERROR) {
+                result = fill_fe_error(o, fe);
+                buffer_free(sql);
+                buffer_free(values);
+                buffer_free(column);
+                buffer_free(id);
+                filter_encoding_free(fe);
+                return result;
+              }
+              buffer_copy(values, fe->sql);
               filter_encoding_free(fe);
-              return result;
-            }
-            buffer_copy(values, fe->sql);
-            filter_encoding_free(fe);
 
-          } else if (!strcmp((char *) elemt->name, "Null")) {
-            buffer_add_str(values, "''");
-          } else {
-            gml = ows_psql_gml_to_sql(o, elemt, srid_root);
-            if (gml) {
-              buffer_add_str(values, "'");
-              buffer_copy(values, gml);
-              buffer_add_str(values, "'");
-              buffer_free(gml);
+            } else if (!strcmp((char *) elemt->name, "Null")) {
+              buffer_add_str(values, "''");
             } else {
-              buffer_free(sql);
-              buffer_free(values);
-              buffer_free(column);
-              buffer_free(id);
-              buffer_free(layer_name);
+              gml = ows_psql_gml_to_sql(o, elemt, srid_root);
+              if (gml) {
+                buffer_add_str(values, "'");
+                buffer_copy(values, gml);
+                buffer_add_str(values, "'");
+                buffer_free(gml);
+              } else {
+                buffer_free(sql);
+                buffer_free(values);
+                buffer_free(column);
+                buffer_free(id);
+                buffer_free(layer_name);
 
-              result = buffer_from_str("Error invalid Geometry");
-              return result;
+                result = buffer_from_str("Error invalid Geometry");
+                return result;
+              }
             }
           }
+          else
+            buffer_add_str(values, "NULL");
 
         } else values = wfs_retrieve_value(o, wr, values, xmldoc, node);
 

@@ -141,7 +141,11 @@ buffer *buffer_ftoa(double f)
 
   res = buffer_init();
   while (res->size < 100) buffer_realloc(res);
+  #ifndef _WIN32
   snprintf(res->buf, 99, "%f", f);
+  #else
+  _snprintf(res->buf, 99, "%f", f);
+  #endif 
   res->use = strlen(res->buf);
 
   return res;

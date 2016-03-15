@@ -507,8 +507,6 @@ buffer *buffer_encode_xml_entities_str(const char * str)
 
   for( /* empty */ ; *str ; str++) {
 
-    if ((int) *str < 32 && (*str != '\n' && *str != '\r' && *str != '	')) break;
-
     switch(*str) {
       case '&':
         buffer_add_str(buf, "&amp;");

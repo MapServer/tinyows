@@ -538,9 +538,6 @@ buffer *buffer_encode_xml_entities_str(const char * str)
 /*
  * Modify string to replace encoded characters by their true value
  * for JSON output
- *
- * The replacements performed are:
- *  " -> \"
  */
 buffer *buffer_encode_json_str(const char * str)
 {
@@ -553,6 +550,22 @@ buffer *buffer_encode_json_str(const char * str)
     switch(*str) {
       case '"':
         buffer_add_str(buf, "\\\"");
+        break;
+
+      case '\n':
+        buffer_add_str(buf, "\\\\n");
+        break;
+
+      case '\r':
+        buffer_add_str(buf, "\\\\r");
+        break;
+
+      case '\t':
+        buffer_add_str(buf, "\\\\t");
+        break;
+
+      case '\\':
+        buffer_add_str(buf, "\\\\");
         break;
 
       default:

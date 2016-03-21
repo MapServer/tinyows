@@ -273,6 +273,7 @@ enum wfs_format {
   WFS_GML311,
   WFS_GML321,
   WFS_GEOJSON,
+  WFS_JSONP,
   WFS_TEXT_XML,
   WFS_APPLICATION_XML
 };
@@ -303,6 +304,7 @@ typedef struct Wfs_request {
   buffer * resulttype;
   buffer * sortby;
   list * sections;
+  buffer * callback;
 
   alist * insert_results;
   int delete_results;

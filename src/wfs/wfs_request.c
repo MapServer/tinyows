@@ -55,6 +55,7 @@ wfs_request *wfs_request_init()
   wr->resulttype = NULL;
   wr->sortby = NULL;
   wr->sections = NULL;
+  wr->callback = NULL;
 
   wr->insert_results = NULL;
   wr->delete_results = 0;
@@ -150,6 +151,12 @@ void wfs_request_flush(wfs_request * wr, FILE * output)
     fprintf(output, "\n");
   }
 
+  if (wr->callback) {
+    fprintf(output, " callback -> ");
+    list_flush(wr->callback, output);
+    fprintf(output, "\n");
+  }
+
   fprintf(output, "]\n");
 }
 #endif
@@ -174,6 +181,7 @@ void wfs_request_free(wfs_request * wr)
   if (wr->sortby)         buffer_free(wr->sortby);
   if (wr->sections)       list_free(wr->sections);
   if (wr->insert_results) alist_free(wr->insert_results);
+  if (wr->callback)       buffer_free(wr->callback);
 
   free(wr);
   wr = NULL;
@@ -467,6 +475,17 @@ static void wfs_request_check_output(ows * o, wfs_request * wr)
     else if (    buffer_cmp(array_get(o->cgi, "outputformat"), "JSON")
               || buffer_cmp(array_get(o->cgi, "outputformat"), "application/json"))
       wr->format = WFS_GEOJSON;
+    else if (    buffer_cmp(array_get(o->cgi, "outputformat"), "JSONP")
+              || buffer_cmp(array_get(o->cgi, "outputformat"), "application/javascript"))
+    {
+      wr->format = WFS_JSONP;
+
+      wr->callback = buffer_init();
+      if (!array_is_key(o->cgi, "callback"))
+          buffer_add_str(wr->callback, "wfs_jsonp_callback");
+      else 
+          buffer_copy(wr->callback, array_get(o->cgi, "callback"));
+    }
     else if (    wr->request == WFS_DESCRIBE_FEATURE_TYPE
               && buffer_cmp(array_get(o->cgi, "outputformat"), "XMLSCHEMA"))  // FIXME: really ?
       wr->format = WFS_XML_SCHEMA;
@@ -474,6 +493,9 @@ static void wfs_request_check_output(ows * o, wfs_request * wr)
       wfs_error(o, wr, WFS_ERROR_OUTPUT_FORMAT_NOT_SUPPORTED,
                 "OutputFormat is not supported", "GetFeature");
   }
+
+
+
 }
 
 

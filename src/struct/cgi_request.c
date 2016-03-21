@@ -33,7 +33,7 @@
 /*
  * Max query string length send via QUERY_STRING CGI
  */
-#define CGI_QUERY_MAX 32768
+#define CGI_QUERY_MAX 1000000
 
 
 /*

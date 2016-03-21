@@ -141,7 +141,11 @@ buffer *buffer_ftoa(double f)
 
   res = buffer_init();
   while (res->size < 100) buffer_realloc(res);
+  #ifndef _WIN32
   snprintf(res->buf, 99, "%f", f);
+  #else
+  _snprintf(res->buf, 99, "%f", f);
+  #endif 
   res->use = strlen(res->buf);
 
   return res;
@@ -503,8 +507,6 @@ buffer *buffer_encode_xml_entities_str(const char * str)
 
   for( /* empty */ ; *str ; str++) {
 
-    if ((int) *str < 32 && (*str != '\n' && *str != '\r' && *str != '	')) break;
-
     switch(*str) {
       case '&':
         buffer_add_str(buf, "&amp;");
@@ -538,9 +540,6 @@ buffer *buffer_encode_xml_entities_str(const char * str)
 /*
  * Modify string to replace encoded characters by their true value
  * for JSON output
- *
- * The replacements performed are:
- *  " -> \"
  */
 buffer *buffer_encode_json_str(const char * str)
 {
@@ -553,6 +552,22 @@ buffer *buffer_encode_json_str(const char * str)
     switch(*str) {
       case '"':
         buffer_add_str(buf, "\\\"");
+        break;
+
+      case '\n':
+        buffer_add_str(buf, "\\\\n");
+        break;
+
+      case '\r':
+        buffer_add_str(buf, "\\\\r");
+        break;
+
+      case '\t':
+        buffer_add_str(buf, "\\\\t");
+        break;
+
+      case '\\':
+        buffer_add_str(buf, "\\\\");
         break;
 
       default:

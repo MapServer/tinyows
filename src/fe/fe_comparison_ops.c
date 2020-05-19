@@ -152,29 +152,42 @@ static buffer *fe_binary_comparison_op(ows * o, buffer * typename, filter_encodi
  */
 static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
-  xmlChar *content, *wildcard, *singlechar, *escape;
+  xmlChar *content, *wildcard, *singlechar, *escape, *matchcase;
   buffer *pg_string;
   char *escaped;
+  bool sensitive_case = true;
 
   assert(o && typename && fe && n);
 
   wildcard = xmlGetProp(n, (xmlChar *) "wildCard");
   singlechar = xmlGetProp(n, (xmlChar *) "singleChar");
+  matchcase = xmlGetProp(n, (xmlChar *) "matchCase");
 
   if (ows_version_get(o->request->version) == 100)
     escape = xmlGetProp(n, (xmlChar *) "escape");
   else
     escape = xmlGetProp(n, (xmlChar *) "escapeChar");
 
+  /* By default, comparison is case sensitive */
+  if (matchcase && !strcmp((char *) matchcase, "false")) sensitive_case = false;
 
   n = n->children;
 
   while (n->type != XML_ELEMENT_NODE) n = n->next; /* eat spaces */
 
+  /* If comparison are explicitly not case sensitive */
+  if (!sensitive_case) buffer_add_str(fe->sql, "LOWER(");
+
   /* We need to cast as varchar at least for timestamp PostgreSQL data type */
   buffer_add_str(fe->sql, " CAST(\"");
   fe->sql = fe_property_name(o, typename, fe, fe->sql, n, false, true);
-  buffer_add_str(fe->sql, "\" AS varchar) LIKE E");
+  buffer_add_str(fe->sql, "\" AS varchar)");
+
+  if (!sensitive_case) {
+    buffer_add_str(fe->sql, ") LIKE LOWER(E");
+  } else {
+    buffer_add_str(fe->sql, " LIKE E");
+  }
 
   n = n->next;
 
@@ -200,9 +213,12 @@ static buffer *fe_property_is_like(ows * o, buffer * typename, filter_encoding *
   }
   buffer_add_str(fe->sql, "'");
 
+  if (!sensitive_case) buffer_add_str(fe->sql, ")");
+
   xmlFree(content);
   xmlFree(wildcard);
   xmlFree(singlechar);
+  xmlFree(matchcase);
   xmlFree(escape);
   buffer_free(pg_string);
 

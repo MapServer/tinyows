@@ -1,0 +1,10 @@
+Makefile
+configure
+demo/install.sh
+demo/tinyows.xml
+src/ows_define.h
+test/wfs_100/config_wfs_100.xml
+test/wfs_100/install_wfs_100.sh
+test/wfs_110/config_wfs_110.xml
+test/wfs_110/install_wfs_110.sh
+tinyows

@@ -630,8 +630,11 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
 
   fp = fopen("/dev/urandom","r");
   if (fp) {
-    for (i=0 ; i<seed_len ; i++)
-      sprintf(seed,"%s%03d", seed, fgetc(fp));
+    for (i=0 ; i<seed_len ; i++) {
+      char szBuf[4];
+      sprintf(szBuf, "%03d", fgetc(fp));
+      strcat(seed, szBuf);
+    }
     fclose(fp);
     buffer_add_str(id, seed);
     free(seed);

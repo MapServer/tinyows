@@ -1,0 +1,1 @@
+service=WFS&version=1.0.0&request=GetFeature&typename=tows:world&maxfeatures=1

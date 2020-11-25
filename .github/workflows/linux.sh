@@ -22,6 +22,7 @@ echo "host all all 127.0.0.1/32 trust" |  cat - /etc/postgresql/12/main/pg_hba.c
 /etc/init.d/postgresql start
 
 make install-demo
+make check
 
 # wget https://github.com/MapServer/tinyows/commit/633ca487113d032e261a4a5c8b5f3b7850580f4f.patch
 # patch -p1 -R < 633ca487113d032e261a4a5c8b5f3b7850580f4f.patch

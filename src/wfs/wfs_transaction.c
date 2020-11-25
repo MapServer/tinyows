@@ -447,6 +447,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     }
 
     layer_ns_prefix = ows_layer_ns_prefix(o->layers, layer_name);
+    (void)layer_ns_prefix; // FIXME : unused variable ?
 
     /* ReplaceDuplicate look if an ID is already used
      *

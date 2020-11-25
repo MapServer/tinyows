@@ -81,6 +81,7 @@ char *cgi_getback_query(ows * o)
       return NULL;
     }
     s = fread(query, query_size, 1, stdin);
+    (void)s;
     if (ferror(stdin)) {
       ows_error(o, OWS_ERROR_REQUEST_HTTP, "Error on QUERY input", "request");
       return NULL;

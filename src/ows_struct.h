@@ -166,9 +166,9 @@ enum ows_error_code {
 typedef struct Ows_layer {
   struct Ows_layer * parent;
   int depth;
-  buffer * name;
-  buffer * name_prefix;
-  buffer * name_no_uri;
+  buffer * name;            /* Nominally concatenation of ns_uri:name_no_uri, e.g. "http://www.tinyows.org/:world" , or name_no_uri if no ns_uri */
+  buffer * name_prefix;     /* Nominally concatenation of ns_prefix:name_no_uri, e.g. "tows:world" , or name_no_uri if no ns_prefix */
+  buffer * name_no_uri;     /* the name as in the "name" attribute in the config, e.g "world" */
   buffer * title;
   bool retrievable;
   bool writable;
@@ -181,8 +181,8 @@ typedef struct Ows_layer {
   buffer * pkey;
   buffer * pkey_sequence;
   list * gml_ns;
-  buffer * ns_prefix;
-  buffer * ns_uri;
+  buffer * ns_prefix;       /* value of the "ns_prefix" attribute in the config, e.g. "tows" */
+  buffer * ns_uri;          /* value of the "ns_uri" attribute in the config, e.g. "http://www.tinyows.org/" */
   buffer * encoding;
   ows_layer_storage * storage;
 } ows_layer;

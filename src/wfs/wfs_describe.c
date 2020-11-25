@@ -199,7 +199,16 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
     fprintf(o->output, " elementFormDefault='qualified'> ");
 
     for (elemt = ns_prefix->first ; elemt ; elemt = elemt->next) {
+      if (buffer_cmp(elemt->value, "gml")) {
+          continue;
+      }
       namespace = ows_layer_ns_prefix_to_ns_uri(o->layers, elemt->value);
+      if( namespace == NULL ) {
+          fprintf(stderr, "Cannot find namespace URI for prefix %s\n",
+                  elemt->value->buf);
+          continue;
+      }
+
       fprintf(o->output, "<xs:import namespace='%s' ", namespace->buf);
       fprintf(o->output, "schemaLocation='%s?service=WFS&amp;version=",
               o->online_resource->buf);
@@ -270,7 +279,7 @@ void wfs_describe_feature_type(ows * o, wfs_request * wr)
  */
 buffer * wfs_generate_schema(ows * o, ows_version * version)
 {
-  list *ns_prefix, *typename, *layers;
+  list *ns_prefix, *typename, *layers, *layers_name_prefix;
   buffer *namespace, *schema;
   list_node *elemt, *t;
   int wfs_version;
@@ -280,6 +289,11 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
   schema = buffer_init();
   wfs_version = ows_version_get(version);
   layers = ows_layer_list_having_storage(o->layers);
+
+  layers_name_prefix = list_init();
+  for (elemt = layers->first; elemt ; elemt = elemt->next) {
+    list_add_by_copy(layers_name_prefix, ows_layer_uri_to_prefix(o->layers, elemt->value));
+  }
 
   buffer_add_str(schema, "<?xml version='1.0' encoding='utf-8'?>\n");
 
@@ -296,7 +310,15 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
   buffer_add_str(schema, "'/>\n");
 
   for (elemt = ns_prefix->first ; elemt ; elemt = elemt->next) {
+    if (buffer_cmp(elemt->value, "gml")) {
+        continue;
+    }
     namespace = ows_layer_ns_prefix_to_ns_uri(o->layers, elemt->value);
+    if( namespace == NULL ) {
+        fprintf(stderr, "Cannot find namespace URI for prefix %s\n",
+                elemt->value->buf);
+        continue;
+    }
     buffer_add_str(schema, "<xs:import namespace='");
     buffer_copy(schema, namespace);
     buffer_add_str(schema, "' schemaLocation='");
@@ -307,7 +329,7 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
     if (elemt->next || elemt != ns_prefix->first) {
       buffer_add_str(schema, "&amp;Typename=");
 
-      typename = ows_layer_list_by_ns_prefix(o->layers, layers, elemt->value);
+      typename = ows_layer_list_by_ns_prefix(o->layers, layers_name_prefix, elemt->value);
       for (t = typename->first ; t ; t = t->next) {
         buffer_copy(schema, t->value);
         if (t->next) buffer_add(schema, ',');
@@ -324,6 +346,7 @@ buffer * wfs_generate_schema(ows * o, ows_version * version)
   buffer_add_str(schema, "</xs:schema>");
   list_free(ns_prefix);
   list_free(layers);
+  list_free(layers_name_prefix);
 
   return schema;
 }

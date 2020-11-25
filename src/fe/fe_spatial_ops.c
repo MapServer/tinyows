@@ -330,7 +330,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
 static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
   xmlChar *content, *units;
-  buffer *tmp, *op, *sql;
+  buffer *tmp, *op, *sql, *layer_name;
   float km;
 
   assert(o);
@@ -341,11 +341,13 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
   tmp = NULL;
   op = buffer_init();
 
+  layer_name = ows_layer_prefix_to_uri(o->layers, typename);
+
   if (!strcmp((char *) n->name, "Beyond"))  buffer_add_str(op, " > ");
   if (!strcmp((char *) n->name, "DWithin")) buffer_add_str(op, " < ");
 
   buffer_add_str(fe->sql, "ST_Distance(");
-  if (!ows_srs_meter_units(o, typename))
+  if (!ows_srs_meter_units(o, layer_name))
     buffer_add_str(fe->sql, "ST_Transform(");
 
   n = n->children;
@@ -355,7 +357,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
   fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true, true);
   buffer_add(fe->sql, '"');
 
-  if (!ows_srs_meter_units(o, typename))
+  if (!ows_srs_meter_units(o, layer_name))
     buffer_add_str(fe->sql, ", 4326)::geography");
 
   buffer_add_str(fe->sql, "),('");
@@ -364,7 +366,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
 
   while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-  if (!ows_srs_meter_units(o, typename))
+  if (!ows_srs_meter_units(o, layer_name))
     buffer_add_str(fe->sql, "ST_Transform(");
 
   /* display the geometry */
@@ -374,7 +376,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     buffer_free(sql);
   } else fe->error_code = FE_ERROR_GEOMETRY;
 
-  if (!ows_srs_meter_units(o, typename))
+  if (!ows_srs_meter_units(o, layer_name))
     buffer_add_str(fe->sql, ", 4326)::geography");
 
   buffer_add_str(fe->sql, "'))");

@@ -108,7 +108,9 @@ typedef struct Ows_layer_storage {
   buffer * pkey_sequence;
   buffer * pkey_default;
   int pkey_column_number;
-  bool is_degree;
+  bool is_geographic;    /* true for a geographic CRS (or a compound CRS
+                            whose base is geographic), false for a projected
+                            CRS (or a compound CRS whose base is projected) */
   array * attributes;
 } ows_layer_storage;
 
@@ -116,10 +118,23 @@ typedef struct Ows_srs {
   int srid;
   buffer * auth_name;
   int auth_srid;
-  bool is_degree;
-  bool is_reverse_axis;
-  bool is_eastern_axis;
-  bool is_long;
+  bool is_geographic;              /* true for a geographic CRS (or a compound
+                                      CRS whose base is geographic), false for
+                                      a projected CRS (or a compound CRS whose
+                                      base is projected) */
+  bool is_axis_order_gis_friendly;   /* true for a CRS whose axis order is
+                                        typically easting, northing (e.g most
+                                        projected CRS, such as EPSG:32631)
+                                        false for example for EPSG:4326 (WGS 84),
+                                        EPSG:2393 (KKJ / Finland Uniform Coordinate System) */
+
+  /* The two below fields are not properties of the SRS, but of its context
+   * of use. */
+  bool honours_authority_axis_order; /* true for a context where the axis order
+                                        as defined by the authority should be
+                                        respected */
+  bool is_long;                      /* true for a context where the srsname must
+                                        be exported as a long URN */
 } ows_srs;
 
 

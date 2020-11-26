@@ -187,7 +187,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 
   /* return the polygon's coordinates matching the bbox */
   bbox = ows_bbox_init();
-  if (s && s->is_reverse_axis) {
+  if (s && s->honours_authority_axis_order && !s->is_axis_order_gis_friendly) {
     ret = ows_bbox_set(o, bbox,
                        atof(coord_min->first->next->value->buf),
                        atof(coord_min->first->value->buf),

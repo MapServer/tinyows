@@ -139,7 +139,7 @@ ows_geobbox *ows_geobbox_set_from_str(ows * o, ows_geobbox * g, char *str)
   assert(str);
 
   bb = ows_bbox_init();
-  ows_bbox_set_from_str(o, bb, str, 4326);
+  ows_bbox_set_from_str(o, bb, str, 4326, false);
   ows_geobbox_set_from_bbox(o, g, bb);
   ows_bbox_free(bb);
 

@@ -123,7 +123,7 @@ void ows_bbox_free (ows_bbox * b);
 ows_bbox *ows_bbox_init ();
 bool ows_bbox_set (ows * o, ows_bbox * b, double xmin, double ymin, double xmax, double ymax, int srid);
 bool ows_bbox_set_from_geobbox (ows * o, ows_bbox * bb, ows_geobbox * geo);
-bool ows_bbox_set_from_str (ows * o, ows_bbox * bb, const char *str, int srid);
+bool ows_bbox_set_from_str (ows * o, ows_bbox * bb, const char *str, int srid, bool honours_authority_axis_order_if_no_explicit_srs);
 bool ows_bbox_transform (ows * o, ows_bbox * bb, int srid);
 void ows_bbox_to_query(ows * o, ows_bbox *bbox, buffer *query);
 void ows_contact_flush (ows_contact * contact, FILE * output);

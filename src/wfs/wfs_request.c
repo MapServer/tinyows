@@ -153,7 +153,7 @@ void wfs_request_flush(wfs_request * wr, FILE * output)
 
   if (wr->callback) {
     fprintf(output, " callback -> ");
-    list_flush(wr->callback, output);
+    buffer_flush(wr->callback, output);
     fprintf(output, "\n");
   }
 

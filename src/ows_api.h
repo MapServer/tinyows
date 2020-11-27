@@ -195,7 +195,7 @@ bool ows_psql_is_numeric(buffer * type);
 buffer *ows_psql_type (ows * o, buffer * layer_name, buffer * property);
 buffer *ows_psql_generate_id (ows * o, buffer * layer_name);
 int ows_psql_number_features(ows * o, list * from, list * where);
-buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, int srid);
+buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, const ows_srs* parent_srs);
 char *ows_psql_escape_string(ows *o, const char *content);
 int ows_psql_geometry_srid(ows *o, const char *geom);
 void ows_request_check (ows * o, ows_request * or, const array * cgi, const char *query);

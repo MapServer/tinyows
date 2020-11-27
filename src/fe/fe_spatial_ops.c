@@ -233,7 +233,8 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
   buffer *geom, *layer_name;
   xmlNodePtr p;
   xmlChar *srsname;
-  int srid = -1;
+  ows_srs* parent_srs = NULL;
+  bool free_parent_srs = false;
 
   assert(typename);
   assert(fe);
@@ -260,11 +261,20 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
   /* jump to the next element if there are spaces */
   while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-  if (o->request->request.wfs->srs) srid = o->request->request.wfs->srs->srid;
-  else srid = ows_srs_get_srid_from_layer(o, layer_name);
+  if (o->request->request.wfs->srs) {
+    parent_srs = o->request->request.wfs->srs;
+  }
+  else {
+    int srid = ows_srs_get_srid_from_layer(o, layer_name);
+    if (srid > 0) {
+      parent_srs = ows_srs_init();
+      ows_srs_set_from_srid(o, parent_srs, srid);
+      free_parent_srs = true;
+    }
+  }
 
   if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope")) {
-
+    int srid = -1;
     srsname = xmlGetProp(n, (xmlChar *) "srsName");
     if (srsname) {
       s = ows_srs_init();
@@ -287,9 +297,12 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     } else fe->sql = fe_envelope(o, typename, fe, fe->sql, n);
 
   } else  {
-    geom = ows_psql_gml_to_sql(o, n, srid);
+    int srid;
+    geom = ows_psql_gml_to_sql(o, n, parent_srs);
     if (!geom) {
       fe->error_code = FE_ERROR_GEOMETRY;
+      if (free_parent_srs)
+        ows_srs_free(parent_srs);
       return fe->sql;
     }
 
@@ -318,6 +331,9 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
   }
 
   buffer_add(fe->sql, ')');
+
+  if (free_parent_srs)
+    ows_srs_free(parent_srs);
 
   return fe->sql;
 }
@@ -370,7 +386,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
     buffer_add_str(fe->sql, "ST_Transform(");
 
   /* display the geometry */
-  sql = ows_psql_gml_to_sql(o, n, 0);
+  sql = ows_psql_gml_to_sql(o, n, NULL);
   if (sql) {
     buffer_copy(fe->sql, sql);
     buffer_free(sql);

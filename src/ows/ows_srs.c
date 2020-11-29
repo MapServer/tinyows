@@ -140,19 +140,31 @@ static void ows_srs_set_is_geographic_and_is_axis_order_gis_friendly_from_def(
             *ptr = '\0';
 
         s->is_axis_order_gis_friendly = true;
-        s->is_geographic = strstr(srtext, "PROJCS[") == NULL &&
-                           strstr(srtext, "GEOCCS[") == NULL;
+        s->is_geographic = (strstr(srtext, "PROJCS[") == NULL &&
+                            strstr(srtext, "GEOCCS[") == NULL &&
+                            strstr(srtext, "BOUNDCRS[") == NULL) ||
+                           strstr(srtext, "BOUNDCRS[SOURCECRS[GEOGCRS") != NULL;
 
-        if( strstr(srtext_horizontal, "AXIS[") == NULL )
+        if( strstr(srtext_horizontal, "AXIS[") == NULL &&
+            strstr(srtext_horizontal, "GEOCCS[") == NULL )
         {
             /* If there is no axis definition, then due to how GDAL < 3
-             * generated the WKT, this means that the axis order is not
-             * GIS friendly */
+            * generated the WKT, this means that the axis order is not
+            * GIS friendly */
             s->is_axis_order_gis_friendly = false;
         }
-        /* In case PostGIS incorporates full WKT output some day... */
         else if( strstr(srtext_horizontal,
-                   "AXIS[\"Northing\",NORTH],AXIS[\"Easting\",EAST]") != NULL )
+                    "AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]") != NULL )
+        {
+            s->is_axis_order_gis_friendly = false;
+        }
+        else if( strstr(srtext_horizontal,
+                    "AXIS[\"Northing\",NORTH],AXIS[\"Easting\",EAST]") != NULL )
+        {
+            s->is_axis_order_gis_friendly = false;
+        }
+        else if( strstr(srtext_horizontal,
+                    "AXIS[\"geodetic latitude (Lat)\",north,ORDER[1]") != NULL )
         {
             s->is_axis_order_gis_friendly = false;
         }

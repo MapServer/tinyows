@@ -187,7 +187,7 @@ buffer *fe_envelope(ows * o, buffer * typename, filter_encoding * fe, buffer *en
 
   /* return the polygon's coordinates matching the bbox */
   bbox = ows_bbox_init();
-  if (s && s->is_reverse_axis) {
+  if (s && s->honours_authority_axis_order && !s->is_axis_order_gis_friendly) {
     ret = ows_bbox_set(o, bbox,
                        atof(coord_min->first->next->value->buf),
                        atof(coord_min->first->value->buf),
@@ -233,7 +233,8 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
   buffer *geom, *layer_name;
   xmlNodePtr p;
   xmlChar *srsname;
-  int srid = -1;
+  ows_srs* parent_srs = NULL;
+  bool free_parent_srs = false;
 
   assert(typename);
   assert(fe);
@@ -260,11 +261,20 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
   /* jump to the next element if there are spaces */
   while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-  if (o->request->request.wfs->srs) srid = o->request->request.wfs->srs->srid;
-  else srid = ows_srs_get_srid_from_layer(o, layer_name);
+  if (o->request->request.wfs->srs) {
+    parent_srs = o->request->request.wfs->srs;
+  }
+  else {
+    int srid = ows_srs_get_srid_from_layer(o, layer_name);
+    if (srid > 0) {
+      parent_srs = ows_srs_init();
+      ows_srs_set_from_srid(o, parent_srs, srid);
+      free_parent_srs = true;
+    }
+  }
 
   if (!strcmp((char *) n->name, "Box") || !strcmp((char *) n->name, "Envelope")) {
-
+    int srid = -1;
     srsname = xmlGetProp(n, (xmlChar *) "srsName");
     if (srsname) {
       s = ows_srs_init();
@@ -287,9 +297,12 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
     } else fe->sql = fe_envelope(o, typename, fe, fe->sql, n);
 
   } else  {
-    geom = ows_psql_gml_to_sql(o, n, srid);
+    int srid;
+    geom = ows_psql_gml_to_sql(o, n, parent_srs);
     if (!geom) {
       fe->error_code = FE_ERROR_GEOMETRY;
+      if (free_parent_srs)
+        ows_srs_free(parent_srs);
       return fe->sql;
     }
 
@@ -319,6 +332,9 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
 
   buffer_add(fe->sql, ')');
 
+  if (free_parent_srs)
+    ows_srs_free(parent_srs);
+
   return fe->sql;
 }
 
@@ -330,7 +346,7 @@ static buffer *fe_spatial_functions(ows * o, buffer * typename, filter_encoding 
 static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding * fe, xmlNodePtr n)
 {
   xmlChar *content, *units;
-  buffer *tmp, *op, *sql;
+  buffer *tmp, *op, *sql, *layer_name;
   float km;
 
   assert(o);
@@ -341,11 +357,13 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
   tmp = NULL;
   op = buffer_init();
 
+  layer_name = ows_layer_prefix_to_uri(o->layers, typename);
+
   if (!strcmp((char *) n->name, "Beyond"))  buffer_add_str(op, " > ");
   if (!strcmp((char *) n->name, "DWithin")) buffer_add_str(op, " < ");
 
   buffer_add_str(fe->sql, "ST_Distance(");
-  if (!ows_srs_meter_units(o, typename))
+  if (!ows_srs_meter_units(o, layer_name))
     buffer_add_str(fe->sql, "ST_Transform(");
 
   n = n->children;
@@ -355,7 +373,7 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
   fe->sql = fe_property_name(o, typename, fe, fe->sql, n, true, true);
   buffer_add(fe->sql, '"');
 
-  if (!ows_srs_meter_units(o, typename))
+  if (!ows_srs_meter_units(o, layer_name))
     buffer_add_str(fe->sql, ", 4326)::geography");
 
   buffer_add_str(fe->sql, "),('");
@@ -364,17 +382,17 @@ static buffer *fe_distance_functions(ows * o, buffer * typename, filter_encoding
 
   while (n->type != XML_ELEMENT_NODE) n = n->next;
 
-  if (!ows_srs_meter_units(o, typename))
+  if (!ows_srs_meter_units(o, layer_name))
     buffer_add_str(fe->sql, "ST_Transform(");
 
   /* display the geometry */
-  sql = ows_psql_gml_to_sql(o, n, 0);
+  sql = ows_psql_gml_to_sql(o, n, NULL);
   if (sql) {
     buffer_copy(fe->sql, sql);
     buffer_free(sql);
   } else fe->error_code = FE_ERROR_GEOMETRY;
 
-  if (!ows_srs_meter_units(o, typename))
+  if (!ows_srs_meter_units(o, layer_name))
     buffer_add_str(fe->sql, ", 4326)::geography");
 
   buffer_add_str(fe->sql, "'))");

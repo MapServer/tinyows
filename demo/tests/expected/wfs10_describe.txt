@@ -1,0 +1,40 @@
+Content-Type: text/xml; subtype=gml/2.1.2;
+
+<?xml version='1.0' encoding='UTF-8'?>
+<xs:schema targetNamespace='http://www.tinyows.org/' xmlns:tows='http://www.tinyows.org/' xmlns:ogc='http://www.opengis.net/ogc' xmlns:xs='http://www.w3.org/2001/XMLSchema' xmlns='http://www.w3.org/2001/XMLSchema' xmlns:gml='http://www.opengis.net/gml' elementFormDefault='qualified' version='1.0'>
+<xs:import namespace='http://www.opengis.net/gml' schemaLocation='http://schemas.opengis.net/gml/2.1.2/feature.xsd'/>
+<xs:element name='world' type='tows:worldType' substitutionGroup='gml:_Feature' />
+<xs:complexType name='worldType'>
+ <xs:complexContent>
+  <xs:extension base='gml:AbstractFeatureType'>
+   <xs:sequence>
+    <xs:element name ='name' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='40'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='gmi_cntry' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='3'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='region' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='25'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='geom' type='gml:MultiPolygonPropertyType' nillable='true' minOccurs='0' maxOccurs='1'/>
+   </xs:sequence>
+  </xs:extension>
+ </xs:complexContent>
+</xs:complexType>
+<xs:element name='france' type='tows:franceType' substitutionGroup='gml:_Feature' />
+<xs:complexType name='franceType'>
+ <xs:complexContent>
+  <xs:extension base='gml:AbstractFeatureType'>
+   <xs:sequence>
+    <xs:element name ='id_geofla' type='long' nillable='true' minOccurs='0' maxOccurs='1'/>
+    <xs:element name ='code_chf_l' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='3'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='nom_chf_l' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='50'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='x_chf_lieu' type='int' nillable='true' minOccurs='0' maxOccurs='1'/>
+    <xs:element name ='y_chf_lieu' type='int' nillable='true' minOccurs='0' maxOccurs='1'/>
+    <xs:element name ='x_centroid' type='int' nillable='true' minOccurs='0' maxOccurs='1'/>
+    <xs:element name ='y_centroid' type='int' nillable='true' minOccurs='0' maxOccurs='1'/>
+    <xs:element name ='nom_dept' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='30'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='code_reg' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='2'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='nom_region' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='30'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='code_dept' nillable='true' minOccurs='0' maxOccurs='1'>
+<xs:simpleType><xs:restriction base='string'><xs:maxLength value='3'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='geom' type='gml:MultiPolygonPropertyType' nillable='true' minOccurs='0' maxOccurs='1'/>
+   </xs:sequence>
+  </xs:extension>
+ </xs:complexContent>
+</xs:complexType>
+</xs:schema>

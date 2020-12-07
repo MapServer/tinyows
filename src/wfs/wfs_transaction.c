@@ -324,8 +324,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
   array * table;
   char *escaped;
   list *l;
-  ows_srs * srs_root;
-  int srid_root = 0;
+  ows_srs * srs_root = NULL;
   xmlChar *attr = NULL;
   enum wfs_insert_idgen idgen = WFS_GENERATE_NEW;
   enum wfs_insert_idgen handle_idgen = WFS_GENERATE_NEW;
@@ -377,8 +376,6 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
       return result;
     }
 
-    srid_root = srs_root->srid;
-    ows_srs_free(srs_root);
     xmlFree(attr);
     attr = NULL;
   }
@@ -407,6 +404,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
       buffer_free(values);
       buffer_free(handle);
       if (layer_name) buffer_free(layer_name);
+      if (srs_root) ows_srs_free(srs_root);
       result = buffer_from_str("Error unknown or not writable Layer Name");
       return result;
     }
@@ -433,6 +431,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
       buffer_free(sql);
       buffer_free(values);
       buffer_free(layer_name);
+      if (srs_root) ows_srs_free(srs_root);
       result = buffer_from_str("Error unknown Layer Name or not id column available");
       return result;
     }
@@ -447,6 +446,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     }
 
     layer_ns_prefix = ows_layer_ns_prefix(o->layers, layer_name);
+    (void)layer_ns_prefix; // FIXME : unused variable ?
 
     /* ReplaceDuplicate look if an ID is already used
      *
@@ -555,6 +555,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                 buffer_free(column);
                 buffer_free(id);
                 filter_encoding_free(fe);
+                if (srs_root) ows_srs_free(srs_root);
                 return result;
               }
               buffer_copy(values, fe->sql);
@@ -563,7 +564,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
             } else if (!strcmp((char *) elemt->name, "Null")) {
               buffer_add_str(values, "''");
             } else {
-              gml = ows_psql_gml_to_sql(o, elemt, srid_root);
+              gml = ows_psql_gml_to_sql(o, elemt, srs_root);
               if (gml) {
                 buffer_add_str(values, "'");
                 buffer_copy(values, gml);
@@ -575,6 +576,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                 buffer_free(column);
                 buffer_free(id);
                 buffer_free(layer_name);
+                if (srs_root) ows_srs_free(srs_root);
 
                 result = buffer_from_str("Error invalid Geometry");
                 return result;
@@ -612,6 +614,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
     result = wfs_execute_transaction_request(o, wr, sql);
     if (!buffer_cmp(result, "PGRES_COMMAND_OK")) {
       buffer_free(sql);
+      if (srs_root) ows_srs_free(srs_root);
       return result;
     }
     buffer_empty(sql);
@@ -619,6 +622,7 @@ static buffer *wfs_insert_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
   }
 
   buffer_free(sql);
+  if (srs_root) ows_srs_free(srs_root);
 
   return result;
 }
@@ -827,8 +831,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
   xmlChar *content;
   char *escaped;
   array *table;
-  ows_srs *srs_root;
-  int srid_root = 0;
+  ows_srs *srs_root = NULL;
   xmlChar *attr = NULL;
   list *l;
 
@@ -856,8 +859,6 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
       return result;
     }
 
-    srid_root = srs_root->srid;
-    ows_srs_free(srs_root);
     xmlFree(attr);
     attr = NULL;
   }
@@ -873,6 +874,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
   if (!layer_name || !s || !t) {
     if (typename) buffer_free(typename);
     buffer_free(sql);
+    if (srs_root) ows_srs_free(srs_root);
     result = buffer_from_str("Typename provided is unknown or not writable");
     return result;
   }
@@ -957,6 +959,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                 buffer_free(typename);
                 buffer_free(property_name);
                 filter_encoding_free(fe);
+                if (srs_root) ows_srs_free(srs_root);
                 return result;
               }
 
@@ -966,7 +969,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
             } else if (!strcmp((char *) elemt->name, "Null")) {
               buffer_add_str(values, "''");
             } else {
-              gml = ows_psql_gml_to_sql(o, elemt, srid_root);
+              gml = ows_psql_gml_to_sql(o, elemt, srs_root);
               if (gml) {
                 buffer_add_str(values, "'");
                 buffer_copy(values, gml);
@@ -977,6 +980,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
                 buffer_free(typename);
                 buffer_free(property_name);
                 buffer_free(sql);
+                if (srs_root) ows_srs_free(srs_root);
                 result = buffer_from_str("Invalid GML Geometry");
                 return result;
               }
@@ -1004,6 +1008,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
           buffer_free(values);
           buffer_free(sql);
           buffer_free(typename);
+          if (srs_root) ows_srs_free(srs_root);
           return result;
 
         } else {
@@ -1025,6 +1030,7 @@ static buffer *wfs_update_xml(ows * o, wfs_request * wr, xmlDocPtr xmldoc, xmlNo
 
   buffer_free(typename);
   buffer_free(sql);
+  if (srs_root) ows_srs_free(srs_root);
 
   return result;
 }

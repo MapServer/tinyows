@@ -44,9 +44,9 @@ ows_srs *ows_srs_init()
   c->srid = -1;
   c->auth_name = buffer_init();
   c->auth_srid = 0;
-  c->is_degree = true;
-  c->is_reverse_axis = false;
-  c->is_eastern_axis = false;
+  c->is_geographic = true;
+  c->honours_authority_axis_order = false;
+  c->is_axis_order_gis_friendly = false;
   c->is_long = false;
 
   return c;
@@ -61,9 +61,9 @@ ows_srs *ows_srs_copy(ows_srs * d, ows_srs * s)
   d->srid = s->srid;
   buffer_copy(d->auth_name, s->auth_name);
   d->auth_srid = s->auth_srid;
-  d->is_degree = s->is_degree;
-  d->is_reverse_axis = s->is_reverse_axis;
-  d->is_eastern_axis = s->is_eastern_axis;
+  d->is_geographic = s->is_geographic;
+  d->honours_authority_axis_order = s->honours_authority_axis_order;
+  d->is_axis_order_gis_friendly = s->is_axis_order_gis_friendly;
   d->is_long = s->is_long;
 
   return d;
@@ -98,18 +98,20 @@ void ows_srs_flush(ows_srs * c, FILE * output)
   fprintf(output, " auth_name: %s\n", c->auth_name->buf);
   fprintf(output, " auth_srid: %i\n", c->auth_srid);
 
-  if (c->is_degree) fprintf(output, " is_degree: true\n]\n");
-  else              fprintf(output, " is_degree: false\n]\n");
-
-  if (c->is_reverse_axis)
-    fprintf(output, " is_reverse_axis: true\n]\n");
+  if (c->is_geographic)
+    fprintf(output, " is_geographic: true\n]\n");
   else
-    fprintf(output, " is_reverse_axis: false\n]\n");
+    fprintf(output, " is_geographic: false\n]\n");
 
-  if (c->is_eastern_axis)
-    fprintf(output, " is_eastern_axis: true\n]\n");
+  if (c->honours_authority_axis_order)
+    fprintf(output, " honours_authority_axis_order: true\n]\n");
   else
-    fprintf(output, " is_eastern_axis: false\n]\n");
+    fprintf(output, " honours_authority_axis_order: false\n]\n");
+
+  if (c->is_axis_order_gis_friendly)
+    fprintf(output, " is_axis_order_gis_friendly: true\n]\n");
+  else
+    fprintf(output, " is_axis_order_gis_friendly: false\n]\n");
 
   if (c->is_long)
     fprintf(output, " is_long: true\n]\n");
@@ -118,24 +120,83 @@ void ows_srs_flush(ows_srs * c, FILE * output)
 }
 #endif
 
+/*
+ * Set s->is_geographic and s->is_axis_order_gis_friendly
+ * from srtext.
+ */
+static void ows_srs_set_is_geographic_and_is_axis_order_gis_friendly_from_def(
+        ows_srs* s, const char* proj4text, const char* srtext)
+{
+    /* Use srtext in priority */
+    if (srtext && srtext[0] != '\0')
+    {
+        char* srtext_horizontal = (char*) malloc(strlen(srtext) + 1);
+        char* ptr;
+        strcpy(srtext_horizontal, srtext);
+
+        /* Remove the VERT_CS part if we are in a COMPD_CS */
+        ptr = strstr(srtext_horizontal, ",VERT_CS[");
+        if (ptr)
+            *ptr = '\0';
+
+        s->is_axis_order_gis_friendly = true;
+        s->is_geographic = (strstr(srtext, "PROJCS[") == NULL &&
+                            strstr(srtext, "GEOCCS[") == NULL &&
+                            strstr(srtext, "BOUNDCRS[") == NULL) ||
+                           strstr(srtext, "BOUNDCRS[SOURCECRS[GEOGCRS") != NULL;
+
+        if( strstr(srtext_horizontal, "AXIS[") == NULL &&
+            strstr(srtext_horizontal, "GEOCCS[") == NULL )
+        {
+            /* If there is no axis definition, then due to how GDAL < 3
+            * generated the WKT, this means that the axis order is not
+            * GIS friendly */
+            s->is_axis_order_gis_friendly = false;
+        }
+        else if( strstr(srtext_horizontal,
+                    "AXIS[\"Latitude\",NORTH],AXIS[\"Longitude\",EAST]") != NULL )
+        {
+            s->is_axis_order_gis_friendly = false;
+        }
+        else if( strstr(srtext_horizontal,
+                    "AXIS[\"Northing\",NORTH],AXIS[\"Easting\",EAST]") != NULL )
+        {
+            s->is_axis_order_gis_friendly = false;
+        }
+        else if( strstr(srtext_horizontal,
+                    "AXIS[\"geodetic latitude (Lat)\",north,ORDER[1]") != NULL )
+        {
+            s->is_axis_order_gis_friendly = false;
+        }
+
+        free(srtext_horizontal);
+    }
+    else if( proj4text && proj4text[0] != '\0' )
+    {
+        s->is_geographic = strstr(proj4text, "+units=m") == NULL;
+        /* This will be wrong for a number of projected CRS ! */
+        s->is_axis_order_gis_friendly = !s->is_geographic;
+    }
+}
 
 /*
  * Set projection value into srs structure
  */
-bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
+bool ows_srs_set(ows * o, ows_srs * s, const buffer * auth_name, int auth_srid)
 {
   PGresult *res;
   buffer *sql;
+  const char* proj4text;
+  const char* srtext;
 
   assert(o);
-  assert(c);
+  assert(s);
   assert(o->pg);
   assert(auth_name);
 
   sql = buffer_init();
-  buffer_add_str(sql, "SELECT srid, position('+units=m ' in proj4text)");
-  buffer_add_str(sql, ", (position('AXIS[\"X\",NORTH]]' in srtext) + position('AXIS[\"Northing\",NORTH]]' in srtext))");
-  buffer_add_str(sql, " FROM spatial_ref_sys WHERE auth_name='");
+  buffer_add_str(sql, "SELECT srid, proj4text, srtext "
+                      "FROM spatial_ref_sys WHERE auth_name='");
   buffer_copy(sql, auth_name);
   buffer_add_str(sql, "' AND auth_srid=");
   buffer_add_int(sql, auth_srid);
@@ -149,21 +210,15 @@ bool ows_srs_set(ows * o, ows_srs * c, const buffer * auth_name, int auth_srid)
     return false;
   }
 
-  buffer_empty(c->auth_name);
-  buffer_copy(c->auth_name, auth_name);
-  c->auth_srid = auth_srid;
+  buffer_empty(s->auth_name);
+  buffer_copy(s->auth_name, auth_name);
+  s->auth_srid = auth_srid;
 
-  c->srid = atoi(PQgetvalue(res, 0, 0));
+  s->srid = atoi(PQgetvalue(res, 0, 0));
 
-  /* Such a way to know if units is meter or degree */
-  if (atoi(PQgetvalue(res, 0, 1)) == 0)
-    c->is_degree = true;
-  else
-    c->is_degree = false;
-
-  /* Is easting-northing SRID ? */
-  if (atoi(PQgetvalue(res, 0, 2)) != 0)
-    c->is_eastern_axis = true;
+  proj4text = PQgetvalue(res, 0, 1);
+  srtext = PQgetvalue(res, 0, 2);
+  ows_srs_set_is_geographic_and_is_axis_order_gis_friendly_from_def(s, proj4text, srtext);
 
   PQclear(res);
   return true;
@@ -183,9 +238,8 @@ bool ows_srs_set_geobbox(ows * o, ows_srs * s)
   buffer_empty(s->auth_name);
   buffer_add_str(s->auth_name, "EPSG");
   s->auth_srid = 4326;
-  s->is_degree = true;
-  s->is_reverse_axis = false;
-  s->is_eastern_axis = false;
+  s->is_geographic = true;
+  s->is_axis_order_gis_friendly = false;
 
   return true;
 }
@@ -198,6 +252,8 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
 {
   PGresult *res;
   buffer *sql;
+  const char *proj4text;
+  const char *srtext;
 
   assert(o);
   assert(s);
@@ -206,18 +262,16 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
     s->srid = -1;
     buffer_empty(s->auth_name);
     s->auth_srid = 0;
-    s->is_degree = true;
-    s->is_reverse_axis = false;
-    s->is_eastern_axis = false;
+    s->is_geographic = true;
+    s->honours_authority_axis_order = false;
+    s->is_axis_order_gis_friendly = false;
 
     return true;
   }
 
   sql = buffer_init();
-  buffer_add_str(sql, "SELECT auth_name, auth_srid, ");
-  buffer_add_str(sql, "position('+units=m ' in proj4text), ");
-  buffer_add_str(sql, "(position('AXIS[\"X\",NORTH]]' in srtext) + position('AXIS[\"Northing\",NORTH]]' in srtext)) ");
-  buffer_add_str(sql, "FROM spatial_ref_sys WHERE srid = '");
+  buffer_add_str(sql, "SELECT auth_name, auth_srid, proj4text, srtext "
+                      "FROM spatial_ref_sys WHERE srid = '");
   buffer_add_int(sql, srid);
   buffer_add_str(sql, "'");
 
@@ -234,15 +288,9 @@ bool ows_srs_set_from_srid(ows * o, ows_srs * s, int srid)
   s->auth_srid = atoi(PQgetvalue(res, 0, 1));
   s->srid = srid;
 
-  /* Such a way to know if units is meter or degree */
-  if (atoi(PQgetvalue(res, 0, 2)) == 0)
-    s->is_degree = true;
-  else
-    s->is_degree = false;
-
-  /* Is easting-northing SRID ? */
-  if (atoi(PQgetvalue(res, 0, 3)) != 0)
-    s->is_eastern_axis = true;
+  proj4text = PQgetvalue(res, 0, 2);
+  srtext = PQgetvalue(res, 0, 3);
+  ows_srs_set_is_geographic_and_is_axis_order_gis_friendly_from_def(s, proj4text, srtext);
 
   PQclear(res);
   return true;
@@ -283,18 +331,18 @@ bool ows_srs_set_from_srsname(ows * o, ows_srs * s, const char *srsname)
   if    (!strncmp((char *) srsname,        "EPSG:", 5)
          || !strncmp((char *) srsname, "spatialreferencing.org", 22)) {
     sep = ':';
-    s->is_reverse_axis = false;
+    s->honours_authority_axis_order = false;
     s->is_long = false;
 
   } else if (!strncmp((char *) srsname, "urn:ogc:def:crs:EPSG:", 21)
              || !strncmp((char *) srsname, "urn:x-ogc:def:crs:EPSG:", 23)
              || !strncmp((char *) srsname, "urn:EPSG:geographicCRS:", 23)) {
     sep = ':';
-    s->is_reverse_axis = true;
+    s->honours_authority_axis_order = true;
 
   } else if (!strncmp((char *) srsname, "http://www.opengis.net/gml/srs/epsg.xml#", 40)) {
     sep = '#';
-    s->is_reverse_axis = false;
+    s->honours_authority_axis_order = false;
   } else return false; /* FIXME must we really not allow other value ? */
 
   /*  Retrieve from last separator to the end of srsName string */
@@ -319,7 +367,7 @@ bool ows_srs_meter_units(ows * o, buffer * layer_name)
 
   for (ln = o->layers->first ; ln ; ln = ln->next)
     if (ln->layer->name && ln->layer->storage && !strcmp(ln->layer->name->buf, layer_name->buf))
-      return !ln->layer->storage->is_degree;
+      return !ln->layer->storage->is_geographic;
 
   assert(0); /* Should not happen */
   return false;

@@ -153,7 +153,7 @@ void wfs_request_flush(wfs_request * wr, FILE * output)
 
   if (wr->callback) {
     fprintf(output, " callback -> ");
-    list_flush(wr->callback, output);
+    buffer_flush(wr->callback, output);
     fprintf(output, "\n");
   }
 
@@ -399,15 +399,9 @@ static void wfs_request_check_srs(ows * o, wfs_request * wr, list * layer_name)
       return;
     }
 
-    if ((wr->format == WFS_GML311 || wr->format == WFS_GML321) && wr->srs->is_degree) {
-      wr->srs->is_reverse_axis = true;
-      wr->srs->is_long = true;
-    } else if (wr->format == WFS_GML311 || wr->format == WFS_GML321) {
-      wr->srs->is_long = true;
-    } else if (ows_version_get(o->request->version) == 110 && wr->srs->is_degree) {
-      wr->srs->is_reverse_axis = true;
-      wr->srs->is_long = true;
-    } else if (ows_version_get(o->request->version) == 110) {
+    if (wr->format == WFS_GML311 || wr->format == WFS_GML321 ||
+        ows_version_get(o->request->version) == 110) {
+      wr->srs->honours_authority_axis_order = true;
       wr->srs->is_long = true;
     }
 
@@ -429,6 +423,7 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
 {
   buffer *b;
   int srid = 4326; /* Default srid if not srs is provided since WFS 1.1.0 */
+  bool honours_authority_axis_order_if_no_explicit_srs = false;
 
   assert(o && wr && layer_name && wr->srs);
 
@@ -437,18 +432,16 @@ static void wfs_request_check_bbox(ows * o, wfs_request * wr, list * layer_name)
   b = array_get(o->cgi, "bbox");
   wr->bbox = ows_bbox_init();
 
-  if (ows_version_get(o->request->version) == 100) srid = wr->srs->srid;
+  if (ows_version_get(o->request->version) == 100)
+      srid = wr->srs->srid;
+  else
+      honours_authority_axis_order_if_no_explicit_srs = true;
 
-  if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, srid)) {
+  if (!ows_bbox_set_from_str(o, wr->bbox, b->buf, srid, honours_authority_axis_order_if_no_explicit_srs)) {
     ows_error(o, OWS_ERROR_INVALID_PARAMETER_VALUE,
               "Bad parameters for Bbox, must be Xmin,Ymin,Xmax,Ymax[,crsuri]", "NULL");
     return;
   }
-
-  /* related to BBOX with crsuri and srsName issue like:
-     bbox=34.94,-10.52,71.96,32.19,urn:ogc:def:crs:EPSG::4326
-  */
-  if (wr->srs->is_reverse_axis) wr->bbox->srs->is_reverse_axis = true;
 }
 
 

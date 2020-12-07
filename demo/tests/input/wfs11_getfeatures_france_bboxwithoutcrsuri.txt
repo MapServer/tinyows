@@ -1,0 +1,1 @@
+SERVICE=WFS&REQUEST=GetFeature&VERSION=1.1.0&TYPENAME=tows:world&bbox=49,2,50,3

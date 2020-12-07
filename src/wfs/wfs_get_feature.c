@@ -43,7 +43,7 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ym
   assert(wr);
   assert(srs);
 
-  if (srs->is_degree) precision = o->degree_precision;
+  if (srs->is_geographic) precision = o->degree_precision;
   else precision = o->meter_precision;
 
   if (!srs->srid || srs->srid == -1 || (xmin == ymin && xmax == ymax && xmin == xmax)) {
@@ -76,7 +76,7 @@ static void wfs_gml_bounded_by(ows * o, wfs_request * wr, double xmin, double ym
       else fprintf(o->output, "EPSG:");
       fprintf(o->output, "%d\">", srs->srid);
 
-      if (srs->is_reverse_axis && !srs->is_eastern_axis && srs->is_long) {
+      if (srs->honours_authority_axis_order && !srs->is_axis_order_gis_friendly) {
         if (fabs(xmin) > OWS_MAX_DOUBLE || fabs(ymin) > OWS_MAX_DOUBLE ||
             fabs(xmax) > OWS_MAX_DOUBLE || fabs(ymax) > OWS_MAX_DOUBLE) {
           fprintf(o->output, "<gml:lowerCorner>%g %g</gml:lowerCorner>", ymin, xmin);
@@ -237,7 +237,6 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
   array *namespaces;
   array_node *an;
   list_node *ln;
-  buffer * ns_prefix;
 
   assert(o);
   assert(wr);
@@ -276,8 +275,7 @@ static void wfs_gml_display_namespaces(ows * o, wfs_request * wr)
   if (wr->typename) {
     fprintf(o->output, "&amp;Typename=");
     for (ln = wr->typename->first ; ln ; ln = ln->next) {
-      ns_prefix = ows_layer_ns_prefix(o->layers, ln->value);
-      fprintf(o->output, "%s:%s", ns_prefix->buf, ln->value->buf);
+      fprintf(o->output, "%s", ln->value->buf);
       if (ln->next) fprintf(o->output, ",");
     }
   }
@@ -459,15 +457,18 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
           buffer_add_str(select, "\",");
         }
 
-        if ((wr->srs && !wr->srs->is_degree) ||
+        if ((wr->srs && !wr->srs->is_geographic) ||
             (!wr->srs && ows_srs_meter_units(o, layer_name)))
           buffer_add_int(select, o->meter_precision);
         else
           buffer_add_int(select, o->degree_precision);
 
                                                  gml_opt  = 0; /* Short SRS */
-        if (wr->srs && wr->srs->is_long)         gml_opt += 1; /* FIXME really ? */
-        if (wr->srs && wr->srs->is_eastern_axis) gml_opt += 16;
+        if (wr->srs && wr->srs->is_long)         gml_opt += 1;
+        /* This will be actually without effect since PostGIS only honours flag = 16 for GML 3 */
+        if (wr->srs &&
+            wr->srs->honours_authority_axis_order &&
+            !wr->srs->is_axis_order_gis_friendly ) gml_opt += 16;
         if (gml_boundedby)                       gml_opt += 32;
 
         buffer_add_str(select, ",");
@@ -498,13 +499,14 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
         if (wr->srs && wr->srs->is_long) gml_opt += 1; /* Long SRS */
         if (gml_boundedby) gml_opt += 32;
 
-        if ((wr->srs && !wr->srs->is_degree) || (!wr->srs && ows_srs_meter_units(o, layer_name))) {
+        if ((wr->srs && !wr->srs->is_geographic) || (!wr->srs && ows_srs_meter_units(o, layer_name))) {
           buffer_add_int(select, o->meter_precision);
-          if (wr->srs && !wr->srs->is_eastern_axis && wr->srs->is_long) gml_opt += 16;
         } else {
           buffer_add_int(select, o->degree_precision);
-          if (wr->srs && !wr->srs->is_eastern_axis && wr->srs->is_long) gml_opt += 16;
         }
+        if (wr->srs &&
+            wr->srs->honours_authority_axis_order &&
+            !wr->srs->is_axis_order_gis_friendly ) gml_opt += 16;
 
         buffer_add_str(select, ", ");
         buffer_add_int(select, gml_opt);
@@ -528,7 +530,7 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
           buffer_add_str(select, "\",");
         }
 
-        if ((wr->srs && !wr->srs->is_degree) ||
+        if ((wr->srs && !wr->srs->is_geographic) ||
             (!wr->srs && ows_srs_meter_units(o, layer_name)))
           buffer_add_int(select, o->meter_precision);
         else
@@ -739,6 +741,8 @@ static mlist *wfs_retrieve_sql_request_list(ows * o, wfs_request * wr)
     }
 
     buffer_copy(sql, where);
+
+    /* fprintf(stderr, "sql = %s\n", sql->buf); */
 
     list_add(sql_req, sql);
     list_add(where_list, where);

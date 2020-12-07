@@ -58,6 +58,9 @@ install-demo:
 	@demo/install.sh
 	cp -i demo/tinyows.xml /etc/tinyows.xml
 
+check:
+	@demo/check.sh
+
 install-test100:
 	@chmod +x test/wfs_100/install_wfs_100.sh
 	@test/wfs_100/install_wfs_100.sh

@@ -630,8 +630,11 @@ buffer *ows_psql_generate_id(ows * o, buffer * layer_name)
 
   fp = fopen("/dev/urandom","r");
   if (fp) {
-    for (i=0 ; i<seed_len ; i++)
-      sprintf(seed,"%s%03d", seed, fgetc(fp));
+    for (i=0 ; i<seed_len ; i++) {
+      char szBuf[4];
+      sprintf(szBuf, "%03d", fgetc(fp));
+      strcat(seed, szBuf);
+    }
     fclose(fp);
     buffer_add_str(id, seed);
     free(seed);
@@ -749,11 +752,12 @@ static xmlNodePtr ows_psql_recursive_parse_gml(ows * o, xmlNodePtr n, xmlNodePtr
  * Transform a GML geometry to PostGIS EWKT
  * Return NULL on error
  */
-buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, int srid)
+buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, const ows_srs* parent_srs)
 {
   PGresult *res;
   xmlNodePtr g;
   buffer *result, *sql, *gml;
+  ows_srs* srs_geom = NULL;
 
   assert(o);
   assert(n);
@@ -761,22 +765,52 @@ buffer * ows_psql_gml_to_sql(ows * o, xmlNodePtr n, int srid)
   g = ows_psql_recursive_parse_gml(o, n, NULL);
   if (!g) return NULL;    /* No Geometry founded in GML doc */
 
+  /* Look for a srsName attribute on the geometry itself */
+  if (xmlHasProp(g, (xmlChar *) "srsName")) {
+    xmlChar* attr =  xmlGetProp(g, (xmlChar *) "srsName");
+    srs_geom = ows_srs_init();
+
+    if (!ows_srs_set_from_srsname(o, srs_geom, (char *) attr)) {
+      ows_srs_free(srs_geom);
+      xmlFree(attr);
+      return NULL;
+    }
+
+    xmlFree(attr);
+  }
+
   /* Retrieve the sub doc and launch GML parse via PostGIS */
   gml = buffer_init();
   cgi_add_xml_into_buffer(gml, g);
 
   sql = buffer_init();
-  buffer_add_str(sql, "SELECT ST_GeomFromGML('");
+  buffer_add_str(sql, "SELECT ");
+  if (srs_geom == NULL && parent_srs != NULL &&
+      parent_srs->honours_authority_axis_order &&
+      !parent_srs->is_axis_order_gis_friendly) {
+      buffer_add_str(sql, "ST_FlipCoordinates(");
+  }
+  /* ST_GeomFromGML handles the axis swapping if the geometry has a srsName */
+  buffer_add_str(sql, "ST_GeomFromGML('");
   buffer_add_str(sql, gml->buf);
 
-  if (ows_version_get(o->postgis_version) >= 200) {
+  if (ows_version_get(o->postgis_version) >= 200 &&
+                        (srs_geom != NULL || parent_srs != NULL)) {
     buffer_add_str(sql, "',");
-    buffer_add_int(sql, srid);
+    buffer_add_int(sql, srs_geom ? srs_geom->srid : parent_srs->srid);
     buffer_add_str(sql, ")");
   } else {
     /* Means PostGIS 1.5 */
     buffer_add_str(sql, "')");
   }
+  if (srs_geom == NULL && parent_srs != NULL &&
+      parent_srs->honours_authority_axis_order &&
+      !parent_srs->is_axis_order_gis_friendly) {
+      /* Close ST_FlipCoordinates */
+      buffer_add_str(sql, ")");
+  }
+
+  if (srs_geom) ows_srs_free(srs_geom);
 
   res = ows_psql_exec(o, sql->buf);
   buffer_free(gml);

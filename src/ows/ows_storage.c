@@ -39,7 +39,7 @@ ows_layer_storage * ows_layer_storage_init()
   storage->schema = buffer_init();
   storage->srid = -1;
   storage->geom_columns = list_init();
-  storage->is_degree = true;
+  storage->is_geographic = true;
   storage->table = buffer_init();
   storage->pkey = NULL;
   storage->pkey_sequence = NULL;
@@ -95,7 +95,7 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
   }
 
   fprintf(output, "srid: %i\n", storage->srid);
-  fprintf(output, "is_degree: %i\n", storage->is_degree?1:0);
+  fprintf(output, "is_geographic: %i\n", storage->is_geographic?1:0);
 
   if (storage->pkey) {
     fprintf(output, "pkey: ");
@@ -461,9 +461,9 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
   buffer_free(sql);
 
   if (PQntuples(res) != 1)
-    l->storage->is_degree = true;
+    l->storage->is_geographic = true;
   else
-    l->storage->is_degree = false;
+    l->storage->is_geographic = false;
 
   PQclear(res);
 

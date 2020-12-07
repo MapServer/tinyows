@@ -93,14 +93,13 @@ bool ows_bbox_set(ows * o, ows_bbox * b, double xmin, double ymin, double xmax, 
 /*
  * Set a given bbox from a string like 'xmin,ymin,xmax,ymax'
  */
-bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
+bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid,
+                           bool honours_authority_axis_order_if_no_explicit_srs)
 {
   double xmin, ymin, xmax, ymax;
-  ows_srs *s;
   buffer *b;
   list *l;
-  int srs = srid;
-  bool ret_srs = true;
+  bool ret;
 
   assert(o && bb && str);
 
@@ -123,16 +122,26 @@ bool ows_bbox_set_from_str(ows * o, ows_bbox * bb, const char *str, int srid)
 
   /* srs is optional since WFS 1.1 */
   if (l->size == 5) {
-    s = ows_srs_init();
-    ret_srs = ows_srs_set_from_srsname(o, s, l->last->value->buf);
-    srs = s->srid;
-    ows_srs_free(s);
+    ows_srs* s = ows_srs_init();
+    ret = ows_srs_set_from_srsname(o, s, l->last->value->buf);
+    if (ret)
+    {
+      srid = s->srid;
+      ret = ows_bbox_set(o, bb, xmin, ymin, xmax, ymax, srid);
+      ows_srs_free(bb->srs);
+      bb->srs = s;
+    } else {
+      ows_srs_free(s);
+    }
+
+  } else {
+    ret = ows_bbox_set(o, bb, xmin, ymin, xmax, ymax, srid);
+    bb->srs->honours_authority_axis_order = honours_authority_axis_order_if_no_explicit_srs;
   }
 
   list_free(l);
-  if(!ret_srs) return false;
 
-  return ows_bbox_set(o, bb, xmin, ymin, xmax, ymax, srs);
+  return ret;
 }
 
 
@@ -279,7 +288,7 @@ void ows_bbox_to_query(ows *o, ows_bbox *bbox, buffer *query)
 
   assert(o && bbox && query);
 
-  if (bbox->srs->is_reverse_axis) {
+  if (bbox->srs->honours_authority_axis_order && !bbox->srs->is_axis_order_gis_friendly) {
     x1 = bbox->ymin;
     y1 = bbox->xmin;
     x2 = bbox->ymax;

@@ -3,15 +3,39 @@
 # don't launch directly this script
 # use 'make install-test100' to do so
 
+set -e
+
 PGBIN=@POSTGIS_BIN@
 PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
 PGUSER=postgres
 DB=tinyows_test
 
+if [ -d @POSTGIS_SHARE@/contrib/postgis-3.0 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.0
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.5 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.5
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.4 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.4
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.3 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.3
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.2 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.2
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.1 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.1
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.0 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-1.5 ]; then
+	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-1.5
+else
+	echo "Unable to find PostGIS dir in @POSTGIS_SHARE@/contrib/" && exit 1
+fi
+
 echo "Create Spatial Database: $DB"
-su $PGUSER -c "$PGBIN/dropdb $DB > /dev/null"
+su $PGUSER -c "$PGBIN/dropdb $DB > /dev/null 2> /dev/null || /bin/true"
 su $PGUSER -c "$PGBIN/createdb $DB"
-su $PGUSER -c "$PGBIN/createlang plpgsql $DB"
+if test -f "$PGBIN/createlang"; then
+    su $PGUSER -c "$PGBIN/createlang plpgsql $DB"
+fi
 su $PGUSER -c "$PGBIN/psql $DB < $PGSHARE/postgis.sql"
 su $PGUSER -c "$PGBIN/psql $DB < $PGSHARE/spatial_ref_sys.sql"
 su $PGUSER -c "$PGBIN/psql $DB < test/wfs_100/ogc_wfs_sf0.sql"

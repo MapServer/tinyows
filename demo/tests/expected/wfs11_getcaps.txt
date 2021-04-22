@@ -126,6 +126,10 @@ Content-Type: application/xml
  <DefaultSRS>urn:ogc:def:crs:EPSG::27582</DefaultSRS>
   <ows:WGS84BoundingBox> <ows:LowerCorner>-6.091001 41.347435</ows:LowerCorner> <ows:UpperCorner>10.812651 50.803540</ows:UpperCorner> </ows:WGS84BoundingBox>
 </FeatureType>
+<FeatureType xmlns:tows="http://www.tinyows.org/">
+  <Name>tows:geometry_less</Name>
+  <Title>Geometry less layer</Title>
+ <NoSRS/></FeatureType>
  </FeatureTypeList>
  <SupportsGMLObjectTypeList>
   <GMLObjectType>

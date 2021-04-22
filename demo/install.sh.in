@@ -48,4 +48,9 @@ echo "Import layer data: france_dept"
 $SHP2PGSQL -s 27582 -I -W latin1 demo/france.shp france > _france.sql
 su $PGUSER -c "$PGBIN/psql $DB < _france.sql"
 
-rm _world.sql _france.sql
+echo "Import non spatial layer"
+echo "CREATE TABLE geometry_less(id SERIAL PRIMARY KEY, intcol INTEGER, textcol TEXT);" > _geometry_less.sql
+echo "INSERT INTO geometry_less (intcol, textcol) VALUES (123, 'foo');" >> _geometry_less.sql
+su $PGUSER -c "$PGBIN/psql $DB < _geometry_less.sql"
+
+rm _world.sql _france.sql _geometry_less.sql

@@ -437,34 +437,28 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
   res = ows_psql_exec(o, sql->buf);
   buffer_empty(sql);
 
-  if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
-    PQclear(res);
+  if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) > 0) {
 
-    ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-              "All config file layers are not availables in geometry_columns or geography_columns",
-              "storage");
-    return;
+      l->storage->srid = atoi(PQgetvalue(res, 0, 0));
+
+      for (i = 0, end = PQntuples(res); i < end; i++)
+        list_add_str(l->storage->geom_columns, PQgetvalue(res, i, 1));
+
+      buffer_add_str(sql, "SELECT * FROM spatial_ref_sys WHERE srid=");
+      buffer_add_str(sql, PQgetvalue(res, 0, 0));
+      buffer_add_str(sql, " AND proj4text like '%%units=m%%'");
+
+      PQclear(res);
+
+      res = ows_psql_exec(o, sql->buf);
+      buffer_free(sql);
+
+      if (PQntuples(res) != 1)
+        l->storage->is_geographic = true;
+      else
+        l->storage->is_geographic = false;
+
   }
-
-  l->storage->srid = atoi(PQgetvalue(res, 0, 0));
-
-  for (i = 0, end = PQntuples(res); i < end; i++)
-    list_add_str(l->storage->geom_columns, PQgetvalue(res, i, 1));
-
-  buffer_add_str(sql, "SELECT * FROM spatial_ref_sys WHERE srid=");
-  buffer_add_str(sql, PQgetvalue(res, 0, 0));
-  buffer_add_str(sql, " AND proj4text like '%%units=m%%'");
-
-  PQclear(res);
-
-  res = ows_psql_exec(o, sql->buf);
-  buffer_free(sql);
-
-  if (PQntuples(res) != 1)
-    l->storage->is_geographic = true;
-  else
-    l->storage->is_geographic = false;
-
   PQclear(res);
 
   ows_storage_fill_pkey(o, l);
@@ -539,8 +533,7 @@ void ows_layers_storage_fill(ows * o)
     }
 
     if (!filled) {
-      if (ln->layer->storage) ows_layer_storage_free(ln->layer->storage);
-      ln->layer->storage = NULL;
+      ows_layer_storage_fill(o, ln->layer, false);
     }
   }
 

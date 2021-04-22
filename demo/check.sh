@@ -63,3 +63,11 @@ QUERY_STRING="$(cat $i)" ./tinyows > /tmp/output.txt || (cat /tmp/output.txt && 
 cat /tmp/output.txt | grep "<wfs:totalInserted>1</wfs:totalInserted>" || (cat /tmp/output.txt && /bin/false)
 echo "select st_astext(geom) from world where name = '-1234';" | su $PGUSER -c "psql -t $DB" | grep "MULTIPOLYGON(((2 49,2 50,3 50,2 49)))"
 echo "delete from world where name = '-1234'" | su $PGUSER -c "psql $DB"
+
+
+i=demo/tests/transactions/input/wfst11_geometry_less_insert.xml
+echo "Running $i"
+QUERY_STRING="$(cat $i)" ./tinyows > /tmp/output.txt || (cat /tmp/output.txt && /bin/false)
+cat /tmp/output.txt | grep "<wfs:totalInserted>1</wfs:totalInserted>" || (cat /tmp/output.txt && /bin/false)
+echo "select textcol from geometry_less where intcol = -1234;" | su $PGUSER -c "psql -t $DB" | grep "minus 1234"
+echo "delete from geometry_less where intcol = -1234" | su $PGUSER -c "psql $DB"

@@ -44,7 +44,6 @@ ows_layer_storage * ows_layer_storage_init()
   storage->pkey = NULL;
   storage->pkey_sequence = NULL;
   storage->pkey_default = NULL;
-  storage->pkey_column_number = -1;
   storage->attributes = array_init();
   storage->not_null_columns = NULL;
 
@@ -102,8 +101,6 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     buffer_flush(storage->pkey, output);
     fprintf(output, "\n");
   }
-
-  fprintf(output, "pkey_column_number: %i\n", storage->pkey_column_number);
 
   if (storage->pkey_sequence) {
     fprintf(output, "pkey_sequence: ");
@@ -225,28 +222,6 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     buffer_empty(sql);
     PQclear(res);
 
-    /* Retrieve the Pkey column number */
-    buffer_add_str(sql, "SELECT a.attnum FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n");
-    buffer_add_str(sql, " WHERE a.attrelid = c.oid AND a.atttypid = t.oid AND n.nspname='");
-    buffer_copy(sql, l->storage->schema);
-    buffer_add_str(sql, "' AND c.relname='");
-    buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND a.attname='");
-    buffer_copy(sql, l->storage->pkey);
-    buffer_add_str(sql, "'");
-    res = ows_psql_exec(o, sql->buf);
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-      PQclear(res);
-      buffer_free(sql);
-      ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED, "Unable to find pkey column number.", "pkey_column number");
-      return;
-    }
-
-    /* -1 because column number start at 1 */
-    l->storage->pkey_column_number = atoi(PQgetvalue(res, 0, 0)) - 1;
-    buffer_empty(sql);
-    PQclear(res);
-
     /* Now try to find a sequence related to this Pkey */
     buffer_add_str(sql, "SELECT pg_get_serial_sequence('");
     buffer_copy(sql, l->storage->schema);
@@ -258,10 +233,16 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
 
     res = ows_psql_exec(o, sql->buf);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+      char message[256];
+      snprintf(message, sizeof(message),
+               "Unable to use pg_get_serial_sequence(%s, %s, %s).",
+               l->storage->schema->buf,
+               l->storage->table->buf,
+               l->storage->pkey->buf);
       PQclear(res);
       buffer_free(sql);
       ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                "Unable to use pg_get_serial_sequence.", "pkey_sequence retrieve");
+                message, "pkey_sequence retrieve");
       return;
     }
 

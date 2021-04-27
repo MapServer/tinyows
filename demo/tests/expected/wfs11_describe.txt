@@ -37,4 +37,15 @@ Content-Type: text/xml; subtype=gml/3.1.1;
   </xs:extension>
  </xs:complexContent>
 </xs:complexType>
+<xs:element name='geometry_less' type='tows:geometry_lessType' substitutionGroup='gml:_Feature' />
+<xs:complexType name='geometry_lessType'>
+ <xs:complexContent>
+  <xs:extension base='gml:AbstractFeatureType'>
+   <xs:sequence>
+    <xs:element name ='intcol' type='int' nillable='true' minOccurs='0' maxOccurs='1'/>
+    <xs:element name ='textcol' type='string' nillable='true' minOccurs='0' maxOccurs='1'/>
+   </xs:sequence>
+  </xs:extension>
+ </xs:complexContent>
+</xs:complexType>
 </xs:schema>

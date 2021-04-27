@@ -21,6 +21,7 @@ echo "local all postgres trust" |  cat - /etc/postgresql/12/main/pg_hba.conf.bak
 echo "host all all 127.0.0.1/32 trust" |  cat - /etc/postgresql/12/main/pg_hba.conf.bak > /etc/postgresql/12/main/pg_hba.conf
 /etc/init.d/postgresql start
 
+rm -f /etc/tinyows.xml
 make install-demo
 cp -f demo/tinyows_no_checkschema.xml /etc/tinyows.xml
 make check

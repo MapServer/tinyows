@@ -107,7 +107,6 @@ typedef struct Ows_layer_storage {
   buffer * pkey;
   buffer * pkey_sequence;
   buffer * pkey_default;
-  int pkey_column_number;
   bool is_geographic;    /* true for a geographic CRS (or a compound CRS
                             whose base is geographic), false for a projected
                             CRS (or a compound CRS whose base is projected) */

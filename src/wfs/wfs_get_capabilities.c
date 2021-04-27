@@ -209,9 +209,6 @@ static void wfs_feature_type_list(ows * o)
   ows_layer_node *ln;
   ows_geobbox *gb;
 
-  int srid_int;
-  buffer *srid;
-  buffer *srs;
   list_node *keyword, *l_srid;
   int s;
   bool writable, retrievable;
@@ -311,33 +308,43 @@ static void wfs_feature_type_list(ows * o)
       }
 
       /* SRS */
-      srid = buffer_init();
-      srid_int = ows_srs_get_srid_from_layer(o, ln->layer->name);
-      buffer_add_int(srid, srid_int);
-      srs = ows_srs_get_from_a_srid(o, srid_int);
+      {
+          buffer *srs = NULL;
 
-      if (srs->use) {
-        if (ows_version_get(o->request->version) == 100) {
-          fprintf(o->output, " <SRS>");
-          buffer_flush(srs, o->output);
-          fprintf(o->output, "</SRS>\n");
-        } else if (ows_version_get(o->request->version) == 110) {
-          fprintf(o->output, " <DefaultSRS>urn:ogc:def:crs:EPSG::%s</DefaultSRS>\n", srid->buf);
+          buffer* srid = buffer_init();
+          int srid_int = ows_srs_get_srid_from_layer(o, ln->layer->name);
+          buffer_add_int(srid, srid_int);
+          if( srid_int != -1 )
+              srs = ows_srs_get_from_a_srid(o, srid_int);
 
-          if (ln->layer->srid) {
-            for (l_srid = ln->layer->srid->first; l_srid; l_srid = l_srid->next) {
-              if (!buffer_cmp(srid, l_srid->value->buf)) {
-                fprintf(o->output, " <OtherSRS>urn:ogc:def:crs:EPSG::%s</OtherSRS>\n", l_srid->value->buf);
+          if (srs && srs->use) {
+            if (ows_version_get(o->request->version) == 100) {
+              fprintf(o->output, " <SRS>");
+              buffer_flush(srs, o->output);
+              fprintf(o->output, "</SRS>\n");
+            } else if (ows_version_get(o->request->version) == 110) {
+              fprintf(o->output, " <DefaultSRS>urn:ogc:def:crs:EPSG::%s</DefaultSRS>\n", srid->buf);
+
+              if (ln->layer->srid) {
+                for (l_srid = ln->layer->srid->first; l_srid; l_srid = l_srid->next) {
+                  if (!buffer_cmp(srid, l_srid->value->buf)) {
+                    fprintf(o->output, " <OtherSRS>urn:ogc:def:crs:EPSG::%s</OtherSRS>\n", l_srid->value->buf);
+                  }
+                }
               }
             }
+          } else {
+            if (ows_version_get(o->request->version) == 100)
+              fprintf(o->output, " <SRS></SRS>\n");
+            else if (ows_version_get(o->request->version) == 110)
+              fprintf(o->output, " <NoSRS/>");
           }
-        }
-      } else {
-        if (ows_version_get(o->request->version) == 100)
-          fprintf(o->output, " <SRS></SRS>\n");
-        else if (ows_version_get(o->request->version) == 110)
-          fprintf(o->output, " <NoSRS/>");
+
+          buffer_free(srid);
+          if( srs )
+              buffer_free(srs);
       }
+
       /* Operations */
       if (retrievable != ln->layer->retrievable || writable != ln->layer->writable) {
         fprintf(o->output, "  <Operations>\n");
@@ -374,59 +381,59 @@ static void wfs_feature_type_list(ows * o)
         gb->south = ln->layer->geobbox->south;
         gb->north = ln->layer->geobbox->north;
       }
-      assert(gb);
 
-      for (s = 0; s < ln->layer->depth; s++) fprintf(o->output, " ");
+      if( gb )
+      {
+          for (s = 0; s < ln->layer->depth; s++) fprintf(o->output, " ");
 
-      if (ows_version_get(o->request->version) == 100)
-        fprintf(o->output, " <LatLongBoundingBox");
-      else if (ows_version_get(o->request->version) == 110)
-        fprintf(o->output, " <ows:WGS84BoundingBox>");
+          if (ows_version_get(o->request->version) == 100)
+            fprintf(o->output, " <LatLongBoundingBox");
+          else if (ows_version_get(o->request->version) == 110)
+            fprintf(o->output, " <ows:WGS84BoundingBox>");
 
-      if (gb->east != DBL_MIN) {
-        if (ows_version_get(o->request->version) == 100) {
-          if (gb->west < gb->east)
-            fprintf(o->output, " minx='%.*f'", o->degree_precision, gb->west);
-          else
-            fprintf(o->output, " minx='%.*f'", o->degree_precision, gb->east);
+          if (gb->east != DBL_MIN) {
+            if (ows_version_get(o->request->version) == 100) {
+              if (gb->west < gb->east)
+                fprintf(o->output, " minx='%.*f'", o->degree_precision, gb->west);
+              else
+                fprintf(o->output, " minx='%.*f'", o->degree_precision, gb->east);
 
-          if (gb->north < gb->south)
-            fprintf(o->output, " miny='%.*f'", o->degree_precision, gb->north);
-          else
-            fprintf(o->output, " miny='%.*f'", o->degree_precision, gb->south);
+              if (gb->north < gb->south)
+                fprintf(o->output, " miny='%.*f'", o->degree_precision, gb->north);
+              else
+                fprintf(o->output, " miny='%.*f'", o->degree_precision, gb->south);
 
-          if (gb->west < gb->east)
-            fprintf(o->output, " maxx='%.*f'", o->degree_precision, gb->east);
-          else
-            fprintf(o->output, " maxx='%.*f'", o->degree_precision, gb->west);
+              if (gb->west < gb->east)
+                fprintf(o->output, " maxx='%.*f'", o->degree_precision, gb->east);
+              else
+                fprintf(o->output, " maxx='%.*f'", o->degree_precision, gb->west);
 
-          if (gb->north < gb->south)
-            fprintf(o->output, " maxy='%.*f'", o->degree_precision, gb->south);
-          else
-            fprintf(o->output, " maxy='%.*f'", o->degree_precision, gb->north);
+              if (gb->north < gb->south)
+                fprintf(o->output, " maxy='%.*f'", o->degree_precision, gb->south);
+              else
+                fprintf(o->output, " maxy='%.*f'", o->degree_precision, gb->north);
 
-          fprintf(o->output, " />\n");
-        } else if (ows_version_get(o->request->version) == 110) {
-          fprintf(o->output, " <ows:LowerCorner>%.*f %.*f</ows:LowerCorner>",
-                  o->degree_precision, gb->west, o->degree_precision, gb->south);
-          fprintf(o->output, " <ows:UpperCorner>%.*f %.*f</ows:UpperCorner>",
-                  o->degree_precision, gb->east, o->degree_precision, gb->north);
-        }
-      } else {
-        if (ows_version_get(o->request->version) == 100) {
-          fprintf(o->output, " minx='0' miny='0' maxx='0' maxy='0'/>\n");
-        } else if (ows_version_get(o->request->version) == 110) {
-          fprintf(o->output, " <ows:LowerCorner>0 0</ows:LowerCorner>");
-          fprintf(o->output, " <ows:UpperCorner>0 0</ows:UpperCorner>");
-        }
+              fprintf(o->output, " />\n");
+            } else if (ows_version_get(o->request->version) == 110) {
+              fprintf(o->output, " <ows:LowerCorner>%.*f %.*f</ows:LowerCorner>",
+                      o->degree_precision, gb->west, o->degree_precision, gb->south);
+              fprintf(o->output, " <ows:UpperCorner>%.*f %.*f</ows:UpperCorner>",
+                      o->degree_precision, gb->east, o->degree_precision, gb->north);
+            }
+          } else {
+            if (ows_version_get(o->request->version) == 100) {
+              fprintf(o->output, " minx='0' miny='0' maxx='0' maxy='0'/>\n");
+            } else if (ows_version_get(o->request->version) == 110) {
+              fprintf(o->output, " <ows:LowerCorner>0 0</ows:LowerCorner>");
+              fprintf(o->output, " <ows:UpperCorner>0 0</ows:UpperCorner>");
+            }
+          }
+
+          if (ows_version_get(o->request->version) == 110)
+            fprintf(o->output, " </ows:WGS84BoundingBox>\n");
+
+          ows_geobbox_free(gb);
       }
-
-      if (ows_version_get(o->request->version) == 110)
-        fprintf(o->output, " </ows:WGS84BoundingBox>\n");
-
-      buffer_free(srid);
-      buffer_free(srs);
-      ows_geobbox_free(gb);
 
       fprintf(o->output, "</FeatureType>\n");
     }

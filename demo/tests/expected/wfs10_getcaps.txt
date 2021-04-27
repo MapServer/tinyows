@@ -90,6 +90,11 @@ version='1.0.0' updateSequence='0'
  <SRS>EPSG:27582</SRS>
   <LatLongBoundingBox minx='-6.091001' miny='41.347435' maxx='10.812651' maxy='50.803540' />
 </FeatureType>
+<FeatureType xmlns:tows="http://www.tinyows.org/">
+  <Name>tows:geometry_less</Name>
+  <Title>Geometry less layer</Title>
+ <SRS></SRS>
+</FeatureType>
  </FeatureTypeList>
 <ogc:Filter_Capabilities>
  <ogc:Spatial_Capabilities>

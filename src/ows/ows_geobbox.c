@@ -157,17 +157,18 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
   PGresult *res;
   ows_geobbox *g;
   ows_bbox *bb;
-  list *geom;
-  list_node *ln;
+  const list *geom;
+  const list_node *ln;
   bool first = true;
 
   assert(o);
   assert(layer_name);
 
-  sql = buffer_init();
-
   geom = ows_psql_geometry_column(o, layer_name);
-  assert(geom);
+  if( geom->first == NULL )
+      return NULL;
+
+  sql = buffer_init();
 
   g = ows_geobbox_init();
   xmin = ymin = xmax = ymax = 0.0;

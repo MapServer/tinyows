@@ -44,7 +44,6 @@ ows_layer_storage * ows_layer_storage_init()
   storage->pkey = NULL;
   storage->pkey_sequence = NULL;
   storage->pkey_default = NULL;
-  storage->pkey_column_number = -1;
   storage->attributes = array_init();
   storage->not_null_columns = NULL;
 
@@ -102,8 +101,6 @@ void ows_layer_storage_flush(ows_layer_storage * storage, FILE * output)
     buffer_flush(storage->pkey, output);
     fprintf(output, "\n");
   }
-
-  fprintf(output, "pkey_column_number: %i\n", storage->pkey_column_number);
 
   if (storage->pkey_sequence) {
     fprintf(output, "pkey_sequence: ");
@@ -225,28 +222,6 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
     buffer_empty(sql);
     PQclear(res);
 
-    /* Retrieve the Pkey column number */
-    buffer_add_str(sql, "SELECT a.attnum FROM pg_class c, pg_attribute a, pg_type t, pg_namespace n");
-    buffer_add_str(sql, " WHERE a.attrelid = c.oid AND a.atttypid = t.oid AND n.nspname='");
-    buffer_copy(sql, l->storage->schema);
-    buffer_add_str(sql, "' AND c.relname='");
-    buffer_copy(sql, l->storage->table);
-    buffer_add_str(sql, "' AND a.attname='");
-    buffer_copy(sql, l->storage->pkey);
-    buffer_add_str(sql, "'");
-    res = ows_psql_exec(o, sql->buf);
-    if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-      PQclear(res);
-      buffer_free(sql);
-      ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED, "Unable to find pkey column number.", "pkey_column number");
-      return;
-    }
-
-    /* -1 because column number start at 1 */
-    l->storage->pkey_column_number = atoi(PQgetvalue(res, 0, 0)) - 1;
-    buffer_empty(sql);
-    PQclear(res);
-
     /* Now try to find a sequence related to this Pkey */
     buffer_add_str(sql, "SELECT pg_get_serial_sequence('");
     buffer_copy(sql, l->storage->schema);
@@ -258,10 +233,16 @@ static void ows_storage_fill_pkey(ows * o, ows_layer * l)
 
     res = ows_psql_exec(o, sql->buf);
     if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+      char message[256];
+      snprintf(message, sizeof(message),
+               "Unable to use pg_get_serial_sequence(%s, %s, %s).",
+               l->storage->schema->buf,
+               l->storage->table->buf,
+               l->storage->pkey->buf);
       PQclear(res);
       buffer_free(sql);
       ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-                "Unable to use pg_get_serial_sequence.", "pkey_sequence retrieve");
+                message, "pkey_sequence retrieve");
       return;
     }
 
@@ -437,38 +418,34 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
   res = ows_psql_exec(o, sql->buf);
   buffer_empty(sql);
 
-  if (PQresultStatus(res) != PGRES_TUPLES_OK || PQntuples(res) == 0) {
-    PQclear(res);
+  if (PQresultStatus(res) == PGRES_TUPLES_OK && PQntuples(res) > 0) {
 
-    ows_error(o, OWS_ERROR_REQUEST_SQL_FAILED,
-              "All config file layers are not availables in geometry_columns or geography_columns",
-              "storage");
-    return;
+      l->storage->srid = atoi(PQgetvalue(res, 0, 0));
+
+      for (i = 0, end = PQntuples(res); i < end; i++)
+        list_add_str(l->storage->geom_columns, PQgetvalue(res, i, 1));
+
+      buffer_add_str(sql, "SELECT * FROM spatial_ref_sys WHERE srid=");
+      buffer_add_str(sql, PQgetvalue(res, 0, 0));
+      buffer_add_str(sql, " AND proj4text like '%%units=m%%'");
+
+      PQclear(res);
+
+      res = ows_psql_exec(o, sql->buf);
+      buffer_free(sql);
+
+      if (PQntuples(res) != 1)
+        l->storage->is_geographic = true;
+      else
+        l->storage->is_geographic = false;
+
   }
-
-  l->storage->srid = atoi(PQgetvalue(res, 0, 0));
-
-  for (i = 0, end = PQntuples(res); i < end; i++)
-    list_add_str(l->storage->geom_columns, PQgetvalue(res, i, 1));
-
-  buffer_add_str(sql, "SELECT * FROM spatial_ref_sys WHERE srid=");
-  buffer_add_str(sql, PQgetvalue(res, 0, 0));
-  buffer_add_str(sql, " AND proj4text like '%%units=m%%'");
-
-  PQclear(res);
-
-  res = ows_psql_exec(o, sql->buf);
-  buffer_free(sql);
-
-  if (PQntuples(res) != 1)
-    l->storage->is_geographic = true;
-  else
-    l->storage->is_geographic = false;
-
   PQclear(res);
 
   ows_storage_fill_pkey(o, l);
+  if( o->exit ) return;
   ows_storage_fill_attributes(o, l);
+  if( o->exit ) return;
   ows_storage_fill_not_null(o, l);
 }
 
@@ -526,6 +503,7 @@ void ows_layers_storage_fill(ows * o)
       if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res, i, 0))
            && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res, i, 1))) {
         ows_layer_storage_fill(o, ln->layer, true);
+        if( o->exit ) break;
         filled = true;
       }
     }
@@ -534,7 +512,30 @@ void ows_layers_storage_fill(ows * o)
       if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res_g, i, 0))
            && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res_g, i, 1))) {
         ows_layer_storage_fill(o, ln->layer, false);
+        if( o->exit ) break;
         filled = true;
+      }
+    }
+
+    if (!filled) {
+      PGresult* res_t;
+
+      sql = buffer_init();
+      buffer_add_str(sql, "SELECT 1 FROM information_schema.tables WHERE table_schema='");
+      buffer_copy(sql, ln->layer->storage->schema);
+      buffer_add_str(sql,"' and table_name='");
+      buffer_copy(sql, ln->layer->storage->table);
+      buffer_add_str(sql,"'");
+      res_t = ows_psql_exec(o, sql->buf);
+      buffer_free(sql);
+      if (PQresultStatus(res_t) == PGRES_TUPLES_OK && PQntuples(res_t) > 0) {
+          filled = true;
+      }
+      PQclear(res_t);
+
+      if (filled) {
+          ows_layer_storage_fill(o, ln->layer, false);
+          if( o->exit ) break;
       }
     }
 

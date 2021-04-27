@@ -71,27 +71,6 @@ PGresult * ows_psql_exec(ows *o, const char *sql)
 
 
 /*
- * Return the column number of the id column from table matching layer name
- * (needed in wfs_get_feature only)
- */
-int ows_psql_column_number_id_column(ows * o, buffer * layer_name)
-{
-  ows_layer_node *ln = NULL;
-
-  assert(o);
-  assert(o->layers);
-  assert(layer_name);
-
-  for (ln = o->layers->first ; ln ; ln = ln->next)
-    if (ln->layer->name && ln->layer->storage
-        && !strcmp(ln->layer->name->buf, layer_name->buf))
-      return ln->layer->storage->pkey_column_number;
-
-  return -1;
-}
-
-
-/*
  * Return geometry columns from the table matching layer name
  */
 list *ows_psql_geometry_column(ows * o, buffer * layer_name)

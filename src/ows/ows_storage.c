@@ -443,7 +443,9 @@ static void ows_layer_storage_fill(ows * o, ows_layer * l, bool is_geom)
   PQclear(res);
 
   ows_storage_fill_pkey(o, l);
+  if( o->exit ) return;
   ows_storage_fill_attributes(o, l);
+  if( o->exit ) return;
   ows_storage_fill_not_null(o, l);
 }
 
@@ -501,6 +503,7 @@ void ows_layers_storage_fill(ows * o)
       if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res, i, 0))
            && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res, i, 1))) {
         ows_layer_storage_fill(o, ln->layer, true);
+        if( o->exit ) break;
         filled = true;
       }
     }
@@ -509,12 +512,14 @@ void ows_layers_storage_fill(ows * o)
       if (    buffer_cmp(ln->layer->storage->schema, (char *) PQgetvalue(res_g, i, 0))
            && buffer_cmp(ln->layer->storage->table,  (char *) PQgetvalue(res_g, i, 1))) {
         ows_layer_storage_fill(o, ln->layer, false);
+        if( o->exit ) break;
         filled = true;
       }
     }
 
     if (!filled) {
       ows_layer_storage_fill(o, ln->layer, false);
+      if( o->exit ) break;
     }
   }
 

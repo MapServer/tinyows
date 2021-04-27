@@ -518,8 +518,30 @@ void ows_layers_storage_fill(ows * o)
     }
 
     if (!filled) {
-      ows_layer_storage_fill(o, ln->layer, false);
-      if( o->exit ) break;
+      PGresult* res_t;
+
+      sql = buffer_init();
+      buffer_add_str(sql, "SELECT 1 FROM information_schema.tables WHERE table_schema='");
+      buffer_copy(sql, ln->layer->storage->schema);
+      buffer_add_str(sql,"' and table_name='");
+      buffer_copy(sql, ln->layer->storage->table);
+      buffer_add_str(sql,"'");
+      res_t = ows_psql_exec(o, sql->buf);
+      buffer_free(sql);
+      if (PQresultStatus(res_t) == PGRES_TUPLES_OK && PQntuples(res_t) > 0) {
+          filled = true;
+      }
+      PQclear(res_t);
+
+      if (filled) {
+          ows_layer_storage_fill(o, ln->layer, false);
+          if( o->exit ) break;
+      }
+    }
+
+    if (!filled) {
+      if (ln->layer->storage) ows_layer_storage_free(ln->layer->storage);
+      ln->layer->storage = NULL;
     }
   }
 

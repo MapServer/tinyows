@@ -28,4 +28,11 @@
          name="geometry_less"
          title="Geometry less layer" />
 
+  <layer retrievable="1"
+	 writable="1"
+	 ns_prefix="tows"
+	 ns_uri="http://www.tinyows.org/"
+         name="i_dont_exist"
+         title="Should not appear in GetCapabilities" />
+
 </tinyows>

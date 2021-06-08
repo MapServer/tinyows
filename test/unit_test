@@ -48,7 +48,12 @@ sed "/LIST$/d" $list_tmp > $sed_tmp && mv $sed_tmp $list_tmp
 for unit_id in `cat $list_tmp`; do
 
 option=`cat $unit_id`
-export QUERY_STRING=$option
+export QUERY_STRING="$option"
+
+echo "---"
+echo "Run: $unit_id"
+echo "Query: $QUERY_STRING"
+
 
 # Valgrind resume mode
 if [ $mode -eq 1 ]; then

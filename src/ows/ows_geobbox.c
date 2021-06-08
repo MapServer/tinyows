@@ -58,8 +58,8 @@ ows_geobbox *ows_geobbox_copy(ows_geobbox *g)
   ows_geobbox *c;
 
   assert(g);
-  c = malloc(sizeof(g));
-  return memcpy(c, g, sizeof(g));
+  c = malloc(sizeof(*g));
+  return memcpy(c, g, sizeof(*g));
 }
 
 
@@ -139,7 +139,7 @@ ows_geobbox *ows_geobbox_set_from_str(ows * o, ows_geobbox * g, char *str)
   assert(str);
 
   bb = ows_bbox_init();
-  ows_bbox_set_from_str(o, bb, str, 4326);
+  ows_bbox_set_from_str(o, bb, str, 4326, false);
   ows_geobbox_set_from_bbox(o, g, bb);
   ows_bbox_free(bb);
 
@@ -157,17 +157,18 @@ ows_geobbox *ows_geobbox_compute(ows * o, buffer * layer_name)
   PGresult *res;
   ows_geobbox *g;
   ows_bbox *bb;
-  list *geom;
-  list_node *ln;
+  const list *geom;
+  const list_node *ln;
   bool first = true;
 
   assert(o);
   assert(layer_name);
 
-  sql = buffer_init();
-
   geom = ows_psql_geometry_column(o, layer_name);
-  assert(geom);
+  if( geom->first == NULL )
+      return NULL;
+
+  sql = buffer_init();
 
   g = ows_geobbox_init();
   xmin = ymin = xmax = ymax = 0.0;

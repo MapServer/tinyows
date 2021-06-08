@@ -29,8 +29,8 @@ XML2_VER=`$LIBXML2_CONFIG --version`
 AC_MSG_RESULT([checking for libxml2 version... $XML2_VER])
 
 xml2_vers=`$LIBXML2_CONFIG --version | awk 'BEGIN { FS = "."; } { printf "%d", ($1 * 1000 + $2) * 1000 + $3;}'`
-if test "$xml2_vers" -lt 2008000 ; then
-	AC_MSG_ERROR([You need at least libxml 2.8.0])
+if test "$xml2_vers" -lt 2009000 ; then
+	AC_MSG_ERROR([You need at least libxml 2.9.0])
 fi
 
 

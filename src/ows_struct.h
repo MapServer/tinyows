@@ -107,8 +107,9 @@ typedef struct Ows_layer_storage {
   buffer * pkey;
   buffer * pkey_sequence;
   buffer * pkey_default;
-  int pkey_column_number;
-  bool is_degree;
+  bool is_geographic;    /* true for a geographic CRS (or a compound CRS
+                            whose base is geographic), false for a projected
+                            CRS (or a compound CRS whose base is projected) */
   array * attributes;
 } ows_layer_storage;
 
@@ -116,10 +117,23 @@ typedef struct Ows_srs {
   int srid;
   buffer * auth_name;
   int auth_srid;
-  bool is_degree;
-  bool is_reverse_axis;
-  bool is_eastern_axis;
-  bool is_long;
+  bool is_geographic;              /* true for a geographic CRS (or a compound
+                                      CRS whose base is geographic), false for
+                                      a projected CRS (or a compound CRS whose
+                                      base is projected) */
+  bool is_axis_order_gis_friendly;   /* true for a CRS whose axis order is
+                                        typically easting, northing (e.g most
+                                        projected CRS, such as EPSG:32631)
+                                        false for example for EPSG:4326 (WGS 84),
+                                        EPSG:2393 (KKJ / Finland Uniform Coordinate System) */
+
+  /* The two below fields are not properties of the SRS, but of its context
+   * of use. */
+  bool honours_authority_axis_order; /* true for a context where the axis order
+                                        as defined by the authority should be
+                                        respected */
+  bool is_long;                      /* true for a context where the srsname must
+                                        be exported as a long URN */
 } ows_srs;
 
 
@@ -166,9 +180,9 @@ enum ows_error_code {
 typedef struct Ows_layer {
   struct Ows_layer * parent;
   int depth;
-  buffer * name;
-  buffer * name_prefix;
-  buffer * name_no_uri;
+  buffer * name;            /* Nominally concatenation of ns_uri:name_no_uri, e.g. "http://www.tinyows.org/:world" , or name_no_uri if no ns_uri */
+  buffer * name_prefix;     /* Nominally concatenation of ns_prefix:name_no_uri, e.g. "tows:world" , or name_no_uri if no ns_prefix */
+  buffer * name_no_uri;     /* the name as in the "name" attribute in the config, e.g "world" */
   buffer * title;
   bool retrievable;
   bool writable;
@@ -181,8 +195,8 @@ typedef struct Ows_layer {
   buffer * pkey;
   buffer * pkey_sequence;
   list * gml_ns;
-  buffer * ns_prefix;
-  buffer * ns_uri;
+  buffer * ns_prefix;       /* value of the "ns_prefix" attribute in the config, e.g. "tows" */
+  buffer * ns_uri;          /* value of the "ns_uri" attribute in the config, e.g. "http://www.tinyows.org/" */
   buffer * encoding;
   ows_layer_storage * storage;
 } ows_layer;
@@ -273,6 +287,7 @@ enum wfs_format {
   WFS_GML311,
   WFS_GML321,
   WFS_GEOJSON,
+  WFS_JSONP,
   WFS_TEXT_XML,
   WFS_APPLICATION_XML
 };
@@ -303,6 +318,7 @@ typedef struct Wfs_request {
   buffer * resulttype;
   buffer * sortby;
   list * sections;
+  buffer * callback;
 
   alist * insert_results;
   int delete_results;

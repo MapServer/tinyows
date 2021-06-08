@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wfs:Transaction xmlns:wfs="http://www.opengis.net/wfs"
+                 xmlns:tows="http://www.tinyows.org/"
+                 xmlns:xlink="http://www.w3.org/1999/xlink"
+                 xmlns:gml="http://www.opengis.net/gml"
+                 xmlns:ogc="http://www.opengis.net/ogc"
+                 xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://www.tinyows.org/ http://127.0.0.1/cgi-bin/tinyows?service=wfs&amp;version=1.1.0&amp;request=describefeaturetype&amp;typename=tows:france"
+                 service="WFS"
+                 version="1.1.0">
+  <wfs:Insert>
+    <tows:france>
+      <tows:id_geofla>-1234</tows:id_geofla>
+      <tows:geom>
+        <gml:MultiPolygon srsName="urn:ogc:def:crs:EPSG::27582">
+          <gml:polygonMember>
+            <gml:Polygon>
+              <gml:outerBoundaryIs>
+                <gml:LinearRing>
+                  <gml:coordinates>2171610,802820 2171611,802820 2171611,802821 2171610,802820</gml:coordinates>
+                </gml:LinearRing>
+              </gml:outerBoundaryIs>
+            </gml:Polygon>
+          </gml:polygonMember>
+        </gml:MultiPolygon>
+      </tows:geom>
+    </tows:france>
+  </wfs:Insert>
+</wfs:Transaction>

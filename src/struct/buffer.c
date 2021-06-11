@@ -574,7 +574,6 @@ buffer *buffer_encode_json_str(const char * str)
         buffer_add(buf, *str);
     }
   }
-
   return buf;
 }
 

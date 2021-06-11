@@ -1,4 +1,19 @@
-1.1.0
+1.2.0   (2021-06-11) *in memory of Olivier Courtin*
+ - Fix custom types conversion (Vincent Mora)
+ - Add support for geometry-less tables (Even Rouault)
+ - Do not list non-existing tables (Even Rouault)
+ - ows_layer_storage_fill(): fix crash when several bad configured layers are found (Even Rouault)
+ - Fix crash when invalid 'pkey' is specified in configuration file (Even Rouault)
+ - Implement matchCase for PropertyIsLike filter (Louis Jencka)
+ - Fix axis order issue on GetFeature 1.1 (Even Rouault)
+ - Avoid repeated prefix of the typename (Even Rouault)
+ - fe_distance_functions(): fix crashes / incorrect behaviour (Even Rouault)
+ - Fix unable to use separator chars as underscore in typename (Olivier Courtin)
+ 
+1.1.1   (2015-06-29)
+ - security release (Olivier Courtin)
+
+1.1.0   (2012-11-13)
  - Add include_items and exclude_items config handling. To choose exactly which columns to retrieve (Serge Dikiy)
  - XSD max length and enumeration constraint handling (Serge Dikiy & Alan Boudreault)
  - First real support of typename namespace provided in request (Olivier Courtin)
@@ -9,7 +24,7 @@
  - Extent layer's properties allowed to inherit (Olivier Courtin)
  - Several bugfixes as usual (special thanks to Andreas Peri, Serge Dikiy and Jukka Rahkonen for detailled reports)
 
-1.0.0   (08/02/2012)
+1.0.0   (2012-02-08)
  - Configuration change with broken backward compatibility:
     * default config file is now /etc/tinyows.xml
     * default schema dir is now $PREFIX/share/tinyows/schema 
@@ -33,14 +48,13 @@
  - Lot of debug stuff (a special thanks to Boris Leukert, Jukka Rahkonen and Even Rouault for detailled reports)
  - Security fixes (SQL Injection vulnerability - Reported by Even Rouault)
 
-
-0.9.0   (19/06/2010)
+0.9.0   (2010-06-19)
  - Fast-CGI support
  - Error log handle
  - Improve --check behaviour
  - And a still a lot of debug stuff
 
-0.8.0   (01/05/2010)
+0.8.0   (2010-05-01)
  - PostgreSQL schema support 
  - Command line --check option, to check configure stuff
  - JSON output format for GetFeature (use OUTPUTFORMAT=application/json)

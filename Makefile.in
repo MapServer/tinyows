@@ -25,7 +25,7 @@ GIT_FLAGS=@GIT_FLAGS@
 SRC=src/fe/fe_comparison_ops.c src/fe/fe_error.c src/fe/fe_filter.c src/fe/fe_filter_capabilities.c src/fe/fe_function.c src/fe/fe_logical_ops.c src/fe/fe_spatial_ops.c src/mapfile/mapfile.c src/ows/ows_bbox.c src/ows/ows.c src/ows/ows_config.c src/ows/ows_error.c src/ows/ows_geobbox.c src/ows/ows_get_capabilities.c src/ows/ows_layer.c src/ows/ows_metadata.c src/ows/ows_psql.c src/ows/ows_request.c src/ows/ows_srs.c src/ows/ows_storage.c src/ows/ows_version.c src/struct/alist.c src/struct/array.c src/struct/buffer.c src/struct/cgi_request.c src/struct/list.c src/struct/mlist.c src/struct/regexp.c src/wfs/wfs_describe.c src/wfs/wfs_error.c src/wfs/wfs_get_capabilities.c src/wfs/wfs_get_feature.c src/wfs/wfs_request.c src/wfs/wfs_transaction.c src/ows/ows_libxml.c
 
 all:
-	$(CC) -o tinyows $(SRC) $(XMLFLAGS) $(CFLAGS) $(PGFLAGS)  $(FCGIFLAGS) $(GIT_FLAGS) -lfl
+	$(CC) $(CFLAGS) $(POSTGIS_INC) $(XML2_INC) $(FCGI_INC) $(SVN_FLAGS) $(SRC) -o tinyows -lfl $(POSTGIS_LIB) $(XML2_LIB) $(FCGI_LIB)
 	@rm -rf tinyows.dSYM
 
 flex:

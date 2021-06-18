@@ -538,13 +538,15 @@ static void end_layer()
 		if (!map_l->storage->schema->use)
 			buffer_add_str(map_l->storage->schema, "public");
 		if (!map_is_dump) map_l->retrievable=map_l->writable = false;
-
+        
+                map_l->name_prefix = buffer_init();
                 buffer_copy(map_l->name_prefix, map_l->name);
                 if (map_l->ns_prefix->use) {
                     buffer_add_head(map_l->name_prefix, ':');
                     buffer_add_head_str(map_l->name_prefix, map_l->ns_prefix->buf);
                 }
 
+                map_l->name_no_uri = buffer_init();
                 buffer_copy(map_l->name_no_uri, map_l->name);
                 if (map_l->ns_uri->use) {
                     buffer_add_head(map_l->name, ':');

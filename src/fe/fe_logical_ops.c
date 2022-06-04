@@ -21,6 +21,7 @@
 */
 
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,7 +102,7 @@ static buffer *fe_unary_logical_op(ows * o, buffer * typename, filter_encoding *
   assert(n);
 
   buffer_add_str(fe->sql, "not(");
-  fe->in_not++;
+  fe->in_not = true;
 
   n = n->children;
   while (n->type != XML_ELEMENT_NODE) n = n->next;
@@ -112,7 +113,7 @@ static buffer *fe_unary_logical_op(ows * o, buffer * typename, filter_encoding *
   else if (fe_is_comparison_op((char *) n->name)) fe->sql = fe_comparison_op(o, typename, fe, n);
 
   buffer_add_str(fe->sql, ")");
-  fe->in_not--;
+  fe->in_not = false;
 
   return fe->sql;
 }

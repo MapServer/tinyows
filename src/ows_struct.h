@@ -24,17 +24,11 @@
 #ifndef OWS_STRUCT_H
 #define OWS_STRUCT_H
 
+#include <stdbool.h>
 #include <stdio.h>    /* FILE prototype */
 
 
 /* ========= Structures ========= */
-
-enum Bool {
-  false,
-  true
-};
-
-typedef enum Bool bool;
 
 #define BUFFER_SIZE_INIT   256
 

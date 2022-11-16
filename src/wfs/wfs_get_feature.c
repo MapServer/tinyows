@@ -545,13 +545,9 @@ static buffer *wfs_retrieve_sql_request_select(ows * o, wfs_request * wr, buffer
     }
     /* Columns are written in quotation marks */
     else {
-      if (wr->format == WFS_GEOJSON)
-          buffer_add_str(select, "to_json(");
       buffer_add_str(select, "\"");
       buffer_copy(select, an->key);
       buffer_add_str(select, "\"");
-      if (wr->format == WFS_GEOJSON)
-          buffer_add_str(select, ")");
     }
 
     if (an->next) buffer_add_str(select, ",");
@@ -857,10 +853,11 @@ static void wfs_geojson_display_results(ows * o, wfs_request * wr, mlist * reque
           else buffer_add_str(prop, ", \"");
 
           buffer_copy(prop, an->key);
-          buffer_add_str(prop, "\": ");
+          buffer_add_str(prop, "\": \"");
           value_enc = buffer_encode_json_str(PQgetvalue(res, i, j));
           buffer_copy(prop, value_enc);
           buffer_free(value_enc);
+          buffer_add(prop, '"');
         }
       }
 

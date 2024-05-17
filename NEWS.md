@@ -1,3 +1,6 @@
+1.2.1   (2024-05-17) *in memory of Olivier Courtin*
+ - Handle check when using TINYOWS_MAPFILE 
+ 
 1.2.0   (2021-06-11) *in memory of Olivier Courtin*
  - Fix custom types conversion (Vincent Mora)
  - Add support for geometry-less tables (Even Rouault)

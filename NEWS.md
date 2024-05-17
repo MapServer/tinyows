@@ -1,5 +1,7 @@
 1.2.1   (2024-05-17) *in memory of Olivier Courtin*
- - Handle check when using TINYOWS_MAPFILE 
+ - Fix JSON encoding ([#100](https://github.com/MapServer/tinyows/pull/100)) (Kévin Dubuc)
+ - Use stdbool.h instead of custom definitions ([#99](https://github.com/MapServer/tinyows/pull/99)) (Bas Couwenberg)
+ - Handle check when using TINYOWS_MAPFILE ([#97](https://github.com/MapServer/tinyows/pull/97)) (Jeff McKenna)
  
 1.2.0   (2021-06-11) *in memory of Olivier Courtin*
  - Fix custom types conversion (Vincent Mora)

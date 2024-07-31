@@ -25,7 +25,7 @@ All code must meet the following rules :
 
 Code dynamically linked with the following other librairies:
 - PostgreSQL
-- libxml 2.9.x
+- libxml2
 - flex
 
 ## Credits

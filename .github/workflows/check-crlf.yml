@@ -17,4 +17,4 @@ jobs:
       - name: Use action to check for CRLF endings
         uses: erclu/check-crlf@v1.2.0
         with: # ignore directories containing *.csv & data
-          exclude: /demo/
+          exclude: /demo/ /ms4w/ /test/ Makefile.vc 

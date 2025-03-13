@@ -10,7 +10,17 @@ PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
 PGUSER=postgres
 DB=tinyows_test
 
-if [ -d @POSTGIS_SHARE@/contrib/postgis-3.0 ]; then
+if [ -d @POSTGIS_SHARE@/contrib/postgis-3.5 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.5
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.4 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.4
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.3 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.3
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.2 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.2
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.1 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.1
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.0 ]; then
 	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.0
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.5 ]; then
 	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.5

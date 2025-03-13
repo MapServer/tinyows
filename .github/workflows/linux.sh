@@ -7,7 +7,7 @@ apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     gcc libxml2-dev libpq-dev libfcgi-dev \
     autoconf make flex libfl-dev \
-    postgresql-12 postgresql-client postgis postgresql-12-postgis-3 postgresql-12-postgis-3-scripts \
+    postgresql-16 postgresql-client postgis postgresql-16-postgis-3 postgresql-16-postgis-3-scripts \
     wget ca-certificates patch valgrind
 
 cd "${WORK_DIR}"
@@ -16,9 +16,9 @@ CFLAGS="-Werror" ./configure
 make
 make install
 
-cp /etc/postgresql/12/main/pg_hba.conf /etc/postgresql/12/main/pg_hba.conf.bak
-echo "local all postgres trust" |  cat - /etc/postgresql/12/main/pg_hba.conf.bak > /etc/postgresql/12/main/pg_hba.conf
-echo "host all all 127.0.0.1/32 trust" |  cat - /etc/postgresql/12/main/pg_hba.conf.bak > /etc/postgresql/12/main/pg_hba.conf
+cp /etc/postgresql/16/main/pg_hba.conf /etc/postgresql/16/main/pg_hba.conf.bak
+echo "local all postgres trust" |  cat - /etc/postgresql/16/main/pg_hba.conf.bak > /etc/postgresql/16/main/pg_hba.conf
+echo "host all all 127.0.0.1/32 trust" |  cat - /etc/postgresql/16/main/pg_hba.conf.bak > /etc/postgresql/16/main/pg_hba.conf
 /etc/init.d/postgresql start
 
 rm -f /etc/tinyows.xml

@@ -21,7 +21,7 @@ Content-Type: text/xml; subtype=gml/3.1.1;
  <xs:complexContent>
   <xs:extension base='gml:AbstractFeatureType'>
    <xs:sequence>
-    <xs:element name ='id_geofla' type='long' nillable='true' minOccurs='0' maxOccurs='1'/>
+    <xs:element name ='id_geofla' type='double' nillable='true' minOccurs='0' maxOccurs='1'/>
     <xs:element name ='code_chf_l' nillable='true' minOccurs='0' maxOccurs='1'>
 <xs:simpleType><xs:restriction base='string'><xs:maxLength value='3'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='nom_chf_l' nillable='true' minOccurs='0' maxOccurs='1'>
 <xs:simpleType><xs:restriction base='string'><xs:maxLength value='50'/></xs:restriction></xs:simpleType></xs:element>    <xs:element name ='x_chf_lieu' type='int' nillable='true' minOccurs='0' maxOccurs='1'/>

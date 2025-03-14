@@ -12,4 +12,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build
-        run: docker run --rm -e WORK_DIR=$PWD -v $PWD:$PWD ubuntu:20.04 $PWD/.github/workflows/linux.sh
+        run: docker run --rm -e WORK_DIR=$PWD -v $PWD:$PWD ubuntu:24.04 $PWD/.github/workflows/linux.sh

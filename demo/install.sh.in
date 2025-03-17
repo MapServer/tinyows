@@ -21,24 +21,34 @@ elif [ -d /usr/local/pgsql/share/contrib/postgis-3.2 ]; then
         PGSHARE=/usr/local/pgsql/share/contrib/postgis-3.2
 elif [ -d /usr/local/pgsql/share/contrib/postgis-3.1 ]; then
         PGSHARE=/usr/local/pgsql/share/contrib/postgis-3.1
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.5 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.5
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.4 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.4
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.3 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.3
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.2 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.2
+elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.1 ]; then
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.1
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-3.0 ]; then
-	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.0
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-3.0
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.5 ]; then
-	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.5
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.5
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.4 ]; then
-	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.4
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.4
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.3 ]; then
-	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.3
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.3
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.2 ]; then
-	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.2
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.2
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.1 ]; then
-	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.1
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.1
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-2.0 ]; then
-	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-2.0
 elif [ -d @POSTGIS_SHARE@/contrib/postgis-1.5 ]; then
-	PGSHARE=@POSTGIS_SHARE@/contrib/postgis-1.5
+    PGSHARE=@POSTGIS_SHARE@/contrib/postgis-1.5
 else
-	echo "Unable to find PostGIS dir in @POSTGIS_SHARE@/contrib/" && exit 1
+    echo "Unable to find PostGIS dir in @POSTGIS_SHARE@/contrib/" && exit 1
 fi
 
 echo "Create Spatial Database: $DB"

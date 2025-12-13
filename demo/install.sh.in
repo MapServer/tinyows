@@ -11,7 +11,9 @@ PGUSER=postgres
 SHP2PGSQL=@SHP2PGSQL@
 DB=tinyows_demo
 
-if [ -d /usr/local/pgsql/share/contrib/postgis-3.5 ]; then
+if [ -d /usr/local/pgsql/share/contrib/postgis-3.6 ]; then
+        PGSHARE=/usr/local/pgsql/share/contrib/postgis-3.6
+elif [ -d /usr/local/pgsql/share/contrib/postgis-3.5 ]; then
         PGSHARE=/usr/local/pgsql/share/contrib/postgis-3.5
 elif [ -d /usr/local/pgsql/share/contrib/postgis-3.4 ]; then
         PGSHARE=/usr/local/pgsql/share/contrib/postgis-3.4 		
